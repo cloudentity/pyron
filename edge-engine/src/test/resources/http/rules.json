@@ -1,0 +1,59 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "/discoverable-service",
+        "targetService": "discoverable-service",
+        "dropPrefix": true
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/test"
+        }
+      ]
+    },
+    {
+      "default": {
+        "pathPrefix": "/discoverable-service-with-tags",
+        "targetService": "discoverable-service-with-tags",
+        "dropPrefix": true
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/test"
+        }
+      ]
+    },
+    {
+      "default": {
+        "pathPrefix": "/service-default-config",
+        "targetService": "service-default-config",
+        "dropPrefix": true
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/test"
+        }
+      ]
+    },
+    {
+      "default": {
+        "pathPrefix": "/static-service",
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/test",
+          "call": {
+            "responseTimeout": 100
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "ping",
+        "targetPort": 0,
+        "pathPrefix": "",
+        "dropPrefix": true
+      },
+      "request": {
+        "postFlow": {
+          "plugins": [
+            {
+              "name": "ping",
+              "conf": {}
+            }
+          ]
+        }
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/noop",
+          "requestPlugins": [
+            {
+              "name": "correlationId",
+              "conf": {
+                "name": "CORRELATION_ID"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/rewrite",
+          "requestPlugins": [
+            {
+              "name": "correlationId",
+              "conf": {
+                "name": "CORRELATION_ID",
+                "rewrite": "REWRITTEN_CORRELATION_ID"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/fill",
+          "requestPlugins": [
+            {
+              "name": "correlationId",
+              "conf": {
+                "name": "CORRELATION_ID",
+                "generate": "fill"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/overwrite",
+          "requestPlugins": [
+            {
+              "name": "correlationId",
+              "conf": {
+                "name": "CORRELATION_ID",
+                "generate": "overwrite"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/multiple",
+          "requestPlugins": [
+            {
+              "name": "correlationId",
+              "conf": {
+                "ids": [
+                  {
+                    "name": "CORRELATION_ID"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

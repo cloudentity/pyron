@@ -1,0 +1,27 @@
+{
+  "vertx": {
+    "logger-delegate-factory-class-name": "io.vertx.core.logging.SLF4JLogDelegateFactory"
+  },
+  "orchis": {
+    "app": {
+      "port": 7770,
+      "serverVerticles": 1,
+      "rules": "$ref:rules"
+    },
+    "jwt": {
+      "secret": "secret",
+      "issuer": "test-orchis-api-gateway",
+      "expiresIn": "PT60S"
+    }
+  },
+  "registry:request-plugins": {
+    "transform-request": { "main": "com.cloudentity.edge.plugin.impl.transformer.TransformRequestPlugin" },
+    "headerToCtx": { "main": "com.cloudentity.edge.plugin.impl.headers.HeaderToFlowCtxPlugin" }
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+  },
+  "registry:system": {
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "requiredModules": ["http-server", "http-client"],
+  "orchis": {
+    "app": {
+      "rules": "$ref:rules",
+      "alivePath": "$env:?ALIVE_PATH:object",
+      "accessLog": {
+        "authnCtx": "$env:?ACCESS_LOG_AUTHN_CTX:object",
+        "request": {
+          "headers": "$env:?ACCESS_LOG_REQUEST_HEADERS:array"
+        }
+      }
+    }
+  },
+  "registry:system": {
+    "log-access-log-persister": {
+      "main": "com.cloudentity.edge.accesslog.LogAccessLogPersister"
+    }
+  }
+}

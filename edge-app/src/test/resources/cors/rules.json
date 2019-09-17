@@ -1,0 +1,54 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760,
+        "pathPrefix": "",
+        "dropPrefix": true
+      },
+      "request": {
+        "preFlow": {
+          "plugins": [
+            {
+              "name": "cors"
+            }
+          ]
+        }
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/cors"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/cors-strict",
+          "requestPlugins": [
+            {
+              "name": "cors",
+              "conf": {
+                "allowCredentials": false,
+                "allowedHttpHeaders": ["Authentication"],
+                "allowedHttpMethods": ["GET", "POST"],
+                "allowedOrigins": ["http://example-a.com", "http://example-b.com"]
+              }
+            }
+          ],
+          "request": {
+            "preFlow": {
+              "disablePlugins": ["cors"]
+            }
+          }
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/cors-with-authz",
+          "requestPlugins": [
+            { "name": "authz", "conf": {"policy": "policy1"}}
+          ]
+        }
+      ]
+    }
+  ]
+}

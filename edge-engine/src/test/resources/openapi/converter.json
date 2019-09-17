@@ -1,0 +1,25 @@
+{
+  "openApi": {
+    "publicLocation": {
+      "host": "localhost",
+      "port": 80,
+      "ssl": false
+    },
+    "defaultSource": {
+      "path": "/docs/index-resolved.yaml"
+    },
+    "defaultConverter": {
+      "processors": {
+        "pre": ["dropSecurityDefinitions"]
+      }
+    }
+  },
+  "registry:openApiPreProcessors": {
+    "pre-a": { "main": "com.cloudentity.edge.openapi.TestPreAProcessor", "prefix": true },
+    "pre-b": { "main": "com.cloudentity.edge.openapi.TestPreBProcessor", "prefix": true }
+  },
+  "registry:openApiPostProcessors": {
+    "post-a": { "main": "com.cloudentity.edge.openapi.TestPostAProcessor", "prefix": true },
+    "post-b": { "main": "com.cloudentity.edge.openapi.TestPostBProcessor", "prefix": true }
+  }
+}

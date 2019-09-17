@@ -1,0 +1,17 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "/service",
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/path-without-policy"
+        }
+      ]
+    }
+  ]
+}

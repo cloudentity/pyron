@@ -1,0 +1,31 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "/service",
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path-for-default-header",
+          "requestPlugins": [
+            {
+              "name": "outgoingDefaultJwt"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/path-for-custom-header",
+          "requestPlugins": [
+            {
+              "name": "outgoingDefaultJwt-customHeader"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

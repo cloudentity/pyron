@@ -1,0 +1,10 @@
+*.iml
+target/
+.idea
+.vertx
+file-uploads
+dependency-reduced-pom.xml
+package-lock.json
+alerts.txt
+report.xml
+*.versionsBackup

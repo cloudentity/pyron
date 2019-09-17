@@ -1,0 +1,23 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "",
+        "targetHost": "localhost",
+        "targetPort": 7234,
+        "dropPrefix": false
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path",
+          "requestPlugins": [
+            {
+              "name": "pingOriginal"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

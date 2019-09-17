@@ -1,0 +1,26 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetService": "service-a"
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path"
+        }
+      ]
+    },
+    {
+      "default": {
+        "targetService": "service-b"
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path"
+        }
+      ]
+    }
+  ]
+}

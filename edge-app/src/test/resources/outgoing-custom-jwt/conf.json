@@ -1,0 +1,83 @@
+{
+  "vertx": {
+    "logger-delegate-factory-class-name": "io.vertx.core.logging.SLF4JLogDelegateFactory"
+  },
+  "orchis": {
+    "app": {
+      "port": 7770,
+      "serverVerticles": 1,
+      "rules": "$ref:rules"
+    }
+  },
+  "registry:request-plugins": {
+    "plugin:authn": { "main": "com.cloudentity.edge.plugin.impl.authn.AuthnPlugin" },
+    "plugin:outgoingCustomJwt": { "main": "com.cloudentity.edge.plugin.impl.jwt.OutgoingCustomJwtPlugin" },
+    "plugin:outgoingCustomJwt-customHeader": { "main": "com.cloudentity.edge.plugin.jwt.OutgoingCustomJwtPluginCustomHeader" }
+  },
+  "plugin:authn": {
+    "methodsMapping": {
+      "sso": "ssoAuthnProvider"
+    },
+    "entitiesMapping": {
+      "sso": {
+        "session": "sessionProvider"
+      }
+    }
+  },
+  "registry:authn-method-providers": {
+    "ssoAuthnProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.methods.SsoAuthnProvider",
+      "verticleConfig": {
+        "sessionService": {
+          "ssl": false,
+          "host": "localhost",
+          "path": "",
+          "port": 7750,
+          "timeout": 3000,
+          "debug": false
+        },
+        "tokenHeaderName": "token",
+        "tokenCookieName": "token",
+        "tokenCookieSettings": "$ref:cookies.token",
+        "userIdName": "uuid",
+        "jwtServiceAddress": "symmetric"
+      }
+    }
+  },
+  "registry:authn-entity-providers": {
+    "sessionProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.entities.SSOSessionProvider"
+    }
+  },
+  "plugin:outgoingCustomJwt": {
+    "jwtServiceAddress": "symmetric"
+  },
+  "plugin:outgoingCustomJwt-customHeader": {
+    "jwtServiceAddress": "symmetric",
+    "authHeader": {
+      "name": "x-cd-fingerprint",
+      "pattern": "{}"
+    }
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+  },
+  "registry:system": {
+    "symmetric-jwt-service": { "main": "com.cloudentity.edge.jwt.impl.SymmetricJwtService" },
+    "other-symmetric-jwt-service": {
+      "main": "com.cloudentity.edge.jwt.impl.SymmetricJwtService",
+      "prefix": "other-symmetric"
+    }
+  },
+  "symmetric-jwt-service": {
+    "secret": "secret",
+    "issuer": "test-orchis-api-gateway",
+    "expiresIn": "PT60S"
+  },
+  "other-symmetric-jwt-service": {
+    "secret": "other-secret",
+    "issuer": "orchis-api-gateway",
+    "expiresIn": "PT60S"
+  }
+}

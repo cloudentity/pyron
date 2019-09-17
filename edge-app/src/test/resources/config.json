@@ -1,0 +1,408 @@
+{
+  "vertx": {
+    "logger-delegate-factory-class-name": "io.vertx.core.logging.SLF4JLogDelegateFactory"
+  },
+  "orchis": {
+    "app": {
+      "port": 7771,
+      "serverVerticles": 1,
+      "rules": "$ref:rules"
+    }
+  },
+  "plugin:outgoingDefaultJwt": {
+    "jwtServiceAddress": "symmetric"
+  },
+  "plugin:outgoingCustomJwt": {
+    "jwtServiceAddress": "symmetric"
+  },
+  "plugin:authz": {
+    "http": {
+      "serviceName": "authz",
+      "httpClientOptions": {
+        "timeout": 3000
+      },
+      "circuitBreakerOptions": { "off": true },
+      "retries": 0
+    },
+    "jwtServiceAddress": "symmetric"
+  },
+  "cookies": {
+    "token": {
+      "path": "/",
+      "domain": "",
+      "secure": false,
+      "httpOnly": true
+    }
+  },
+  "plugin:authn": {
+    "methodsMapping": {
+      "anonymous": "anonymousAuthnProvider",
+      "sso": "ssoAuthnProvider",
+      "jwt": "jwtAuthnProvider",
+      "authorizationCodeOAuth": "authorizationCodeOAuthProvider",
+      "authorizationCodeOAuthIntrospection": "authorizationCodeOAuthIntrospectionProvider",
+      "clientCredentialsOAuth": "clientCredentialsOAuthProvider"
+    },
+    "entitiesMapping": {
+      "jwt": {
+        "jwtContent": "jwtContentProvider"
+      },
+      "sso": {
+        "deviceUuid": "deviceUuidProvider",
+        "userUuid": "userUuidProvider",
+        "user": "userEntityProvider",
+        "device": "deviceEntityProvider",
+        "session": "sessionProvider",
+        "token": "sessionIdProvider"
+      },
+      "authorizationCodeOAuth": {
+        "userUuid": "userUuidProvider",
+        "user": "userEntityProvider"
+      },
+      "clientCredentialsOAuth": {
+        "applicationByClientId": "applicationByClientIdProvider",
+        "oauthClientId": "oauthClientIdProvider"
+
+      }
+    },
+    "openApi": {
+      "oauthUrls": {
+        "authorizationUrl": {
+          "host": "$ref:openApi.publicLocation.host",
+          "path": "/oauth/authorize",
+          "port" : "$ref:openApi.publicLocation.port",
+          "ssl" : "$ref:openApi.publicLocation.ssl"
+        },
+        "tokenUrl": {
+          "host": "$ref:openApi.publicLocation.host",
+          "path": "/oauth/token",
+          "port" : "$ref:openApi.publicLocation.port",
+          "ssl" : "$ref:openApi.publicLocation.ssl"
+        }
+      },
+      "securityDefinitionsMapping": {
+        "authorizationCodeOAuth": {
+          "type": "oauth2",
+          "flows": ["implicit", "authorizationCode", "password"]
+        },
+        "authorizationCodeOAuthIntrospection": {
+          "type": "oauth2",
+          "flows": ["implicit", "authorizationCode", "password"]
+        },
+        "clientCredentialsOAuth": {
+          "type": "oauth2",
+          "flows": ["clientCredentials"]
+        },
+        "sso": {
+          "type": "apiKey",
+          "definitionName": "SsoToken",
+          "in": "header",
+          "name": "token"
+        }
+      }
+    }
+  },
+  "openApi": {
+    "publicLocation": {
+      "host": "localhost",
+      "port": 80,
+      "ssl": false
+    }
+  },
+  "plugin:custom-authn":  {
+    "methodsMapping": {
+      "anonymous": "anonymousAuthnProvider",
+      "sso": "ssoAuthnProvider",
+      "jwt": "customJwtAuthnProvider",
+      "authorizationCodeOAuth": "authorizationCodeOAuthProvider",
+      "authorizationCodeOAuthIntrospection": "authorizationCodeOAuthIntrospectionProvider",
+      "clientCredentialsOAuth": "clientCredentialsOAuthProvider"
+    },
+    "entitiesMapping": {
+      "jwt": {
+        "jwtContent": "jwtContentProvider"
+      },
+      "sso": {
+        "deviceUuid": "deviceUuidProvider",
+        "userUuid": "userUuidProvider",
+        "user": "userEntityProvider",
+        "device": "deviceEntityProvider",
+        "session": "sessionProvider",
+        "token": "sessionIdProvider"
+      },
+      "authorizationCodeOAuth": {
+        "userUuid": "userUuidProvider",
+        "user": "userEntityProvider"
+      },
+      "clientCredentialsOAuth": {
+        "applicationByClientId": "applicationByClientIdProvider"
+      }
+    },
+    "authnMethodProvidersConfigKey": "custom-authn-method-providers"
+  },
+  "registry:custom-authn-method-providers": {
+    "customJwtAuthnProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.methods.JwtAuthnProvider",
+      "verticleConfig": {
+        "jwtServiceAddress": "other-symmetric"
+      }
+    }
+  },
+  "registry:authn-method-providers": {
+    "anonymousAuthnProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.methods.AnonymousAuthnProvider"
+    },
+    "ssoAuthnProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.methods.SsoAuthnProvider",
+      "verticleConfig": {
+        "sessionService": {
+          "ssl": false,
+          "host": "localhost",
+          "path": "",
+          "port": 7750,
+          "timeout": 3000,
+          "debug": false
+        },
+        "tokenHeaderName": "token",
+        "tokenCookieName": "token",
+        "tokenCookieSettings": "$ref:cookies.token",
+        "userIdName": "uuid",
+        "jwtServiceAddress": "symmetric"
+      }
+    },
+    "jwtAuthnProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.methods.JwtAuthnProvider",
+      "verticleConfig": {
+        "jwtServiceAddress": "symmetric"
+      }
+    },
+    "authorizationCodeOAuthProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.methods.OAuthAuthorizationCodeAuthnProvider" },
+    "clientCredentialsOAuthProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.methods.OAuthClientCredentialsAuthnProvider" },
+    "authorizationCodeOAuthIntrospectionProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.methods.OAuthAuthorizationCodeIntrospectionAuthnProvider",
+      "verticleConfig": {
+        "http": {
+          "serviceLocation": {
+            "host": "localhost",
+            "port": 9999,
+            "ssl": false
+          }
+        }
+      }
+    }
+  },
+  "registry:authn-entity-providers": {
+    "sessionProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.SSOSessionProvider" },
+    "sessionIdProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.SessionIdProvider" },
+    "userUuidProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.UserUuidProvider" },
+    "jwtContentProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.JWTContentProvider" },
+    "oauthClientIdProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.OAuthClientIdProvider" },
+    "userEntityProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.entities.UserEntityProvider",
+      "verticleConfig": {
+        "userService": {
+          "serviceName": "userService",
+          "httpClientOptions": {
+            "timeout": 3000
+          },
+          "circuitBreakerOptions": { "off": true },
+          "retries": 0
+        },
+        "jwtServiceAddress": "symmetric"
+      }
+    },
+    "deviceUuidProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.DeviceUuidProvider" },
+    "deviceEntityProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.entities.DeviceEntityProvider",
+      "verticleConfig": {
+        "deviceService": {
+          "serviceName": "deviceService",
+          "httpClientOptions": {
+            "timeout": 3000
+          },
+          "circuitBreakerOptions": { "off": true },
+          "retries": 0
+        },
+        "jwtServiceAddress": "symmetric"
+      }
+    },
+    "applicationByClientIdProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.entities.ApplicationByOAuthClientIdProvider",
+      "verticleConfig": {
+        "applicationService": {
+          "serviceName": "applicationService",
+          "httpClientOptions": {
+            "timeout": 3000
+          },
+          "circuitBreakerOptions": { "off": true },
+          "retries": 0
+        },
+        "jwtServiceAddress": "symmetric"
+      }
+    }
+  },
+  "plugin:session": {
+    "sessionService": {
+      "ssl": false,
+      "host": "localhost",
+      "path": "",
+      "port": 7750,
+      "timeout": 3000,
+      "debug": false
+    },
+    "sessionTokenName": "token",
+    "userIdName": "uuid",
+    "jwtServiceAddress": "symmetric"
+  },
+  "plugin:identifiers": {
+    "sessionService": {
+      "ssl": false,
+      "host": "local.orchis.syntegrity.com",
+      "path": "/overlay/api",
+      "port": 7080,
+      "timeout": 3000,
+      "debug": false
+    },
+    "jwtServiceAddress": "symmetric",
+    "authnMethod":{
+      "session": "token"
+    }
+  },
+  "registry:request-plugins": {
+    "plugin:authn": { "main": "com.cloudentity.edge.plugin.impl.authn.AuthnPlugin" },
+    "plugin:custom-authn": { "main": "com.cloudentity.edge.plugin.impl.authn.AuthnPlugin", "prefix": "custom-authn" },
+    "plugin:authz": { "main": "com.cloudentity.edge.plugin.impl.authz.AuthzPlugin" },
+    "plugin:session": { "main": "com.cloudentity.edge.plugin.impl.session.SessionPlugin" },
+    "plugin:outgoingDefaultJwt": { "main": "com.cloudentity.edge.plugin.impl.jwt.OutgoingDefaultJwtPlugin" },
+    "plugin:outgoingCustomJwt": { "main": "com.cloudentity.edge.plugin.impl.jwt.OutgoingCustomJwtPlugin" },
+    "plugin:identifiers": { "main": "com.cloudentity.edge.plugin.impl.identifiers.IdentifiersPlugin" }
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+    "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }
+  },
+  "registry:system": {
+    "fixed-sd-provider": { "main": "com.cloudentity.tools.vertx.sd.provider.FixedSdProvider" },
+    "oidc-client": { "main": "com.cloudentity.edge.service.HttpOidcClient" },
+    "vault-client": { "main": "com.cloudentity.edge.service.HttpVaultClient" },
+    "public-key-provider": {"main": "com.cloudentity.edge.jwt.vault.PublicKeyVaultProvider"},
+    "public-key-validator": {"main": "com.cloudentity.edge.jwt.InternalPublicKeyValidator"},
+    "symmetric-jwt-service": { "main": "com.cloudentity.edge.jwt.impl.SymmetricJwtService" },
+    "other-symmetric-jwt-service": {
+      "main": "com.cloudentity.edge.jwt.impl.SymmetricJwtService",
+      "prefix": "other-symmetric"
+    },
+    "asymmetric-jwt-service": { "main": "com.cloudentity.edge.jwt.impl.AsymmetricJwtService" }
+  },
+  "symmetric-jwt-service": {
+    "secret": "secret",
+    "issuer": "test-orchis-api-gateway",
+    "expiresIn": "PT60S"
+  },
+  "other-symmetric-jwt-service": {
+    "secret": "other-secret",
+    "issuer": "orchis-api-gateway",
+    "expiresIn": "PT60S"
+  },
+  "asymmetric-jwt-service": {
+    "serviceId": "service-a",
+    "serialNumber": "aa:bb:cc:dd:ee",
+    "instanceId": "12345",
+    "expiresIn": "PT60S",
+    "keystore": {
+      "path": "src/test/resources/keystore.jks",
+      "keyAlias": "app",
+      "keyPassword": "password"
+    }
+  },
+  "circuit-breakers": {
+    "off": true
+  },
+  "fixed-sd-provider": {
+    "records": [
+      {
+        "name": "authz",
+        "metadata": {
+          "ID": "authz:localhost:7770"
+        },
+        "location": {
+          "host": "localhost",
+          "port": 7770,
+          "ssl": false
+        }
+      },
+      {
+        "name": "userService",
+        "metadata": {
+          "ID": "userService:localhost:7750"
+        },
+        "location": {
+          "host": "localhost",
+          "port": 7750,
+          "ssl": false
+        }
+      },
+      {
+        "name": "deviceService",
+        "metadata": {
+          "ID": "deviceService:localhost:7750"
+        },
+        "location": {
+          "host": "localhost",
+          "port": 7750,
+          "ssl": false
+        }
+      },
+      {
+        "name": "applicationService",
+        "metadata": {
+          "ID": "applicationService:localhost:7750"
+        },
+        "location": {
+          "host": "localhost",
+          "port": 7750,
+          "ssl": false
+        }
+      }
+    ]
+  },
+  "tracing": {
+    "JAEGER_SERVICE_NAME": "orchis-api-gateway"
+  },
+  "oidc-client": {
+    "oidcService": {
+      "ssl": false,
+      "host": "localhost",
+      "path": "/oauth",
+      "port": 9987,
+      "timeout": 3000,
+      "debug": false,
+      "trustAll": false,
+      "jwkEndpoint": "/jwk",
+      "jwkReload": 1000
+    }
+  },
+  "multi-oidc-client": {
+    "jwkReload": 1000,
+    "idps": [
+      {
+        "host": "demo.cloudentity.com",
+        "basePath": "/oauth",
+        "jwkEndpoint": "/jwk"
+      }
+    ]
+  },
+  "vault-client": {
+    "vaultService": {
+      "ssl": false,
+      "host": "localhost",
+      "path": "/v1",
+      "port": 9988,
+      "timeout": 3000,
+      "debug": false,
+      "trustAll": false,
+      "publicKeyEndpoint": "/pki/cert"
+    }
+  }
+}

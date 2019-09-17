@@ -1,0 +1,21 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetService": "virtual"
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/proxy-headers",
+          "requestPlugins": [
+            {
+              "name": "ping",
+              "conf": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+<configuration scan="true" scanPeriod="30 seconds">
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${LOG_LEVEL:-WARN}</level>
+    </filter>
+    <encoder>
+      <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSXXX", UTC} [%X{x-trace-id}] [%thread] [%-5level] %logger{32} - %msg%n%xEx</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="INIT" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+        <marker>INIT</marker>
+      </evaluator>
+      <onMismatch>DENY</onMismatch>
+      <onMatch>NEUTRAL</onMatch>
+    </filter>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${INIT_LOG_LEVEL:-INFO}</level>
+    </filter>
+    <encoder>
+      <Pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSXXX", UTC} [%X{x-trace-id}] [%thread] [%-5level] %logger{32} - %msg%n%xEx</Pattern>
+    </encoder>
+  </appender>
+
+  <appender name="AUDIT" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${AUDIT_LOG_LEVEL:-INFO}</level>
+    </filter>
+    <encoder>
+      <Pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSXXX", UTC} [%X{x-trace-id}] [%thread] [%-5level] %logger{32} - %msg%n%xEx</Pattern>
+    </encoder>
+  </appender>
+
+  <appender name="ASYNC_AUDIT" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="AUDIT" />
+    <queueSize>10000</queueSize>
+    <neverBlock>true</neverBlock>
+    <!--<discardingThreshold>0</discardingThreshold>-->
+  </appender>
+
+  <appender name="ACCESS" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${ACCESS_LOG_LEVEL:-INFO}</level>
+    </filter>
+    <encoder>
+      <Pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSXXX", UTC} [%X{x-trace-id}] [%thread] [%-5level] %logger{32} - %msg%n%xEx</Pattern>
+    </encoder>
+  </appender>
+
+  <appender name="ASYNC_ACCESS" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="ACCESS" />
+    <queueSize>10000</queueSize>
+     <discardingThreshold>0</discardingThreshold>
+    <neverBlock>true</neverBlock>
+  </appender>
+
+  <appender name="THIRD_PARTY_LIB" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${THIRD_PARTY_LIB_LOG_LEVEL:-INFO}</level>
+    </filter>
+    <encoder>
+      <Pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSXXX", UTC} [%X{x-trace-id}] [%thread] [%-5level] %logger{32} - %msg%n%xEx</Pattern>
+    </encoder>
+  </appender>
+
+  <appender name="ASYNC_THIRD_PARTY_LIB" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="THIRD_PARTY_LIB" />
+    <queueSize>1000</queueSize>
+    <discardingThreshold>0</discardingThreshold>
+  </appender>
+
+  <logger name="com.hazelcast" additivity="false">
+    <appender-ref ref="ASYNC_THIRD_PARTY_LIB" />
+  </logger>
+
+  <logger name="io.netty" additivity="false">
+    <appender-ref ref="ASYNC_THIRD_PARTY_LIB"/>
+  </logger>
+
+  <logger name="io.vertx" additivity="false">
+    <appender-ref ref="ASYNC_THIRD_PARTY_LIB" />
+  </logger>
+
+  <logger name="org.apache.kafka" additivity="false">
+    <appender-ref ref="ASYNC_THIRD_PARTY_LIB" />
+  </logger>
+
+  <logger name="com.cloudentity.edge.accesslog.LogAccessLogPersister" additivity="false">
+    <appender-ref ref="ASYNC_ACCESS" />
+  </logger>
+
+  <root level="${ROOT_LOG_LEVEL:-DEBUG}" >
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="INIT" />
+  </root>
+</configuration>

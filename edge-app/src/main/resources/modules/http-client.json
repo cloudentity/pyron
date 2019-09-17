@@ -1,0 +1,130 @@
+{
+  "fixed-http-target-client-default": "$ref:http-client",
+  "smart-http-target-client-default": {
+    "http": "$ref:http-client",
+    "retries": "$env:?SMART_HTTP_CLIENT_RETRIES:int",
+    "responseTimeout": "$env:?SMART_HTTP_CLIENT_RESPONSE_TIMEOUT:int",
+    "failureHttpCodes": "$env:?SMART_HTTP_CLIENT_FAILURE_CODES:array",
+    "retryFailedResponse": "$env:?SMART_HTTP_CLIENT_RETRY_FAILED_RESPONSE:boolean",
+    "retryOnException": "$env:?SMART_HTTP_CLIENT_RETRY_ON_EXCEPTION:boolean"
+  },
+  "http-client": {
+    "verifyHost": "$env:?HTTP_CLIENT_VERIFY_HOST:boolean",
+    "maxPoolSize": "$env:?HTTP_CLIENT_MAX_POOL_SIZE:int",
+    "keepAlive": "$env:?HTTP_CLIENT_KEEP_ALIVE:boolean",
+    "keepAliveTimeout": "$env:?HTTP_CLIENT_KEEP_ALIVE_TIMEOUT:int",
+    "pipeliningLimit": "$env:?HTTP_CLIENT_PIPELINING_LIMIT:int",
+    "pipelining": "$env:?HTTP_CLIENT_PIPELINING:boolean",
+    "http2MaxPoolSize": "$env:?HTTP_CLIENT_HTTP2_MAX_POOL_SIZE:int",
+    "http2MultiplexingLimit": "$env:?HTTP_CLIENT_HTTP2_MULTIPLEXING_LIMIT:int",
+    "http2ConnectionWindowSize": "$env:?HTTP_CLIENT_HTTP2_CONNECTION_WINDOW_SIZE:int",
+    "http2KeepAliveTimeout": "$env:?HTTP_CLIENT_HTTP2_KEEP_ALIVE_TIMEOUT:int",
+    "poolCleanerPeriod": "$env:?HTTP_CLIENT_POOL_CLEANER_PERIOD:int",
+    "tryUseCompression": "$env:?HTTP_CLIENT_TRY_USE_COMPRESSION:boolean",
+    "maxWebsocketFrameSize": "$env:?HTTP_CLIENT_MAX_WEBSOCKET_FRAME_SIZE:int",
+    "maxWebsocketMessageSize": "$env:?HTTP_CLIENT_MAX_WEBSOCKET_MESSAGE_SIZE:int",
+    "defaultHost": "$env:?HTTP_CLIENT_DEFAULT_HOST:string",
+    "defaultPort": "$env:?HTTP_CLIENT_DEFAULT_PORT:int",
+    "protocolVersion": "$env:?HTTP_CLIENT_PROTOCOL_VERSION:string",
+    "maxChunkSize": "$env:?HTTP_CLIENT_MAX_CHUNK_SIZE:int",
+    "maxInitialLineLength": "$env:?HTTP_CLIENT_MAX_INITIAL_LINE_LENGTH:int",
+    "maxHeaderSize": "$env:?HTTP_CLIENT_MAX_HEADER_SIZE:int",
+    "maxWaitQueueSize": "$env:?HTTP_CLIENT_MAX_WAIT_QUEUE_SIZE:int",
+    "initialSettings": {
+      "_nullify": true,
+      "headerTableSize": "$env:?HTTP_CLIENT_INITIAL_SETTINGS__HEADER_TABLE_SIZE:int",
+      "pushEnabled": "$env:?HTTP_CLIENT_INITIAL_SETTINGS__PUSH_ENABLED:boolean",
+      "maxConcurrentStreams": "$env:?HTTP_CLIENT_INITIAL_SETTINGS__MAX_CONCURRENT_STREAMS:int",
+      "initialWindowSize": "$env:?HTTP_CLIENT_INITIAL_SETTINGS__INITIAL_WINDOW_SIZE:int",
+      "maxFrameSize": "$env:?HTTP_CLIENT_INITIAL_SETTINGS__MAX_FRAME_SIZE:int",
+      "maxHeaderListSize": "$env:?HTTP_CLIENT_INITIAL_SETTINGS__MAX_HEADER_LIST_SIZE:int",
+      "extraSettings": "$env:?HTTP_CLIENT_INITIAL_SETTINGS__EXTRA_SETTINGS:object"
+    },
+    "alpnVersions": "$env:?HTTP_CLIENT_ALPN_VERSIONS:array",
+    "http2ClearTextUpgrade": "$env:?HTTP_CLIENT_HTTP2_CLEAR_TEXT_UPGRADE:boolean",
+    "sendUnmaskedFrames": "$env:?HTTP_CLIENT_SEND_UNMASKED_FRAMES:boolean",
+    "maxRedirects": "$env:?HTTP_CLIENT_MAX_REDIRECTS:int",
+    "forceSni": "$env:?HTTP_CLIENT_FORCE_SNI:boolean",
+    "decoderInitialBufferSize": "$env:?HTTP_CLIENT_DECODER_INITIAL_BUFFER_SIZE:int",
+    "tryUsePerFrameWebsocketCompression": "$env:?HTTP_CLIENT_TRY_USE_PER_FRAME_WEBSOCKET_COMPRESSION:boolean",
+    "tryUsePerMessageWebsocketCompression": "$env:?HTTP_CLIENT_TRY_USE_PER_MESSAGE_WEBSOCKET_COMPRESSION:boolean",
+    "websocketCompressionLevel": "$env:?HTTP_CLIENT_WEBSOCKET_COMPRESSION_LEVEL:int",
+    "websocketAllowClientNoContext": "$env:?HTTP_CLIENT_WEBSOCKET_ALLOW_CLIENT_NO_CONTEXT:boolean",
+    "websocketRequestServerNoContext": "$env:?HTTP_CLIENT_WEBSOCKET_REQUEST_SERVER_NO_CONTEXT:boolean",
+    "connectTimeout": "$env:?HTTP_CLIENT_CONNECT_TIMEOUT:int",
+    "trustAll": "$env:?HTTP_CLIENT_TRUST_ALL:boolean",
+    "metricsName": "$env:?HTTP_CLIENT_METRICS_NAME:string",
+    "proxyOptions": {
+      "_nullify": true,
+      "host": "$env:?HTTP_CLIENT_PROXY_OPTIONS__HOST:string",
+      "port": "$env:?HTTP_CLIENT_PROXY_OPTIONS__PORT:int",
+      "username": "$env:?HTTP_CLIENT_PROXY_OPTIONS__USERNAME:string",
+      "password": "$env:?HTTP_CLIENT_PROXY_OPTIONS__PASSWORD:string",
+      "type": "$env:?HTTP_CLIENT_PROXY_OPTIONS__TYPE:string"
+    },
+    "localAddress": "$env:?HTTP_CLIENT_LOCAL_ADDRESS:string",
+    "tcpNoDelay": "$env:?HTTP_CLIENT_TCP_NO_DELAY:boolean",
+    "tcpKeepAlive": "$env:?HTTP_CLIENT_TCP_KEEP_ALIVE:boolean",
+    "soLinger": "$env:?HTTP_CLIENT_SO_LINGER:int",
+    "idleTimeout": "$env:?HTTP_CLIENT_IDLE_TIMEOUT:int",
+    "idleTimeoutUnit": "$env:?HTTP_CLIENT_IDLE_TIMEOUT_UNIT:string",
+    "ssl": "$env:?HTTP_CLIENT_SSL:boolean",
+    "sslHandshakeTimeout": "$env:?HTTP_CLIENT_SSL_HANDSHAKE_TIMEOUT:int",
+    "sslHandshakeTimeoutUnit": "$env:?HTTP_CLIENT_SSL_HANDSHAKE_TIMEOUT_UNIT:string",
+    "keyStoreOptions": {
+      "_nullify": true,
+      "password": "$env:?HTTP_CLIENT_KEY_STORE_OPTIONS__PASSWORD:string",
+      "path": "$env:?HTTP_CLIENT_KEY_STORE_OPTIONS__PATH:string",
+      "value": "$env:?HTTP_CLIENT_KEY_STORE_OPTIONS__VALUE:string"
+    },
+    "trustStoreOptions": {
+      "_nullify": true,
+      "password": "$env:?HTTP_CLIENT_TRUST_STORE_OPTIONS__PASSWORD:string",
+      "path": "$env:?HTTP_CLIENT_TRUST_STORE_OPTIONS__PATH:string",
+      "value": "$env:?HTTP_CLIENT_TRUST_STORE_OPTIONS__VALUE:string"
+    },
+    "pemKeyCertOptions": {
+      "_nullify": true,
+      "keyPaths": "$env:?HTTP_CLIENT_PEM_KEY_CERT_OPTIONS__KEY_PATHS:array",
+      "keyValues": "$env:?HTTP_CLIENT_PEM_KEY_CERT_OPTIONS__KEY_VALUES:array",
+      "certPaths": "$env:?HTTP_CLIENT_PEM_KEY_CERT_OPTIONS__CERT_PATHS:array",
+      "certValues": "$env:?HTTP_CLIENT_PEM_KEY_CERT_OPTIONS__CERT_VALUES:array"
+    },
+    "pemTrustOptions": {
+      "_nullify": true,
+      "certPaths": "$env:?HTTP_CLIENT_PEM_TRUST_OPTIONS__CERT_PATHS:array",
+      "certValues": "$env:?HTTP_CLIENT_PEM_TRUST_OPTIONS__CERT_VALUES:array"
+    },
+    "pfxKeyCertOptions": {
+      "_nullify": true,
+      "password": "$env:?HTTP_CLIENT_PFX_KEY_CERT_OPTIONS__PASSWORD:string",
+      "path": "$env:?HTTP_CLIENT_PFX_KEY_CERT_OPTIONS__PATH:string",
+      "value": "$env:?HTTP_CLIENT_PFX_KEY_CERT_OPTIONS__VALUE:string"
+    },
+    "pfxTrustOptions": {
+      "_nullify": true,
+      "password": "$env:?HTTP_CLIENT_PFX_TRUST_OPTIONS__PASSWORD:string",
+      "path": "$env:?HTTP_CLIENT_PFX_TRUST_OPTIONS__PATH:string",
+      "value": "$env:?HTTP_CLIENT_PFX_TRUST_OPTIONS__VALUE:string"
+    },
+    "enabledCipherSuites": "$env:?HTTP_CLIENT_ENABLED_CIPHER_SUITES:array",
+    "crlPaths": "$env:?HTTP_CLIENT_CRL_PATHS:array",
+    "crlValues": "$env:?HTTP_CLIENT_CRL_VALUES:array",
+    "useAlpn": "$env:?HTTP_CLIENT_USE_ALPN:boolean",
+    "openSslEngineOptions": {
+      "_nullify": true,
+      "sessionCacheEnabled": "$env:?HTTP_CLIENT_OPEN_SSL_ENGINE_OPTIONS__SESSION_CACHE_ENABLED:boolean"
+    },
+    "jdkSslEngineOptions": "$env:?HTTP_CLIENT_JDK_SSL_ENGINE_OPTIONS:object",
+    "enabledSecureTransportProtocols": "$env:?HTTP_CLIENT_ENABLED_SECURE_TRANSPORT_PROTOCOLS:array",
+    "tcpFastOpen": "$env:?HTTP_CLIENT_TCP_FAST_OPEN:boolean",
+    "tcpCork": "$env:?HTTP_CLIENT_TCP_CORK:boolean",
+    "tcpQuickAck": "$env:?HTTP_CLIENT_TCP_QUICK_ACK:boolean",
+    "sendBufferSize": "$env:?HTTP_CLIENT_SEND_BUFFER_SIZE:int",
+    "receiveBufferSize": "$env:?HTTP_CLIENT_RECEIVE_BUFFER_SIZE:int",
+    "trafficClass": "$env:?HTTP_CLIENT_TRAFFIC_CLASS:int",
+    "reuseAddress": "$env:?HTTP_CLIENT_REUSE_ADDRESS:boolean",
+    "logActivity": "$env:?HTTP_CLIENT_LOG_ACTIVITY:boolean",
+    "reusePort": "$env:?HTTP_CLIENT_REUSE_PORT:boolean"
+  }
+}

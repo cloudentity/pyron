@@ -1,0 +1,96 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "/service",
+        "targetHost": "localhost",
+        "targetPort": 7760,
+        "subDomainPattern": ".*",
+        "dropPrefix": true
+      },
+      "request": {
+        "postFlow": {
+          "plugins": [
+            {
+              "name": "outgoingDefaultJwt",
+              "conf": {}
+            }
+          ]
+        }
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/path-with-policy",
+          "requestPlugins": [
+            { "name": "authz", "conf": { "policy": "policy1" } }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/path-with-authentication",
+          "sessionTokenName": "token",
+          "requestPlugins": [
+            { "name": "session", "conf": {} }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/path-for-authn-plugin",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": { "methods": ["sso"], "entities": ["user", "device", "userUuid", "deviceUuid", "session", "token"] }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/authn-with-jwt",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "methods": [
+                  "jwt"
+                ],
+                "entities": [
+                  "jwtContent"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/client-credentials-flow",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": { "methods": ["clientCredentialsOAuth"], "entities": ["applicationByClientId", "oauthClientId"] }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/path-without-policy"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/devices",
+          "requestPlugins": [
+            {
+              "name": "identifiers",
+              "conf": {
+                "authnMethods" : ["accessToken"],
+                "requiredIds": {
+                  "userUuid": "sub"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

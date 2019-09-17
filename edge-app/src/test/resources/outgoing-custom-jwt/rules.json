@@ -1,0 +1,65 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "/service",
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path-for-default-header",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": { "methods": ["sso"], "entities": ["session"] }
+            },
+            {
+              "name": "outgoingCustomJwt",
+              "conf": {
+                "mapping": {
+                  "cnt": {
+                    "usr": "${content.session.user}",
+                    "lvl": "${content.session.level}",
+                    "status": "${content.session.status}"
+                  }
+                },
+                "defaults": {
+                  "content.session.status": "inactive"
+                },
+                "jwtServiceAddress": "other-symmetric"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/path-for-custom-header",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": { "methods": ["sso"], "entities": ["session"] }
+            },
+            {
+              "name": "outgoingCustomJwt-customHeader",
+              "conf": {
+                "mapping": {
+                  "cnt": {
+                    "usr": "${content.session.user}",
+                    "lvl": "${content.session.level}",
+                    "status": "${content.session.status}"
+                  }
+                },
+                "defaults": {
+                  "content.session.status": "inactive"
+                },
+                "jwtServiceAddress": "other-symmetric"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

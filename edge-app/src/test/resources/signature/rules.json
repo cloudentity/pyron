@@ -1,0 +1,30 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "/service",
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path",
+          "requestPlugins": [
+            {
+              "name": "signature",
+              "conf": {
+                "serviceFingerprint": {
+                  "mapping": {}
+                },
+                "identityContext": {
+                  "mapping": {}
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

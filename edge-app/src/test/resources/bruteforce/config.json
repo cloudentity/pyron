@@ -1,0 +1,36 @@
+{
+  "vertx": {
+    "logger-delegate-factory-class-name": "io.vertx.core.logging.SLF4JLogDelegateFactory"
+  },
+  "orchis": {
+    "app": {
+      "port": 7773,
+      "serverVerticles": 1,
+      "rules": "$ref:rules"
+    },
+    "jwt": {
+      "secret": "secret",
+      "issuer": "test-orchis-api-gateway",
+      "expiresIn": "PT60S"
+    }
+  },
+  "registry:request-plugins": {
+    "plugin:bruteForce": { "main": "com.cloudentity.edge.plugin.impl.bruteforce.BruteForcePlugin" }
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+    "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }
+  },
+  "registry:system": {
+    "fixed-sd-provider": { "main": "com.cloudentity.tools.vertx.sd.provider.FixedSdProvider" },
+    "cache": { "main": "com.cloudentity.tools.vertx.hazelcast.inmemory.InMemoryHazelcastVerticle" }
+  },
+  "circuit-breakers": {
+    "off": true
+  },
+  "fixed-sd-provider": {
+    "records": [
+    ]
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "apiServer": {
+    "http": {
+      "port": 7772
+    },
+    "routes": [
+      {
+        "id": "access-log-route",
+        "urlPath": "/*"
+      }
+    ]
+  },
+  "registry:routes": {
+    "access-log-route": { "main": "com.cloudentity.tools.vertx.server.api.routes.impl.AccessLogRoute" }
+  },
+  "orchis": {
+    "app": {
+      "port": 7001,
+      "serverVerticles": 1,
+      "rules": "$ref:rules"
+    }
+  },
+  "registry:request-plugins": {
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+    "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }
+  },
+  "registry:system": {
+    "fixed-sd-provider": { "main": "com.cloudentity.tools.vertx.sd.provider.FixedSdProvider" }
+  },
+  "registry:open-api": {
+    "openapi-service": { "main": "com.cloudentity.edge.openapi.OpenApiServiceVerticle" },
+    "openapi-converter": { "main": "com.cloudentity.edge.openapi.OpenApiConverterVerticle" }
+  },
+  "fixed-sd-provider": {
+    "records": [
+      {
+        "name": "service-a",
+        "location": {
+          "host": "localhost",
+          "port": 7760,
+          "ssl": false
+        }
+      },
+      {
+        "name": "service-b",
+        "location": {
+          "host": "localhost",
+          "port": 7770,
+          "ssl": false
+        }
+      },
+      {
+        "name": "virtual",
+        "location": {
+          "host": "virtual",
+          "port": 0,
+          "ssl": false
+        }
+      }
+    ]
+  },
+  "openApi": {
+    "defaultSource": {
+      "path": "/docs/openapi"
+    },
+    "services": {
+      "service-a": {
+        "source": {
+          "path": "/docs/openapi.json"
+        }
+      }
+    },
+    "excludedServices": [
+      "virtual"
+    ]
+  },
+  "listOpenApi": {
+    "location": {
+      "host" : "$ref:openApi.publicLocation.host:string:localhost",
+      "ssl" : "$ref:openApi.publicLocation.ssl:boolean:false",
+      "port" : "$ref:openApi.publicLocation.port:int:80",
+      "basePath": "$ref:app.openApi.basePath:string:/openapi"
+    },
+    "excludedServices": "$ref:openApi.excludedServices:array:[]"
+  },
+  "getOpenApi": {
+    "excludedServices": "$ref:openApi.excludedServices:array:[]"
+  },
+  "rules": [
+    {
+      "default": {
+        "targetService": "service-a"
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path",
+          "requestPlugins": [
+
+          ]
+        }
+      ]
+    },
+    {
+      "default": {
+        "targetService": "service-b"
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path",
+          "requestPlugins": [
+
+          ]
+        }
+      ]
+    },
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7780
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/path",
+          "requestPlugins": [
+
+          ]
+        }
+      ]
+    },
+    {
+      "default": {
+        "targetService": "virtual"
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/authn-plugin",
+          "requestPlugins": []
+        }
+      ]
+    }
+  ]
+}

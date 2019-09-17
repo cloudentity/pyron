@@ -1,0 +1,71 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "/service",
+        "targetHost": "localhost",
+        "targetPort": 7760,
+        "dropPrefix": true
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/send-event-to-session-from-context",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "entities": [
+                  "token"
+                ],
+                "methods": [
+                  "sso"
+                ]
+              }
+            }
+          ],
+          "responsePlugins": [
+            {
+              "conf": {
+                  "event": {
+                    "id": "FederatedAuthentication",
+                    "type": "AuthN"
+                  },
+                "failure": [
+                  401
+                ],
+                "success": [
+                  200,
+                  201
+                ]
+              },
+              "name": "authEvent"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/send-event-without-authn-plugin",
+          "responsePlugins": [
+            {
+              "conf": {
+                "event": {
+                  "id": "FederatedAuthentication",
+                  "type": "AuthN"
+                },
+                "failure": [
+                  401
+                ],
+                "success": [
+                  200,
+                  201
+                ]
+              },
+              "name": "authEvent"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

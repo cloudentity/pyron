@@ -1,0 +1,35 @@
+{
+  "rules": [
+    {
+      "default": {
+        "pathPrefix": "/service",
+        "targetHost": "localhost",
+        "targetPort": 7760,
+        "dropPrefix": false
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/params/{param1}",
+          "requestPlugins": [
+            { "name": "pingOriginal", "conf": {} }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/headers",
+          "requestPlugins": [
+            { "name": "pingOriginal", "conf": {} }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/body",
+          "requestPlugins": [
+            { "name": "pingOriginal", "conf": {} }
+          ]
+        }
+      ]
+    }
+  ]
+}
