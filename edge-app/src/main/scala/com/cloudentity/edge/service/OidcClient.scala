@@ -3,7 +3,6 @@ package com.cloudentity.edge.service
 import java.nio.charset.Charset
 
 import com.nimbusds.jose.jwk.JWKSet
-import com.cloudentity.edge.plugin.impl.identifiers.OidcServiceConf
 import com.cloudentity.edge.util.ConfigDecoder
 import com.cloudentity.tools.vertx.bus.VertxEndpoint
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
@@ -24,6 +23,8 @@ case class JWKSetNotAvailable() extends OidcClientError
 case class JWK(kty: String, e: String, alg: String, n: String)
 case class JWKeys(keys: List[JWK])
 
+case class OidcServiceConf(ssl: Boolean, host: String, port: Int, path: String, timeout: Int, debug: Boolean,
+                           trustAll: Boolean, jwkEndpoint: String, jwkReload: Long)
 
 trait OidcClient {
   /**

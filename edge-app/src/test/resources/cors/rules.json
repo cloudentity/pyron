@@ -43,9 +43,9 @@
         },
         {
           "method": "GET",
-          "pathPattern": "/cors-with-authz",
+          "pathPattern": "/cors-with-failing",
           "requestPlugins": [
-            { "name": "authz", "conf": {"policy": "policy1"}}
+            { "name": "failing" }
           ]
         }
       ]

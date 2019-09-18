@@ -12,16 +12,15 @@
           "pathPattern": "/path-for-default-header",
           "requestPlugins": [
             {
-              "name": "authn",
-              "conf": { "methods": ["sso"], "entities": ["session"] }
+              "name": "headerToCtx",
+              "conf": { "headers": ["user"] }
             },
             {
               "name": "outgoingCustomJwt",
               "conf": {
                 "mapping": {
                   "cnt": {
-                    "usr": "${content.session.user}",
-                    "lvl": "${content.session.level}",
+                    "usr": "${content.user}",
                     "status": "${content.session.status}"
                   }
                 },
@@ -38,16 +37,15 @@
           "pathPattern": "/path-for-custom-header",
           "requestPlugins": [
             {
-              "name": "authn",
-              "conf": { "methods": ["sso"], "entities": ["session"] }
+              "name": "headerToCtx",
+              "conf": { "headers": ["user"] }
             },
             {
               "name": "outgoingCustomJwt-customHeader",
               "conf": {
                 "mapping": {
                   "cnt": {
-                    "usr": "${content.session.user}",
-                    "lvl": "${content.session.level}",
+                    "usr": "${content.user}",
                     "status": "${content.session.status}"
                   }
                 },

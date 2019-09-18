@@ -141,40 +141,10 @@
     "authnMethodProvidersConfigKey": "custom-authn-method-providers"
   },
   "registry:custom-authn-method-providers": {
-    "customJwtAuthnProvider": {
-      "main": "com.cloudentity.edge.plugin.impl.authn.methods.JwtAuthnProvider",
-      "verticleConfig": {
-        "jwtServiceAddress": "other-symmetric"
-      }
-    }
   },
   "registry:authn-method-providers": {
     "anonymousAuthnProvider": {
       "main": "com.cloudentity.edge.plugin.impl.authn.methods.AnonymousAuthnProvider"
-    },
-    "ssoAuthnProvider": {
-      "main": "com.cloudentity.edge.plugin.impl.authn.methods.SsoAuthnProvider",
-      "verticleConfig": {
-        "sessionService": {
-          "ssl": false,
-          "host": "localhost",
-          "path": "",
-          "port": 7750,
-          "timeout": 3000,
-          "debug": false
-        },
-        "tokenHeaderName": "token",
-        "tokenCookieName": "token",
-        "tokenCookieSettings": "$ref:cookies.token",
-        "userIdName": "uuid",
-        "jwtServiceAddress": "symmetric"
-      }
-    },
-    "jwtAuthnProvider": {
-      "main": "com.cloudentity.edge.plugin.impl.authn.methods.JwtAuthnProvider",
-      "verticleConfig": {
-        "jwtServiceAddress": "symmetric"
-      }
     },
     "authorizationCodeOAuthProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.methods.OAuthAuthorizationCodeAuthnProvider" },
     "clientCredentialsOAuthProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.methods.OAuthClientCredentialsAuthnProvider" },
@@ -192,54 +162,9 @@
     }
   },
   "registry:authn-entity-providers": {
-    "sessionProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.SSOSessionProvider" },
-    "sessionIdProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.SessionIdProvider" },
     "userUuidProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.UserUuidProvider" },
     "jwtContentProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.JWTContentProvider" },
-    "oauthClientIdProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.OAuthClientIdProvider" },
-    "userEntityProvider": {
-      "main": "com.cloudentity.edge.plugin.impl.authn.entities.UserEntityProvider",
-      "verticleConfig": {
-        "userService": {
-          "serviceName": "userService",
-          "httpClientOptions": {
-            "timeout": 3000
-          },
-          "circuitBreakerOptions": { "off": true },
-          "retries": 0
-        },
-        "jwtServiceAddress": "symmetric"
-      }
-    },
-    "deviceUuidProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.DeviceUuidProvider" },
-    "deviceEntityProvider": {
-      "main": "com.cloudentity.edge.plugin.impl.authn.entities.DeviceEntityProvider",
-      "verticleConfig": {
-        "deviceService": {
-          "serviceName": "deviceService",
-          "httpClientOptions": {
-            "timeout": 3000
-          },
-          "circuitBreakerOptions": { "off": true },
-          "retries": 0
-        },
-        "jwtServiceAddress": "symmetric"
-      }
-    },
-    "applicationByClientIdProvider": {
-      "main": "com.cloudentity.edge.plugin.impl.authn.entities.ApplicationByOAuthClientIdProvider",
-      "verticleConfig": {
-        "applicationService": {
-          "serviceName": "applicationService",
-          "httpClientOptions": {
-            "timeout": 3000
-          },
-          "circuitBreakerOptions": { "off": true },
-          "retries": 0
-        },
-        "jwtServiceAddress": "symmetric"
-      }
-    }
+    "oauthClientIdProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.OAuthClientIdProvider" }
   },
   "plugin:session": {
     "sessionService": {

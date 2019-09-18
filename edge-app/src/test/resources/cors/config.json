@@ -10,10 +10,8 @@
     }
   },
   "registry:request-plugins": {
-    "plugin:authz": { "main": "com.cloudentity.edge.plugin.impl.authz.AuthzPlugin" },
-    "plugin:cors": { "main": "com.cloudentity.edge.plugin.impl.cors.CorsPlugin" }
-  },
-  "registry:response-plugins": {
+    "plugin:cors": { "main": "com.cloudentity.edge.plugin.impl.cors.CorsPlugin" },
+    "plugin:failing": { "main": "com.cloudentity.edge.plugin.impl.cors.FailingPlugin" }
   },
   "registry:sd": {
     "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }
@@ -29,20 +27,6 @@
   },
   "plugin:cors": {
     "preflightMaxAgeInSeconds": 84000
-  },
-  "plugin:authz": {
-    "http": {
-      "serviceName": "authz",
-      "httpClientOptions": {
-        "timeout": 3000
-      },
-      "circuitBreakerOptions": { "off": true },
-      "retries": 0
-    },
-    "jwtServiceAddress": "symmetric"
-  },
-  "circuit-breakers": {
-    "off": true
   },
   "fixed-sd-provider": {
     "records": [

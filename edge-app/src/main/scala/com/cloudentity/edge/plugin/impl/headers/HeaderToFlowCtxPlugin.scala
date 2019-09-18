@@ -12,7 +12,7 @@ import scala.concurrent.Future
 case class HeaderToFlowCtxConf(headers: List[String])
 
 /**
-  * Copies header values from request to flow-ctx.
+  * Copies header values from request to authn-ctx.
   */
 class HeaderToFlowCtxPlugin extends RequestPluginVerticle[HeaderToFlowCtxConf] with RequestPluginService {
   override def name: PluginName = PluginName("headerToCtx")

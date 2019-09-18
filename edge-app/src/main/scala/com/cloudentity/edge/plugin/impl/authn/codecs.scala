@@ -76,21 +76,6 @@ object codecs {
   implicit lazy val AuthnProxyPluginRequestEnc = deriveEncoder[AuthnProxyPluginRequest]
   implicit lazy val AuthnProxyPluginRequestDec = deriveDecoder[AuthnProxyPluginRequest]
 
-  implicit lazy val AuthnEdgePluginCacheConfEnc = deriveEncoder[AuthnEdgePluginCacheConf]
-  implicit lazy val AuthnEdgePluginCacheConfDec = deriveDecoder[AuthnEdgePluginCacheConf]
-
   implicit lazy val AuthnPluginVerticleConfEnc = deriveEncoder[AuthnPluginVerticleConf]
   implicit lazy val AuthnPluginVerticleConfDec = deriveDecoder[AuthnPluginVerticleConf]
-
-  implicit lazy val JwtAuthnProviderConfigEnc = deriveEncoder[JwtAuthnProviderConfig]
-  implicit lazy val JwtAuthnProviderConfigDec = deriveDecoder[JwtAuthnProviderConfig]
-
-  implicit lazy val LegacyHmacProviderConfEnc = deriveEncoder[LegacyHmacProviderConf]
-  implicit lazy val LegacyHmacProviderConfDec = deriveDecoder[LegacyHmacProviderConf]
-
-  implicit lazy val RequestSourceHmacProviderConfEnc = deriveEncoder[RequestSource]
-  implicit lazy val RequestSourceHmacProviderConfDec = deriveDecoder[RequestSource]
-
-  implicit lazy val HmacProviderConfEnc = deriveEncoder[HmacProviderConf]
-  implicit lazy val HmacProviderConfDec = deriveDecoder[HmacProviderConf]
 }

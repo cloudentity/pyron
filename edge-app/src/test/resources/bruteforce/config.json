@@ -26,9 +26,6 @@
     "fixed-sd-provider": { "main": "com.cloudentity.tools.vertx.sd.provider.FixedSdProvider" },
     "cache": { "main": "com.cloudentity.tools.vertx.hazelcast.inmemory.InMemoryHazelcastVerticle" }
   },
-  "circuit-breakers": {
-    "off": true
-  },
   "fixed-sd-provider": {
     "records": [
     ]
