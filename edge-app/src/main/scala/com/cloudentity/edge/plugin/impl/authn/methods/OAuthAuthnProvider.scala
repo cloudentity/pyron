@@ -5,7 +5,6 @@ import io.circe.parser.parse
 import io.circe.{Json, JsonObject}
 import com.cloudentity.edge.api.Responses.Errors
 import com.cloudentity.edge.domain.flow._
-import com.cloudentity.edge.jwt.OAuthAccessToken
 import com.cloudentity.edge.plugin.impl.authn.AuthnPlugin._
 import com.cloudentity.edge.plugin.impl.authn._
 import com.cloudentity.edge.service.OidcClient

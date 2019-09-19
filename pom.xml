@@ -19,18 +19,11 @@
     <scala.version>2.12.9</scala.version>
     <vertx.version>3.8.0</vertx.version>
     <vertx-tools.version>1.27-SNAPSHOT</vertx-tools.version>
-    <authz-client.version>1.27-SNAPSHOT</authz-client.version>
-    <authn-events-client.version>1.6-SNAPSHOT</authn-events-client.version>
     <circe.version>0.11.1</circe.version>
     <jackson-databind.version>2.9.9.3</jackson-databind.version>
-    <lla.client.version>1.33-SNAPSHOT</lla.client.version>
     <embedded-consul.version>1.0.0</embedded-consul.version>
-    <application.service.client.version>1.16.0-SNAPSHOT</application.service.client.version>
-    <kafka.java.version>1.8</kafka.java.version>
-    <spring-web.version>4.3.25.RELEASE</spring-web.version>
     <slf4j.version>1.8.0-beta4</slf4j.version>
     <bouncycastle.bcprov.version>1.62</bouncycastle.bcprov.version>
-    <hazelcast.sslcontext.tools.version>1.24-SNAPSHOT</hazelcast.sslcontext.tools.version>
     <apache.httpclient.version>4.5.2</apache.httpclient.version>
   </properties>
 
@@ -121,25 +114,8 @@
       </dependency>
       <dependency>
         <groupId>com.cloudentity.tools</groupId>
-        <artifactId>vertx-hazelcast</artifactId>
-        <version>${vertx-tools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.cloudentity.tools</groupId>
         <artifactId>vertx-json</artifactId>
         <version>${vertx-tools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.cloudentity.tools</groupId>
-        <artifactId>vertx-hazelcast-enterprise-impl</artifactId>
-        <version>${vertx-tools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.cloudentity.tools</groupId>
-        <artifactId>vertx-hazelcast-impl</artifactId>
-        <version>${vertx-tools.version}</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>com.cloudentity.tools</groupId>
@@ -189,39 +165,14 @@
         <version>${circe.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-service-discovery</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.pauldijou</groupId>
-        <artifactId>jwt-core_2.12</artifactId>
-        <version>0.12.0</version>
-      </dependency>
-      <dependency>
         <groupId>com.nimbusds</groupId>
         <artifactId>nimbus-jose-jwt</artifactId>
         <version>5.1</version>
       </dependency>
       <dependency>
-        <groupId>com.shekhargulati.urlcleaner</groupId>
-        <artifactId>urlcleaner</artifactId>
-        <version>0.4.0</version>
-      </dependency>
-      <dependency>
         <groupId>io.swagger</groupId>
         <artifactId>swagger-parser</artifactId>
         <version>1.0.36</version>
-      </dependency>
-      <dependency>
-        <groupId>com.twitter</groupId>
-        <artifactId>joauth</artifactId>
-        <version>6.0.2</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-web</artifactId>
-        <version>${spring-web.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -303,6 +254,12 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk15on</artifactId>
+        <version>${bouncycastle.bcprov.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>com.pszymczyk.consul</groupId>
         <artifactId>embedded-consul</artifactId>
         <version>${embedded-consul.version}</version>
@@ -312,12 +269,6 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>2.16.0</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.mastercard.developer</groupId>
-        <artifactId>oauth1-signer</artifactId>
-        <version>1.0.0</version>
         <scope>test</scope>
       </dependency>
     </dependencies>

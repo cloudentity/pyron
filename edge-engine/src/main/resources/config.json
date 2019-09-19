@@ -1,5 +1,6 @@
 {
   "requiredModules": ["http-server", "http-client"],
+  "modules": "$env:?MODULES:array",
   "orchis": {
     "app": {
       "rules": "$ref:rules",

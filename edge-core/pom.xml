@@ -21,14 +21,6 @@
       <artifactId>circe-core_2.12</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-generic_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-parser_2.12</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.cloudentity.tools</groupId>
       <artifactId>vertx-bus</artifactId>
     </dependency>

@@ -20,9 +20,6 @@ case class OidClientHttpError(ex: Throwable) extends OidcClientError
 case class InvalidStatusCodeError() extends OidcClientError
 case class JWKSetNotAvailable() extends OidcClientError
 
-case class JWK(kty: String, e: String, alg: String, n: String)
-case class JWKeys(keys: List[JWK])
-
 case class OidcServiceConf(ssl: Boolean, host: String, port: Int, path: String, timeout: Int, debug: Boolean,
                            trustAll: Boolean, jwkEndpoint: String, jwkReload: Long)
 

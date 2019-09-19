@@ -8,3 +8,4 @@ package-lock.json
 alerts.txt
 report.xml
 *.versionsBackup
+run/standalone/edge.jar

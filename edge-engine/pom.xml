@@ -68,28 +68,8 @@
       <artifactId>circe-java8_2.12</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-discovery</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.pauldijou</groupId>
-      <artifactId>jwt-core_2.12</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.shekhargulati.urlcleaner</groupId>
-      <artifactId>urlcleaner</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>joauth</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-web</artifactId>
     </dependency>
     <!-- logging -->
     <dependency>
@@ -109,6 +89,7 @@
     <dependency>
       <groupId>io.circe</groupId>
       <artifactId>circe-testing_2.12</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.scalacheck</groupId>
@@ -151,8 +132,7 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk15on</artifactId>
-      <version>${bouncycastle.bcprov.version}</version>
-      <scope>provided</scope>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.swagger</groupId>
@@ -168,24 +148,6 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-ext</artifactId>
       <version>${slf4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools</groupId>
-      <artifactId>vertx-hazelcast</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools</groupId>
-      <artifactId>vertx-hazelcast-enterprise-impl</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools</groupId>
-      <artifactId>vertx-hazelcast-impl</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.mastercard.developer</groupId>
-      <artifactId>oauth1-signer</artifactId>
     </dependency>
   </dependencies>
 
