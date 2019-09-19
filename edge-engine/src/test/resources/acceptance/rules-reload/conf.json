@@ -1,0 +1,24 @@
+{
+
+  "orchis": {
+    "app": {
+      "port": 8080,
+      "serverVerticles": 1,
+      "rules": "$ref:rules"
+    },
+    "jwt": {
+      "secret": "secret",
+      "issuer": "test-orchis-api-gateway",
+      "expiresIn": "PT60S"
+    }
+  },
+  "registry:request-plugins": {
+    "pingOriginal": { "main": "com.cloudentity.edge.plugin.impl.test.PingOriginalPlugin" }
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+  },
+  "registry:system": {
+  }
+}

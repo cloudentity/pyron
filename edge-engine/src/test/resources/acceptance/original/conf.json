@@ -1,0 +1,12 @@
+{
+  "orchis": {
+    "app": {
+      "port": 8080,
+      "serverVerticles": 1,
+      "rules": "$ref:rules"
+    }
+  },
+  "registry:request-plugins": {
+    "pingOriginal": { "main": "com.cloudentity.edge.plugin.impl.test.PingOriginalPlugin" }
+  }
+}

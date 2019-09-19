@@ -1,0 +1,42 @@
+{
+  "orchis": {
+    "app": {
+      "port": 8080,
+      "rules": [
+        {
+          "default": {
+            "targetHost": "localhost",
+            "targetPort": 8201,
+            "pathPrefix": "",
+            "dropPrefix": false
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "pathPattern": "/modify-response",
+              "requestPlugins": [
+                {
+                  "name": "modify-response",
+                  "conf": {}
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "registry:request-plugins": {
+    "modify-response": { "main": "com.cloudentity.edge.ModifyingRequestPlugin", "disabled": false }
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+    "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }
+  },
+  "registry:system": {
+  },
+  "circuit-breakers": {
+    "off": true
+  }
+}

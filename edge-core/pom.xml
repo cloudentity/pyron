@@ -36,6 +36,16 @@
       <groupId>io.swagger</groupId>
       <artifactId>swagger-parser</artifactId>
     </dependency>
+    <!-- test -->
+    <dependency>
+      <groupId>com.cloudentity.tools</groupId>
+      <artifactId>vertx-test</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.12</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

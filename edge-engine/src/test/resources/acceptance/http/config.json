@@ -1,0 +1,73 @@
+{
+
+  "orchis": {
+    "app": {
+      "port": 8080,
+      "serverVerticles": 1,
+      "rules": "$ref:rules"
+    },
+    "jwt": {
+      "secret": "secret",
+      "issuer": "test-orchis-api-gateway",
+      "expiresIn": "PT60S"
+    }
+  },
+  "registry:request-plugins": {
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+    "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }
+  },
+  "registry:system": {
+    "fixed-sd-provider": { "main": "com.cloudentity.tools.vertx.sd.provider.FixedSdProvider" }
+  },
+  "circuit-breakers": {
+    "off": true
+  },
+  "smart-http-target-client-default": {
+    "retries": 1,
+    "failureHttpCodes": [400]
+  },
+  "smart-http-target-clients": {
+    "discoverable-service-with-tags": {
+      "serviceName": "discoverable-service",
+      "serviceTags": [ "tag-x" ]
+    }
+  },
+  "fixed-sd-provider": {
+    "records": [
+      {
+        "name": "discoverable-service",
+        "metadata": {
+          "ID": "discoverable-service:localhost:7760"
+        },
+        "location": {
+          "host": "localhost",
+          "port": 7760,
+          "ssl": false
+        }
+      },
+      {
+        "name": "discoverable-service",
+        "metadata": {
+          "ID": "discoverable-service:localhost:7760",
+          "tags": [ "tag-x" ]
+        },
+        "location": {
+          "host": "localhost",
+          "port": 7760,
+          "ssl": false
+        }
+      },
+      {
+        "name": "service-default-config",
+        "location": {
+          "host": "localhost",
+          "port": 7760,
+          "ssl": false
+        }
+      }
+    ]
+  }
+}

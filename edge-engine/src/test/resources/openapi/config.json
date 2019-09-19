@@ -1,28 +1,10 @@
 {
-  "apiServer": {
-    "http": {
-      "port": 7772
-    },
-    "routes": [
-      {
-        "id": "access-log-route",
-        "urlPath": "/*"
-      }
-    ]
-  },
-  "registry:routes": {
-    "access-log-route": { "main": "com.cloudentity.tools.vertx.server.api.routes.impl.AccessLogRoute" }
-  },
   "orchis": {
     "app": {
-      "port": 7001,
+      "port": 8080,
       "serverVerticles": 1,
       "rules": "$ref:rules"
     }
-  },
-  "registry:request-plugins": {
-  },
-  "registry:response-plugins": {
   },
   "registry:sd": {
     "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }

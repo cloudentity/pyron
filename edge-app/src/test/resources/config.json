@@ -1,7 +1,4 @@
 {
-  "vertx": {
-    "logger-delegate-factory-class-name": "io.vertx.core.logging.SLF4JLogDelegateFactory"
-  },
   "orchis": {
     "app": {
       "port": 7771,
