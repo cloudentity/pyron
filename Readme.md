@@ -45,7 +45,7 @@ Above `meta-config.json` defines two configuration stores: `config.json` from cl
 
 `config.json` defines minimal configuration required to run Edge without routing rules that are provided in `rules.json`.
 
-### Rules
+### Routing rules
 
 Rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in `default` object.
 If an endpoint attribute is missing then it is taken from `default`.
@@ -258,8 +258,82 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
 }
 ```
 
-#### Circuit breaker
-
 ### HTTP server
 
+Edge uses Vertx HTTP server implementation. Use environment variables to configure `io.vertx.core.http.HttpServerOptions`.
+
+Environment variables map to `HttpServerOptions` attributes in following way:
+
+* All variable names start with `HTTP_SERVER_` prefix,
+* HttpServerOptions attribute name is capitalized and camel-case is replaced with underscore `_`.
+* If an attribute has object value then it's sub-attribute env names are prefixed with `HTTP_SERVER_{parent-env-name}__` (note double underscore).
+
+Examples:
+
+| Name                                            | HttpServerOptions attribute |
+|-------------------------------------------------|-----------------------------|
+| `HTTP_SERVER_PORT`                              | port                        |
+| `HTTP_SERVER_ACCEPT_BACKLOG`                    | acceptBacklog               |
+| `HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS`     | pemTrustOptions.certPaths   |
+
+#### HTTP server collection options
+
+In order to set `HttpServerOptions` attribute with collection value use JSON syntax, e.g. `HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS=["/etc/ssl/cert.pem"]`.
+
 ### HTTP clients
+
+Edge uses Vertx implementation of HTTP clients. Use environment variables to configure default `io.vertx.core.http.HttpClientOptions`.
+
+Environment variables map to `HttpClientOptions` attributes the same way they map to `HttpServerOptions`.
+
+You can configure HTTP client for each target service separately:
+
+```json
+{
+  "smart-http-target-clients": {
+    "example-service": {
+      "http": {
+        // io.vertx.core.http.HttpClientOptions
+        "maxPoolSize": 50
+        ...
+      }
+    }
+  }
+}
+```
+
+#### Default retries and timeout
+
+```json
+{
+  "smart-http-target-clients": {
+    "example-service": {
+      "retries": 5,
+      "responseTimeout": 3000,
+      "failureHttpCodes": [500],
+      "retryFailedResponse": false,
+      "retryOnException": false
+    }
+  }
+}
+```
+
+Target client retry and timeout default attributes are overridden by values set in routing rule.
+
+#### Circuit breaker
+
+Configure `circuitBreaker` to enable circuit breaker functionality of target service client.
+
+```json
+{
+  "smart-http-target-clients": {
+    "example-service": {
+      "circuitBreaker": {
+        // io.vertx.circuitbreaker.CircuitBreakerOptions
+        "maxFailures": 3
+        ...
+      }
+    }
+  }
+}
+```
