@@ -1,21 +1,62 @@
+## Content
+
+* [Build](#build)
+  * [Standalone](#build-standalone)
+  * [Docker](#build-docker)
+* [Run](#run)
+  * [Standalone](#run-standalone)
+  * [Docker](#run-docker)
+* [Configure](#configure)
+  * [Routing rules](#routing)
+    * Method and path pattern
+    * Path prefix
+    * Rewrite path
+    * Rewrite method
+    * Response timeout
+    * Retry
+    * Preserve Host header
+  * [Service discovery](#service-discovery)
+    * Consul service discovery
+    * Configuration-based service discovery
+  * [HTTP server](#http-server)
+  * [HTTP clients](#http-clients)
+    * Default retries and timeout
+    * Circuit breaker
+
+<a name="build"/>
 ## Build
 
 Edge depends on github.com/cloudentity/vertx-tools. Clone it and build with `mvn install` command first.
 
+<a name="build-standalone"/>
 ### Standalone
 
 `mvn clean install -Pbuild-standalone`
 
+<a name="build-docker"/>
+### Docker
+
+`mvn clean install -Pbuild-latest-docker`
+
+<a name="run"/>
 ## Run
 
+Configure routing rules in `rules.json` and environment variables in `.env` if required.
+
+<a name="run-standalone"/>
 ### Standalone
 
-cd run/standalone
-./run.sh
+* `cd run/standalone`
+* `*./run.sh`
 
-If required set environment variables in `.env` file.
+<a name="run-docker"/>
+### Docker
 
-## Configuration
+* `cd run/docker`
+* `docker run --env-file .env -p 8080:8080 --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest`
+
+<a name="configure"/>
+## Configure
 
 At the start Edge needs `meta-config.json` file describing where to read configuration from.
 
@@ -45,6 +86,7 @@ Above `meta-config.json` defines two configuration stores: `config.json` from cl
 
 `config.json` defines minimal configuration required to run Edge without routing rules that are provided in `rules.json`.
 
+<a name="routing"/>
 ### Routing rules
 
 Rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in `default` object.
@@ -79,7 +121,7 @@ If an endpoint attribute is missing then it is taken from `default`.
 }
 ```
 
-`pathPattern` is regular expression extended with support of path-param placeholders, e.g. `/user/{user_id}`
+`pathPattern` is regular expression extended with support of path-param placeholders, e.g. `/user/{id}`
 
 #### Path prefix
 
@@ -102,7 +144,7 @@ Expose multiple endpoints using the same path prefix.
         },
         {
           "method": "GET",
-          "pathPattern": "/user/{user_id}"
+          "pathPattern": "/user/{id}"
         }
       ]
     }
@@ -120,8 +162,8 @@ To preserve the prefix set `dropPathPrefix` to false.
   "endpoints": [
     {
       "method": "GET",
-      "pathPattern": "/user/{user_id}",
-      "rewritePath": "/entities/user/{user_id}"
+      "pathPattern": "/user/{id}",
+      "rewritePath": "/entities/user/{id}"
     }
   ]
 }
@@ -201,8 +243,6 @@ By default Edge uses target host when calling target service. When `preserveHost
 
 Edge Gateway provides support for service discovery utilizing Consul client or configuration object.
 
-#### Target service
-
 ```json
 {
   "rules": [
@@ -219,6 +259,8 @@ Edge Gateway provides support for service discovery utilizing Consul client or c
 ```
 
 Edge calls nodes with `targetService` service-name using round-robin load balancer.
+
+Below you will find instructions how to enable service discovery provider.
 
 #### Consul service discovery
 
@@ -272,11 +314,9 @@ Examples:
 
 | Name                                            | HttpServerOptions attribute |
 |-------------------------------------------------|-----------------------------|
-| `HTTP_SERVER_PORT`                              | port                        |
-| `HTTP_SERVER_ACCEPT_BACKLOG`                    | acceptBacklog               |
-| `HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS`     | pemTrustOptions.certPaths   |
-
-#### HTTP server collection options
+| HTTP_SERVER_PORT                                | port                        |
+| HTTP_SERVER_ACCEPT_BACKLOG                      | acceptBacklog               |
+| HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS       | pemTrustOptions.certPaths   |
 
 In order to set `HttpServerOptions` attribute with collection value use JSON syntax, e.g. `HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS=["/etc/ssl/cert.pem"]`.
 
@@ -286,7 +326,7 @@ Edge uses Vertx implementation of HTTP clients. Use environment variables to con
 
 Environment variables map to `HttpClientOptions` attributes the same way they map to `HttpServerOptions`.
 
-You can configure HTTP client for each target service separately:
+You can configure HTTP client for each target service separately (note that default attributes from environment variables are ignored in this case):
 
 ```json
 {
@@ -308,11 +348,9 @@ You can configure HTTP client for each target service separately:
 {
   "smart-http-target-clients": {
     "example-service": {
-      "retries": 5,
       "responseTimeout": 3000,
-      "failureHttpCodes": [500],
-      "retryFailedResponse": false,
-      "retryOnException": false
+      "retries": 5,
+      "failureHttpCodes": [500]
     }
   }
 }
@@ -322,7 +360,7 @@ Target client retry and timeout default attributes are overridden by values set 
 
 #### Circuit breaker
 
-Configure `circuitBreaker` to enable circuit breaker functionality of target service client.
+Configure `circuitBreaker` to enable circuit breaker functionality per target service.
 
 ```json
 {

@@ -17,7 +17,7 @@
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
     </dependency>
-    <!-- orchis -->
+    <!-- cloudentity -->
     <dependency>
       <groupId>com.cloudentity.edge</groupId>
       <artifactId>edge-core</artifactId>
@@ -205,12 +205,6 @@
             </goals>
             <configuration>
               <artifactSet>
-                <excludes>
-                  <exclude>org.bouncycastle:*:*:*</exclude>
-                  <exclude>com.hazelcast:*:*:*</exclude>
-                  <exclude>com.cloudentity.tools:vertx-hazelcast-impl:*</exclude>
-                  <exclude>com.cloudentity.tools:vertx-hazelcast-enterprise-impl:*</exclude>
-                </excludes>
               </artifactSet>
               <filters>
                 <filter>
@@ -308,11 +302,10 @@
               </execution>
             </executions>
             <configuration>
-              <repository>docker.artifactory.syntegrity.com/api-gateway</repository>
+              <repository>docker.artifactory.syntegrity.com/edge</repository>
               <tag>latest</tag>
               <buildArgs>
-                <HAZELCAST_VERSION>${vertx-tools.version}</HAZELCAST_VERSION>
-                <JAR_FILE>target/orchis-api-gateway-${project.version}.jar</JAR_FILE>
+                <JAR_FILE>target/edge-app-${project.version}.jar</JAR_FILE>
               </buildArgs>
             </configuration>
           </plugin>
@@ -340,11 +333,10 @@
               </execution>
             </executions>
             <configuration>
-              <repository>docker.artifactory.syntegrity.com/api-gateway</repository>
+              <repository>docker.artifactory.syntegrity.com/edge</repository>
               <tag>${project.version}</tag>
               <buildArgs>
-                <HAZELCAST_VERSION>${vertx-tools.version}</HAZELCAST_VERSION>
-                <JAR_FILE>target/orchis-api-gateway-${project.version}.jar</JAR_FILE>
+                <JAR_FILE>target/edge-app-${project.version}.jar</JAR_FILE>
               </buildArgs>
             </configuration>
           </plugin>

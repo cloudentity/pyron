@@ -2,7 +2,7 @@ package com.cloudentity.edge.rule
 
 import java.util.Optional
 
-import io.circe.Json
+import io.circe.{Json, Printer}
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
@@ -82,7 +82,7 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
   private def readRulesConf(rulesConf: Json, tag: String): Future[List[RuleConfWithPlugins]] =
     RulesConfReader.read(rulesConf.toString) match {
       case \/-(rules) =>
-        log.info(s"Rules (${tag}) configuration:\n${rules.map(rule => s"   ${rule.asJson.noSpaces}").mkString("\n")}")
+        log.info(s"Rules (${tag}) configuration:\n${rules.map(rule => s"   ${rule.asJson.pretty(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
         for {
           _             <- checkPluginsReady(rules)
           extendedRules <- Future.sequence(rules.map(extendedRuleConfs)).map(_.flatten).map { extendedRules =>
