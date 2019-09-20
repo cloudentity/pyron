@@ -85,7 +85,7 @@ At the start Edge needs `meta-config.json` file describing where to read configu
 
 Above `meta-config.json` defines two configuration stores: `config.json` from classpath and `rules.json` from file system.
 
-`config.json` defines minimal configuration required to run Edge without routing rules that are provided in `rules.json`.
+`config.json` defines minimal configuration required to run Edge. Routing rules are provided in `rules.json`.
 
 <a name="routing"/>
 ### Routing rules
@@ -238,7 +238,7 @@ Edge retries call if target service returned HTTP status code defined in `failur
 }
 ```
 
-By default Edge uses target host when calling target service. When `preserveHostHeader` is set to true then the Host header sent by the client is used instead.
+By default Edge uses target host to set Host header value when calling target service. When `preserveHostHeader` is set to true then the Host header sent by the client is used instead.
 
 ### Service discovery
 
@@ -267,15 +267,15 @@ Below you will find instructions how to enable service discovery provider.
 
 Add `sd-provider/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-provider/consul"]`.
 
-| Env variable          | Description                          |
-|-----------------------|--------------------------------------|
-| CONSUL_HOST           | host                                 |
-| CONSUL_POST           | port (default 8500)                  |
-| CONSUL_SSL            | SSL flag (default false)             |
-| CONSUL_ACL_TOKEN      | ACL token                            |
-| CONSUL_DC             | data center                          |
-| CONSUL_TIMEOUT        | connection timeout                   |
-| CONSUL_SD_SCAN_PERIOD | nodes refresh period in milliseconds |
+| Env variable          | Description                                         |
+|-----------------------|-----------------------------------------------------|
+| CONSUL_HOST           | host                                                |
+| CONSUL_POST           | port (default 8500)                                 |
+| CONSUL_SSL            | SSL flag (default false)                            |
+| CONSUL_ACL_TOKEN      | ACL token (optional)                                |
+| CONSUL_DC             | data center (optional)                              |
+| CONSUL_TIMEOUT        | connection timeout (optional)                       |
+| CONSUL_SD_SCAN_PERIOD | nodes refresh period in milliseconds (default 2000) |
 
 Note: nodes registered in Consul need to have `http-endpoint` tag and `ssl` tag if exposed over SSL.
 
@@ -386,6 +386,6 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 |-----------------------------------|------------------------------------------------|
 | TRACING_SERVICE_NAME              | Edge name in Jaeger                            |
 | JAEGER_AGENT_HOST                 | Jaeger agent host                              |
-| JAEGER_AGENT_PORT                 | Jaeger agent port, optional                    |
-| JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port, optional             |
+| JAEGER_AGENT_PORT                 | Jaeger agent port (optional)                   |
+| JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port (optional)            |
 | TRACING_FORMAT                    | tracing format - cloudentity, jaeger, zipkin   |
