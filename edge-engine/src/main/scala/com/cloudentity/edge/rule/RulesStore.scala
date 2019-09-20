@@ -156,10 +156,10 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
 
   private def readDefaultProxyRules(conf: AppConf) = {
     if (conf.defaultProxyRulesEnabled.getOrElse(false)) {
-      log.info("Default proxy rules are enabled. Reading config.")
+      log.debug("Default proxy rules are enabled. Reading config.")
       readRuleConfs(conf.defaultProxyRules, "default", false)
     } else {
-      log.info("Default proxy rules are disabled. Skipping.")
+      log.debug("Default proxy rules are disabled. Skipping.")
       Future.successful(Nil)
     }
   }

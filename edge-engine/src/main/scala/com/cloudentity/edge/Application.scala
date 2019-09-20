@@ -89,7 +89,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
     else               acc
 
   private def deployVerticle(verticle: Verticle): Future[String] = {
-    log.info(s"Deploying ${verticle.getClass.getName} verticle")
+    log.debug(s"Deploying ${verticle.getClass.getName} verticle")
     VertxDeploy.deploy(vertx, verticle).toScala()
   }
 
@@ -98,7 +98,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       case Some(_) =>
         ApiServerDeployer.deployServer(vertx).map(()).toScala()
       case None    =>
-        log.info("Admin API server configuration missing, skipping deployment")
+        log.debug("Admin API server configuration missing, skipping deployment")
         Future.successful(())
     }
 

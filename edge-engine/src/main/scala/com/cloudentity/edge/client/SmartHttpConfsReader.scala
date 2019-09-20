@@ -30,7 +30,7 @@ object SmartHttpConfsReader extends FutureConversions {
   def readFromConfig(confOpt: Option[JsonObject], targetSmartClientsConfPath: String): Throwable \/ Map[ServiceClientName, SmartHttpClientConf] =
     confOpt match {
       case Some(conf) =>
-        log.info(s"Configuration of SmartHttpClients for target services: ${conf.toString()}")
+        log.debug(s"Configuration of SmartHttpClients for target services: ${conf.toString()}")
 
         val smartConfigs: Iterable[(ServiceClientName, Option[SmartHttpClientConf])] =
           conf.fieldNames().asScala.map { serviceName =>
@@ -47,7 +47,7 @@ object SmartHttpConfsReader extends FutureConversions {
           -\/(new Exception(s"Some configuration of SmartHttpClients are not JSON objects: ${wrongSmartConfigs.map(_._1.value).mkString(", ")}"))
         }
       case None =>
-        log.info(s"No configuration of SmartHttpClients for target services at '$targetSmartClientsConfPath' config path. Using default configuration")
+        log.debug(s"No configuration of SmartHttpClients for target services at '$targetSmartClientsConfPath' config path. Using default configuration")
         \/-(Map())
     }
 }
