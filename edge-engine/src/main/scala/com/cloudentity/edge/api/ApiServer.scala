@@ -8,7 +8,7 @@ import io.vertx.core.http.{HttpServer, HttpServerOptions}
 import scala.concurrent.Future
 
 class ApiServer(conf: AppConf) extends ScalaComponentVerticle {
-  override def configPath(): String = "orchis.app.server"
+  override def configPath(): String = "app.server"
 
   override def initComponentAsyncS(): Future[Unit] = {
     val router = ApiRouter.createRouter(vertx, conf, getTracing)
@@ -18,7 +18,7 @@ class ApiServer(conf: AppConf) extends ScalaComponentVerticle {
 
   private def getHttpConfig = {
     val httpConfig = Option(getConfig).getOrElse(new JsonObject()).getJsonObject("http", new JsonObject())
-    conf.port.foreach(httpConfig.put("port", _)) // we use orchis.app.port conf value for backward-compatibility
+    conf.port.foreach(httpConfig.put("port", _)) // we use app.port conf value for backward-compatibility
     httpConfig
   }
 }

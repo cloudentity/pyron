@@ -1,18 +1,11 @@
 {
-  "orchis": {
-    "app": {
-      "port": 8080,
-      "serverVerticles": 1,
-      "rules": "$ref:rules",
-      "proxyHeaders": {
-        "inputTrueClientIp": "IN-MY-TRUE-IP",
-        "outputTrueClientIp": "OUT-MY-TRUE-IP"
-      }
-    },
-    "jwt": {
-      "secret": "secret",
-      "issuer": "test-orchis-api-gateway",
-      "expiresIn": "PT60S"
+  "app": {
+    "port": 8080,
+    "serverVerticles": 1,
+    "rules": "$ref:rules",
+    "proxyHeaders": {
+      "inputTrueClientIp": "IN-MY-TRUE-IP",
+      "outputTrueClientIp": "OUT-MY-TRUE-IP"
     }
   },
   "registry:request-plugins": {
@@ -27,9 +20,6 @@
   },
   "registry:system": {
     "fixed-sd-provider": { "main": "com.cloudentity.tools.vertx.sd.provider.FixedSdProvider" }
-  },
-  "circuit-breakers": {
-    "off": true
   },
   "fixed-sd-provider": {
     "records": [

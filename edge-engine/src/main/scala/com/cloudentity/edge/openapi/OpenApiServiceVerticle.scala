@@ -29,7 +29,7 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
   var targetClient: TargetClient = _
   var confs: List[ApiGroupConf] = List()
 
-  private val appConfPath = "orchis.app"
+  private val appConfPath = "app"
   lazy val converter = createClient(classOf[OpenApiConverter])
 
   override def configPath(): String = "openApi"

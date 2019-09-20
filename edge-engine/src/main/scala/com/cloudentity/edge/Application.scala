@@ -53,17 +53,9 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
     }.toJava
 
   private def readAppConf: Future[AppConf] = {
-    def deprecatedConf(): Future[JsonObject] =
-      createConfigClient.getConf("orchis.app").toScala
-        .map(Option.apply)
-        .flatMap {
-          case Some(conf) => Future.successful(conf)
-          case None => Future.failed(new Exception("'app' configuration attribute missing"))
-        }
-
     for {
       confJsonOpt <- createConfigClient.getConf("app").toScala.map(Option.apply)
-      confJson    <- confJsonOpt.map(Future.successful).getOrElse(deprecatedConf)
+      confJson    <- confJsonOpt.map(Future.successful).getOrElse(Future.failed(new Exception("'app' configuration attribute missing")))
     } yield Conf(confJson.toString)
   }
 

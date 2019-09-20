@@ -1,10 +1,8 @@
 {
-  "orchis": {
-    "app": {
-      "port": 8080,
-      "serverVerticles": 1,
-      "rules": "$ref:rules"
-    }
+  "app": {
+    "port": 8080,
+    "serverVerticles": 1,
+    "rules": "$ref:rules"
   },
   "registry:sd": {
     "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }

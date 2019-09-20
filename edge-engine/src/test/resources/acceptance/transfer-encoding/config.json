@@ -1,15 +1,8 @@
 {
-  "orchis": {
-    "app": {
-      "port": 8080,
-      "serverVerticles": 1,
-      "rules": "$ref:rules"
-    },
-    "jwt": {
-      "secret": "secret",
-      "issuer": "test-orchis-api-gateway",
-      "expiresIn": "PT60S"
-    }
+  "app": {
+    "port": 8080,
+    "serverVerticles": 1,
+    "rules": "$ref:rules"
   },
   "registry:request-plugins": {
     "plugin:static": { "main": "com.cloudentity.edge.plugin.impl.respond.RespondPlugin" }

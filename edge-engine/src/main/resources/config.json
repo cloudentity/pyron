@@ -1,15 +1,13 @@
 {
   "requiredModules": ["http-server", "http-client"],
   "modules": "$env:?MODULES:array",
-  "orchis": {
-    "app": {
-      "rules": "$ref:rules",
-      "alivePath": "$env:?ALIVE_PATH:object",
-      "accessLog": {
-        "authnCtx": "$env:?ACCESS_LOG_AUTHN_CTX:object",
-        "request": {
-          "headers": "$env:?ACCESS_LOG_REQUEST_HEADERS:array"
-        }
+  "app": {
+    "rules": "$ref:rules",
+    "alivePath": "$env:?ALIVE_PATH:object",
+    "accessLog": {
+      "authnCtx": "$env:?ACCESS_LOG_AUTHN_CTX:object",
+      "request": {
+        "headers": "$env:?ACCESS_LOG_REQUEST_HEADERS:array"
       }
     }
   },

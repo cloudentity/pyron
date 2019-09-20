@@ -1,21 +1,19 @@
 {
-  "orchis": {
-    "app": {
-      "port": 8080,
-      "rules": [
-        {
-          "default": {
-            "targetHost": "virtual",
-            "targetPort": 0
-          },
-          "endpoints": [
-            {
-              "method": "GET",
-              "pathPattern": "/path"
-            }
-          ]
-        }
-      ]
-    }
+  "app": {
+    "port": 8080,
+    "rules": [
+      {
+        "default": {
+          "targetHost": "virtual",
+          "targetPort": 0
+        },
+        "endpoints": [
+          {
+            "method": "GET",
+            "pathPattern": "/path"
+          }
+        ]
+      }
+    ]
   }
 }

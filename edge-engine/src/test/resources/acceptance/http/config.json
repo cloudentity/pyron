@@ -1,16 +1,8 @@
 {
-
-  "orchis": {
-    "app": {
-      "port": 8080,
-      "serverVerticles": 1,
-      "rules": "$ref:rules"
-    },
-    "jwt": {
-      "secret": "secret",
-      "issuer": "test-orchis-api-gateway",
-      "expiresIn": "PT60S"
-    }
+  "app": {
+    "port": 8080,
+    "serverVerticles": 1,
+    "rules": "$ref:rules"
   },
   "registry:request-plugins": {
   },
@@ -21,9 +13,6 @@
   },
   "registry:system": {
     "fixed-sd-provider": { "main": "com.cloudentity.tools.vertx.sd.provider.FixedSdProvider" }
-  },
-  "circuit-breakers": {
-    "off": true
   },
   "smart-http-target-client-default": {
     "retries": 1,

@@ -35,7 +35,7 @@ object ApiGroupsStoreVerticle {
 class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
   val log = LoggerFactory.getLogger(this.getClass)
 
-  private val appConfPath = "orchis.app"
+  private val appConfPath = "app"
   private val apiGroupsConfPath = "apiGroups"
 
   var apiGroups: List[ApiGroup] = _

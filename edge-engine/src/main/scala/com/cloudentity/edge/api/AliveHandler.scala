@@ -4,7 +4,7 @@ import io.vertx.ext.web.RoutingContext
 
 object AliveHandler {
   def handle(ctx: RoutingContext): Unit = {
-    ctx.response().setStatusCode(200).end("Orchis API Gateway")
+    ctx.response().setStatusCode(200).end("Cloudentity Edge")
   }
 }
 

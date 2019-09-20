@@ -42,7 +42,7 @@ case class RulesChanged(rules: List[Rule], confs: List[RuleConfWithPlugins])
 class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
   val log = LoggerFactory.getLogger(this.getClass)
 
-  private val appConfPath = "orchis.app"
+  private val appConfPath = "app"
 
   private def getAppConf(): Future[AppConf] =
     getConfService.getConf(appConfPath).toScala().flatMap(decodeAppConf)
