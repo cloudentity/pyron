@@ -361,7 +361,7 @@ Target client retry and timeout default attributes are overridden by values set 
 
 #### Circuit breaker
 
-Configure `circuitBreaker` to enable circuit breaker functionality per target service.
+Configure `io.vertx.circuitbreaker.CircuitBreakerOptions` in `circuitBreaker` object to enable circuit breaker functionality per target service.
 
 ```json
 {
