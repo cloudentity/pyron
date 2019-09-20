@@ -3,7 +3,7 @@
   "modules": "$env:?MODULES:array",
   "app": {
     "rules": "$ref:rules",
-    "alivePath": "$env:?ALIVE_PATH:object",
+    "alivePath": "$env:?ALIVE_PATH:string",
     "accessLog": {
       "authnCtx": "$env:?ACCESS_LOG_AUTHN_CTX:object",
       "request": {

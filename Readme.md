@@ -22,6 +22,7 @@
   * [HTTP clients](#http-clients)
     * Default retries and timeout
     * Circuit breaker
+  * [Open tracing](#open-tracing)
 
 <a name="build"/>
 ## Build
@@ -375,3 +376,16 @@ Configure `circuitBreaker` to enable circuit breaker functionality per target se
   }
 }
 ```
+
+<a name="open-tracing"/>
+### Open tracing
+
+Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/jaeger"]`.
+
+| Env variable                      | Description                                    |
+|-----------------------------------|------------------------------------------------|
+| TRACING_SERVICE_NAME              | Edge name in Jaeger                            |
+| JAEGER_AGENT_HOST                 | Jaeger agent host                              |
+| JAEGER_AGENT_PORT                 | Jaeger agent port, optional                    |
+| JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port, optional             |
+| TRACING_FORMAT                    | tracing format - cloudentity, jaeger, zipkin   |
