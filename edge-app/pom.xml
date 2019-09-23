@@ -32,15 +32,15 @@
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools</groupId>
-      <artifactId>vertx-app</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools</groupId>
       <artifactId>vertx-bus</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools</groupId>
       <artifactId>vertx-json</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudentity.tools</groupId>
+      <artifactId>vertx-config-all</artifactId>
     </dependency>
     <!-- vertx -->
     <dependency>

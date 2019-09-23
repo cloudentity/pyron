@@ -27,7 +27,11 @@
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools</groupId>
-      <artifactId>vertx-app</artifactId>
+      <artifactId>vertx-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudentity.tools</groupId>
+      <artifactId>vertx-client</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools</groupId>

@@ -24,7 +24,7 @@
     <embedded-consul.version>1.0.0</embedded-consul.version>
     <slf4j.version>1.8.0-beta4</slf4j.version>
     <bouncycastle.bcprov.version>1.62</bouncycastle.bcprov.version>
-    <apache.httpclient.version>4.5.2</apache.httpclient.version>
+    <apache.httpclient.version>4.5.6</apache.httpclient.version>
   </properties>
 
   <distributionManagement>
@@ -76,7 +76,12 @@
       </dependency>
       <dependency>
         <groupId>com.cloudentity.tools</groupId>
-        <artifactId>vertx-app</artifactId>
+        <artifactId>vertx-config-all</artifactId>
+        <version>${vertx-tools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudentity.tools</groupId>
+        <artifactId>vertx-client</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>
       <dependency>
@@ -139,7 +144,7 @@
       <dependency>
         <groupId>com.nimbusds</groupId>
         <artifactId>nimbus-jose-jwt</artifactId>
-        <version>5.1</version>
+        <version>7.8</version>
       </dependency>
       <dependency>
         <groupId>io.swagger</groupId>
