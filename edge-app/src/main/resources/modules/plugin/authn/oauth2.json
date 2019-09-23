@@ -1,0 +1,34 @@
+{
+  "registry:system": {
+    "oidc-client": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.MultiOidcClient",
+      "verticleConfig": {
+        "jwkReload": 60000,
+        "idps": [
+          {
+            "host": "$env:OIDC_HOST:string",
+            "port": "$env:OIDC_PORT:int",
+            "ssl": "$env:OIDC_SSL:boolean",
+            "jwkEndpoint": "$env:OIDC_JWK_ENDPOINT:string"
+          }
+        ]
+      }
+    }
+  },
+  "plugin:authn": {
+    "methodsMapping": {
+      "oauth2": "oauthJWTAuthnProvider"
+    },
+    "entitiesMapping": {
+      "oauth2": {
+        "jwt": "jwtContentProvider"
+      }
+    }
+  },
+  "registry:authn-method-providers": {
+    "oauthJWTAuthnProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.methods.OAuthAuthorizationCodeAuthnProvider" }
+  },
+  "registry:authn-entity-providers": {
+    "jwtContentProvider": { "main": "com.cloudentity.edge.plugin.impl.authn.entities.JWTContentProvider" }
+  }
+}

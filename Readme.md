@@ -15,6 +15,9 @@
     * Response timeout
     * Retry
     * Preserve Host header
+  * [Plugins](#plugins)
+    * Authentication
+      * OAuth 2 with JWT access token
   * [Service discovery](#service-discovery)
     * Consul service discovery
     * Configuration-based service discovery
@@ -240,6 +243,79 @@ Edge retries call if target service returned HTTP status code defined in `failur
 
 By default Edge uses target host to set Host header value when calling target service. When `preserveHostHeader` is set to true then the Host header sent by the client is used instead.
 
+<a name="plugins"/>
+### Plugins
+
+#### Authentication
+
+`authn` plugin performs authentication and optionally sets entities in the request authentication context.
+
+Enable `authn` plugin by adding `plugin/authn` to `MODULES` environment variable.
+
+```json
+{
+  "endpoints": [
+    {
+      "method": "POST",
+      "pathPattern": "/user",
+      "requestPlugins": [
+        {
+          "name": "authn",
+          "config": {
+            "methods": [ ... ],
+            "entities": [ ... ]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+Configuration attributes:
+
+| Name               | Description                                                                     |
+|--------------------|---------------------------------------------------------------------------------|
+| `methods`          | list of enabled authentication methods                                          |
+| `entities`         | required entities set in authentication context                                 |
+| `tokenHeader`      | name of the HTTP header containing authentication token (default Authorization) |
+
+##### OAuth 2 with JWT access token
+
+Enable OAuth 2 authentication method for JWT access tokens by adding `plugin/authn/oauth2` to `MODULES` environment variable.
+This module enables `oauth2` authentication method with `jwt` entity.
+
+Token header sent by the client should have following format: `Bearer {access-token}`.
+
+```json
+{
+  "endpoints": [
+    {
+      "method": "POST",
+      "pathPattern": "/user",
+      "requestPlugins": [
+        {
+          "name": "authn",
+          "config": {
+            "methods": ["oauth2"],
+            "entities": ["jwt"]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+Configure OIDC server:
+
+| Env variable          | Description                                    |
+|-----------------------|------------------------------------------------|
+| OIDC_HOST             | OIDC server host                               |
+| OIDC_PORT             | OIDC server port                               |
+| OIDC_SSL              | SSL enabled (default false)                    |
+| OIDC_JWK_ENDPOINT     | public server JSON Web Key endpoint            |
+
 ### Service discovery
 
 Edge Gateway provides support for service discovery utilizing Consul client or configuration object.
@@ -271,7 +347,7 @@ Add `sd-provider/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-p
 |-----------------------|-----------------------------------------------------|
 | CONSUL_HOST           | host                                                |
 | CONSUL_POST           | port (default 8500)                                 |
-| CONSUL_SSL            | SSL flag (default false)                            |
+| CONSUL_SSL            | SSL enabled (default false)                         |
 | CONSUL_ACL_TOKEN      | ACL token (optional)                                |
 | CONSUL_DC             | data center (optional)                              |
 | CONSUL_TIMEOUT        | connection timeout (optional)                       |

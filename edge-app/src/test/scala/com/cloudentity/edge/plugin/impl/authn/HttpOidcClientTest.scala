@@ -1,11 +1,11 @@
-package com.cloudentity.edge.service
+package com.cloudentity.edge.plugin.impl.authn
 
 import java.security.interfaces.{RSAPrivateKey, RSAPublicKey}
 import java.security.{KeyPair, KeyPairGenerator}
 
-import com.nimbusds.jose.jwk.{JWK, JWKSet, RSAKey}
 import com.cloudentity.tools.vertx.bus.ServiceClientFactory
 import com.cloudentity.tools.vertx.test.{VertxDeployTest, VertxUnitTest}
+import com.nimbusds.jose.jwk.{JWK, JWKSet, RSAKey}
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.unit.TestContext

@@ -1,0 +1,21 @@
+{
+  "registry:request-plugins": {
+    "plugin:authn": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.AuthnPlugin"
+    }
+  },
+  "plugin:authn": {
+    "methodsMapping": {
+      "anonymous": "anonymousAuthnProvider"
+    },
+    "entitiesMapping": {
+    }
+  },
+  "registry:authn-method-providers": {
+    "anonymousAuthnProvider": {
+      "main": "com.cloudentity.edge.plugin.impl.authn.methods.AnonymousAuthnProvider"
+    }
+  },
+  "registry:authn-entity-providers": {
+  }
+}

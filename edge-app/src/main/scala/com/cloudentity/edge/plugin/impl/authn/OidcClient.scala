@@ -1,18 +1,17 @@
-package com.cloudentity.edge.service
+package com.cloudentity.edge.plugin.impl.authn
 
 import java.nio.charset.Charset
 
-import com.nimbusds.jose.jwk.JWKSet
 import com.cloudentity.edge.util.ConfigDecoder
 import com.cloudentity.tools.vertx.bus.VertxEndpoint
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
-import io.vertx.core.{Future, Promise}
+import com.nimbusds.jose.jwk.JWKSet
 import io.vertx.core.http.{HttpClient, HttpClientOptions, HttpClientResponse}
+import io.vertx.core.{Future, Promise}
 import org.slf4j.LoggerFactory
-
-import scala.util.Try
 import scalaz.{-\/, \/, \/-}
 
+import scala.util.Try
 
 sealed trait OidcClientError
 case class JWKSetParsingError(ex: Throwable) extends OidcClientError
