@@ -54,7 +54,7 @@ object AuthnPlugin {
     case class AuthnFailResponse(resp: ApiResponse, modify: Modify) extends AuthnPluginError
 }
 
-class AuthnPlugin() extends RequestPluginVerticle[AuthnPluginConf] with RequestPluginService with PluginOpenApiConverter[AuthnPluginConf]{
+class AuthnPlugin() extends RequestPluginVerticle[AuthnPluginConf] with PluginOpenApiConverter[AuthnPluginConf]{
   override def name: PluginName = PluginName("authn")
   override def confDecoder: Decoder[AuthnPluginConf] = codecs.AuthnPluginConfDec
 

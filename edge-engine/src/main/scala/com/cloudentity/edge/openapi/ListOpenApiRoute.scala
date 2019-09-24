@@ -1,6 +1,5 @@
 package com.cloudentity.edge.openapi
 
-import com.cloudentity.tools.api.errors.ApiError
 import io.circe.{Decoder, Encoder, Printer}
 import io.circe.syntax._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -21,6 +20,7 @@ import com.cloudentity.tools.vertx.server.api.routes.utils.CirceRouteOperations
 import com.cloudentity.tools.vertx.server.http.HttpStatus
 import io.vertx.ext.web.RoutingContext
 import com.cloudentity.tools.vertx.bus.VertxBus
+import com.cloudentity.tools.vertx.server.api.errors.ApiError
 import com.cloudentity.tools.vertx.tracing.LoggingWithTracing
 import io.swagger.models.Swagger
 import io.vertx.core.eventbus.DeliveryOptions

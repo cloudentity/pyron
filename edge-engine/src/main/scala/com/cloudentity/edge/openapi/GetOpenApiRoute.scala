@@ -1,6 +1,5 @@
 package com.cloudentity.edge.openapi
 
-import com.cloudentity.tools.api.errors.ApiError
 import io.circe.generic.semiauto.deriveDecoder
 import com.cloudentity.edge.openapi.OpenApiService._
 import com.cloudentity.edge.openapi._
@@ -20,6 +19,7 @@ import com.cloudentity.edge.domain.openapi.{DiscoverableServiceId, ServiceId, St
 import com.cloudentity.edge.openapi.GetOpenApiRoute.GetOpenApiRouteConf
 import com.cloudentity.tools.vertx.http.headers.ContentType
 import com.cloudentity.tools.vertx.http.headers.ContentType.{ApplicationJson, ApplicationYaml}
+import com.cloudentity.tools.vertx.server.api.errors.ApiError
 import io.vertx.core.eventbus.DeliveryOptions
 
 import scala.collection.JavaConverters._

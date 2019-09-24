@@ -1,25 +1,24 @@
 package com.cloudentity.edge.openapi
 
-import com.cloudentity.tools.api.errors.ApiError
 import com.cloudentity.edge.apigroup.{ApiGroupConf, ApiGroupsChanged, ApiGroupsStore, ApiGroupsStoreVerticle}
 import com.cloudentity.edge.client.TargetClient
-import com.cloudentity.edge.domain._
-import com.cloudentity.edge.domain.flow.{DiscoverableService, DiscoverableServiceRule, GroupMatchCriteria, PathPattern, ServiceClientName, StaticService, StaticServiceRule}
+import com.cloudentity.edge.domain.flow._
 import com.cloudentity.edge.domain.http.{RelativeUri, TargetRequest}
-import com.cloudentity.edge.domain.openapi.{ConverterConf, DiscoverableServiceId, OpenApiConf, OpenApiRule, ServiceId, SourceConf, StaticServiceId}
+import com.cloudentity.edge.domain.openapi._
 import com.cloudentity.edge.domain.rule.RuleConfWithPlugins
-import com.cloudentity.edge.rule.{RulesChanged, RulesConfReader, RulesStore, RulesStoreVerticle}
+import com.cloudentity.edge.openapi.Codecs._
+import com.cloudentity.edge.openapi.OpenApiService._
+import com.cloudentity.edge.rule.RulesConfReader
 import com.cloudentity.edge.util.ConfigDecoder
 import com.cloudentity.tools.vertx.bus.VertxBus
+import com.cloudentity.tools.vertx.http.Headers
 import com.cloudentity.tools.vertx.scala.Operation
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
-import com.cloudentity.tools.vertx.http.Headers
+import com.cloudentity.tools.vertx.server.api.errors.ApiError
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.swagger.models.Swagger
 import io.swagger.parser.SwaggerParser
 import io.vertx.core.http.HttpMethod
-import com.cloudentity.edge.openapi.Codecs._
-import com.cloudentity.edge.openapi.OpenApiService._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
