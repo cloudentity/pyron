@@ -33,6 +33,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       _ <- deployVerticle(new RulesStoreVerticle)
       _ <- deployVerticle(new ApiGroupsStoreVerticle)
       _ <- deployVerticle(new RoutingCtxVerticle)
+      _ <- deployRegistryIfConfigured("open-api")
     } yield ()
     }.toJava()
 
@@ -42,7 +43,6 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       _ <- deployRegistryIfConfigured("system")
       _ <- deployRegistryIfConfigured("request-plugins")
       _ <- deployRegistryIfConfigured("response-plugins")
-      _ <- deployRegistryIfConfigured("open-api")
     } yield ()
 
   override def deployServer(): VxFuture[String] = {
