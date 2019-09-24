@@ -11,12 +11,11 @@ import com.cloudentity.tools.vertx.conf.ConfService
 import com.cloudentity.tools.vertx.launchers.OrchisCommandLauncher
 import com.cloudentity.tools.vertx.registry.RegistryVerticle
 import com.cloudentity.tools.vertx.registry.RegistryVerticle.RegistryType
-import com.cloudentity.tools.vertx.scala.{FutureConversions, Operation, ScalaSyntax, VertxExecutionContext}
+import com.cloudentity.tools.vertx.scala.{FutureConversions, ScalaSyntax, VertxExecutionContext}
 import com.cloudentity.tools.vertx.server.VertxBootstrap
 import com.cloudentity.tools.vertx.server.api.ApiServerDeployer
 import com.cloudentity.tools.vertx.verticles.VertxDeploy
 import io.vertx.core.Verticle
-import io.vertx.core.json.JsonObject
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.Future
@@ -30,17 +29,21 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
     ec = VertxExecutionContext(vertx.getOrCreateContext())
 
     for {
-      _ <- deployRegistryIfConfigured("sd")
-      _ <- deployRegistryIfConfigured("system")
-      _ <- deployRegistryIfConfigured("service-clients")
-      _ <- deployRegistryIfConfigured("request-plugins")
-      _ <- deployRegistryIfConfigured("response-plugins")
+      _ <- deployRegistries()
       _ <- deployVerticle(new RulesStoreVerticle)
       _ <- deployVerticle(new ApiGroupsStoreVerticle)
       _ <- deployVerticle(new RoutingCtxVerticle)
-      _ <- deployRegistryIfConfigured("open-api")
     } yield ()
     }.toJava()
+
+  private def deployRegistries(): Future[Unit] =
+    for {
+      _ <- deployRegistryIfConfigured("sd")
+      _ <- deployRegistryIfConfigured("system")
+      _ <- deployRegistryIfConfigured("request-plugins")
+      _ <- deployRegistryIfConfigured("response-plugins")
+      _ <- deployRegistryIfConfigured("open-api")
+    } yield ()
 
   override def deployServer(): VxFuture[String] = {
     for {
