@@ -115,7 +115,8 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler {
                                     case Some(response) =>
                                       \/-(response) |> Future.successful[ApiError \/ ApiResponse] |> EitherT[Future, ApiError, ApiResponse]
                                   }
-          responseCtx           = toResponseCtx(finalRequestCtx, initialResponse)
+          modifiedResponse     <- finalRequestCtx.modifyResponse(initialResponse).map(\/-(_)) |> EitherT[Future, ApiError, ApiResponse]
+          responseCtx           = toResponseCtx(finalRequestCtx, modifiedResponse)
           finalResponseCtx     <- applyResponsePlugins(responseCtx, rule.responsePlugins) |> EitherT.apply
           _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalResponseCtx.accessLog)
         } yield finalResponseCtx.response

@@ -25,7 +25,7 @@
     ]
   },
   "registry:request-plugins": {
-    "modify-response": { "main": "com.cloudentity.edge.ModifyingRequestPlugin", "disabled": false }
+    "modify-response": { "main": "com.cloudentity.edge.acceptance.ModifyingRequestPlugin", "disabled": false }
   },
   "registry:response-plugins": {
   },

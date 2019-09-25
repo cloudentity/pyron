@@ -189,6 +189,7 @@ case class RequestCtx(
   correlationCtx: CorrelationCtx,
   authnCtx: AuthnCtx = AuthnCtx(),
   accessLog: AccessLogItems = AccessLogItems(),
+  modifyResponse: List[ApiResponse => Future[ApiResponse]] = Nil,
 
   aborted: Option[ApiResponse] = None
 ) {
@@ -212,6 +213,15 @@ case class RequestCtx(
 
   def withTracingCtx(ctx: TracingContext): RequestCtx =
     this.copy(tracingCtx = ctx)
+
+  def modifyResponse(response: ApiResponse)(implicit ec: ExecutionContext): Future[ApiResponse] =
+    modifyResponse.foldLeft(Future.successful(response)) { case (fut, mod) => fut.flatMap(mod) }
+
+  def withModifyResponse(f: ApiResponse => ApiResponse) =
+    withModifyResponseAsync(f.andThen(Future.successful))
+
+   def withModifyResponseAsync(f: ApiResponse => Future[ApiResponse]) =
+    this.copy(modifyResponse = f :: modifyResponse)
 
   def abort(response: ApiResponse): RequestCtx =
     this.copy(aborted = Some(response))
