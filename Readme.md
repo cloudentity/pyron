@@ -1,4 +1,4 @@
-## Content
+## Contents
 
 * [Build](#build)
   * [Standalone](#build-standalone)
@@ -27,39 +27,32 @@
     * Circuit breaker
   * [Open tracing](#open-tracing)
 
-<a name="build"/>
 ## Build
 
 Edge depends on github.com/cloudentity/vertx-tools. Clone it and build with `mvn install` command first.
 
-<a name="build-standalone"/>
 ### Standalone
 
 `mvn clean install -Pbuild-standalone`
 
-<a name="build-docker"/>
 ### Docker
 
 `mvn clean install -Pbuild-latest-docker`
 
-<a name="run"/>
 ## Run
 
 Configure routing rules in `rules.json` and environment variables in `envs` file if required.
 
-<a name="run-standalone"/>
 ### Standalone
 
 * `cd run/standalone`
 * `*./run.sh`
 
-<a name="run-docker"/>
 ### Docker
 
 * `cd run/docker`
 * `docker run --env-file envs -p 8080:8080 --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest`
 
-<a name="configure"/>
 ## Configure
 
 At startup Edge needs `meta-config.json` file describing where to read configuration from.
@@ -90,7 +83,6 @@ Above `meta-config.json` defines two configuration stores: `config.json` from cl
 
 `config.json` defines minimal configuration required to run Edge. Routing rules are provided in `rules.json`.
 
-<a name="routing"/>
 ### Routing rules
 
 Rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in `default` object.
@@ -243,7 +235,6 @@ Edge retries call if target service returned HTTP status code defined in `failur
 
 By default Edge uses target host to set Host header value when calling target service. When `preserveHostHeader` is set to true then the Host header sent by the client is used instead.
 
-<a name="plugins"/>
 ### Plugins
 
 #### Authentication
@@ -453,7 +444,6 @@ Configure `io.vertx.circuitbreaker.CircuitBreakerOptions` in `circuitBreaker` ob
 }
 ```
 
-<a name="open-tracing"/>
 ### Open tracing
 
 Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/jaeger"]`.
