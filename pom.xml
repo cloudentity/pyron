@@ -70,37 +70,37 @@
       </dependency>
       <!-- vertx-tools -->
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-server</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-config-all</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-client</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-http-common</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-json</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-bus</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-bus-scala</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>
@@ -169,19 +169,19 @@
       </dependency>
       <!-- test -->
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-server-test</artifactId>
         <version>${vertx-tools.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-test</artifactId>
         <version>${vertx-tools.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.tools</groupId>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-test-scala</artifactId>
         <version>${vertx-tools.version}</version>
         <scope>test</scope>

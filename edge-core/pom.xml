@@ -21,11 +21,11 @@
       <artifactId>circe-core_2.12</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.cloudentity.tools</groupId>
+      <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-bus</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.cloudentity.tools</groupId>
+      <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-http-common</artifactId>
     </dependency>
     <dependency>
@@ -38,7 +38,7 @@
     </dependency>
     <!-- test -->
     <dependency>
-      <groupId>com.cloudentity.tools</groupId>
+      <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-test</artifactId>
     </dependency>
     <dependency>

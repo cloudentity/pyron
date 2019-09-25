@@ -13,7 +13,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.cloudentity.tools</groupId>
+      <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-bus-scala</artifactId>
     </dependency>
     <dependency>
@@ -43,7 +43,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.cloudentity.tools</groupId>
+      <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-test-scala</artifactId>
       <scope>test</scope>
     </dependency>
