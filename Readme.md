@@ -18,6 +18,7 @@
   * [Plugins](#plugins)
     * Authentication
       * OAuth 2 with JWT access token
+  * [API groups](#api-groups)
   * [Service discovery](#service-discovery)
     * Consul service discovery
     * Configuration-based service discovery
@@ -306,6 +307,41 @@ Configure OIDC server:
 | OIDC_PORT             | OIDC server port                               |
 | OIDC_SSL              | SSL enabled (default false)                    |
 | OIDC_JWK_ENDPOINT     | public server JSON Web Key endpoint            |
+
+### API Groups
+
+API Groups allow to separate routing rule sets. You can define a set of rules and expose it on a domain and/or base-path.
+Incoming request is initially matched against domain and base-path and then dispatched to appropriate set for
+further processing.
+
+```json
+{
+  "apiGroups": {
+    "example": {
+      "group": {
+        "domains": ["demo.com"],
+        "basePath": "/apis"
+      },
+      "rules": [
+        {
+          "default": {
+            "targetHost": "example.com",
+            "targetPort": 8080
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "pathPattern": "/user"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+[API Groups configuration details](docs/api-groups.md)
 
 ### Service discovery
 
