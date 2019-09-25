@@ -283,7 +283,7 @@ Configuration attributes:
 ##### OAuth 2 with JWT access token
 
 Enable OAuth 2 authentication method for JWT access tokens by adding `plugin/authn/oauth2` to `MODULES` environment variable.
-This module enables `oauth2` authentication method with `jwt` entity.
+This module enables `oauth2` authentication method with `jwt` entity provider. `jwt` provider sets all JWT claims in authentication context.
 
 Token header sent by the client should have following format: `Bearer {access-token}`.
 
