@@ -45,7 +45,7 @@ Edge depends on github.com/cloudentity/vertx-tools. Clone it and build with `mvn
 <a name="run"/>
 ## Run
 
-Configure routing rules in `rules.json` and environment variables in `.env` if required.
+Configure routing rules in `rules.json` and environment variables in `env` if required.
 
 <a name="run-standalone"/>
 ### Standalone
@@ -57,12 +57,12 @@ Configure routing rules in `rules.json` and environment variables in `.env` if r
 ### Docker
 
 * `cd run/docker`
-* `docker run --env-file .env -p 8080:8080 --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest`
+* `docker run --env-file env -p 8080:8080 --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest`
 
 <a name="configure"/>
 ## Configure
 
-At the start Edge needs `meta-config.json` file describing where to read configuration from.
+At startup Edge needs `meta-config.json` file describing where to read configuration from.
 
 ```json
 {
