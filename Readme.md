@@ -47,12 +47,12 @@ Edge depends on github.com/cloudentity/vertx-tools. Clone it and build with `mvn
 
 Configure routing rules in `rules.json` and environment variables in `envs` file if required.
 
-By default Edge runs on 8080 port. Set `HTTP_SERVER_PORT` to change it.
+By default Edge runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change it.
 
 ### Standalone
 
 * `cd run/standalone`
-* `*./run.sh`
+* `./run.sh`
 
 ### Docker
 
