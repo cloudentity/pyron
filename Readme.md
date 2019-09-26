@@ -47,6 +47,8 @@ Edge depends on github.com/cloudentity/vertx-tools. Clone it and build with `mvn
 
 Configure routing rules in `rules.json` and environment variables in `envs` file if required.
 
+By default Edge runs on 8080 port. Set `HTTP_SERVER_PORT` to change it.
+
 ### Standalone
 
 * `cd run/standalone`
@@ -109,6 +111,11 @@ If an endpoint attribute is missing then it is taken from `default`.
   ]
 }
 ```
+
+| Attribute          | Description                                    |
+|--------------------|------------------------------------------------|
+| targetHost         | host of target service (upstream)              |
+| targetPort         | port of target service (upstream)              |
 
 #### Method and path pattern
 
@@ -421,7 +428,12 @@ further processing.
 }
 ```
 
-[API Groups configuration details](docs/api-groups.md)
+| Attribute                | Description                                        |
+|--------------------------|----------------------------------------------------|
+| group.domains            | Host headers Edge matches the API group for        |
+| group.basePath           | base path Edge matches the API group at (optional) |
+
+[API Groups configuration details.](docs/api-groups.md)
 
 ### Service discovery
 
@@ -441,6 +453,10 @@ Edge Gateway provides support for service discovery utilizing Consul client or c
   ]
 }
 ```
+
+| Attribute          | Description                                         |
+|--------------------|-----------------------------------------------------|
+| targetService      | service-name of target nodes from service-discovery |
 
 Edge calls nodes with `targetService` service-name using round-robin load balancer.
 
@@ -483,6 +499,14 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
   ]
 }
 ```
+
+| Attribute          | Description                          |
+|--------------------|--------------------------------------|
+| name               | service-name of target node          |
+| location.host      | host of target node                  |
+| location.port      | port of target node                  |
+| location.ssl       | SSL of target node                   |
+| location.root      | root path of target node (optional ) |
 
 ### HTTP server
 
