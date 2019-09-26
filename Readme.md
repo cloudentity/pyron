@@ -258,7 +258,7 @@ To preserve the prefix set `dropPrefix` to false.
 
 | Attribute            | Description                                                                            |
 |----------------------|----------------------------------------------------------------------------------------|
-| call.responseTimeout | target service response timeout in milliseconds.                                       |
+| call.responseTimeout | target service response timeout in milliseconds                                        |
 
 #### Retry
 
@@ -316,9 +316,11 @@ To preserve the prefix set `dropPrefix` to false.
 }
 ```
 
-| Attribute            | Description                                                                                                    |
-|----------------------|----------------------------------------------------------------------------------------------------------------|
-| preserveHostHeader   | send Host header sent by the client to Edge when calling target service instead of target host (default false) |
+| Attribute            | Description                                                            |
+|----------------------|------------------------------------------------------------------------|
+| preserveHostHeader   | proxy Host header sent by the client to target service (default false) |
+
+By default Edge sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
 
 ### Plugins
 
@@ -669,6 +671,6 @@ Edge applies following request headers modification (unless disabled):
 
 | Env variable                      | Description                                            |
 |-----------------------------------|--------------------------------------------------------|
-| PROXY_HEADERS_ENABLED             | enable flag (default true)                             |
+| PROXY_HEADERS_ENABLED             | enable proxy headers (default true)                    |
 | INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
 | OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
