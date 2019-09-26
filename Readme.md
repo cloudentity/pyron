@@ -87,6 +87,8 @@ Above `meta-config.json` defines two configuration stores: `config.json` from cl
 
 `config.json` defines minimal configuration required to run Edge. Routing rules are provided in `rules.json`.
 
+You will find `meta-config.json` in run folder (`run/standalone` or `run/docker`).
+
 ### Routing rules
 
 Rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in `default` object.
@@ -112,16 +114,30 @@ If an endpoint attribute is missing then it is taken from `default`.
 
 ```json
 {
-  "endpoints": [
+  "rules": [
     {
-      "method": "POST",
-      "pathPattern": "/user"
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user"
+        }
+      ]
     }
   ]
 }
 ```
 
-`pathPattern` is regular expression extended with support of path-param placeholders, e.g. `/user/{id}`
+`method` is HTTP verb
+`pathPattern` is
+
+| Attribute          | Description                                                                            |
+|--------------------|----------------------------------------------------------------------------------------|
+| method             | HTTP method                                                                            |
+| pathPattern        | regular expression extended with support of path-param placeholders, e.g. `/user/{id}` |
 
 #### Path prefix
 
@@ -155,89 +171,150 @@ Expose multiple endpoints using the same path prefix.
 By default the prefix is dropped when calling target service. I.e. endpoint exposed at `POST /example/user` is proxied to `POST /user` in target service.
 To preserve the prefix set `dropPathPrefix` to false.
 
+| Attribute          | Description                                                                            |
+|--------------------|----------------------------------------------------------------------------------------|
+| pathPrefix         | prefix appended to `pathPattern` (optional)                                            |
+| dropPathPrefix     | drop path prefix when calling target service                                           |
+
 #### Rewrite path
 
 ```json
 {
-  "endpoints": [
+  "rules": [
     {
-      "method": "GET",
-      "pathPattern": "/user/{id}",
-      "rewritePath": "/entities/user/{id}"
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/user/{id}",
+          "rewritePath": "/entities/user/{id}"
+        }
+      ]
     }
   ]
 }
 ```
+
+| Attribute          | Description                                                                            |
+|--------------------|----------------------------------------------------------------------------------------|
+| rewritePath        | path that Edge calls target service at (optional, `pathPattern` used if this not set)  |
 
 #### Rewrite method
 
 ```json
 {
-  "endpoints": [
+  "rules": [
     {
-      "method": "POST",
-      "rewriteMethod": "PUT",
-      "pathPattern": "/user"
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+              "method": "POST",
+              "rewriteMethod": "PUT",
+              "pathPattern": "/user"
+            }
+      ]
     }
   ]
 }
 ```
+
+| Attribute          | Description                                                                            |
+|--------------------|----------------------------------------------------------------------------------------|
+| rewriteMethod      | method that Edge calls target service with (optional, `method` used if this not set)   |
 
 #### Response timeout
 
 ```json
 {
-  "endpoints": [
+  "rules": [
     {
-      "method": "POST",
-      "pathPattern": "/user",
-      "call": {
-        "responseTimeout": 3000
-      }
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "call": {
+            "responseTimeout": 3000
+          }
+        }
+      ]
     }
   ]
 }
 ```
 
-Response timeout in milliseconds.
+| Attribute            | Description                                                                            |
+|----------------------|----------------------------------------------------------------------------------------|
+| call.responseTimeout | target service response timeout in milliseconds.                                       |
 
 #### Retry
 
 ```json
 {
-  "endpoints": [
+  "rules": [
     {
-      "method": "POST",
-      "pathPattern": "/user",
-      "call": {
-        "retries": 1,
-        "failureHttpCodes": [500],
-        "retryFailedResponse": true, // default
-        "retryOnException": true     // default
-      }
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "call": {
+            "retries": 1,
+            "failureHttpCodes": [500],
+            "retryFailedResponse": true, // default
+            "retryOnException": true     // default
+          }
+        }
+      ]
     }
   ]
 }
 ```
 
-Edge retries call if target service returned HTTP status code defined in `failureHttpCodes` or on HTTP client exception (e.g. response timeout).
-`retries` defines maximum number of retries; if reached then the last attempt result is returned to the client.
+| Attribute                | Description                                                                            |
+|--------------------------|----------------------------------------------------------------------------------------|
+| call.retries             | maximum number of retries                                                              |
+| call.failureHttpCodes    | response codes that Edge retries if returned by target service                         |
+| call.retryFailedResponse | retry call if target service returned code in `failureHttpCodes` (default true)        |
+| call.retryOnException    | retry call on HTTP client exception, e.g. response timeout (default true)              |
 
 #### Preserve Host header
 
 ```json
 {
-  "endpoints": [
+  "rules": [
     {
-      "method": "POST",
-      "pathPattern": "/user",
-      "preserveHostHeader": true
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "preserveHostHeader": true
+        }
+      ]
     }
   ]
 }
 ```
 
-By default Edge uses target host to set Host header value when calling target service. When `preserveHostHeader` is set to true then the Host header sent by the client is used instead.
+| Attribute            | Description                                                                                                    |
+|----------------------|----------------------------------------------------------------------------------------------------------------|
+| preserveHostHeader   | send Host header sent by the client to Edge when calling target service instead of target host (default false) |
 
 ### Plugins
 
