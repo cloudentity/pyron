@@ -9,6 +9,11 @@
       "request": {
         "headers": "$env:?ACCESS_LOG_REQUEST_HEADERS:array"
       }
+    },
+    "proxyHeaders": {
+      "enabled": "$env:?PROXY_HEADERS_ENABLED:boolean",
+      "inputTrueClientIp": "$env:?INPUT_TRUE_CLIENT_IP_HEADER:string",
+      "outputTrueClientIp": "$env:?OUTPUT_TRUE_CLIENT_IP_HEADER:string"
     }
   },
   "registry:system": {

@@ -27,6 +27,7 @@
     * Default retries and timeout
     * Circuit breaker
   * [Open tracing](#open-tracing)
+  * [Proxy headers](#proxy-headers)
 
 ## Build
 
@@ -491,3 +492,19 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 | JAEGER_AGENT_PORT                 | Jaeger agent port (optional)                   |
 | JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port (optional)            |
 | TRACING_FORMAT                    | tracing format - cloudentity, jaeger, zipkin   |
+
+### Proxy headers
+
+Edge applies following request headers modification (unless disabled):
+
+* Add `remote-address.host` to `X-Forwarded-For` headers
+* Add `remote-address.protocol` to `X-Forwarded-Proto` headers
+* If `Host` header is set add it to `X-Forwarded-Host` headers
+* If True Client IP header is missing then set it to first `X-Forwarded-For` value
+* Set True Client IP header to upstream service
+
+| Env variable                      | Description                                            |
+|-----------------------------------|--------------------------------------------------------|
+| PROXY_HEADERS_ENABLED             | enable flag (default true)                             |
+| INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
+| OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
