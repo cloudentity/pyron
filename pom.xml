@@ -81,6 +81,16 @@
       </dependency>
       <dependency>
         <groupId>com.cloudentity.tools.vertx</groupId>
+        <artifactId>vertx-sd</artifactId>
+        <version>${vertx-tools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudentity.tools.vertx</groupId>
+        <artifactId>vertx-sd-consul</artifactId>
+        <version>${vertx-tools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudentity.tools.vertx</groupId>
         <artifactId>vertx-client</artifactId>
         <version>${vertx-tools.version}</version>
       </dependency>

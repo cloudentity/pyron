@@ -42,6 +42,10 @@
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-config-all</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.cloudentity.tools.vertx</groupId>
+      <artifactId>vertx-sd-consul</artifactId>
+    </dependency>
     <!-- vertx -->
     <dependency>
       <groupId>io.vertx</groupId>

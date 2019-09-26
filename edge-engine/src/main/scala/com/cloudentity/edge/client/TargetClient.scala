@@ -8,15 +8,15 @@ import com.cloudentity.edge.domain.rule.RuleConf
 import com.cloudentity.tools.vertx.conf.ConfService
 import com.cloudentity.tools.vertx.http.builder.SmartHttpClientBuilderImpl.CallOk
 import com.cloudentity.tools.vertx.http.builder.{RequestCtxBuilder, SmartHttpResponse}
+import com.cloudentity.tools.vertx.http.circuit.NoopCB
 import com.cloudentity.tools.vertx.http.client.SmartHttpClientImpl
-import com.cloudentity.tools.vertx.http.{SmartHttp, SmartHttpClient}
+import com.cloudentity.tools.vertx.http.{Sd, SmartHttp, SmartHttpClient}
 import com.cloudentity.tools.vertx.scala.FutureConversions
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext, TracingManager}
 import io.vertx.core.buffer.Buffer
 import com.cloudentity.tools.vertx.scala.VertxExecutionContext
 import com.cloudentity.tools.vertx.sd.{Node => SdNode}
-import com.cloudentity.tools.vertx.sd.circuit.NoopCB
-import com.cloudentity.tools.vertx.sd.{Location, Sd, ServiceName}
+import com.cloudentity.tools.vertx.sd.{Location, ServiceName}
 import io.vertx.core
 import io.vertx.core.Vertx
 import io.vertx.core.http._
