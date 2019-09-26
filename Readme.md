@@ -33,7 +33,7 @@
 
 ## Build
 
-Edge depends on github.com/cloudentity/vertx-tools. Clone it and build with `mvn install` command first.
+Edge depends on bitbucket.org/syntegritynet/open-vertx-tools. Clone it and build with `mvn install` command first.
 
 ### Standalone
 
