@@ -155,7 +155,7 @@ Expose multiple endpoints using the same path prefix.
         "targetHost": "example.com",
         "targetPort": 8000,
         "pathPrefix": "/example",
-        "dropPathPrefix": true // default
+        "dropPrefix": true // default
       },
       "endpoints": [
         {
@@ -175,10 +175,10 @@ Expose multiple endpoints using the same path prefix.
 | Attribute          | Description                                                   |
 |--------------------|---------------------------------------------------------------|
 | pathPrefix         | prefix appended to `pathPattern` (optional)                   |
-| dropPathPrefix     | drop path prefix when calling target service (default true)   |
+| dropPrefix         | drop path prefix when calling target service (default true)   |
 
 By default the prefix is dropped when calling target service. I.e. endpoint exposed at `POST /example/user` is proxied to `POST /user` in target service.
-To preserve the prefix set `dropPathPrefix` to false.
+To preserve the prefix set `dropPrefix` to false.
 
 #### Rewrite path
 
