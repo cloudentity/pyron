@@ -1,6 +1,18 @@
 #HTTP_SERVER_PORT=8080
 #ALIVE_PATH=/alive
-#ACCESS_LOG_REQUEST_HEADERS=[]
+
+## access logs
+#ACCESS_LOG_AUTHN_CTX={"method":"authnMethod","user":"sub","uid":"email"}
+
+#ACCESS_LOG_REQUEST_HEADERS_ALL=true
+#ACCESS_LOG_REQUEST_HEADERS_WHITELIST=["Host","User-Agent"]
+#ACCESS_LOG_REQUEST_HEADERS_MASK_WHOLE=["Authorization"]
+#ACCESS_LOG_REQUEST_HEADERS_MASK_PARTIAL=["Token"]
+
+## proxy headers
+#PROXY_HEADERS_ENABLED=false
+#INPUT_TRUE_CLIENT_IP_HEADER=X-Real-IP
+#OUTPUT_TRUE_CLIENT_IP_HEADER=X-Real-IP
 
 #MODULES=["sd-provider/consul", "sd-provider/static", "tracing/jaeger", "plugin/authn", "plugin/authn/oauth2"]
 

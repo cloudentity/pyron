@@ -1,24 +1,10 @@
 {
-  "requiredModules": ["http-server", "http-client"],
+  "requiredModules": ["http-server", "http-client", "proxy-headers", "access-log"],
   "modules": "$env:?MODULES:array",
   "app": {
     "rules": "$ref:rules",
-    "alivePath": "$env:?ALIVE_PATH:string",
-    "accessLog": {
-      "authnCtx": "$env:?ACCESS_LOG_AUTHN_CTX:object",
-      "request": {
-        "headers": "$env:?ACCESS_LOG_REQUEST_HEADERS:array"
-      }
-    },
-    "proxyHeaders": {
-      "enabled": "$env:?PROXY_HEADERS_ENABLED:boolean",
-      "inputTrueClientIp": "$env:?INPUT_TRUE_CLIENT_IP_HEADER:string",
-      "outputTrueClientIp": "$env:?OUTPUT_TRUE_CLIENT_IP_HEADER:string"
-    }
+    "alivePath": "$env:?ALIVE_PATH:string"
   },
   "registry:system": {
-    "log-access-log-persister": {
-      "main": "com.cloudentity.edge.accesslog.LogAccessLogPersister"
-    }
   }
 }

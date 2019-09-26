@@ -27,6 +27,8 @@
     * Default retries and timeout
     * Circuit breaker
   * [Open tracing](#open-tracing)
+  * [Access log](#access-log)
+    * Authentication context and request headers in access log
   * [Proxy headers](#proxy-headers)
 
 ## Build
@@ -492,6 +494,70 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 | JAEGER_AGENT_PORT                 | Jaeger agent port (optional)                   |
 | JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port (optional)            |
 | TRACING_FORMAT                    | tracing format - cloudentity, jaeger, zipkin   |
+
+### Access logs
+
+```json
+{
+  "timestamp": "2018-04-06T15:14:33.929Z",
+  "trueClientIp": "192.168.0.13",
+  "remoteClient": "192.168.0.127",
+  "http": {
+    "httpVersion": "HTTP/1.1",
+    "method": "GET",
+    "uri": "/service-a/user/123",
+    "status": "200"
+  },
+  "gateway": {
+    "method": "GET",
+    "path": "/user/{userId}",
+    "pathPrefix": "/service-a",
+    "aborted": false,
+    "targetService": "service-a"
+  },
+  "request": {
+    "headers": {
+      "Host": ["example.com"]
+    }
+  },
+  "authnCtx": {
+      "method": "oauth2",
+      "user":"4b1b17f8-a934-458f-3c08-cc01d9f9b917",
+      "uid":"admin@cloudentity.com"
+    }
+  },
+  "timeMs": "3"
+}
+```
+
+| Attribute             | Description                                                                                               |
+|-----------------------|-----------------------------------------------------------------------------------------------------------|
+| datetime              | request time in ISO 8601 format                                                                           |
+| trueClientIp          | IP address of original client, either X-Real-IP header or first IP from X-Forwarded-For or remote address |
+| remoteIp              | IP of the direct client                                                                                   |
+| authnCtx              | authentication context                                                                                    |
+| httpVersion           | HTTP version                                                                                              |
+| method                | HTTP method                                                                                               |
+| uri                   | URI without host                                                                                          |
+| status                | HTTP status code                                                                                          |
+| gateway.method        | method of matching rule                                                                                   |
+| gateway.path          | path pattern of matching rule                                                                             |
+| gateway.pathPrefix    | path prefix of matching rule                                                                              |
+| gateway.aborted       | true if Edge aborted the call without proxying to target service; false otherwise                         |
+| gateway.targetService | target service of matching rule                                                                           |
+| request.headers       | request headers                                                                                           |
+| timeMs                | time from receiving the request body till writing full response body                                      |
+
+#### Authentication context and request headers in access log
+
+| Env variable                            | Description                                         | Example                                             |
+|-----------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
+| ACCESS_LOG_SLF4J_DISABLED               | disable SLF4J access logging (default false)        | true                                                |
+| ACCESS_LOG_AUTHN_CTX                    | authentication context set in access log (optional) | {"method":"authnMethod","user":"sub","uid":"email"} |
+| ACCESS_LOG_REQUEST_HEADERS_ALL          | log all headers flag (default false)                | true                                                |
+| ACCESS_LOG_REQUEST_HEADERS_WHITELIST    | log selected headers (optional)                     | ["Host","User-Agent"]                               |
+| ACCESS_LOG_REQUEST_HEADERS_MASK_WHOLE   | mask whole logged header (optional)                 | ["Authorization"]                                   |
+| ACCESS_LOG_REQUEST_HEADERS_MASK_PARTIAL | mask logged header partially (optional)             | ["Token"]                                           |
 
 ### Proxy headers
 

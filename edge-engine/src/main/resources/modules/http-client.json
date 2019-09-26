@@ -1,6 +1,7 @@
 {
   "fixed-http-target-client-default": "$ref:http-client",
   "smart-http-target-client-default": {
+    "_nullify": true,
     "http": "$ref:http-client",
     "retries": "$env:?SMART_HTTP_CLIENT_RETRIES:int",
     "responseTimeout": "$env:?SMART_HTTP_CLIENT_RESPONSE_TIMEOUT:int",
@@ -9,6 +10,7 @@
     "retryOnException": "$env:?SMART_HTTP_CLIENT_RETRY_ON_EXCEPTION:boolean"
   },
   "http-client": {
+    "_nullify": true,
     "verifyHost": "$env:?HTTP_CLIENT_VERIFY_HOST:boolean",
     "maxPoolSize": "$env:?HTTP_CLIENT_MAX_POOL_SIZE:int",
     "keepAlive": "$env:?HTTP_CLIENT_KEEP_ALIVE:boolean",

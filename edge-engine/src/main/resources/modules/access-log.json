@@ -1,0 +1,27 @@
+{
+  "app": {
+    "accessLog": {
+      "_nullify": true,
+      "authnCtx": "$env:?ACCESS_LOG_AUTHN_CTX:object",
+      "request": {
+        "_nullify": true,
+        "headers": {
+          "_nullify": true,
+          "all": "$env:?ACCESS_LOG_REQUEST_HEADERS_ALL:boolean",
+          "whitelist": "$env:?ACCESS_LOG_REQUEST_HEADERS_WHITELIST:string",
+          "maskFields": {
+            "_nullify": true,
+            "partial": "$env:?ACCESS_LOG_REQUEST_HEADERS_MASK_PARTIAL:array",
+            "whole": "$env:?ACCESS_LOG_REQUEST_HEADERS_MASK_WHOLE:array"
+          }
+        }
+      }
+    }
+  },
+  "registry:system": {
+    "log-access-log-persister": {
+      "main": "com.cloudentity.edge.accesslog.LogAccessLogPersister",
+      "disabled": "$env:?ACCESS_LOG_SLF4J_DISABLED:boolean:false"
+    }
+  }
+}
