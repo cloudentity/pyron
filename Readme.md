@@ -404,11 +404,11 @@ further processing.
 {
   "apiGroups": {
     "example": {
-      "group": {
+      "_group": {
         "domains": ["demo.com"],
         "basePath": "/apis"
       },
-      "rules": [
+      "_rules": [
         {
           "default": {
             "targetHost": "example.com",
@@ -429,8 +429,10 @@ further processing.
 
 | Attribute                | Description                                        |
 |--------------------------|----------------------------------------------------|
-| group.domains            | Host headers Edge matches the API group for        |
-| group.basePath           | base path Edge matches the API group at (optional) |
+| _group.domains           | Host headers Edge matches the API group for        |
+| _group.basePath          | base path Edge matches the API group at (optional) |
+
+Note `_` (underscore) in `_rules` and `_group`.
 
 [API Groups configuration details.](docs/api-groups.md)
 
