@@ -339,7 +339,7 @@ Enable `authn` plugin by adding `plugin/authn` to `MODULES` environment variable
       "requestPlugins": [
         {
           "name": "authn",
-          "config": {
+          "conf": {
             "methods": [ ... ],
             "entities": [ ... ]
           }
@@ -374,7 +374,7 @@ Token header sent by the client should have following format: `Bearer {access-to
       "requestPlugins": [
         {
           "name": "authn",
-          "config": {
+          "conf": {
             "methods": ["oauth2"],
             "entities": ["jwt"]
           }
