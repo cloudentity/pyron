@@ -171,13 +171,28 @@ class ApiHandlerAcceptanceSpec extends ScalaVertxUnitTest with MockUtils {
   }
 
   @Test
-  def shouldMatchDomain(ctx: TestContext): Unit = {
+  def shouldMatchDomainWhenHostWithoutPort(ctx: TestContext): Unit = {
     val apiGroup = ApiGroup(GroupMatchCriteria(None, Some(List(DomainPattern("example.com")))), List(defaultRule))
     mockOnPath(targetService)("/path", resp().withStatusCode(200))
 
     deployAndCall(ctx, apiGroup) {
       given()
         .header("Host", "example.com")
+      .when()
+        .get("/path")
+      .`then`()
+        .statusCode(200)
+    }
+  }
+
+  @Test
+  def shouldMatchDomainWhenHostWithPort(ctx: TestContext): Unit = {
+    val apiGroup = ApiGroup(GroupMatchCriteria(None, Some(List(DomainPattern("example.com")))), List(defaultRule))
+    mockOnPath(targetService)("/path", resp().withStatusCode(200))
+
+    deployAndCall(ctx, apiGroup) {
+      given()
+        .header("Host", "example.com:8080")
       .when()
         .get("/path")
       .`then`()
