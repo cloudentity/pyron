@@ -14,11 +14,11 @@ Let's have a look at simple API Group that exposes rules on `demo.com` domain an
 {
   "apiGroups": {
     "single-group": {
-      "group": {
+      "_group": {
         "domains": ["demo.com"],
         "basePath": "/apis"
       },
-      "rules": [
+      "_rules": [
         {
           "default": {
             "targetHost": "a.service.com",
@@ -49,20 +49,20 @@ For simplicity, we use references to define `rules`.
 {
   "apiGroups": {
     "demo": {
-      "group": {
+      "_group": {
         "domains": ["demo.com"]
       },
       "service-a": {
-        "group": {
+        "_group": {
           "basePath": "/service-a"
         },
-        "rules": "$ref:some-rules"
+        "_rules": "$ref:some-rules"
       },
       "service-b": {
-        "group": {
+        "_group": {
           "basePath": "/service-b"
         },
-        "rules": "$ref:some-other-rules"
+        "_rules": "$ref:some-other-rules"
       }
 
     }
@@ -78,15 +78,15 @@ In this example we have a single API Group configured at `apiGroups.demo` path w
 {
   "apiGroups": {
     "demo": {
-      "group": {
+      "_group": {
         "domains": ["demo.com"],
         "basePath": "/apis"
       },
       "service-a": {
-        "rules": "$ref:some-rules"
+        "_rules": "$ref:some-rules"
       },
       "service-b": {
-        "rules": "$ref:some-other-rules"
+        "_rules": "$ref:some-other-rules"
       }
     }
   }
@@ -105,21 +105,21 @@ You can either use approach described in <<Multiple API Groups config>> or use g
 {
   "apiGroups": {
     "demo": {
-      "group": {
+      "_group": {
         "basePath": "/apis"
       },
       "some-grouping": {
         "service-a": {
-          "group": {
+          "_group": {
             "basePath": "/service-a"
           },
-          "rules": "$ref:some-rules"
+          "_rules": "$ref:some-rules"
         },
         "service-b": {
-          "group": {
+          "_group": {
             "basePath": "/service-b"
           },
-          "rules": "$ref:some-other-rules"
+          "_rules": "$ref:some-other-rules"
         }
       }
     }
@@ -132,10 +132,10 @@ In this example, we have 2 leaf nodes:
 ```json
 {
   "service-a": {
-    "group": {
+    "_group": {
       "basePath": "/service-a"
     },
-    "rules": "$ref:some-rules"
+    "_rules": "$ref:some-rules"
   }
 }
 ```
@@ -145,10 +145,10 @@ and
 ```json
 {
   "service-b": {
-    "group": {
+    "_group": {
       "basePath": "/service-b"
     },
-    "rules": "$ref:some-other-rules"
+    "_rules": "$ref:some-other-rules"
   }
 }
 ```
