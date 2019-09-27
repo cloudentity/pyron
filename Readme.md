@@ -524,7 +524,6 @@ Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-
 | CONSUL_ACL_TOKEN                 | ACL token (optional)                                        |
 | CONSUL_DC                        | data center (optional)                                      |
 | CONSUL_TIMEOUT                   | connection timeout (optional)                               |
-| CONSUL_SD_SCAN_PERIOD            | nodes refresh period in milliseconds (default 2000)         |
 | REGISTER_SD_SERVICE_NAME         | Edge service name                                           |
 | REGISTER_SD_HOST                 | host of Edge node                                           |
 | REGISTER_SD_PORT                 | port of Edge node                                           |
