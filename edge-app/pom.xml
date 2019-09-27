@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.cloudentity.edge</groupId>
     <artifactId>edge-root</artifactId>
-    <version>1.27.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>edge-app</artifactId>
@@ -104,14 +104,12 @@
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-test-scala</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-test</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-server-test</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
