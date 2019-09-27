@@ -521,11 +521,11 @@ Environment variables map to `HttpServerOptions` ([see docs](https://vertx.io/do
 
 Examples:
 
-| Name                                            | HttpServerOptions attribute |
-|-------------------------------------------------|-----------------------------|
-| HTTP_SERVER_PORT                                | port                        |
-| HTTP_SERVER_ACCEPT_BACKLOG                      | acceptBacklog               |
-| HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS       | pemTrustOptions.certPaths   |
+| Name                                            | HttpServerOptions attribute                                                                                                                                |
+|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| HTTP_SERVER_PORT                                | [port](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpServerOptions.html#setPort-int-)                                                               |
+| HTTP_SERVER_ACCEPT_BACKLOG                      | [acceptBacklog](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpServerOptions.html#setAcceptBacklog-int-)                                            |
+| HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS       | [pemTrustOptions.certPaths](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpServerOptions.html#setPemTrustOptions-io.vertx.core.net.PemTrustOptions-) |
 
 In order to set `HttpServerOptions` attribute with collection value use JSON syntax, e.g. `HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS=["/etc/ssl/cert.pem"]`.
 
