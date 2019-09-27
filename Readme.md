@@ -22,6 +22,7 @@
   * [Service discovery](#service-discovery)
     * Consul service discovery
     * Configuration-based service discovery
+    * Self-registration in Consul
   * [HTTP server](#http-server)
   * [HTTP clients](#http-clients)
     * Default retries and timeout
@@ -508,6 +509,32 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
 | location.port      | port of target node                  |
 | location.ssl       | SSL of target node                   |
 | location.root      | root path of target node (optional ) |
+
+#### Self-registration in Consul
+
+Edge node can register itself in Consul for service discovery.
+
+Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-registrar/consul"]`.
+
+| Env variable                 | Description                                                 |
+|------------------------------|-------------------------------------------------------------|
+| CONSUL_HOST                  | host                                                        |
+| CONSUL_POST                  | port (default 8500)                                         |
+| CONSUL_SSL                   | SSL enabled (default false)                                 |
+| CONSUL_ACL_TOKEN             | ACL token (optional)                                        |
+| CONSUL_DC                    | data center (optional)                                      |
+| CONSUL_TIMEOUT               | connection timeout (optional)                               |
+| CONSUL_SD_SCAN_PERIOD        | nodes refresh period in milliseconds (default 2000)         |
+| SELF_SD_SERVICE_NAME         | Edge service name                                           |
+| SELF_SD_HOST                 | host of Edge node                                           |
+| SELF_SD_PORT                 | port of Edge node                                           |
+| SELF_SD_SSL                  | ssl of Edge node (default false)                            |
+| SELF_SD_HEALTHCHECK_HOST     | host of Edge health-check (default SELF_SD_SERVICE_NAME)    |
+| SELF_SD_HEALTHCHECK_PORT     | port of Edge health-check (default SELF_SD_HEALTHCHECK_PORT)|
+| SELF_SD_HEALTHCHECK_PATH     | path of Edge health-check (default /alive)                  |
+| SELF_SD_HEALTHCHECK_INTERVAL | health-check interval (default 3s)                          |
+| SELF_SD_DEREGISTER_AFTER     | node de-register period when health-check fails (600s)      |
+| SELF_SD_TAGS                 | extra node tags (default [])                                |
 
 ### HTTP server
 
