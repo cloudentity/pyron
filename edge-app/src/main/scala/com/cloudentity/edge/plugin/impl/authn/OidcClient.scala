@@ -121,9 +121,10 @@ object OidcHttpClient {
         log.error(s"Received ${response.statusCode()} status code when calling: ${response.request().absoluteURI()}")
         promise.complete(-\/(InvalidStatusCodeError()))
       }
-    }).exceptionHandler(error =>
-      promise.complete(-\/(OidClientHttpError(error))))
-      .end()
+    }).exceptionHandler { ex =>
+      log.error(s"Exception when calling '${endpointPath}' ", ex)
+      promise.complete(-\/(OidClientHttpError(ex)))
+    }.end()
     promise.future()
   }
 
