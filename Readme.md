@@ -85,7 +85,7 @@ At startup Edge needs `meta-config.json` file describing where to read configura
 }
 ```
 
-Above `meta-config.json` defines two configuration stores: `config.json` from classpath and `rules.json` from file system.
+Above `meta-config.json` defines two configuration stores: `config.json` from JAR classpath and `rules.json` from file system.
 
 `config.json` defines minimal configuration required to run Edge. Routing rules are provided in `rules.json`.
 
