@@ -513,7 +513,7 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
 
 Edge uses Vertx HTTP server implementation. Use environment variables to configure `io.vertx.core.http.HttpServerOptions`.
 
-Environment variables map to `HttpServerOptions` attributes in following way:
+Environment variables map to `HttpServerOptions` ([see docs](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpServerOptions.html)) attributes in following way:
 
 * All variable names start with `HTTP_SERVER_` prefix,
 * HttpServerOptions attribute name is capitalized and camel-case is replaced with underscore `_`.
@@ -533,7 +533,7 @@ In order to set `HttpServerOptions` attribute with collection value use JSON syn
 
 Edge uses Vertx implementation of HTTP clients. Use environment variables to configure default `io.vertx.core.http.HttpClientOptions`.
 
-Environment variables map to `HttpClientOptions` attributes the same way they map to `HttpServerOptions`.
+Environment variables map to `HttpClientOptions` ([see docs](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpClientOptions.html)) attributes the same way they map to `HttpServerOptions`.
 
 You can configure HTTP client for each target service separately (note that default attributes from environment variables are ignored in this case):
 
