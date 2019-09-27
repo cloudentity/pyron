@@ -1,0 +1,1 @@
+Aggregated dependency licenses you can find [here](edge-epp/src/main/resources/licenses.xml).
