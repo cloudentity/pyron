@@ -388,12 +388,15 @@ Token header sent by the client should have following format: `Bearer {access-to
 
 Configure OIDC server:
 
-| Env variable          | Description                                    |
-|-----------------------|------------------------------------------------|
-| OIDC_HOST             | OIDC server host                               |
-| OIDC_PORT             | OIDC server port                               |
-| OIDC_SSL              | SSL enabled (default false)                    |
-| OIDC_JWK_ENDPOINT     | public server JSON Web Key endpoint            |
+| Env variable                         | Description                                                                                                                                  |
+|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| OIDC_HOST                            | OIDC server host                                                                                                                             |
+| OIDC_PORT                            | OIDC server port                                                                                                                             |
+| OIDC_SSL                             | SSL enabled (default false)                                                                                                                  |
+| OIDC_JWK_ENDPOINT                    | public server JSON Web Key endpoint path                                                                                                     |
+| OIDC_TRUST_ALL                       | trust all OIDC SSL certificates (optional, default false)                                                                                                                   |
+| OIDC_PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
+| OIDC_PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html)) |
 
 ### API Groups
 
