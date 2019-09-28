@@ -34,7 +34,7 @@
 
 ## Build
 
-Edge depends on bitbucket.org/syntegritynet/open-vertx-tools. Clone it and build with `mvn install` command first.
+Edge depends on https://bitbucket.org/syntegritynet/open-vertx-tools. Clone it and build with `mvn install` command first.
 
 ### Standalone
 
@@ -79,7 +79,7 @@ At startup Edge needs `meta-config.json` file describing where to read configura
       "type": "file",
       "format": "json",
       "config": {
-        "path": "path/to/rules.json"
+        "path": "rules.json"
       }
     }
   ]
@@ -116,7 +116,7 @@ If an endpoint attribute is missing then it is taken from `default`.
 | Attribute          | Description                                    |
 |--------------------|------------------------------------------------|
 | targetHost         | host of target service (upstream)              |
-| targetPort         | port of target service (upstream)              |
+| targetPort         | port of target service                         |
 
 #### Method and path pattern
 
@@ -317,9 +317,9 @@ To preserve the prefix set `dropPrefix` to false.
 }
 ```
 
-| Attribute            | Description                                                            |
-|----------------------|------------------------------------------------------------------------|
-| preserveHostHeader   | proxy Host header sent by the client to target service (default false) |
+| Attribute            | Description                                                                        |
+|----------------------|------------------------------------------------------------------------------------|
+| preserveHostHeader   | should send to target service Host header received from the client (default false) |
 
 By default Edge sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
 
