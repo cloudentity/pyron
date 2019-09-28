@@ -8,6 +8,7 @@ import com.cloudentity.edge.domain.flow.{PathParams, RewritePath, TargetService}
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpHeaders, HttpMethod}
 import org.apache.http.client.utils.URLEncodedUtils
+import scala.collection.JavaConverters._
 
 import scala.util.Try
 
@@ -20,37 +21,61 @@ case class TargetRequest(
 ) {
   def modifyHeaders(f: Headers => Headers) = this.copy(headers = f(headers))
 
-  def withBearerAuth(token: String) = this.copy(
+  def withBearerAuth(token: String): TargetRequest = this.copy(
     headers = this.headers.set(HttpHeaders.AUTHORIZATION.toString, s"Bearer $token")
   )
 
-  def withHeader(name: String, value: String) =
+  def withHeader(name: String, value: String): TargetRequest =
     this.copy(headers = this.headers.set(name, value))
 
-  def withHeaders(values: Map[String, String]) =
+  def withHeaders(values: Map[String, String]): TargetRequest =
     this.copy(headers =
       values.foldLeft(this.headers) { case (hs, (key, value)) =>
         hs.set(key, value)
       }
     )
 
-  def withHeaderValues(values: Map[String, List[String]]) =
+  def withHeaders(values: java.util.Map[String, String]): TargetRequest =
+    withHeaders(values.asScala.toMap)
+
+  def withHeaderValues(values: Map[String, List[String]]): TargetRequest =
     this.copy(headers =
       values.foldLeft(this.headers) { case (hs, (key, values)) =>
         hs.setValues(key, values)
       }
     )
 
-  def removeHeader(name: String) =
+  def withHeaderValues(values: java.util.Map[String, java.util.List[String]]): TargetRequest =
+    withHeaderValues(values.asScala.toMap.mapValues(_.asScala.toList))
+
+  def removeHeader(name: String): TargetRequest =
     this.copy(headers = this.headers.remove(name))
 
-  def modifyPathParams(f: PathParams => PathParams) =
+  def withMethod(method: HttpMethod): TargetRequest =
+    this.copy(method = method)
+
+  def withTargetService(service: TargetService): TargetRequest =
+    this.copy(service = service)
+
+  def withUri(uri: RelativeUri): TargetRequest =
+    this.copy(uri = uri)
+
+  def withBody(bodyOpt: Option[Buffer]): TargetRequest =
+    this.copy(bodyOpt = bodyOpt)
+
+  def modifyPathParams(f: PathParams => PathParams): TargetRequest =
     this.copy(uri = uri.modifyPathParams(f))
 }
 
 case class ApiResponse(statusCode: Int, body: Buffer, headers: Headers, cookies: Option[ClientCookies] = None) {
   def modifyHeaders(f: Headers => Headers): ApiResponse =
     this.copy(headers = f(headers))
+
+  def withStatusCode(statusCode: Int): ApiResponse =
+    this.copy(statusCode = statusCode)
+
+  def withBody(body: Buffer): ApiResponse =
+    this.copy(body = body)
 }
 
 case class OriginalRequest(method: HttpMethod, path: UriPath, queryParams: QueryParams, headers: Headers, bodyOpt: Option[Buffer], pathParams: PathParams)

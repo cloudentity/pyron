@@ -86,6 +86,12 @@ object TargetService {
       case ProxyServiceRule => readStaticService(req)
     }
 
+  def Static(host: TargetHost, port: Int, ssl: Boolean): TargetService =
+    StaticService(host, port, ssl)
+
+  def discoverable(serviceName: ServiceClientName): TargetService =
+    DiscoverableService(serviceName)
+
   private def readStaticService(req: HttpServerRequest): StaticService = {
     if (Option(req.host()).isDefined) {
       Option(req.host()).get.split(":").toList match {
