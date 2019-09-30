@@ -12,8 +12,8 @@ The Edge provides a number of tools to manage, transform, and secure your API en
 * *Header Management*: Support for X-Forwarded-For, X-TrueClient-IP, Proxy VIA headers
 * *OpenTracing support*: provides visibility into cross service communication and instrumentation enabling  the distributed tracing.
 * *API Specification Support*: Configuration for the published API endpoints can be configured via any combination of following methods
-** JSON or YAML files
-** Consul Key-Value pair database ◦ Cloudentity Application Service
+  * JSON or YAML files
+  * Consul Key-Value pair database ◦ Cloudentity Application Service
 
 #### Authentication
 As an enforcement point, the Edge integrates with a wide range of protocols and tools to ensure the request is not only authorized but also secure in context of a wide range of risk and business rules.
