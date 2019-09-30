@@ -5,6 +5,16 @@
     "rules": "$ref:rules",
     "alivePath": "$env:?ALIVE_PATH:string"
   },
+  "registry:request-plugins": {
+    "config": {
+      "defaultDeploymentStrategy": "cpu"
+    }
+  },
+  "registry:response-plugins": {
+    "config": {
+      "defaultDeploymentStrategy": "cpu"
+    }
+  },
   "registry:system": {
   }
 }
