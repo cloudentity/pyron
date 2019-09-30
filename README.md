@@ -185,7 +185,7 @@ If an endpoint attribute is missing then it is taken from `default`.
 ```
 
 | Attribute          | Description                                    |
-|--------------------|------------------------------------------------|
+|:-------------------|:-----------------------------------------------|
 | targetHost         | host of target service (upstream)              |
 | targetPort         | port of target service                         |
 
@@ -211,7 +211,7 @@ If an endpoint attribute is missing then it is taken from `default`.
 ```
 
 | Attribute          | Description                                                                            |
-|--------------------|----------------------------------------------------------------------------------------|
+|:-------------------|:---------------------------------------------------------------------------------------|
 | method             | HTTP method                                                                            |
 | pathPattern        | regular expression extended with support of path-param placeholders, e.g. `/user/{id}` |
 
@@ -245,7 +245,7 @@ Expose multiple endpoints using the same path prefix.
 ```
 
 | Attribute          | Description                                                   |
-|--------------------|---------------------------------------------------------------|
+|:-------------------|:--------------------------------------------------------------|
 | pathPrefix         | prefix appended to `pathPattern` (optional)                   |
 | dropPrefix         | drop path prefix when calling target service (default true)   |
 
@@ -275,7 +275,7 @@ To preserve the prefix set `dropPrefix` to false.
 ```
 
 | Attribute          | Description                                                                            |
-|--------------------|----------------------------------------------------------------------------------------|
+|:-------------------|:---------------------------------------------------------------------------------------|
 | rewritePath        | path that Edge calls target service at (optional, `pathPattern` used if this not set)  |
 
 #### Rewrite method
@@ -301,7 +301,7 @@ To preserve the prefix set `dropPrefix` to false.
 ```
 
 | Attribute          | Description                                                                            |
-|--------------------|----------------------------------------------------------------------------------------|
+|:-------------------|:---------------------------------------------------------------------------------------|
 | rewriteMethod      | method that Edge calls target service with (optional, `method` used if this not set)   |
 
 #### Response timeout
@@ -329,7 +329,7 @@ To preserve the prefix set `dropPrefix` to false.
 ```
 
 | Attribute            | Description                                                                            |
-|----------------------|----------------------------------------------------------------------------------------|
+|:---------------------|:---------------------------------------------------------------------------------------|
 | call.responseTimeout | target service response timeout in milliseconds                                        |
 
 #### Retry
@@ -360,7 +360,7 @@ To preserve the prefix set `dropPrefix` to false.
 ```
 
 | Attribute                | Description                                                                            |
-|--------------------------|----------------------------------------------------------------------------------------|
+|:-------------------------|:---------------------------------------------------------------------------------------|
 | call.retries             | maximum number of retries                                                              |
 | call.failureHttpCodes    | response codes that Edge retries if returned by target service                         |
 | call.retryFailedResponse | retry call if target service returned code in `failureHttpCodes` (default true)        |
@@ -389,7 +389,7 @@ To preserve the prefix set `dropPrefix` to false.
 ```
 
 | Attribute            | Description                                                                        |
-|----------------------|------------------------------------------------------------------------------------|
+|:---------------------|:-----------------------------------------------------------------------------------|
 | preserveHostHeader   | should send to target service Host header received from the client (default false) |
 
 By default Edge sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
@@ -425,7 +425,7 @@ Enable `authn` plugin by adding `plugin/authn` to `MODULES` environment variable
 Configuration attributes:
 
 | Name               | Description                                                                     |
-|--------------------|---------------------------------------------------------------------------------|
+|:-------------------|:--------------------------------------------------------------------------------|
 | `methods`          | list of enabled authentication methods                                          |
 | `entities`         | required entities set in authentication context                                 |
 | `tokenHeader`      | name of the HTTP header containing authentication token (default Authorization) |
@@ -460,7 +460,7 @@ Token header sent by the client should have following format: `Bearer {access-to
 Configure OIDC server:
 
 | Env variable                         | Description                                                                                                                                  |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+|:-------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------|
 | OIDC_HOST                            | OIDC server host                                                                                                                             |
 | OIDC_PORT                            | OIDC server port                                                                                                                             |
 | OIDC_SSL                             | SSL enabled (default false)                                                                                                                  |
@@ -503,7 +503,7 @@ further processing.
 ```
 
 | Attribute                | Description                                        |
-|--------------------------|----------------------------------------------------|
+|:-------------------------|:---------------------------------------------------|
 | _group.domains           | Host headers Edge matches the API group for        |
 | _group.basePath          | base path Edge matches the API group at (optional) |
 
@@ -531,7 +531,7 @@ Edge Gateway provides support for service discovery utilizing Consul client or c
 ```
 
 | Attribute          | Description                                         |
-|--------------------|-----------------------------------------------------|
+|:-------------------|:----------------------------------------------------|
 | targetService      | service-name of target nodes from service-discovery |
 
 Edge calls nodes with `targetService` service-name using round-robin load balancer.
@@ -543,7 +543,7 @@ Below you will find instructions how to enable service discovery provider.
 Add `sd-provider/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-provider/consul"]`.
 
 | Env variable          | Description                                         |
-|-----------------------|-----------------------------------------------------|
+|:----------------------|:----------------------------------------------------|
 | CONSUL_HOST           | host                                                |
 | CONSUL_POST           | port (default 8500)                                 |
 | CONSUL_SSL            | SSL enabled (default false)                         |
@@ -577,7 +577,7 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
 ```
 
 | Attribute          | Description                          |
-|--------------------|--------------------------------------|
+|:-------------------|:-------------------------------------|
 | name               | service-name of target node          |
 | location.host      | host of target node                  |
 | location.port      | port of target node                  |
@@ -591,7 +591,7 @@ Edge node can register itself in Consul for service discovery.
 Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-registrar/consul"]`.
 
 | Env variable                     | Description                                                    |
-|----------------------------------|----------------------------------------------------------------|
+|:---------------------------------|:---------------------------------------------------------------|
 | CONSUL_HOST                      | host                                                           |
 | CONSUL_POST                      | port (default 8500)                                            |
 | CONSUL_SSL                       | SSL enabled (default false)                                    |
@@ -622,7 +622,7 @@ Environment variables map to `HttpServerOptions` ([see docs](https://vertx.io/do
 Examples:
 
 | Name                                            | HttpServerOptions attribute                                                                                                                                |
-|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|:------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | HTTP_SERVER_PORT                                | [port](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpServerOptions.html#setPort-int-)                                                               |
 | HTTP_SERVER_ACCEPT_BACKLOG                      | [acceptBacklog](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpServerOptions.html#setAcceptBacklog-int-)                                            |
 | HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS       | [pemTrustOptions.certPaths](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpServerOptions.html#setPemTrustOptions-io.vertx.core.net.PemTrustOptions-) |
@@ -690,7 +690,7 @@ Configure `io.vertx.circuitbreaker.CircuitBreakerOptions` in `circuitBreaker` ob
 Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/jaeger"]`.
 
 | Env variable                      | Description                                    |
-|-----------------------------------|------------------------------------------------|
+|:----------------------------------|:-----------------------------------------------|
 | TRACING_SERVICE_NAME              | Edge name in Jaeger                            |
 | JAEGER_AGENT_HOST                 | Jaeger agent host                              |
 | JAEGER_AGENT_PORT                 | Jaeger agent port (optional)                   |
@@ -733,7 +733,7 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 ```
 
 | Attribute             | Description                                                                                               |
-|-----------------------|-----------------------------------------------------------------------------------------------------------|
+|:----------------------|:----------------------------------------------------------------------------------------------------------|
 | timestamp             | request time in ISO 8601 format                                                                           |
 | trueClientIp          | IP address of original client, either X-Real-IP header or first IP from X-Forwarded-For or remote address |
 | remoteIp              | IP of the direct client                                                                                   |
@@ -753,7 +753,7 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 #### Authentication context and request headers in access log
 
 | Env variable                            | Description                                         | Example                                             |
-|-----------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
+|:----------------------------------------|:----------------------------------------------------|:----------------------------------------------------|
 | ACCESS_LOG_SLF4J_DISABLED               | disable SLF4J access logging (default false)        | true                                                |
 | ACCESS_LOG_AUTHN_CTX                    | authentication context set in access log (optional) | {"method":"authnMethod","user":"sub","uid":"email"} |
 | ACCESS_LOG_REQUEST_HEADERS_ALL          | log all headers flag (default false)                | true                                                |
@@ -772,7 +772,7 @@ Edge applies following request headers modification (unless disabled):
 * Set True Client IP header to upstream service
 
 | Env variable                      | Description                                            |
-|-----------------------------------|--------------------------------------------------------|
+|:----------------------------------|:-------------------------------------------------------|
 | PROXY_HEADERS_ENABLED             | enable proxy headers (default true)                    |
 | INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
 | OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
@@ -795,14 +795,14 @@ Edge Gateway proxies requests to mocked target service without applying any plug
 With no target service delay and 30 connections:
 
 | Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
-|--------------|-------------|---------------|-------------|-------------|
+|:-------------|:------------|:--------------|:------------|:------------|
 | 22692        | 1.42 ms     | 1.25 ms       | 2.34 ms     | 5.18 ms     |
 
 
 With 50 ms target service delay and 200 connections:
 
 | Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
-|--------------|-------------|---------------|-------------|-------------|
+|:-------------|:------------|:--------------|:------------|:------------|
 | 3787         | 2.69 ms     | 2.62 ms       | 5.70 ms     | 13.23 ms    |
 
 NOTE: due to 50 ms delay the target service can't respond to more than 4000 requests/s.
@@ -814,13 +814,13 @@ Edge Gateway signs each request with empty JWT with symmetric key, puts the sign
 With no target service delay and 30 connections:
 
 | Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
-|--------------|-------------|---------------|-------------|-------------|
+|:-------------|:------------|:--------------|:------------|:------------|
 | 12415        | 2.65 ms     | 3.33 ms       | 3.62 ms     | 9.27 ms     |
 
 With 50 ms target service delay and 200 connections:
 
 | Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
-|--------------|-------------|---------------|-------------|-------------|
+|:-------------|:------------|:--------------|:------------|:------------|
 | 3233         | 10.41 ms    | 9.28 ms       | 24.01 ms    | 40.85 ms    |
 
 NOTE: due to 50 ms delay the target service can't respond to more than 4000 requests/s.
