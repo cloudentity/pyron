@@ -792,7 +792,6 @@ We have put Edge Gateway under load to see how performant it is.
 ### Setup
 
 * The test was run on a machine with i7-8550U CPU @ 1.80GHz
-* Access logs were constructed, but not persisted
 * `wrk` is used to generate load, single test takes 30s and uses 10 threads
 * target service is mocked with server responding to 140k req/sec with ~20 bytes response body
 
