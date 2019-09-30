@@ -8,7 +8,7 @@
         "headers": {
           "_nullify": true,
           "all": "$env:?ACCESS_LOG_REQUEST_HEADERS_ALL:boolean",
-          "whitelist": "$env:?ACCESS_LOG_REQUEST_HEADERS_WHITELIST:string",
+          "whitelist": "$env:?ACCESS_LOG_REQUEST_HEADERS_WHITELIST:array",
           "maskFields": {
             "_nullify": true,
             "partial": "$env:?ACCESS_LOG_REQUEST_HEADERS_MASK_PARTIAL:array",
