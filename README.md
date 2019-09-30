@@ -1,3 +1,58 @@
+## Introduction
+
+Cloudentity Edge Gateway provides the dividing line between the Client (such as a Browser, Mobile App, Other 3rd party services) and the trusted mesh of services, microservices or applications that are deployed on prem, cloud, hybrid or multi-cloud environments.
+
+### Supported functionality
+
+#### API endpoints publishing
+The Edge provides a number of tools to manage, transform, and secure your API endpoints:
+
+* *Routing*: API calls can be routed to different targets based on te URI path pattern
+* *Filtering and Orchestration*: API endpoint level URI rewrite and the ability to assign filters/plugins both at the service level as well as the individual API endpoint level can be defined by the URI pattern matching
+* *Header Management*: Support for X-Forwarded-For, X-TrueClient-IP, Proxy VIA headers
+* *OpenTracing support*: provides visibility into cross service communication and instrumentation enabling  the distributed tracing.
+* *API Specification Support*: Configuration for the published API endpoints can be configured via any combination of following methods
+** JSON or YAML files
+** Consul Key-Value pair database ◦ Cloudentity Application Service
+
+#### Authentication
+As an enforcement point, the Edge integrates with a wide range of protocols and tools to ensure the request is not only authorized but also secure in context of a wide range of risk and business rules.
+
+* *Protocol Support*
+  * OAuth2.0 JWT Access Token
+  * Anonymous authentication – ability to track public request
+* *Fallback Authorization*: Edge has the ability to chain multiple authentication methods together and define the fallback scenarios Request authorization.
+
+#### Integration with protected services
+
+The Cloudentity Edge is able to normalize your API by transforming and managing requests to the services it protects.
+
+* *Service Management*: Ability to configure/discover the location of the protected services via
+  * Consul Service discovery
+  * Static Service registry – provided as part of the Edge API configuration (external KV or JSON flat file). Support for multiple nodes per service name to allow client based load balancing.
+* *Service Target Management*: Direct target host configuration as part of the API publishing rules
+* *Load Balancing*: When using Consul or Fixed Service registry, Edge is able to provide load balancing to targets
+* *SMART HTTP client functionality*
+  * API Request retries
+  * Request failover
+  * Circuit Breaker support
+  * Open Tracing support
+  * Per service connection pooling support
+  * Per service connection keep alive support
+* *URI Rewrite*: Provide backwards compatibility or consistency by rewriting the URI proxied to protected service
+
+#### API protection
+
+Cloudentity Edge also provides broad API protection with a number of standard features.
+
+* URI structure enforcement and whitelisting
+* Detailed access logs including the authentication context
+* Ability to configured desired TLS version and ciphers
+
+#### Extensibility
+
+Edge also allows for custom plugins which can be used to integrate legacy or proprietary systems as part of the standard data flow and enforcement. This could include custom callouts, complex business logic, or custom protocol/security management.
+
 ## Contents
 
 * [Build](#build)
@@ -35,6 +90,11 @@
 ## Build
 
 Edge depends on https://bitbucket.org/syntegritynet/open-vertx-tools. Clone it and build with `mvn install` command first.
+
+#### Prerequisites
+
+* Maven 3+
+* JDK 1.8+
 
 ### Standalone
 
