@@ -88,6 +88,7 @@ Edge also allows for custom plugins which can be used to integrate legacy or pro
   * [Access log](#access-log)
     * Authentication context and request headers in access log
   * [Proxy headers](#proxy-headers)
+* [Performance](#performance)
 
 ## Build
 
@@ -775,5 +776,54 @@ Edge applies following request headers modification (unless disabled):
 | PROXY_HEADERS_ENABLED             | enable proxy headers (default true)                    |
 | INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
 | OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
+
+## Performance
+
+We have put Edge Gateway under load to see how performant it is.
+
+### Setup
+
+* The test was run on a machine with i7-8550U CPU @ 1.80GHz
+* Access logs were constructed, but not persisted
+* `wrk` is used to generate load, single test takes 30s and uses 10 threads
+* target service is mocked with server responding to 140k req/sec with ~20 bytes response body
+
+### Proxying request with no plugins
+
+Edge Gateway proxies requests to mocked target service without applying any plugins.
+
+With no target service delay and 30 connections:
+
+| Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
+|--------------|-------------|---------------|-------------|-------------|
+| 22692        | 1.42 ms     | 1.25 ms       | 2.34 ms     | 5.18 ms     |
+
+
+With 50 ms target service delay and 200 connections:
+
+| Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
+|--------------|-------------|---------------|-------------|-------------|
+| 3787         | 2.69 ms     | 2.62 ms       | 5.70 ms     | 13.23 ms    |
+
+NOTE: due to 50 ms delay the target service can't respond to more than 4000 requests/s.
+
+### Proxying request with applying JWT-signing plugin
+
+Edge Gateway signs each request with empty JWT with symmetric key, puts the signature in the header and proxies request to mocked target service.
+
+With no target service delay and 30 connections:
+
+| Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
+|--------------|-------------|---------------|-------------|-------------|
+| 12415        | 2.65 ms     | 3.33 ms       | 3.62 ms     | 9.27 ms     |
+
+With 50 ms target service delay and 200 connections:
+
+| Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
+|--------------|-------------|---------------|-------------|-------------|
+| 3233         | 10.41 ms    | 9.28 ms       | 24.01 ms    | 40.85 ms    |
+
+NOTE: due to 50 ms delay the target service can't respond to more than 4000 requests/s.
+
 
 [cloudentity-logo]: docs/logo-3x.png
