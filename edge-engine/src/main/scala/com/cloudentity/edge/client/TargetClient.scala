@@ -187,7 +187,7 @@ class TargetClient(tracing: TracingManager, fixedClient: HttpClient, clients: Ma
       override def close(): core.Future[Unit] = core.Future.succeededFuture(())
     }
 
-    makeSmartCall(tracing, request, callOpts, Some(sd), new SmartHttpClientImpl(sd, fixedClient, 0, None, _ => CallOk, _ => false))
+    makeSmartCall(tracing, request, callOpts, Some(sd), new SmartHttpClientImpl(sd, fixedClient, 0, None, _ => CallOk, _ => true))
   }
 
   def copyHeadersWithoutContentLength(from: TargetRequest, to: HttpClientRequest): Unit = {
