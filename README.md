@@ -733,7 +733,7 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 
 | Attribute             | Description                                                                                               |
 |-----------------------|-----------------------------------------------------------------------------------------------------------|
-| datetime              | request time in ISO 8601 format                                                                           |
+| timestamp             | request time in ISO 8601 format                                                                           |
 | trueClientIp          | IP address of original client, either X-Real-IP header or first IP from X-Forwarded-For or remote address |
 | remoteIp              | IP of the direct client                                                                                   |
 | authnCtx              | authentication context                                                                                    |
