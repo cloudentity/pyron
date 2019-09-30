@@ -1,3 +1,5 @@
+[![][cloudentity-logo]](cloudentity-url)
+
 ## Introduction
 
 Cloudentity Edge Gateway provides the dividing line between the Client (such as a Browser, Mobile App, Other 3rd party services) and the trusted mesh of services, microservices or applications that are deployed on prem, cloud, hybrid or multi-cloud environments.
@@ -98,11 +100,15 @@ Edge depends on https://bitbucket.org/syntegritynet/open-vertx-tools. Clone it a
 
 ### Standalone
 
-`mvn clean install -Pbuild-standalone`
+```
+$ mvn clean install -Pbuild-standalone
+```
 
 ### Docker
 
-`mvn clean install -Pbuild-latest-docker`
+```
+$ mvn clean install -Pbuild-latest-docker
+```
 
 ## Run
 
@@ -112,13 +118,17 @@ By default Edge runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change
 
 ### Standalone
 
-* `cd run/standalone`
-* `./run.sh`
+```
+$ cd run/standalone
+$ ./run.sh
+```
 
 ### Docker
 
-* `cd run/docker`
-* `docker run --env-file envs --network="host" --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest`
+```
+$ cd run/docker
+$ docker run --env-file envs --network="host" --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest
+```
 
 ## Configure
 
@@ -765,3 +775,6 @@ Edge applies following request headers modification (unless disabled):
 | PROXY_HEADERS_ENABLED             | enable proxy headers (default true)                    |
 | INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
 | OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
+
+[cloudentity-url]: https://cloudentity.com/
+[cloudentity-logo]: docs/logo-3x.png
