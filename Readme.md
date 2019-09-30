@@ -58,7 +58,7 @@ By default Edge runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change
 ### Docker
 
 * `cd run/docker`
-* `docker run --env-file envs -p 8080:8080 --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest`
+* `docker run --env-file envs --network="host" --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest`
 
 ## Configure
 
