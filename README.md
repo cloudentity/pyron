@@ -635,6 +635,14 @@ Edge uses Vertx implementation of HTTP clients. Use environment variables to con
 
 Environment variables map to `HttpClientOptions` ([see docs](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpClientOptions.html)) attributes the same way they map to `HttpServerOptions`.
 
+
+| Name                                            | HttpClientOptions attribute                                                                                                                                |
+|:------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| HTTP_CLIENT_MAX_POOL_SIZE                       | [maxPoolSize](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpClientOptions.html#setMaxPoolSize-int-)                                                 |
+| HTTP_CLIENT_KEEP_ALIVE                          | [keepAlive](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpClientOptions.html#setKeepAlive-boolean-)                                                 |
+| HTTP_CLIENT_TRUST_ALL                           | [trustAll](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpClientOptions.html#setTrustAll-boolean-)                                                   |
+
+
 You can configure HTTP client for each target service separately (note that default attributes from environment variables are ignored in this case):
 
 ```json
