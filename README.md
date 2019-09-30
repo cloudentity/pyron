@@ -1,4 +1,4 @@
-[![][cloudentity-logo]](cloudentity-url)
+[![][cloudentity-logo]](https://cloudentity.com)
 
 ## Introduction
 
@@ -776,5 +776,4 @@ Edge applies following request headers modification (unless disabled):
 | INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
 | OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
 
-[cloudentity-url]: https://cloudentity.com/
 [cloudentity-logo]: docs/logo-3x.png
