@@ -13,6 +13,7 @@
     <module>edge-plugin</module>
     <module>edge-engine</module>
     <module>edge-app</module>
+    <module>sample-scala-plugins</module>
   </modules>
 
   <properties>

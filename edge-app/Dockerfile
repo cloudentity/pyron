@@ -2,7 +2,7 @@ FROM docker.artifactory.syntegrity.com/jre:1.6
 
 USER root
 
-RUN mkdir /.vertx /file-uploads && chown -R cloudentity:cloudentity /.vertx /file-uploads
+RUN mkdir /.vertx /file-uploads /plugin-jars && chown -R cloudentity:cloudentity /.vertx /file-uploads /plugin-jars
 
 USER cloudentity
 

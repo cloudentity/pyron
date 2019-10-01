@@ -1,0 +1,8 @@
+{
+  "registry:request-plugins": {
+    "dummy-rate-limit": {
+      "main": "com.cloudentity.edge.sample.scala.DummyRateLimitPluginVerticle",
+      "deploymentStrategy": "simple"
+    }
+  }
+}
