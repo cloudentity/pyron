@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 import scalaz.{-\/, \/-}
 
 import scala.concurrent.Future
+import scala.util.Try
 
 trait RulesStore {
   @VertxEndpoint
@@ -48,7 +49,7 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
     getConfService.getConf(appConfPath).toScala().flatMap(decodeAppConf)
 
   private def decodeAppConf(conf: JsonObject): Future[AppConf] = {
-    decode[AppConf](conf.toString) match {
+    Try(Conf.decodeUnsafe(conf.toString)).toEither match {
       case Right(appConf) => Future.successful(appConf)
       case Left(err)      => Future.failed(err)
     }
