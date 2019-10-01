@@ -79,7 +79,7 @@ Edge also allows for custom plugins which can be used to integrate legacy or pro
 <a id="build"></a>
 ## Build
 
-Edge depends on https://bitbucket.org/syntegritynet/open-vertx-tools. Clone it and build with `mvn install` command first.
+Edge depends on https://github.com/Cloudentity/vertx-tools. Clone it and build with `mvn install` command first.
 
 #### Prerequisites
 
