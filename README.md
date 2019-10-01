@@ -86,7 +86,7 @@ Edge depends on https://bitbucket.org/syntegritynet/open-vertx-tools. Clone it a
 * Maven 3+
 * JDK 1.8+
 
-<a id="build-standalone" />
+<a id="build-standalone"></a>
 ### Standalone
 
 ```
@@ -107,7 +107,7 @@ Configure routing rules in `rules.json` and environment variables in `envs` file
 
 By default Edge runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change it.
 
-<a id="run-standalone" />
+<a id="run-standalone"></a>
 ### Standalone
 
 ```
