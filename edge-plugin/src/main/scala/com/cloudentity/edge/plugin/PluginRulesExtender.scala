@@ -14,7 +14,7 @@ trait PluginRulesExtendService {
 }
 
 trait PluginRulesExtender[C] extends PluginRulesExtendService {
-  protected def getFromCacheOrDecode(conf: Json): Result[C]
+  protected def getFromCacheOrDecode(conf: Json): Either[Throwable, C]
   def extendRules(rule: RuleConfWithPlugins, conf: C): ExtendRules = ExtendRules()
 
   def handleExtendRules(rule: RuleConfWithPlugins, pluginConf: Json): Future[ExtendRules] =

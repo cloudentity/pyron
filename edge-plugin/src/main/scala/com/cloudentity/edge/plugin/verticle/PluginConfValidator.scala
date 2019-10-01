@@ -1,19 +1,25 @@
 package com.cloudentity.edge.plugin.verticle
 
-import io.circe.{Decoder, Json}
+import com.cloudentity.edge.domain.flow.PluginName
+import io.circe.{CursorOp, Decoder, Json}
 import com.cloudentity.edge.plugin.config._
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
+import io.vertx.core.impl.NoStackTraceThrowable
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 trait PluginConfValidator[C] {
+  def name: PluginName
   def log: LoggingWithTracing
   def validate(conf: C): ValidateResponse
   def confDecoder: Decoder[C]
 
-  def decodeRuleConf(rawRuleConf: Json): Decoder.Result[C] =
+  def decodeRuleConf(rawRuleConf: Json): Either[Throwable, C] =
     confDecoder.decodeJson(rawRuleConf)
+      .left.map { failure =>
+        new NoStackTraceThrowable(s"Could not decode '${name.value}' plugin rule configuration '${rawRuleConf.noSpaces}': invalid 'conf${CursorOp.opsToPath(failure.history)}'")
+      }
 
   def handleValidate(req: ValidateRequest): Future[ValidateResponse] =
     Future.successful {
@@ -27,7 +33,7 @@ trait PluginConfValidator[C] {
           }
         case Left(err) =>
           log.error(TracingContext.dummy(), s"Could not decode plugin configuration: ${req.conf}", err)
-          ValidateError(err.message)
+          ValidateError(err.getMessage)
       }
     }
 }

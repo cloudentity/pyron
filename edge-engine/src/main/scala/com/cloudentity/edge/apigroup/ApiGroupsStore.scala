@@ -12,11 +12,13 @@ import io.vertx.core.{Future => VxFuture}
 import org.slf4j.LoggerFactory
 import io.circe.generic.auto._
 import com.cloudentity.edge.apigroup.ApiGroupReader.ApiGroupConfUnresolved
+import com.cloudentity.edge.config.Conf
 import com.cloudentity.edge.domain.flow.GroupMatchCriteria
 import com.cloudentity.edge.rule.RulesStore
 import com.cloudentity.tools.vertx.json.JsonExtractor
 
 import scala.concurrent.Future
+import scala.util.Try
 
 trait ApiGroupsStore {
   @VertxEndpoint
@@ -64,7 +66,7 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
     getConfService.getConf(appConfPath).toScala().map(Option(_).getOrElse(new JsonObject)).flatMap(decodeAppConf)
 
   private def decodeAppConf(conf: JsonObject): Future[AppConf] = {
-    decode[AppConf](conf.toString) match {
+    Try(Conf.decodeUnsafe(conf.toString)).toEither match {
       case Right(appConf) => Future.successful(appConf)
       case Left(err)      => Future.failed(err)
     }

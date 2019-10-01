@@ -69,7 +69,7 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
       case Left(ex) =>
         log.error(tracingCtx, s"Error on decoding plugin config for ${req}", ex)
         tracingCtx.logException(ex)
-        Future.successful(request.ApplyError(ex.message))
+        Future.successful(request.ApplyError(ex.getMessage))
     }
   }
 
@@ -101,7 +101,7 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
       case Left(ex) =>
         log.error(tracingCtx, s"Error on decoding plugin config for ${resp}", ex)
         tracingCtx.logException(ex)
-        Future.successful(response.ApplyError(ex.message))
+        Future.successful(response.ApplyError(ex.getMessage))
     }
   }
 
@@ -123,7 +123,7 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
     }
   }
 
-  protected def getFromCacheOrDecode(conf: Json): Result[C] =
+  protected def getFromCacheOrDecode(conf: Json): Either[Throwable, C] =
     confCache.get(conf) match {
       case Some(ruleConf) => Right(ruleConf)
       case None           => decodeRuleConf(conf)
