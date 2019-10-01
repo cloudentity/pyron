@@ -16,7 +16,7 @@ case class VerifyApiKeyConf(apiKey: String)
 case class VerifyApiKeyVerticleConf(invalidKeyStatusCode: Int, invalidKeyBody: Option[Json], defaultApiKeyHeader: String)
 
 class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf] with ConfigDecoder {
-  override def name: PluginName = PluginName("verify-apikey")
+  override def name: PluginName = PluginName("sample-verify-apikey")
 
   var verticleConf: VerifyApiKeyVerticleConf = _
   var unauthorizedResponse: ApiResponse = _

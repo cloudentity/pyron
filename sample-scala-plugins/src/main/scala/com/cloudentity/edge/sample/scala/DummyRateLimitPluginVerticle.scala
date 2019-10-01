@@ -15,7 +15,7 @@ import scala.concurrent.Future
 case class RateLimitConf(maxConcurrent: Int, counter: String)
 
 class DummyRateLimitPluginVerticle extends RequestResponsePluginVerticle[RateLimitConf] with ConfigDecoder {
-  override def name: PluginName = PluginName("dummy-rate-limit")
+  override def name: PluginName = PluginName("sample-rate-limit")
 
   var counters: Map[String, Int] = Map().withDefaultValue(0)
 
