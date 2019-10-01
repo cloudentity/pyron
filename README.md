@@ -23,23 +23,23 @@
 <a id="intro"></a>
 ## Introduction
 
-Cloudentity Edge Gateway provides the dividing line between the Client (such as a Browser, Mobile App, Other 3rd party services) and the trusted mesh of services, microservices or applications that are deployed on prem, cloud, hybrid or multi-cloud environments.
+Cloudentity Edge Gateway provides the dividing line between the Client (such as a Browser, Mobile App, Other 3rd party services) and the trusted mesh of services, microservices or applications that are deployed on-prem, cloud, hybrid or multi-cloud environments.
 
 ### Supported functionality
 
 #### API endpoints publishing
 The Edge provides a number of tools to manage, transform, and secure your API endpoints:
 
-* *Routing*: API calls can be routed to different targets based on te URI path pattern
+* *Routing*: API calls can be routed to different targets based on the URI path pattern
 * *Filtering and Orchestration*: API endpoint level URI rewrite and the ability to assign filters/plugins both at the service level as well as the individual API endpoint level can be defined by the URI pattern matching
 * *Header Management*: Support for X-Forwarded-For, X-TrueClient-IP, Proxy VIA headers
-* *OpenTracing support*: provides visibility into cross service communication and instrumentation enabling  the distributed tracing.
+* *OpenTracing support*: provides visibility into cross-service communication and instrumentation enabling the distributed tracing.
 * *API Specification Support*: Configuration for the published API endpoints can be configured via any combination of following methods
   * JSON or YAML files
   * Consul Key-Value pair database ◦ Cloudentity Application Service
 
 #### Authentication
-As an enforcement point, the Edge integrates with a wide range of protocols and tools to ensure the request is not only authorized but also secure in context of a wide range of risk and business rules.
+As an enforcement point, Edge integrates with a wide range of protocols and tools to ensure the request is not only authorized but also secure in the context of a wide range of risk and business rules.
 
 * *Protocol Support*
   * OAuth2.0 JWT Access Token
@@ -48,21 +48,21 @@ As an enforcement point, the Edge integrates with a wide range of protocols and 
 
 #### Integration with protected services
 
-The Cloudentity Edge is able to normalize your API by transforming and managing requests to the services it protects.
+The Cloudentity Edge can normalize your API by transforming and managing requests to the services it protects.
 
 * *Service Management*: Ability to configure/discover the location of the protected services via
   * Consul Service discovery
   * Static Service registry – provided as part of the Edge API configuration (external KV or JSON flat file). Support for multiple nodes per service name to allow client based load balancing.
 * *Service Target Management*: Direct target host configuration as part of the API publishing rules
-* *Load Balancing*: When using Consul or Fixed Service registry, Edge is able to provide load balancing to targets
+* *Load Balancing*: When using Consul or Fixed Service registry, Edge can provide load balancing to targets
 * *SMART HTTP client functionality*
   * API Request retries
   * Request failover
   * Circuit Breaker support
   * Open Tracing support
   * Per service connection pooling support
-  * Per service connection keep alive support
-* *URI Rewrite*: Provide backwards compatibility or consistency by rewriting the URI proxied to protected service
+  * Per service connection keep-alive support
+* *URI Rewrite*: Provide backward compatibility or consistency by rewriting the URI proxied to protected service
 
 #### API protection
 
@@ -178,16 +178,16 @@ At startup Edge needs `meta-config.json` file describing where to read configura
 }
 ```
 
-Above `meta-config.json` defines two configuration stores: `config.json` from JAR classpath and `rules.json` from file system.
+Above `meta-config.json` defines two configuration stores: `config.json` from JAR classpath and `rules.json` from the file system.
 
 `config.json` defines minimal configuration required to run Edge. Routing rules are provided in `rules.json`.
 
-You will find `meta-config.json` in run folder (`run/standalone` or `run/docker`).
+You will find `meta-config.json` in the run folder (`run/standalone` or `run/docker`).
 
 <a id="config-routing"></a>
 ### Routing rules
 
-Rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in `default` object.
+The rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in the `default` object.
 If an endpoint attribute is missing then it is taken from `default`.
 
 ```json
@@ -251,7 +251,7 @@ Expose multiple endpoints using the same path prefix.
         "targetHost": "example.com",
         "targetPort": 8000,
         "pathPrefix": "/example",
-        "dropPrefix": true // default
+        "dropPrefix": true
       },
       "endpoints": [
         {
@@ -273,7 +273,7 @@ Expose multiple endpoints using the same path prefix.
 | pathPrefix         | prefix appended to `pathPattern` (optional)                   |
 | dropPrefix         | drop path prefix when calling target service (default true)   |
 
-By default the prefix is dropped when calling target service. I.e. endpoint exposed at `POST /example/user` is proxied to `POST /user` in target service.
+By default, the prefix is dropped when calling target service. I.e. endpoint exposed at `POST /example/user` is proxied to `POST /user` in target service.
 To preserve the prefix set `dropPrefix` to false.
 
 <a id="config-rewrite-path"></a>
@@ -377,8 +377,8 @@ To preserve the prefix set `dropPrefix` to false.
           "call": {
             "retries": 1,
             "failureHttpCodes": [500],
-            "retryFailedResponse": true, // default
-            "retryOnException": true     // default
+            "retryFailedResponse": true,
+            "retryOnException": true
           }
         }
       ]
@@ -421,7 +421,7 @@ To preserve the prefix set `dropPrefix` to false.
 |:---------------------|:-----------------------------------------------------------------------------------|
 | preserveHostHeader   | should send to target service Host header received from the client (default false) |
 
-By default Edge sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
+By default, Edge sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
 
 <a id="config-plugins"></a>
 ### Plugins
@@ -502,8 +502,8 @@ Configure OIDC server:
 <a id="config-api-groups"></a>
 ### API Groups
 
-API Groups allow to separate routing rule sets. You can define a set of rules and expose it on a domain and/or base-path.
-Incoming request is initially matched against domain and base-path and then dispatched to appropriate set for
+API Groups allow separating routing rule sets. You can define a set of rules and expose it on a domain and/or base-path.
+An incoming request is initially matched against domain and base-path and then dispatched to appropriate set for
 further processing.
 
 ```json
@@ -566,9 +566,9 @@ Edge Gateway provides support for service discovery utilizing Consul client or c
 |:-------------------|:----------------------------------------------------|
 | targetService      | service-name of target nodes from service-discovery |
 
-Edge calls nodes with `targetService` service-name using round-robin load balancer.
+Edge calls nodes with `targetService` service-name using a round-robin load balancer.
 
-Below you will find instructions how to enable service discovery provider.
+Below you will find instructions on how to enable service discovery providers.
 
 #### Consul service discovery
 
@@ -601,7 +601,7 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
         "host": "example.com",
         "port": 8000,
         "ssl": false,
-        "root": "/v1" // default ''
+        "root": "/v1"
       }
     }
   ]
@@ -614,7 +614,7 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
 | location.host      | host of target node                  |
 | location.port      | port of target node                  |
 | location.ssl       | SSL of target node                   |
-| location.root      | root path of target node (optional ) |
+| location.root      | root path of target node (optional)  |
 
 #### Self-registration in Consul
 
@@ -794,7 +794,7 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 | request.headers       | request headers                                                                                           |
 | timeMs                | time from receiving the request body till writing full response body                                      |
 
-#### Authentication context and request headers in access log
+#### Authentication context and request headers in the access log
 
 | Env variable                            | Description                                         | Example                                             |
 |:----------------------------------------|:----------------------------------------------------|:----------------------------------------------------|
@@ -812,7 +812,7 @@ Edge applies following request headers modification (unless disabled):
 
 * Add `remote-address.host` to `X-Forwarded-For` headers
 * Add `remote-address.protocol` to `X-Forwarded-Proto` headers
-* If `Host` header is set add it to `X-Forwarded-Host` headers
+* If `Host` header is set then add it to `X-Forwarded-Host` headers
 * If True Client IP header is missing then set it to first `X-Forwarded-For` value
 * Set True Client IP header to upstream service
 
@@ -830,7 +830,7 @@ We have put Edge Gateway under load to see how performant it is.
 ### Setup
 
 * The test was run on a machine with i7-8550U CPU @ 1.80GHz
-* `wrk` is used to generate load, single test takes 30s and uses 10 threads
+* `wrk` is used to generate load, a single test takes 30s and uses 10 threads
 * target service is mocked with server responding to 140k req/sec with ~20 bytes response body
 
 ### Proxying request with no plugins
