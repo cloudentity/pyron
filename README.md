@@ -127,13 +127,13 @@ $ docker run --env-file envs --network="host" --name edge -v "$(pwd)"/configs:/c
 
 * [Meta config](#config-meta)
 * [Routing rules](#config-routing)
-  * Method and path pattern
-  * Path prefix
-  * Rewrite path
-  * Rewrite method
-  * Response timeout
-  * Retry
-  * Preserve Host header
+  * [Method and path pattern](#config-)
+  * [Path prefix](#config-path-prefix)
+  * [Rewrite path](#config-rewrite-path)
+  * [Rewrite method](#config-rewrite-method)
+  * [Response timeout](#config-response-timeout)
+  * [Retry](#config-retry)
+  * [Preserve Host header](#config-preserve-host--header)
 * [Plugins](#config-plugins)
   * Authentication
     * OAuth 2 with JWT access token
@@ -211,6 +211,7 @@ If an endpoint attribute is missing then it is taken from `default`.
 | targetHost         | host of target service (upstream)              |
 | targetPort         | port of target service                         |
 
+<a id="config-method-path-pattern"></a>
 #### Method and path pattern
 
 ```json
@@ -237,6 +238,7 @@ If an endpoint attribute is missing then it is taken from `default`.
 | method             | HTTP method                                                                            |
 | pathPattern        | regular expression extended with support of path-param placeholders, e.g. `/user/{id}` |
 
+<a id="config-path-prefix"></a>
 #### Path prefix
 
 Expose multiple endpoints using the same path prefix.
@@ -274,6 +276,7 @@ Expose multiple endpoints using the same path prefix.
 By default the prefix is dropped when calling target service. I.e. endpoint exposed at `POST /example/user` is proxied to `POST /user` in target service.
 To preserve the prefix set `dropPrefix` to false.
 
+<a id="config-rewrite-path"></a>
 #### Rewrite path
 
 ```json
@@ -300,6 +303,7 @@ To preserve the prefix set `dropPrefix` to false.
 |:-------------------|:---------------------------------------------------------------------------------------|
 | rewritePath        | path that Edge calls target service at (optional, `pathPattern` used if this not set)  |
 
+<a id="config-rewrite-method"></a>
 #### Rewrite method
 
 ```json
@@ -326,6 +330,7 @@ To preserve the prefix set `dropPrefix` to false.
 |:-------------------|:---------------------------------------------------------------------------------------|
 | rewriteMethod      | method that Edge calls target service with (optional, `method` used if this not set)   |
 
+<a id="config-response-timeout"></a>
 #### Response timeout
 
 ```json
@@ -354,6 +359,7 @@ To preserve the prefix set `dropPrefix` to false.
 |:---------------------|:---------------------------------------------------------------------------------------|
 | call.responseTimeout | target service response timeout in milliseconds                                        |
 
+<a id="config-retry"></a>
 #### Retry
 
 ```json
@@ -388,6 +394,7 @@ To preserve the prefix set `dropPrefix` to false.
 | call.retryFailedResponse | retry call if target service returned code in `failureHttpCodes` (default true)        |
 | call.retryOnException    | retry call on HTTP client exception, e.g. response timeout (default true)              |
 
+<a id="config-preserve-host-header"></a>
 #### Preserve Host header
 
 ```json
