@@ -1,5 +1,26 @@
 [![][cloudentity-logo]](https://cloudentity.com)
 
+* [Introduction](#intro)
+* [Build](#build)
+  * [Standalone](#build-standalone)
+  * [Docker](#build-docker)
+* [Run](#run)
+  * [Standalone](#run-standalone)
+  * [Docker](#run-docker)
+* [Configure](#config)
+  * [Meta config](#config-meta)
+  * [Routing rules](#config-routing)
+  * [Plugins](#config-plugins)
+  * [API groups](#config-api-groups)
+  * [Service discovery](#config-service-discovery)
+  * [HTTP server](#config-http-server)
+  * [HTTP clients](#config-http-clients)
+  * [Open tracing](#config-open-tracing)
+  * [Access log](#config-access-log)
+  * [Proxy headers](#config-proxy-headers)
+* [Performance](#performance)
+
+<a id="intro"></a>
 ## Introduction
 
 Cloudentity Edge Gateway provides the dividing line between the Client (such as a Browser, Mobile App, Other 3rd party services) and the trusted mesh of services, microservices or applications that are deployed on prem, cloud, hybrid or multi-cloud environments.
@@ -55,41 +76,7 @@ Cloudentity Edge also provides broad API protection with a number of standard fe
 
 Edge also allows for custom plugins which can be used to integrate legacy or proprietary systems as part of the standard data flow and enforcement. This could include custom callouts, complex business logic, or custom protocol/security management.
 
-## Contents
-
-* [Build](#build)
-  * [Standalone](#build-standalone)
-  * [Docker](#build-docker)
-* [Run](#run)
-  * [Standalone](#run-standalone)
-  * [Docker](#run-docker)
-* [Configure](#configure)
-  * [Routing rules](#routing)
-    * Method and path pattern
-    * Path prefix
-    * Rewrite path
-    * Rewrite method
-    * Response timeout
-    * Retry
-    * Preserve Host header
-  * [Plugins](#plugins)
-    * Authentication
-      * OAuth 2 with JWT access token
-  * [API groups](#api-groups)
-  * [Service discovery](#service-discovery)
-    * Consul service discovery
-    * Configuration-based service discovery
-    * Self-registration in Consul
-  * [HTTP server](#http-server)
-  * [HTTP clients](#http-clients)
-    * Default retries and timeout
-    * Circuit breaker
-  * [Open tracing](#open-tracing)
-  * [Access log](#access-log)
-    * Authentication context and request headers in access log
-  * [Proxy headers](#proxy-headers)
-* [Performance](#performance)
-
+<a id="build"></a>
 ## Build
 
 Edge depends on https://bitbucket.org/syntegritynet/open-vertx-tools. Clone it and build with `mvn install` command first.
@@ -99,31 +86,35 @@ Edge depends on https://bitbucket.org/syntegritynet/open-vertx-tools. Clone it a
 * Maven 3+
 * JDK 1.8+
 
+<a id="build-standalone" />
 ### Standalone
 
 ```
 $ mvn clean install -Pbuild-standalone
 ```
 
+<a id="build-docker"></a>
 ### Docker
 
 ```
 $ mvn clean install -Pbuild-latest-docker
 ```
 
+<a id="run"></a>
 ## Run
 
 Configure routing rules in `rules.json` and environment variables in `envs` file if required.
 
 By default Edge runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change it.
 
+<a id="run-standalone" />
 ### Standalone
 
 ```
 $ cd run/standalone
 $ ./run.sh
 ```
-
+<a id="run-docker"></a>
 ### Docker
 
 ```
@@ -131,7 +122,37 @@ $ cd run/docker
 $ docker run --env-file envs --network="host" --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest
 ```
 
+<a id="config"></a>
 ## Configure
+
+* [Meta config](#config-meta)
+* [Routing rules](#config-routing)
+  * Method and path pattern
+  * Path prefix
+  * Rewrite path
+  * Rewrite method
+  * Response timeout
+  * Retry
+  * Preserve Host header
+* [Plugins](#config-plugins)
+  * Authentication
+    * OAuth 2 with JWT access token
+* [API groups](#config-api-groups)
+* [Service discovery](#config-service-discovery)
+  * Consul service discovery
+  * Configuration-based service discovery
+  * Self-registration in Consul
+* [HTTP server](#config-http-server)
+* [HTTP clients](#config-http-clients)
+  * Default retries and timeout
+  * Circuit breaker
+* [Open tracing](#config-open-tracing)
+* [Access log](#config-access-log)
+  * Authentication context and request headers in access log
+* [Proxy headers](#config-proxy-headers)
+
+<a id="config-meta"></a>
+### Meta config
 
 At startup Edge needs `meta-config.json` file describing where to read configuration from.
 
@@ -163,6 +184,7 @@ Above `meta-config.json` defines two configuration stores: `config.json` from JA
 
 You will find `meta-config.json` in run folder (`run/standalone` or `run/docker`).
 
+<a id="config-routing"></a>
 ### Routing rules
 
 Rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in `default` object.
@@ -394,6 +416,7 @@ To preserve the prefix set `dropPrefix` to false.
 
 By default Edge sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
 
+<a id="config-plugins"></a>
 ### Plugins
 
 #### Authentication
@@ -469,6 +492,7 @@ Configure OIDC server:
 | OIDC_PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
 | OIDC_PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html)) |
 
+<a id="config-api-groups"></a>
 ### API Groups
 
 API Groups allow to separate routing rule sets. You can define a set of rules and expose it on a domain and/or base-path.
@@ -511,6 +535,7 @@ Note `_` (underscore) in `_rules` and `_group`.
 
 [API Groups configuration details.](docs/api-groups.md)
 
+<a id="config-service-discovery"></a>
 ### Service discovery
 
 Edge Gateway provides support for service discovery utilizing Consul client or configuration object.
@@ -609,6 +634,7 @@ Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-
 | REGISTER_SD_DEREGISTER_AFTER     | node de-register period when health-check fails (default 600s) |
 | REGISTER_SD_TAGS                 | extra node tags (default [])                                   |
 
+<a id="config-http-server"></a>
 ### HTTP server
 
 Edge uses Vertx HTTP server implementation. Use environment variables to configure `io.vertx.core.http.HttpServerOptions`.
@@ -629,6 +655,7 @@ Examples:
 
 In order to set `HttpServerOptions` attribute with collection value use JSON syntax, e.g. `HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS=["/etc/ssl/cert.pem"]`.
 
+<a id="config-http-clients"></a>
 ### HTTP clients
 
 Edge uses Vertx implementation of HTTP clients. Use environment variables to configure default `io.vertx.core.http.HttpClientOptions`.
@@ -693,6 +720,7 @@ Configure `io.vertx.circuitbreaker.CircuitBreakerOptions` in `circuitBreaker` ob
 }
 ```
 
+<a id="config-open-tracing"></a>
 ### Open tracing
 
 Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/jaeger"]`.
@@ -705,7 +733,8 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 | JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port (optional)            |
 | TRACING_FORMAT                    | tracing format - cloudentity, jaeger, zipkin   |
 
-### Access logs
+<a id="config-access-log"></a>
+### Access log
 
 ```json
 {
@@ -769,6 +798,7 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 | ACCESS_LOG_REQUEST_HEADERS_MASK_WHOLE   | mask whole logged header (optional)                 | ["Authorization"]                                   |
 | ACCESS_LOG_REQUEST_HEADERS_MASK_PARTIAL | mask logged header partially (optional)             | ["Token"]                                           |
 
+<a id="config-proxy-headers"></a>
 ### Proxy headers
 
 Edge applies following request headers modification (unless disabled):
@@ -785,6 +815,7 @@ Edge applies following request headers modification (unless disabled):
 | INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
 | OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
 
+<a id="config-performance"></a>
 ## Performance
 
 We have put Edge Gateway under load to see how performant it is.
