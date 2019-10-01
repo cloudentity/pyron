@@ -12,16 +12,16 @@ import io.vertx.core.buffer.Buffer
 
 import scala.concurrent.Future
 
-case class RateLimitConf(maxConcurrent: Int, counter: String)
+case class ConcurrentRateLimitConf(maxConcurrent: Int, counter: String)
 
-class DummyRateLimitPluginVerticle extends RequestResponsePluginVerticle[RateLimitConf] with ConfigDecoder {
-  override def name: PluginName = PluginName("sample-rate-limit")
+class ConcurrentRateLimitPluginVerticle extends RequestResponsePluginVerticle[ConcurrentRateLimitConf] with ConfigDecoder {
+  override def name: PluginName = PluginName("sample-concurrent-rate-limit")
 
   var counters: Map[String, Int] = Map().withDefaultValue(0)
 
   private val shouldDecreaseCounterKey = s"${name.value}.should-decrease-counter"
 
-  override def apply(requestCtx: RequestCtx, conf: RateLimitConf): Future[RequestCtx] =
+  override def apply(requestCtx: RequestCtx, conf: ConcurrentRateLimitConf): Future[RequestCtx] =
     Future.successful {
       if (counters(conf.counter) >= conf.maxConcurrent) {
         requestCtx.abort(ApiResponse(429, Buffer.buffer(), Headers()))
@@ -32,7 +32,7 @@ class DummyRateLimitPluginVerticle extends RequestResponsePluginVerticle[RateLim
       }
     }
 
-  override def apply(responseCtx: ResponseCtx, conf: RateLimitConf): Future[ResponseCtx] =
+  override def apply(responseCtx: ResponseCtx, conf: ConcurrentRateLimitConf): Future[ResponseCtx] =
     Future.successful {
       val shouldDecreaseCounter = responseCtx.properties.get(shouldDecreaseCounterKey).getOrElse(false)
       if (shouldDecreaseCounter) {
@@ -42,12 +42,12 @@ class DummyRateLimitPluginVerticle extends RequestResponsePluginVerticle[RateLim
       responseCtx
     }
 
-  override def validate(conf: RateLimitConf): ValidateResponse =
+  override def validate(conf: ConcurrentRateLimitConf): ValidateResponse =
     if (conf.counter.nonEmpty && conf.maxConcurrent >= 0) {
       ValidateOk
     } else {
       ValidateFailure("'counter' must not be empty and 'maxConcurrent' must be non-negative")
     }
 
-  override def confDecoder: Decoder[RateLimitConf] = deriveDecoder
+  override def confDecoder: Decoder[ConcurrentRateLimitConf] = deriveDecoder
 }
