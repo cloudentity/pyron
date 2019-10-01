@@ -25,15 +25,19 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
 
   implicit var ec: VertxExecutionContext = null
 
+  var appConf: AppConf = _
+
   override def beforeServerStart(): VxFuture[_] = {
     ec = VertxExecutionContext(vertx.getOrCreateContext())
 
     for {
-      _ <- deployRegistries()
-      _ <- deployVerticle(new RulesStoreVerticle)
-      _ <- deployVerticle(new ApiGroupsStoreVerticle)
-      _ <- deployVerticle(new RoutingCtxVerticle)
-      _ <- deployRegistryIfConfigured("open-api")
+      appConf <- readAppConf
+      _        = this.appConf = appConf
+      _       <- deployRegistries()
+      _       <- deployVerticle(new RulesStoreVerticle)
+      _       <- deployVerticle(new ApiGroupsStoreVerticle)
+      _       <- deployVerticle(new RoutingCtxVerticle)
+      _       <- deployRegistryIfConfigured("open-api")
     } yield ()
     }.toJava()
 
@@ -47,7 +51,6 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
 
   override def deployServer(): VxFuture[String] = {
     for {
-      appConf    <- readAppConf
       _          <- deployApiHandlers(appConf)
       _          <- deployServerInstances(appConf, getServerVerticlesNum(appConf), Future.successful(""))
       _          <- deployAdminServerIfConfigured()
@@ -59,7 +62,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
     for {
       confJsonOpt <- createConfigClient.getConf("app").toScala.map(Option.apply)
       confJson    <- confJsonOpt.map(Future.successful).getOrElse(Future.failed(new Exception("'app' configuration attribute missing")))
-    } yield Conf(confJson.toString)
+    } yield Conf.decodeUnsafe(confJson.toString)
   }
 
   private def createConfigClient: ConfService =

@@ -49,7 +49,7 @@ Cloudentity Edge also provides broad API protection with a number of standard fe
 
 * URI structure enforcement and whitelisting
 * Detailed access logs including the authentication context
-* Ability to configured desired TLS version and ciphers
+* Ability to configure desired TLS version and ciphers
 
 #### Extensibility
 

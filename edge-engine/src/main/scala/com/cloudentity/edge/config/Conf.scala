@@ -32,10 +32,16 @@ object Conf {
     enabled: Option[Boolean]
   )
 
-  def apply(json: String): AppConf = { // TODO throws exception
+  def decodeUnsafe(json: String): AppConf = {
     decode[AppConf](json) match {
       case Right(conf) => conf
-      case Left(err)   => throw new RuntimeException(err.getMessage)
+      case Left(err) =>
+        err match {
+          case ParsingFailure(msg, ex) =>
+            throw new Exception(s"Could not parse configuration: $msg", ex)
+          case DecodingFailure(msg, ops) =>
+            throw new Exception(s"Could not decode configuration attribute at 'app${CursorOp.opsToPath(ops)}': $msg")
+        }
     }
   }
 }
