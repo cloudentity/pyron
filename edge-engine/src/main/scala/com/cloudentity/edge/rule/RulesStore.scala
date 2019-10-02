@@ -1,84 +1,48 @@
 package com.cloudentity.edge.rule
 
-import java.util.Optional
-
-import io.circe.{Json, Printer}
-import io.circe.generic.auto._
-import io.circe.parser._
-import io.circe.syntax._
-import com.cloudentity.edge.config.Conf
-import com.cloudentity.edge.config.Conf.AppConf
 import com.cloudentity.edge.domain.Codecs._
-import com.cloudentity.edge.domain.flow.{PluginConf, PluginName, ProxyServiceRule}
+import com.cloudentity.edge.domain.flow.{PluginConf, PluginName}
 import com.cloudentity.edge.domain.rule.RuleConfWithPlugins
 import com.cloudentity.edge.plugin.{ExtendRules, PluginRulesExtendService, PluginService}
+import com.cloudentity.edge.rule.RuleBuilder.InvalidPluginConf
+import com.cloudentity.edge.rule.RuleConfValidator.PluginConfValidationError
 import com.cloudentity.edge.rule.RulesConfReader.{RuleDecodingError, RuleErrors}
 import com.cloudentity.tools.vertx.bus.VertxEndpoint
-import com.cloudentity.tools.vertx.json.JsonExtractor
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
-import io.vertx.core.json.{JsonArray, JsonObject}
+import io.circe.generic.auto._
+import io.circe.syntax._
+import io.circe.{Json, Printer}
 import io.vertx.core.{Future => VxFuture}
 import org.slf4j.LoggerFactory
 import scalaz.{-\/, \/-}
 
 import scala.concurrent.Future
-import scala.util.Try
 
 trait RulesStore {
   @VertxEndpoint
-  def getDeprecatedRules(): VxFuture[List[Rule]]
+  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json]): VxFuture[(List[Rule], List[RuleConfWithPlugins])]
 
   @VertxEndpoint
-  def getDeprecatedRuleConfsWithPlugins(): VxFuture[List[RuleConfWithPlugins]]
-
-  @VertxEndpoint
-  def decodeRules(tag: String, rules: Json): VxFuture[(List[Rule], List[RuleConfWithPlugins])]
-
-  @VertxEndpoint
-  def decodeRuleConfsWithPlugins(tag: String, rules: Json): VxFuture[List[RuleConfWithPlugins]]
+  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json]): VxFuture[List[RuleConfWithPlugins]]
 }
 
 case class RulesChanged(rules: List[Rule], confs: List[RuleConfWithPlugins])
 
+case class RulesDecodingSuccess(rules: List[Rule], confs: List[RuleConfWithPlugins])
+case class RulesDecodingError(errors: List[PluginConfValidationError])
+
 class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
   val log = LoggerFactory.getLogger(this.getClass)
 
-  private val appConfPath = "app"
+  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json]): VxFuture[(List[Rule], List[RuleConfWithPlugins])] =
+    decodeRuleConfsWithPlugins(tag, rules, proxyRulesOpt).toScala.flatMap(confs => buildRules(confs).map((_, confs))).toJava
 
-  private def getAppConf(): Future[AppConf] =
-    getConfService.getConf(appConfPath).toScala().flatMap(decodeAppConf)
-
-  private def decodeAppConf(conf: JsonObject): Future[AppConf] = {
-    Try(Conf.decodeUnsafe(conf.toString)).toEither match {
-      case Right(appConf) => Future.successful(appConf)
-      case Left(err)      => Future.failed(err)
-    }
-  }
-
-  def decodeRules(tag: String, rules: Json): VxFuture[(List[Rule], List[RuleConfWithPlugins])] =
-    decodeRuleConfsWithPlugins(tag, rules).toScala.flatMap(confs => buildRules(confs).map((_, confs))).toJava
-
-  def decodeRuleConfsWithPlugins(tag: String, rules: Json): VxFuture[List[RuleConfWithPlugins]] =
-    readRuleConfs(Some(rules), tag).toJava()
-
-  override def getDeprecatedRules(): VxFuture[List[Rule]] =
-    getAppConf().flatMap(readRules).map(_._1).toJava()
-
-  override def getDeprecatedRuleConfsWithPlugins(): VxFuture[List[RuleConfWithPlugins]] =
-    getAppConf().flatMap(readRules).map(_._2).toJava()
-
-  private def extractRulesConfig(root: JsonObject): AnyRef =
-    JsonExtractor.resolve(root, appConfPath).flatMap(appConf => Optional.ofNullable(appConf.getValue(Conf.rulesKey))).orElse(new JsonArray())
-
-  private def readRuleConfs(rulesConfOpt: Option[Json], tag: String, failOnEmpty: Boolean = true): Future[List[RuleConfWithPlugins]] = {
-    rulesConfOpt match {
-      case Some(rulesConf) => readRulesConf(rulesConf, tag)
-      case None            => failOnEmpty match {
-        case true => Future.failed(new Exception(s"Could not find ${tag} rules configuration at '" + appConfPath + "'"))
-        case false => Future.successful(Nil)
-      }
-    }
-  }
+  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json]): VxFuture[List[RuleConfWithPlugins]] = {
+    for {
+      rules <- readRulesConf(rules, tag)
+      proxyRules <- proxyRulesOpt.map(readRulesConf(_, tag + "_proxy")).getOrElse(Future.successful(Nil))
+    } yield (rules ::: proxyRules)
+    }.toJava
 
   private def readRulesConf(rulesConf: Json, tag: String): Future[List[RuleConfWithPlugins]] =
     RulesConfReader.read(rulesConf.toString) match {
@@ -139,37 +103,17 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
       case \/-(rules) =>
         Future.successful(rules)
       case -\/(errors) =>
-        log.error(s"Failure on plugin config validations: $errors") // TODO fix error format
-        Future.failed(new Exception(s"Failure on plugin config validations"))
+        val printer = Printer.noSpaces.copy(dropNullValues = true)
+        val validationFailureMsgs = errors.map { case (r, e) =>
+          val invalidConfs = e.stream.foldLeft(List[InvalidPluginConf]()) { case (l, el) => el :: l }
+
+          s"""
+             |  {
+             |    "ruleConf": ${r.asJson.pretty(printer)},
+             |    "errors": ${invalidConfs.map("       " + _.asJson.noSpaces).mkString("[\n", "\n", "\n    ]")}
+             |  }
+             |""".stripMargin
+        }
+        Future.failed(new Exception(s"Failure on plugin config validations: ${validationFailureMsgs.mkString("[", "\n  ", "]")}"))
     }
-
-  private def readRules(conf: AppConf): Future[(List[Rule], List[RuleConfWithPlugins])] = {
-    for {
-      standardRules <- readStandardRules(conf)
-      defaultProxyRules <- readDefaultProxyRules(conf)
-      onlyProxyRules <- filterOnlyProxyRules(defaultProxyRules)
-    } yield standardRules ++ onlyProxyRules
-  }.flatMap { confs =>
-    buildRules(confs).map((_, confs))
-  }
-
-  private def readStandardRules(conf: AppConf) = readRuleConfs(conf.rules, "standard")
-
-  private def readDefaultProxyRules(conf: AppConf) = {
-    if (conf.defaultProxyRulesEnabled.getOrElse(false)) {
-      log.debug("Default proxy rules are enabled. Reading config.")
-      readRuleConfs(conf.defaultProxyRules, "default", false)
-    } else {
-      log.debug("Default proxy rules are disabled. Skipping.")
-      Future.successful(Nil)
-    }
-  }
-
-  private def filterOnlyProxyRules(rules: List[RuleConfWithPlugins]) = {
-    if (rules.find(r => r.rule.target != ProxyServiceRule).isDefined) {
-      log.warn(s"There are non proxy rules in default proxy rules configuration. Ignoring them")
-    }
-    Future.successful(rules.filter(r => r.rule.target == ProxyServiceRule))
-  }
-
 }

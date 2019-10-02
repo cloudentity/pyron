@@ -1,6 +1,5 @@
 package com.cloudentity.edge.plugin
 
-import io.circe.Decoder.Result
 import io.circe.Json
 import com.cloudentity.edge.domain.rule.RuleConfWithPlugins
 import com.cloudentity.tools.vertx.bus.VertxEndpoint
