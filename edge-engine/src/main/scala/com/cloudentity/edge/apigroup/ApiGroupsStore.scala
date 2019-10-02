@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory
 import io.circe.generic.auto._
 import com.cloudentity.edge.apigroup.ApiGroupReader.ApiGroupConfUnresolved
 import com.cloudentity.edge.config.Conf
-import com.cloudentity.edge.domain.flow.GroupMatchCriteria
 import com.cloudentity.edge.rule.RulesStore
 import com.cloudentity.tools.vertx.json.JsonExtractor
+import io.circe.Json
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -111,26 +111,22 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
     VertxBus.publish(vertx.eventBus(), ApiGroupsStoreVerticle.PUBLISH_API_GROUPS_ADDRESS, ApiGroupsChanged(apiGroups, confs))
 
   private def buildApiGroupsOrFallbackToRules(conf: AppConf, apiGroupsConfOpt: Option[JsonObject]): Future[(List[ApiGroup], List[ApiGroupConf])] = {
-    (conf.rules, conf.defaultProxyRules, apiGroupsConfOpt) match {
-      case (None, None, None) =>
+    val defaultProxyRulesOpt = conf.defaultProxyRules.filter(_ => conf.defaultProxyRulesEnabled.getOrElse(false))
+
+    (conf.rules, apiGroupsConfOpt) match {
+      case (None, None) =>
         Future.failed(new Exception("API Groups and Rules are missing. Configure 'apiGroups' or 'rules'."))
-      case (_, _, None) =>
+      case (Some(rules), None) =>
         // fallback for deprecated Rules configuration
-        for {
-          rules <- rulesStore.getDeprecatedRules().toScala
-          confs <- rulesStore.getDeprecatedRuleConfsWithPlugins().toScala
-        } yield {
-          val emptyMatchCriteria = GroupMatchCriteria(None, None)
-          (ApiGroup(emptyMatchCriteria, rules) :: Nil, ApiGroupConf(emptyMatchCriteria, confs) :: Nil)
-        }
-      case (None, None, Some(apiGroups)) =>
-        buildApiGroups(apiGroups)
-      case (Some(_), _, Some(_)) | (_, Some(_), Some(_)) =>
+        buildApiGroups(new JsonObject().put("_rules", new JsonArray(rules.noSpaces)), defaultProxyRulesOpt, true)
+      case (None, Some(apiGroups)) =>
+        buildApiGroups(apiGroups, defaultProxyRulesOpt, false)
+      case (Some(_), Some(_)) =>
         Future.failed(new Exception("Both API Groups and Rules can't be defined. Move Rules to Api Groups."))
     }
   }
 
-  private def buildApiGroups(apiGroupsConf: JsonObject): Future[(List[ApiGroup], List[ApiGroupConf])] =
+  private def buildApiGroups(apiGroupsConf: JsonObject, defaultProxyRulesOpt: Option[Json], deprecatedRules: Boolean): Future[(List[ApiGroup], List[ApiGroupConf])] =
     ApiGroupReader.readApiGroupLevels(apiGroupsConf.toString) match {
       case ValidResult(_, groupLevel) =>
         val unresolvedGroupResults: List[ReadResult[ApiGroupConfUnresolved]] =
@@ -147,7 +143,7 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
 
         val resolvedGroupFuts: List[Future[ReadResult[(ApiGroup, ApiGroupConf)]]] =
           okGroups.map { group =>
-            rulesStore.decodeRules(loggingTag(group), group.value.rules).toScala()
+            rulesStore.decodeRules(loggingTag(group), group.value.rules, defaultProxyRulesOpt).toScala()
               .map { case (rs, rsConfs) =>
                 ValidResult(group.path, (ApiGroup(group.value.matchCriteria, rs), ApiGroupConf(group.value.matchCriteria, rsConfs)))
               }
@@ -166,19 +162,20 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
             if (invalidGroups.isEmpty) {
               Future.successful(validResolvedGroups.map(_.value._1), validResolvedGroups.map(_.value._2))
             } else {
-              val invalidMsgs = invalidGroups.map(invalidMsg).mkString("[", ", ", "]")
-              Future.failed(new Exception("Reading API Groups failed: " + invalidMsgs))
+              val invalidMsgs = invalidGroups.map(invalidMsg).mkString("\n")
+              Future.failed(new Exception("\n" + invalidMsgs))
             }
           }
       case x: InvalidResult[_] =>
-        Future.failed(new Exception(s"""Reading API Groups failed: ["${invalidMsg(x)}"]"""))
+          Future.failed(new Exception(s"""Reading rules failed: ["${invalidMsg(x)}"]"""))
     }
 
   private def loggingTag(group: ValidResult[ApiGroupConfUnresolved]) = {
-    val basePathTag = s"'${group.value.matchCriteria.basePathResolved.value}'"
-    val domainsTag = group.value.matchCriteria.domains.map(ds => s", domains=${ds.map(_.value).mkString("[", ",", "]")}").getOrElse("")
+    val groupTagOpt = if (group.path.nonEmpty) Some(s"apiGroup=${group.path.mkString(".")}") else None
+    val basePathTagOpt = group.value.matchCriteria.basePath.map("basePath=" + _)
+    val domainsTagOpt = group.value.matchCriteria.domains.map(ds => s"domains=${ds.map(_.value).mkString("[", ",", "]")}")
 
-    s"apiGroup='${group.path.mkString(".")}', basePath=$basePathTag$domainsTag"
+    List(groupTagOpt, basePathTagOpt, domainsTagOpt).flatten.mkString(", ")
   }
 
   private def invalidateConflicted(validUnresolvedGroups: List[ValidResult[ApiGroupConfUnresolved]]): List[ReadResult[ApiGroupConfUnresolved]] =
