@@ -83,8 +83,8 @@ Edge depends on https://github.com/Cloudentity/vertx-tools. Clone it and build w
 
 #### Prerequisites
 
-* Maven 3+
-* JDK 1.8+
+* Maven 3
+* JDK 1.8
 
 <a id="build-standalone"></a>
 ### Standalone
