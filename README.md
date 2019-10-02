@@ -684,9 +684,7 @@ You can configure HTTP client for each target service separately (note that defa
   "smart-http-target-clients": {
     "example-service": {
       "http": {
-        // io.vertx.core.http.HttpClientOptions
         "maxPoolSize": 50
-        ...
       }
     }
   }
@@ -718,9 +716,7 @@ Configure `io.vertx.circuitbreaker.CircuitBreakerOptions` in `circuitBreaker` ob
   "smart-http-target-clients": {
     "example-service": {
       "circuitBreaker": {
-        // io.vertx.circuitbreaker.CircuitBreakerOptions
         "maxFailures": 3
-        ...
       }
     }
   }
