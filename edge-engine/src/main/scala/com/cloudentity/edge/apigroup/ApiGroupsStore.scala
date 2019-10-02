@@ -118,7 +118,8 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
         Future.failed(new Exception("API Groups and Rules are missing. Configure 'apiGroups' or 'rules'."))
       case (Some(rules), None) =>
         // fallback for deprecated Rules configuration
-        buildApiGroups(new JsonObject().put("_rules", new JsonArray(rules.noSpaces)), defaultProxyRulesOpt, true)
+        val rulesValue = Try(new JsonArray(rules.noSpaces)).orElse(Try(new JsonObject(rules.noSpaces))).toOption.getOrElse(null)
+        buildApiGroups(new JsonObject().put("_rules", rulesValue), defaultProxyRulesOpt, true)
       case (None, Some(apiGroups)) =>
         buildApiGroups(apiGroups, defaultProxyRulesOpt, false)
       case (Some(_), Some(_)) =>
