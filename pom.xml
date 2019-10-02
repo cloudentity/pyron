@@ -270,8 +270,7 @@
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>rest-assured</artifactId>
-        <version>3.0.2</version>
-        <scope>test</scope>
+        <version>3.3.0</version>
       </dependency>
       <dependency>
         <groupId>org.mock-server</groupId>

@@ -169,8 +169,6 @@
           </execution>
         </executions>
         <configuration>
-          <recompileMode>incremental</recompileMode>
-          <useZincServer>true</useZincServer>
           <scalaVersion>${scala.version}</scalaVersion>
           <args>
             <arg>-unchecked</arg>
