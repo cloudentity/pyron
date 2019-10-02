@@ -15,7 +15,7 @@
 
   <properties>
     <scala.version>2.12.9</scala.version>
-    <edge.version>1.27.0-SNAPSHOT</edge.version>
+    <edge.version>1.0.0-SNAPSHOT</edge.version>
     <vertx-tools.version>1.0.0-SNAPSHOT</vertx-tools.version>
   </properties>
 
