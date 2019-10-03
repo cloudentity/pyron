@@ -46,7 +46,7 @@ object RuleBuilder {
       (ctx: RequestCtx) =>
         Futures.toScala(client.applyPlugin(ctx.tracingCtx, request.ApplyRequest(ctx, conf))).flatMap {
           case request.Continue(nextCtx) => Future.successful(nextCtx)
-          case request.ApplyError(msg)   => Future.failed(new Exception("Request plugin apply error: " + msg))
+          case request.ApplyError(ex)    => Future.failed(new Exception("Request plugin apply error: " + ex.getMessage, ex))
         }
     }
 
@@ -57,7 +57,7 @@ object RuleBuilder {
       (ctx: ResponseCtx) =>
         Futures.toScala(client.applyPlugin(ctx.tracingCtx, response.ApplyRequest(ctx, conf))).flatMap {
           case response.Continue(apiResponse) => Future.successful(apiResponse)
-          case response.ApplyError(msg)   => Future.failed(new Exception("Request plugin apply error: " + msg))
+          case response.ApplyError(ex)        => Future.failed(new Exception("Request plugin apply error: " + ex.getMessage, ex))
         }
     }
 

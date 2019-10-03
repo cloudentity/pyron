@@ -69,7 +69,7 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
       case Left(ex) =>
         log.error(tracingCtx, s"Error on decoding plugin config for ${req}", ex)
         tracingCtx.logException(ex)
-        Future.successful(request.ApplyError(ex.getMessage))
+        Future.successful(request.ApplyError(ex))
     }
   }
 
@@ -82,12 +82,12 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
           .recover { case ex: Throwable =>
             log.error(tracingCtx, s"RequestPluginVerticle.apply returned failed Future for $ctx", ex)
             ctx.tracingCtx.logError(ex)
-            request.ApplyError(ex.getMessage)
+            request.ApplyError(ex)
           }
       case Failure(ex) =>
         log.error(tracingCtx, s"RequestPluginVerticle.apply threw exception for $ctx", ex)
         ctx.tracingCtx.logException(ex)
-        Future.successful(request.ApplyError(ex.getMessage))
+        Future.successful(request.ApplyError(ex))
     }
   }
 
@@ -101,7 +101,7 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
       case Left(ex) =>
         log.error(tracingCtx, s"Error on decoding plugin config for ${resp}", ex)
         tracingCtx.logException(ex)
-        Future.successful(response.ApplyError(ex.getMessage))
+        Future.successful(response.ApplyError(ex))
     }
   }
 
@@ -114,12 +114,12 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
           .recover { case ex: Throwable =>
             log.error(tracingCtx, s"ResponsePluginVerticle.apply returned failed Future for $ctx", ex)
             ctx.tracingCtx.logError(ex)
-            response.ApplyError(ex.getMessage)
+            response.ApplyError(ex)
           }
       case Failure(ex) =>
         log.error(tracingCtx, s"ResponsePluginVerticle.apply threw exception for $ctx", ex)
         ctx.tracingCtx.logException(ex)
-        Future.successful(response.ApplyError(ex.getMessage))
+        Future.successful(response.ApplyError(ex))
     }
   }
 

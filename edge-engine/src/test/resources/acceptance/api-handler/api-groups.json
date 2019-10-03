@@ -1,0 +1,121 @@
+{
+  "apiGroups": {
+    "test-rules": {
+      "_group": {
+        "basePath": "/test-rules"
+      },
+      "_rules": "$ref:common-rules"
+    },
+    "test-api-group-base-paths": {
+      "_group": {
+        "basePath": "/base-path"
+      },
+      "_rules": [
+        {
+          "default": {
+            "targetHost": "localhost",
+            "targetPort": 7760
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "pathPattern": "/should-match-base-path"
+            }
+          ]
+        }
+      ]
+    },
+    "test-api-group-domains": {
+      "_group": {
+        "domains": ["example.com"],
+        "basePath": "/domain"
+      },
+      "_rules": [
+        {
+          "default": {
+            "targetHost": "localhost",
+            "targetPort": 7760
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "pathPattern": "/should-match-domain-when-host-without-port"
+            },
+            {
+              "method": "GET",
+              "pathPattern": "/should-match-domain-when-host-with-port"
+            }
+          ]
+        }
+      ]
+    },
+    "test-api-group-subdomains": {
+      "_group": {
+        "domains": ["*.example.com"],
+        "basePath": "/subdomain"
+      },
+      "_rules": [
+        {
+          "default": {
+            "targetHost": "localhost",
+            "targetPort": 7760
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "pathPattern": "/should-match-sub-domain"
+            }
+          ]
+        }
+      ]
+    },
+    "test-api-group-subsubdomains": {
+      "_group": {
+        "domains": ["*.*.example.com"],
+        "basePath": "/subsubdomain"
+      },
+      "_rules": [
+        {
+          "default": {
+            "targetHost": "localhost",
+            "targetPort": 7760
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "pathPattern": "/should-match-sub-sub-domain"
+            },
+            {
+              "method": "GET",
+              "pathPattern": "/should-not-match-sub-domain"
+            }
+          ]
+        }
+      ]
+    },
+    "test-api-group-base-path-no-domain": {
+      "_group": {
+        "domains": ["example.com"],
+        "basePath": "/base-and-domain"
+      },
+      "_rules": [
+        {
+          "default": {
+            "targetHost": "localhost",
+            "targetPort": 7760
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "pathPattern": "/should-not-match-if-base-path-matches-and-domain-does-not"
+            },
+            {
+              "method": "GET",
+              "pathPattern": "/should-not-match-if-domain-matches-and-base-path-does-not"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -124,7 +124,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       }.compose { response =>
       // then
       response match {
-        case ApplyError("error") => // ok
+        case ApplyError(_) => // ok
         case x => fail(x.toString)
       }
 
@@ -169,7 +169,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       }.compose { response =>
       // then
       response match {
-        case ApplyError("error") => // ok
+        case ApplyError(_) => // ok
         case x => fail(x.toString)
       }
 
