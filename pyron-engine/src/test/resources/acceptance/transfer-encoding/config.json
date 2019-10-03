@@ -1,0 +1,51 @@
+{
+  "app": {
+    "port": 8080,
+    "serverVerticles": 1,
+    "rules": "$ref:rules"
+  },
+  "registry:request-plugins": {
+    "plugin:static": { "main": "com.cloudentity.pyron.plugin.impl.respond.RespondPlugin" }
+  },
+  "registry:response-plugins": {
+  },
+  "registry:sd": {
+    "sd": { "main": "com.cloudentity.tools.vertx.sd.SdVerticle" }
+  },
+  "registry:system": {
+    "fixed-sd-provider": { "main": "com.cloudentity.tools.vertx.sd.provider.FixedSdProvider" }
+  },
+  "circuit-breakers": {
+    "off": true
+  },
+  "fixed-sd-provider": {
+    "records": [
+    ]
+  },
+  "rules": [
+    {
+      "default": {
+        "targetHost": "virtual",
+        "targetPort": 0
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/chunked",
+          "requestPlugins": [
+            {
+              "name": "respond",
+              "conf": {
+                "statusCode": 200,
+                "headers": {
+                  "Transfer-Encoding": ["chunked"]
+                },
+                "body": "abc"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

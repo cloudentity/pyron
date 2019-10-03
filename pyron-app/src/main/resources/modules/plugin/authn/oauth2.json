@@ -1,0 +1,43 @@
+{
+  "registry:system": {
+    "oidc-client": {
+      "main": "com.cloudentity.pyron.plugin.impl.authn.MultiOidcClient",
+      "verticleConfig": {
+        "jwkReload": 60000,
+        "idps": [
+          {
+            "host": "$env:OIDC_HOST:string",
+            "port": "$env:OIDC_PORT:int",
+            "ssl": "$env:OIDC_SSL:boolean",
+            "jwkEndpoint": "$env:OIDC_JWK_ENDPOINT:string",
+            "http": {
+              "_nullify": true,
+              "trustAll": "$env:?OIDC_TRUST_ALL:boolean",
+              "pemTrustOptions": {
+                "_nullify": true,
+                "certPaths": "$env:?OIDC_PEM_TRUST_OPTIONS__CERT_PATHS:array",
+                "certValues": "$env:?OIDC_PEM_TRUST_OPTIONS__CERT_VALUES:array"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "plugin:authn": {
+    "methodsMapping": {
+      "oauth2": "oauthJWTAuthnProvider"
+    },
+    "entitiesMapping": {
+      "oauth2": {
+        "jwt": "jwtContentProvider"
+      }
+    }
+  },
+  "registry:authn-method-providers": {
+    "oauthJWTAuthnProvider": { "main": "com.cloudentity.pyron.plugin.impl.authn.methods.OAuthAuthorizationCodeAuthnProvider" }
+  },
+  "registry:authn-entity-providers": {
+    "jwtContentProvider": { "main": "com.cloudentity.pyron.plugin.impl.authn.entities.JWTContentProvider" }
+  }
+}

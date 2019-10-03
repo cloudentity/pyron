@@ -23,12 +23,12 @@
 <a id="intro"></a>
 ## Introduction
 
-Cloudentity Edge Gateway provides the dividing line between the Client (such as a Browser, Mobile App, Other 3rd party services) and the trusted mesh of services, microservices or applications that are deployed on-prem, cloud, hybrid or multi-cloud environments.
+PYRON API Gateway provides the dividing line between the Client (such as a Browser, Mobile App, Other 3rd party services) and the trusted mesh of services, microservices or applications that are deployed on-prem, cloud, hybrid or multi-cloud environments.
 
 ### Supported functionality
 
 #### API endpoints publishing
-The Edge provides a number of tools to manage, transform, and secure your API endpoints:
+Pyron provides a number of tools to manage, transform, and secure your API endpoints:
 
 * *Routing*: API calls can be routed to different targets based on the URI path pattern
 * *Filtering and Orchestration*: API endpoint level URI rewrite and the ability to assign filters/plugins both at the service level as well as the individual API endpoint level can be defined by the URI pattern matching
@@ -39,22 +39,22 @@ The Edge provides a number of tools to manage, transform, and secure your API en
   * Consul Key-Value pair database ◦ Cloudentity Application Service
 
 #### Authentication
-As an enforcement point, Edge integrates with a wide range of protocols and tools to ensure the request is not only authorized but also secure in the context of a wide range of risk and business rules.
+As an enforcement point, Pyron integrates with a wide range of protocols and tools to ensure the request is not only authorized but also secure in the context of a wide range of risk and business rules.
 
 * *Protocol Support*
   * OAuth2.0 JWT Access Token
   * Anonymous authentication – ability to track public request
-* *Fallback Authorization*: Edge has the ability to chain multiple authentication methods together and define the fallback scenarios Request authorization.
+* *Fallback Authorization*: Pyron has the ability to chain multiple authentication methods together and define the fallback scenarios Request authorization.
 
 #### Integration with protected services
 
-The Cloudentity Edge can normalize your API by transforming and managing requests to the services it protects.
+Cloudentity Pyron can normalize your API by transforming and managing requests to the services it protects.
 
 * *Service Management*: Ability to configure/discover the location of the protected services via
   * Consul Service discovery
-  * Static Service registry – provided as part of the Edge API configuration (external KV or JSON flat file). Support for multiple nodes per service name to allow client based load balancing.
+  * Static Service registry – provided as part of the Pyron API configuration (external KV or JSON flat file). Support for multiple nodes per service name to allow client based load balancing.
 * *Service Target Management*: Direct target host configuration as part of the API publishing rules
-* *Load Balancing*: When using Consul or Fixed Service registry, Edge can provide load balancing to targets
+* *Load Balancing*: When using Consul or Fixed Service registry, Pyron can provide load balancing to targets
 * *SMART HTTP client functionality*
   * API Request retries
   * Request failover
@@ -66,7 +66,7 @@ The Cloudentity Edge can normalize your API by transforming and managing request
 
 #### API protection
 
-Cloudentity Edge also provides broad API protection with a number of standard features.
+Cloudentity Pyron also provides broad API protection with a number of standard features.
 
 * URI structure enforcement and whitelisting
 * Detailed access logs including the authentication context
@@ -74,12 +74,12 @@ Cloudentity Edge also provides broad API protection with a number of standard fe
 
 #### Extensibility
 
-Edge also allows for custom plugins which can be used to integrate legacy or proprietary systems as part of the standard data flow and enforcement. This could include custom callouts, complex business logic, or custom protocol/security management.
+Pyron also allows for custom plugins which can be used to integrate legacy or proprietary systems as part of the standard data flow and enforcement. This could include custom callouts, complex business logic, or custom protocol/security management.
 
 <a id="build"></a>
 ## Build
 
-Edge depends on https://github.com/Cloudentity/vertx-tools. Clone it and build with `mvn install` command first.
+Pyron depends on https://github.com/Cloudentity/vertx-tools. Clone it and build with `mvn install` command first.
 
 #### Prerequisites
 
@@ -107,7 +107,7 @@ $ make docker
 
 Configure routing rules in `rules.json` and environment variables in `envs` file if required.
 
-By default Edge runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change it.
+By default, Pyron runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change it.
 
 <a id="run-standalone"></a>
 ### Standalone
@@ -156,7 +156,7 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
 <a id="config-meta"></a>
 ### Meta config
 
-At startup Edge needs `meta-config.json` file describing where to read configuration from.
+At startup Pyron needs `meta-config.json` file describing where to read configuration from.
 
 ```json
 {
@@ -182,7 +182,7 @@ At startup Edge needs `meta-config.json` file describing where to read configura
 
 Above `meta-config.json` defines two configuration stores: `config.json` from JAR classpath and `rules.json` from the file system.
 
-`config.json` defines minimal configuration required to run Edge. Routing rules are provided in `rules.json`.
+`config.json` defines minimal configuration required to run Pyron. Routing rules are provided in `rules.json`.
 
 You will find `meta-config.json` in the run folder (`run/standalone` or `run/docker`).
 
@@ -303,7 +303,7 @@ To preserve the prefix set `dropPrefix` to false.
 
 | Attribute          | Description                                                                            |
 |:-------------------|:---------------------------------------------------------------------------------------|
-| rewritePath        | path that Edge calls target service at (optional, `pathPattern` used if this not set)  |
+| rewritePath        | path that Pyron calls target service at (optional, `pathPattern` used if this not set)  |
 
 <a id="config-rewrite-method"></a>
 #### Rewrite method
@@ -330,7 +330,7 @@ To preserve the prefix set `dropPrefix` to false.
 
 | Attribute          | Description                                                                            |
 |:-------------------|:---------------------------------------------------------------------------------------|
-| rewriteMethod      | method that Edge calls target service with (optional, `method` used if this not set)   |
+| rewriteMethod      | method that Pyron calls target service with (optional, `method` used if this not set)   |
 
 <a id="config-response-timeout"></a>
 #### Response timeout
@@ -392,7 +392,7 @@ To preserve the prefix set `dropPrefix` to false.
 | Attribute                | Description                                                                            |
 |:-------------------------|:---------------------------------------------------------------------------------------|
 | call.retries             | maximum number of retries                                                              |
-| call.failureHttpCodes    | response codes that Edge retries if returned by target service                         |
+| call.failureHttpCodes    | response codes that Pyron retries if returned by target service                         |
 | call.retryFailedResponse | retry call if target service returned code in `failureHttpCodes` (default true)        |
 | call.retryOnException    | retry call on HTTP client exception, e.g. response timeout (default true)              |
 
@@ -423,7 +423,7 @@ To preserve the prefix set `dropPrefix` to false.
 |:---------------------|:-----------------------------------------------------------------------------------|
 | preserveHostHeader   | should send to target service Host header received from the client (default false) |
 
-By default, Edge sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
+By default, Pyron sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
 
 <a id="config-plugins"></a>
 ### Plugins
@@ -537,8 +537,8 @@ further processing.
 
 | Attribute                | Description                                        |
 |:-------------------------|:---------------------------------------------------|
-| _group.domains           | Host headers Edge matches the API group for        |
-| _group.basePath          | base path Edge matches the API group at (optional) |
+| _group.domains           | Host headers Pyron matches the API group for        |
+| _group.basePath          | base path Pyron matches the API group at (optional) |
 
 Note `_` (underscore) in `_rules` and `_group`.
 
@@ -547,7 +547,7 @@ Note `_` (underscore) in `_rules` and `_group`.
 <a id="config-service-discovery"></a>
 ### Service discovery
 
-Edge Gateway provides support for service discovery utilizing Consul client or configuration object.
+Pyron Gateway provides support for service discovery utilizing Consul client or configuration object.
 
 ```json
 {
@@ -568,7 +568,7 @@ Edge Gateway provides support for service discovery utilizing Consul client or c
 |:-------------------|:----------------------------------------------------|
 | targetService      | service-name of target nodes from service-discovery |
 
-Edge calls nodes with `targetService` service-name using a round-robin load balancer.
+Pyron calls nodes with `targetService` service-name using a round-robin load balancer.
 
 Below you will find instructions on how to enable service discovery providers.
 
@@ -620,7 +620,7 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
 
 #### Self-registration in Consul
 
-Edge node can register itself in Consul for service discovery.
+Pyron node can register itself in Consul for service discovery.
 
 Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-registrar/consul"]`.
 
@@ -632,13 +632,13 @@ Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-
 | CONSUL_ACL_TOKEN                 | ACL token (optional)                                           |
 | CONSUL_DC                        | data center (optional)                                         |
 | CONSUL_TIMEOUT                   | connection timeout (optional)                                  |
-| REGISTER_SD_SERVICE_NAME         | Edge service name                                              |
-| REGISTER_SD_HOST                 | host of Edge node                                              |
-| REGISTER_SD_PORT                 | port of Edge node                                              |
-| REGISTER_SD_SSL                  | ssl of Edge node (default false)                               |
-| REGISTER_SD_HEALTHCHECK_HOST     | host of Edge health-check (default SELF_SD_SERVICE_NAME)       |
-| REGISTER_SD_HEALTHCHECK_PORT     | port of Edge health-check (default SELF_SD_HEALTHCHECK_PORT)   |
-| REGISTER_SD_HEALTHCHECK_PATH     | path of Edge health-check (default /alive)                     |
+| REGISTER_SD_SERVICE_NAME         | Pyron service name                                              |
+| REGISTER_SD_HOST                 | host of Pyron node                                              |
+| REGISTER_SD_PORT                 | port of Pyron node                                              |
+| REGISTER_SD_SSL                  | ssl of Pyron node (default false)                               |
+| REGISTER_SD_HEALTHCHECK_HOST     | host of Pyron health-check (default SELF_SD_SERVICE_NAME)       |
+| REGISTER_SD_HEALTHCHECK_PORT     | port of Pyron health-check (default SELF_SD_HEALTHCHECK_PORT)   |
+| REGISTER_SD_HEALTHCHECK_PATH     | path of Pyron health-check (default /alive)                     |
 | REGISTER_SD_HEALTHCHECK_INTERVAL | health-check interval (default 3s)                             |
 | REGISTER_SD_DEREGISTER_AFTER     | node de-register period when health-check fails (default 600s) |
 | REGISTER_SD_TAGS                 | extra node tags (default [])                                   |
@@ -646,7 +646,7 @@ Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-
 <a id="config-http-server"></a>
 ### HTTP server
 
-Edge uses Vertx HTTP server implementation. Use environment variables to configure `io.vertx.core.http.HttpServerOptions`.
+Pyron uses Vertx HTTP server implementation. Use environment variables to configure `io.vertx.core.http.HttpServerOptions`.
 
 Environment variables map to `HttpServerOptions` ([see docs](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpServerOptions.html)) attributes in following way:
 
@@ -667,7 +667,7 @@ In order to set `HttpServerOptions` attribute with collection value use JSON syn
 <a id="config-http-clients"></a>
 ### HTTP clients
 
-Edge uses Vertx implementation of HTTP clients. Use environment variables to configure default `io.vertx.core.http.HttpClientOptions`.
+Pyron uses Vertx implementation of HTTP clients. Use environment variables to configure default `io.vertx.core.http.HttpClientOptions`.
 
 Environment variables map to `HttpClientOptions` ([see docs](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpClientOptions.html)) attributes the same way they map to `HttpServerOptions`.
 
@@ -732,7 +732,7 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 
 | Env variable                      | Description                                    |
 |:----------------------------------|:-----------------------------------------------|
-| TRACING_SERVICE_NAME              | Edge name in Jaeger                            |
+| TRACING_SERVICE_NAME              | Pyron name in Jaeger                            |
 | JAEGER_AGENT_HOST                 | Jaeger agent host                              |
 | JAEGER_AGENT_PORT                 | Jaeger agent port (optional)                   |
 | JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port (optional)            |
@@ -787,7 +787,7 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 | gateway.method        | method of matching rule                                                                                   |
 | gateway.path          | path pattern of matching rule                                                                             |
 | gateway.pathPrefix    | path prefix of matching rule                                                                              |
-| gateway.aborted       | true if Edge aborted the call without proxying to target service; false otherwise                         |
+| gateway.aborted       | true if Pyron aborted the call without proxying to target service; false otherwise                         |
 | gateway.targetService | target service of matching rule                                                                           |
 | request.headers       | request headers                                                                                           |
 | timeMs                | time from receiving the request body till writing full response body                                      |
@@ -806,7 +806,7 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 <a id="config-proxy-headers"></a>
 ### Proxy headers
 
-Edge applies following request headers modification (unless disabled):
+Pyron applies following request headers modification (unless disabled):
 
 * Add `remote-address.host` to `X-Forwarded-For` headers
 * Add `remote-address.protocol` to `X-Forwarded-Proto` headers
@@ -823,7 +823,7 @@ Edge applies following request headers modification (unless disabled):
 <a id="config-performance"></a>
 ## Performance
 
-We have put Edge Gateway under load to see how performant it is.
+We have put Pyron Gateway under load to see how performant it is.
 
 ### Setup
 
@@ -833,7 +833,7 @@ We have put Edge Gateway under load to see how performant it is.
 
 ### Proxying request with no plugins
 
-Edge Gateway proxies requests to mocked target service without applying any plugins.
+Pyron Gateway proxies requests to mocked target service without applying any plugins.
 
 With no target service delay and 30 connections:
 
@@ -852,7 +852,7 @@ NOTE: due to 50 ms delay the target service can't respond to more than 4000 requ
 
 ### Proxying request with applying JWT-signing plugin
 
-Edge Gateway signs each request with empty JWT with symmetric key, puts the signature in the header and proxies request to mocked target service.
+Pyron Gateway signs each request with empty JWT with symmetric key, puts the signature in the header and proxies request to mocked target service.
 
 With no target service delay and 30 connections:
 
