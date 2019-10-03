@@ -1,0 +1,58 @@
+{
+  "registry:request-plugins": {
+    "timeout": {
+      "main": "com.cloudentity.pyron.acceptance.TimeoutPluginVerticle"
+    }
+  },
+  "common-rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-rewrite-path-without-query",
+          "rewritePath": "/should-apply-rewrite-path-without-query-rewrite",
+          "copyQueryOnRewrite": true
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-rewrite-path-and-copy-query",
+          "rewritePath": "/should-apply-rewrite-path-and-copy-query-rewrite",
+          "copyQueryOnRewrite": true
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-rewrite-path-and-drop-query",
+          "rewritePath": "/should-apply-rewrite-path-and-drop-query-rewrite",
+          "copyQueryOnRewrite": false
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-rewrite-method",
+          "rewriteMethod": "POST"
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/should-not-set-form-params-as-query-params-if-form-content"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-preserve-host-header-if-configured",
+          "preserveHostHeader": true
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-replace-host-header-by-default"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-return-504-on-event-bus-timeout",
+          "requestPlugins": [{ "name": "timeout" }]
+        }
+      ]
+    }
+  ]
+}

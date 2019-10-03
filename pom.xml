@@ -2,17 +2,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <groupId>com.cloudentity.edge</groupId>
-  <artifactId>edge-root</artifactId>
+  <groupId>com.cloudentity.pyron</groupId>
+  <artifactId>pyron-root</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <modelVersion>4.0.0</modelVersion>
   <packaging>pom</packaging>
 
   <modules>
-    <module>edge-core</module>
-    <module>edge-plugin</module>
-    <module>edge-engine</module>
-    <module>edge-app</module>
+    <module>pyron-core</module>
+    <module>pyron-plugin</module>
+    <module>pyron-engine</module>
+    <module>pyron-app</module>
     <module>sample-scala-plugins</module>
   </modules>
 
@@ -76,7 +76,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration>
-                  <outputDirectory>${basedir}/edge-app/src/main/resources</outputDirectory>
+                  <outputDirectory>${basedir}/pyron-app/src/main/resources</outputDirectory>
                   <resources>
                     <resource>
                       <directory>target/generated-resources</directory>
@@ -102,25 +102,25 @@
         <artifactId>scala-library</artifactId>
         <version>${scala.version}</version>
       </dependency>
-      <!-- edge -->
+      <!-- pyron -->
       <dependency>
-        <groupId>com.cloudentity.edge</groupId>
-        <artifactId>edge-app</artifactId>
+        <groupId>com.cloudentity.pyron</groupId>
+        <artifactId>pyron-app</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.edge</groupId>
-        <artifactId>edge-core</artifactId>
+        <groupId>com.cloudentity.pyron</groupId>
+        <artifactId>pyron-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.edge</groupId>
-        <artifactId>edge-engine</artifactId>
+        <groupId>com.cloudentity.pyron</groupId>
+        <artifactId>pyron-engine</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.cloudentity.edge</groupId>
-        <artifactId>edge-plugin</artifactId>
+        <groupId>com.cloudentity.pyron</groupId>
+        <artifactId>pyron-plugin</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- vertx-tools -->

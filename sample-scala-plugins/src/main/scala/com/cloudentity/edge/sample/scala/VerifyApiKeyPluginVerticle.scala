@@ -1,10 +1,10 @@
-package com.cloudentity.edge.sample.scala
+package com.cloudentity.pyron.sample.scala
 
-import com.cloudentity.edge.domain.flow.{PluginName, RequestCtx}
-import com.cloudentity.edge.domain.http.ApiResponse
-import com.cloudentity.edge.plugin.config.{ValidateFailure, ValidateOk, ValidateResponse}
-import com.cloudentity.edge.plugin.verticle.RequestPluginVerticle
-import com.cloudentity.edge.util.ConfigDecoder
+import com.cloudentity.pyron.domain.flow.{PluginName, RequestCtx}
+import com.cloudentity.pyron.domain.http.ApiResponse
+import com.cloudentity.pyron.plugin.config.{ValidateFailure, ValidateOk, ValidateResponse}
+import com.cloudentity.pyron.plugin.verticle.RequestPluginVerticle
+import com.cloudentity.pyron.util.ConfigDecoder
 import com.cloudentity.tools.vertx.http.Headers
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.{Decoder, Json}

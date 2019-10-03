@@ -1,7 +1,7 @@
 {
   "registry:request-plugins": {
     "sample-rate-limit": {
-      "main": "com.cloudentity.edge.sample.scala.RateLimitPluginVerticle",
+      "main": "com.cloudentity.pyron.sample.scala.RateLimitPluginVerticle",
       "deploymentStrategy": "simple"
     }
   }

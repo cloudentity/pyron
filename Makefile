@@ -12,4 +12,4 @@ standalone:
 
 docker:
 	@echo -e "$(OK_COLOR) > building docker $(NO_COLOR)"
-	docker build -t cloudentity/pyron edge-app --build-arg version=$(CURRENT_VERSION)
+	docker build -t cloudentity/pyron pyron-app --build-arg version=$(CURRENT_VERSION)

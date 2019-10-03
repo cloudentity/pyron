@@ -1,0 +1,25 @@
+{
+  "openApi": {
+    "publicLocation": {
+      "host": "localhost",
+      "port": 80,
+      "ssl": false
+    },
+    "defaultSource": {
+      "path": "/docs/index-resolved.yaml"
+    },
+    "defaultConverter": {
+      "processors": {
+        "pre": ["dropSecurityDefinitions"]
+      }
+    }
+  },
+  "registry:openApiPreProcessors": {
+    "pre-a": { "main": "com.cloudentity.pyron.openapi.TestPreAProcessor", "prefix": true },
+    "pre-b": { "main": "com.cloudentity.pyron.openapi.TestPreBProcessor", "prefix": true }
+  },
+  "registry:openApiPostProcessors": {
+    "post-a": { "main": "com.cloudentity.pyron.openapi.TestPostAProcessor", "prefix": true },
+    "post-b": { "main": "com.cloudentity.pyron.openapi.TestPostBProcessor", "prefix": true }
+  }
+}

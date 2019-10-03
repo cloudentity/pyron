@@ -3,9 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>com.cloudentity.edge</groupId>
+    <groupId>com.cloudentity.pyron</groupId>
     <version>1.0.0-SNAPSHOT</version>
-    <artifactId>edge-root</artifactId>
+    <artifactId>pyron-root</artifactId>
   </parent>
 
   <artifactId>sample-scala-plugins</artifactId>
@@ -15,7 +15,7 @@
 
   <properties>
     <scala.version>2.12.9</scala.version>
-    <edge.version>1.0.0-SNAPSHOT</edge.version>
+    <pyron.version>1.0.0-SNAPSHOT</pyron.version>
     <vertx-tools.version>1.0.0-SNAPSHOT</vertx-tools.version>
   </properties>
 
@@ -29,9 +29,9 @@
 
     <!-- cloudentity -->
     <dependency>
-      <groupId>com.cloudentity.edge</groupId>
-      <artifactId>edge-plugin</artifactId>
-      <version>${edge.version}</version>
+      <groupId>com.cloudentity.pyron</groupId>
+      <artifactId>pyron-plugin</artifactId>
+      <version>${pyron.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
