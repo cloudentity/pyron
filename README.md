@@ -85,19 +85,21 @@ Edge depends on https://github.com/Cloudentity/vertx-tools. Clone it and build w
 
 * Maven 3
 * JDK 1.8
+* make
+* Docker 19.03 (optional)
 
 <a id="build-standalone"></a>
 ### Standalone
 
 ```
-$ mvn clean install -Pbuild-standalone
+$ make standalone
 ```
 
 <a id="build-docker"></a>
 ### Docker
 
 ```
-$ mvn clean install -Pbuild-latest-docker
+$ make docker
 ```
 
 <a id="run"></a>
@@ -119,7 +121,7 @@ $ ./run.sh
 
 ```
 $ cd run/docker
-$ docker run --env-file envs --network="host" --name edge -v "$(pwd)"/configs:/configs -d docker.artifactory.syntegrity.com/edge:latest
+$ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/configs -d cloudentity/pyron
 ```
 
 <a id="config"></a>
