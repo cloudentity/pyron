@@ -16,7 +16,7 @@ import org.mockserver.model.HttpResponse.response
 
 import scala.concurrent.Future
 
-class ModifyResponseAcceptanceSpec extends EdgeAcceptanceTest with MockUtils {
+class ModifyResponseAcceptanceTest extends EdgeAcceptanceTest with MockUtils {
   override def getMetaConfPath(): String = "src/test/resources/acceptance/modify-response/meta-config-test.json"
 
     var targetService: ClientAndServer = null

@@ -7,5 +7,5 @@ object response {
 
   sealed trait ApplyResponse
     case class Continue(ctx: ResponseCtx) extends ApplyResponse
-    case class ApplyError(msg: String) extends ApplyResponse
+    case class ApplyError(ex: Throwable) extends ApplyResponse
 }

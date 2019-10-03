@@ -322,7 +322,10 @@ object ApiResponseHandler {
   }
 
   def endWithException(tracing: TracingContext, vertxResponse: HttpServerResponse, ex: Throwable): Unit = {
-    if (ex.isInstanceOf[ReplyException] && ex.getMessage().contains("Timed out")) { // event-bus timeout
+    def isEvenBusTimeout(ex: Throwable) =
+      ex.isInstanceOf[ReplyException] && ex.getMessage().contains("Timed out")
+
+    if (isEvenBusTimeout(ex) || (ex.getCause != null && isEvenBusTimeout(ex.getCause))) {
       endWith(tracing, vertxResponse, Errors.systemTimeout)
     } else {
       endWith(tracing, vertxResponse, Errors.unexpected)
