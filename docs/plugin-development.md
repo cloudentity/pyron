@@ -34,7 +34,7 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
   // name of the plugin used in rule definition
   override def name: PluginName = PluginName("sample-verify-key")
 
-  // transforms request (or response in case of `ResponsePluginVerticle`) given plugin configuration
+  // transforms request (or response in case of `ResponsePluginVerticle`) given plugin configuration, NOTE: `RequestCtx` is immutable
   override def apply(requestCtx: RequestCtx, conf: VerifyApiKeyConf): Future[RequestCtx] = ???
 
   // validates plugin configuration when initializing the rule
@@ -76,7 +76,7 @@ PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE=401
 PLUGIN_VERIFY_APIKEY__HEADER=apikey
 ```
 
-* Run Pyron with plugin enabled
+* Use plugin in a rule
 
 ```json
 {
@@ -129,7 +129,7 @@ class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
     return "sample-verify-key";
   }
 
-  // transforms request (or response in case of `JavaResponsePluginVerticle`) given plugin configuration
+  // transforms request (or response in case of `JavaResponsePluginVerticle`) given plugin configuration, NOTE: `RequestCtx` is immutable
   public Future<RequestCtx> apply(RequestCtx requestCtx, JsonObject conf) {
     return null;
   }
@@ -172,7 +172,7 @@ PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE=401
 PLUGIN_VERIFY_APIKEY__HEADER=apikey
 ```
 
-* Run Pyron with plugin enabled
+* Use plugin in a rule
 
 ```json
 {
