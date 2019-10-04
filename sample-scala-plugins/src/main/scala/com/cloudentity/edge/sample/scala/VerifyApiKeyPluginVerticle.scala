@@ -15,6 +15,21 @@ import scala.concurrent.Future
 case class VerifyApiKeyConf(apiKey: String)
 case class VerifyApiKeyVerticleConf(invalidKeyStatusCode: Int, invalidKeyBody: Option[Json], defaultApiKeyHeader: String)
 
+/**
+ * Verifies that the API client sends an API key in the request header that matches the one configured for that API.
+ * If they do match then the request is proxied to the target service. Otherwise, the request is aborted and error response is sent back to the client.
+ *
+ * Rule configuration:
+ * {
+ *   "name": "sample-verify-apikey",
+ *   "conf": {
+ *     "apiKey": "secret-api-key"
+ *   }
+ * }
+ *
+ * Verticle configuration:
+ * see src/main/resources/modules/plugin/scala/verify-apikey.json
+ */
 class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf] with ConfigDecoder {
   override def name: PluginName = PluginName("sample-verify-apikey")
 
@@ -39,9 +54,9 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
 
       apiKeyValueOpt match {
         case Some(value) if (value == conf.apiKey) =>
-          requestCtx
+          requestCtx // continue request flow
         case _ =>
-          requestCtx.abort(unauthorizedResponse)
+          requestCtx.abort(unauthorizedResponse) // abort request and return response to the client
       }
     }
 

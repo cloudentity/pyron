@@ -18,6 +18,7 @@
   * [Open tracing](#config-open-tracing)
   * [Access log](#config-access-log)
   * [Proxy headers](#config-proxy-headers)
+* [Plugin development guide](docs/plugin-development.md)
 * [Performance](#performance)
 
 <a id="intro"></a>
@@ -436,17 +437,25 @@ Enable `authn` plugin by adding `plugin/authn` to `MODULES` environment variable
 
 ```json
 {
-  "endpoints": [
+  "rules": [
     {
-      "method": "POST",
-      "pathPattern": "/user",
-      "requestPlugins": [
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
         {
-          "name": "authn",
-          "conf": {
-            "methods": [ ... ],
-            "entities": [ ... ]
-          }
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "methods": [ ... ],
+                "entities": [ ... ]
+              }
+            }
+          ]
         }
       ]
     }
@@ -471,17 +480,25 @@ Token header sent by the client should have following format: `Bearer {access-to
 
 ```json
 {
-  "endpoints": [
+  "rules": [
     {
-      "method": "POST",
-      "pathPattern": "/user",
-      "requestPlugins": [
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
         {
-          "name": "authn",
-          "conf": {
-            "methods": ["oauth2"],
-            "entities": ["jwt"]
-          }
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "methods": ["oauth2"],
+                "entities": ["jwt"]
+              }
+            }
+          ]
         }
       ]
     }
