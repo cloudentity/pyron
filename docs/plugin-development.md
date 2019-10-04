@@ -12,7 +12,7 @@ In order to build and use a plugin we need to:
 * [Implement a plugin class](#implement)
 * [Prepare configuration module](#module)
 * [Build JAR](#build)
-* [Configure Pyron to enable plugin](#run)
+* [Run Pyron with plugin enabled](#run)
 
 #### TL;DR;
 
@@ -58,7 +58,6 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
       "main": "com.cloudentity.pyron.sample.scala.VerifyApiKeyPluginVerticle",
       "verticleConfig": {
         "invalidKeyStatusCode": "$env:PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE:int:401",
-        "invalidKeyBody": "$env:?PLUGIN_VERIFY_APIKEY__INVALID_BODY:object",
         "defaultApiKeyHeader": "$env:PLUGIN_VERIFY_APIKEY__HEADER:string:apikey"
       }
     }
@@ -78,14 +77,13 @@ Add plugin's configuration module to MODULES and set required environment variab
 MODULES=["plugin/sample/scala/verify-apikey"]
 
 PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE=401
-PLUGIN_VERIFY_APIKEY__INVALID_BODY={"msg":"API key invalid"}
 PLUGIN_VERIFY_APIKEY__HEADER=apikey
 ```
 
-> Instead of using environment variables put the `verify-apikey.json` content to `system.json` in `run/standalone` or `run/docker` directory.
-> However, from DevOps perspective it is more favorable to use environment variables because of portability to different deployment environments (standalone, Kubernetes, OpenShift, etc.)
+> Instead of using environment variables you can put the `verify-apikey.json` content to `system.json` in `run/standalone` or `run/docker` directory.
+> However, from DevOps perspective it is more favorable to use environment variables because of ease of deployment to different environments (standalone, Kubernetes, OpenShift, etc.)
 
-* Configure rule with plugin applied
+* Run Pyron with plugin enabled
 
 ```json
 {
@@ -293,7 +291,7 @@ override def name: PluginName = PluginName("sample-verify-apikey")
 Now let's read `VerifyApiKeyVerticleConf`, i.e. verticle configuration with API key header and response definition in case of invalid API key:
 
 ```scala
-case class VerifyApiKeyVerticleConf(invalidKeyStatusCode: Int, invalidKeyBody: Option[Json], defaultApiKeyHeader: String)
+case class VerifyApiKeyVerticleConf(invalidKeyStatusCode: Int, defaultApiKeyHeader: String)
 ```
 
 ```scala
@@ -307,7 +305,7 @@ override def initService(): Unit = {
   unauthorizedResponse =
     ApiResponse(
       statusCode = verticleConf.invalidKeyStatusCode,
-      body       = verticleConf.invalidKeyBody.map(_.noSpaces).map(Buffer.buffer).getOrElse(Buffer.buffer()),
+      body       = Buffer.buffer(),
       headers    = Headers()
     )
 }

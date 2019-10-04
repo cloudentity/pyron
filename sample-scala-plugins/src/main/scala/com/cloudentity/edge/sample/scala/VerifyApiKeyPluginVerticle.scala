@@ -13,7 +13,7 @@ import io.vertx.core.buffer.Buffer
 import scala.concurrent.Future
 
 case class VerifyApiKeyConf(apiKey: String)
-case class VerifyApiKeyVerticleConf(invalidKeyStatusCode: Int, invalidKeyBody: Option[Json], defaultApiKeyHeader: String)
+case class VerifyApiKeyVerticleConf(invalidKeyStatusCode: Int, defaultApiKeyHeader: String)
 
 /**
  * Verifies that the API client sends an API key in the request header that matches the one configured for that API.
@@ -43,7 +43,7 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
     unauthorizedResponse =
       ApiResponse(
         statusCode = verticleConf.invalidKeyStatusCode,
-        body       = verticleConf.invalidKeyBody.map(_.noSpaces).map(Buffer.buffer).getOrElse(Buffer.buffer()),
+        body       = Buffer.buffer(),
         headers    = Headers()
       )
   }

@@ -4,7 +4,6 @@
       "main": "com.cloudentity.pyron.sample.scala.VerifyApiKeyPluginVerticle",
       "verticleConfig": {
         "invalidKeyStatusCode": "$env:PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE:int:401",
-        "invalidKeyBody": "$env:?PLUGIN_VERIFY_APIKEY__INVALID_BODY:object",
         "defaultApiKeyHeader": "$env:PLUGIN_VERIFY_APIKEY__HEADER:string:apikey"
       }
     }
