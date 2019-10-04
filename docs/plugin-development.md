@@ -130,12 +130,12 @@ class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
   }
 
   // transforms request (or response in case of `JavaResponsePluginVerticle`) given plugin configuration
-  public Future<RequestCtx> apply(requestCtx: RequestCtx, conf: JsonObject) {
+  public Future<RequestCtx> apply(RequestCtx requestCtx, JsonObject conf) {
     return null;
   }
 
   // validates plugin configuration when initializing the rule
-  public ValidateResponse validate(conf: JsonObject) {
+  public ValidateResponse validate(JsonObject conf) {
     return null;
   }
 }
