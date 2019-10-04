@@ -2,8 +2,7 @@ package com.cloudentity.pyron.plugin.verticle
 
 import com.cloudentity.tools.vertx.scala.Futures
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
-import io.circe.Decoder.Result
-import io.circe.Json
+import io.circe.{Decoder, Encoder, Json}
 import com.cloudentity.pyron.plugin.openapi.ConvertOpenApiRequest
 import com.cloudentity.pyron.plugin.config.ValidateRequest
 import com.cloudentity.pyron.domain.flow.{PluginName, RequestCtx, ResponseCtx}
@@ -14,6 +13,7 @@ import com.cloudentity.pyron.plugin.config.ValidateResponse
 import com.cloudentity.pyron.plugin.openapi.ConvertOpenApiResponse
 import com.cloudentity.pyron.util.ConfigDecoder
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
+import io.vertx.core.json.JsonObject
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -128,4 +128,10 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
       case Some(ruleConf) => Right(ruleConf)
       case None           => decodeRuleConf(conf)
     }
+
+  implicit val JsonObjectDecoder: Decoder[io.vertx.core.json.JsonObject] =
+    Decoder.decodeJson.emapTry(o => Try(new io.vertx.core.json.JsonObject(o.noSpaces)))
+
+  implicit val JsonObjectEncoder: Encoder[io.vertx.core.json.JsonObject] =
+    (o: JsonObject) => io.circe.parser.parse(o.toString).getOrElse(throw new Exception(s"could not encode '${o.toString}' to JSON"))
 }

@@ -28,6 +28,10 @@
     </dependency>
     <dependency>
       <groupId>com.cloudentity.pyron</groupId>
+      <artifactId>pyron-plugin-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudentity.pyron</groupId>
       <artifactId>pyron-engine</artifactId>
     </dependency>
     <dependency>

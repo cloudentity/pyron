@@ -11,14 +11,17 @@
   <modules>
     <module>pyron-core</module>
     <module>pyron-plugin</module>
+    <module>pyron-plugin-java</module>
     <module>pyron-engine</module>
     <module>pyron-app</module>
     <module>sample-scala-plugins</module>
+    <module>sample-java-plugins</module>
   </modules>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <scala.version>2.12.9</scala.version>
+    <java.version>1.8</java.version>
     <scala-maven-plugin.version>4.2.0</scala-maven-plugin.version>
     <vertx.version>3.8.0</vertx.version>
     <vertx-tools.version>1.0.0-SNAPSHOT</vertx-tools.version>
@@ -121,6 +124,11 @@
       <dependency>
         <groupId>com.cloudentity.pyron</groupId>
         <artifactId>pyron-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudentity.pyron</groupId>
+        <artifactId>pyron-plugin-java</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- vertx-tools -->
