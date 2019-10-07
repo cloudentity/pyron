@@ -4,7 +4,7 @@
 
 Pyron is a JVM-based application. This means you can use any Java-compatible language to implement Pyron plugin.
 
-For Scala development tutorial go [here](plugin-development-scala.md) for Java go [here](plugin-development-java.md).
+For Scala development tutorial go [here](plugin-dev-scala.md) for Java go [here](plugin-dev-java.md).
 
 * [TL;DR; for Scala](#tldr-scala)
 * [TL;DR; for Java](#tldr-java)

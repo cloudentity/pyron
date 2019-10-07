@@ -18,7 +18,7 @@
   * [Open tracing](#config-open-tracing)
   * [Access log](#config-access-log)
   * [Proxy headers](#config-proxy-headers)
-* [Plugin development guide](docs/plugin-development.md)
+* [Plugin development guide](docs/plugin-dev.md)
 * [Performance](#performance)
 
 <a id="intro"></a>
@@ -241,6 +241,8 @@ If an endpoint attribute is missing then it is taken from `default`.
 | method             | HTTP method                                                                            |
 | pathPattern        | regular expression extended with support of path-param placeholders, e.g. `/user/{id}` |
 
+Client's call `POST /user` is proxied to target `POST /user`.
+
 <a id="config-path-prefix"></a>
 #### Path prefix
 
@@ -304,7 +306,9 @@ To preserve the prefix set `dropPrefix` to false.
 
 | Attribute          | Description                                                                            |
 |:-------------------|:---------------------------------------------------------------------------------------|
-| rewritePath        | path that Pyron calls target service at (optional, `pathPattern` used if this not set)  |
+| rewritePath        | path that Pyron calls target service at (optional, `pathPattern` used if this not set) |
+
+Client's call `GET /user/123` is proxied to target `GET /entities/user/123`
 
 <a id="config-rewrite-method"></a>
 #### Rewrite method
@@ -331,7 +335,9 @@ To preserve the prefix set `dropPrefix` to false.
 
 | Attribute          | Description                                                                            |
 |:-------------------|:---------------------------------------------------------------------------------------|
-| rewriteMethod      | method that Pyron calls target service with (optional, `method` used if this not set)   |
+| rewriteMethod      | method that Pyron calls target service with (optional, `method` used if this not set)  |
+
+Client's call `POST /user` is proxied to target `PUT /user`.
 
 <a id="config-response-timeout"></a>
 #### Response timeout

@@ -21,7 +21,7 @@ In order to build and use a plugin we need to:
 
 All dependencies needed to implement a plugin are contained in `pyron-plugin` module.
 
-Add com.cloudentity.pyron:pyron-plugin:{pyron.version} dependency to your build.
+Add `com.cloudentity.pyron:pyron-plugin:{PYRON_VERSION}` dependency to your build.
 
 Sample `pom.xml`:
 
@@ -39,7 +39,7 @@ Sample `pom.xml`:
   <properties>
     <scala.version>2.12.9</scala.version>
     <scala-maven-plugin.version>4.2.0</scala-maven-plugin.version>
-    <pyron.version>1.0.0-SNAPSHOT</pyron.version>
+    <pyron.version>PYRON_VERSION</pyron.version>
   </properties>
 
   <dependencies>
@@ -147,6 +147,16 @@ The plugin rule configuration has following form:
 }
 ```
 
+and verticle configuration:
+```json
+{
+  "verticleConfig": {
+    "invalidKeyStatusCode": 401,
+    "defaultApiKeyHeader": "apikey"
+  }
+}
+```
+
 The name of the plugin is `sample-verify-apikey` and the configuration object has one attribute `apiKey` containing the API key value.
 
 To implement the plugin logic we need to extend request part of the flow and use `RequestPluginVerticle` to create our `VerifyApiKeyPluginVerticle`.
@@ -235,7 +245,7 @@ override def apply(requestCtx: RequestCtx, conf: VerifyApiKeyConf): Future[Reque
   }
 ```
 
-`apply` method accepts `RequestCtx` and plugin configuration. Remember that `RequestCtx` is immutable, so it requires [special handling](#docs/plugin-development-guidelines.md#request-ctx).
+`apply` method accepts `RequestCtx` and plugin configuration. Remember that `RequestCtx` is immutable, so it requires [special handling](#docs/plugin-dev-ctx-scala.md).
 
 Finally, the full implementation:
 
