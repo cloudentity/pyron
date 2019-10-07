@@ -244,7 +244,7 @@ override def apply(requestCtx: RequestCtx, conf: VerifyApiKeyConf): Future[Reque
   }
 ```
 
-`apply` method accepts `RequestCtx` and plugin configuration. Remember that `RequestCtx` is immutable, so it requires [special handling](#docs/plugin-dev-ctx-scala.md).
+`apply` method accepts `RequestCtx` and plugin configuration. Remember that `RequestCtx` is immutable, so it requires [special handling](plugin-dev-ctx-scala.md).
 
 Finally, the full implementation:
 
@@ -374,3 +374,4 @@ Start Pyron. Now we can use the plugin in a rule:
 ### More
 
 * [Call external HTTP server](plugin-dev-http-scala.md)
+* [Working with immutable RequestCtx and ResponseCtx](plugin-dev-ctx-scala.md)

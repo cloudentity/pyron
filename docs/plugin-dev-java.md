@@ -215,7 +215,7 @@ And finally the plugin logic:
   }
 ```
 
-`applyJava` method accepts `RequestCtx` and plugin configuration. Remember that `RequestCtx` is immutable, so it requires [special handling](#docs/plugin-dev-ctx-java.md).
+`applyJava` method accepts `RequestCtx` and plugin configuration. Remember that `RequestCtx` is immutable, so it requires [special handling](plugin-dev-ctx-java.md).
 
 Finally, the full implementation:
 
@@ -352,3 +352,4 @@ Start Pyron. Now we can use the plugin in a rule:
 ### More
 
 * [Call external HTTP server](plugin-dev-http-java.md)
+* [Working with immutable RequestCtx and ResponseCtx](plugin-dev-ctx-java.md)
