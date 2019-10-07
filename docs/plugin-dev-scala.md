@@ -178,7 +178,6 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
 ```
 
 `RequestPluginVerticle` is parametrized with `VerifyApiKeyConf`, i.e. a class representing plugin configuration at rule level.
-
 In our case it is `case class VerifyApiKeyConf(apiKey: String)`.
 
 We can use automatic derivation of Decoder using `io.circe.generic.semiauto.deriveDecoder` method or create custom implementation.
@@ -317,7 +316,7 @@ In order to deploy `VerifyApiKeyPluginVerticle` we need to put it's definition i
 > `verticleConfig.invalidKeyStatusCode` is set to `PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE` environment variable reference with default `401` integer value.
 
 We need to put the above JSON file on plugin JAR classpath at `modules/plugin/...` path, e.g. `modules/plugin/sample/scala/verify-apikey.json`.
-Later on we will configure Pyron engine to read this JSON and deploy the plugin.
+Later on, we will configure Pyron to read this JSON and deploy the plugin.
 
 <a id="build"></a>
 ### Build JAR
@@ -337,7 +336,7 @@ PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE=401
 PLUGIN_VERIFY_APIKEY__HEADER=apikey
 ```
 
-Now we can use the plugin in a rule
+Restart Pyron. Now we can use the plugin in a rule:
 
 ```json
 {
@@ -365,3 +364,7 @@ Now we can use the plugin in a rule
   ]
 }
 ```
+
+> NOTE<br/>
+> It is possible to deploy/undeploy plugins at runtime, but it requires to override MODULES environment variable in `system.json` configuration file.
+> [Read about the details](https://github.com/Cloudentity/vertx-tools#override-envsys).

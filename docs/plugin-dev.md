@@ -128,7 +128,7 @@ Use `JavaRequestPluginVerticle`, `JavaResponsePluginVerticle`, `JavaRequestRespo
 ```java
 class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
   // name of the plugin used in rule definition
-  public String name(): {
+  public String name() {
     return "sample-verify-key";
   }
 
