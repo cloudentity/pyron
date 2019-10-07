@@ -241,7 +241,7 @@ If an endpoint attribute is missing then it is taken from `default`.
 | method             | HTTP method                                                                            |
 | pathPattern        | regular expression extended with support of path-param placeholders, e.g. `/user/{id}` |
 
-Client's call `POST /user` is proxied to target `POST /user`.
+Example: client's call `POST /user` is proxied to target `POST /user`.
 
 <a id="config-path-prefix"></a>
 #### Path prefix
@@ -308,7 +308,7 @@ To preserve the prefix set `dropPrefix` to false.
 |:-------------------|:---------------------------------------------------------------------------------------|
 | rewritePath        | path that Pyron calls target service at (optional, `pathPattern` used if this not set) |
 
-Client's call `GET /user/123` is proxied to target `GET /entities/user/123`
+Example: client's call `GET /user/123` is proxied to target `GET /entities/user/123`
 
 <a id="config-rewrite-method"></a>
 #### Rewrite method
@@ -337,7 +337,7 @@ Client's call `GET /user/123` is proxied to target `GET /entities/user/123`
 |:-------------------|:---------------------------------------------------------------------------------------|
 | rewriteMethod      | method that Pyron calls target service with (optional, `method` used if this not set)  |
 
-Client's call `POST /user` is proxied to target `PUT /user`.
+Example: client's call `POST /user` is proxied to target `PUT /user`.
 
 <a id="config-response-timeout"></a>
 #### Response timeout
