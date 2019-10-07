@@ -138,13 +138,13 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
   * [Retry](#config-retry)
   * [Preserve Host header](#config-preserve-host--header)
 * [Plugins](#config-plugins)
-  * Authentication
+  * [Authentication](#plugins-authn)
     * OAuth 2 with JWT access token
 * [API groups](#config-api-groups)
 * [Service discovery](#config-service-discovery)
-  * Consul service discovery
-  * Configuration-based service discovery
-  * Self-registration in Consul
+  * [Consul service discovery](#sd-consul)
+  * [Configuration-based service discovery](#sd-static)
+  * [Self-registration in Consul](#sd-register)
 * [HTTP server](#config-http-server)
 * [HTTP clients](#config-http-clients)
   * Default retries and timeout
@@ -436,6 +436,7 @@ By default, Pyron sends target host in Host header to target service, set `prese
 <a id="config-plugins"></a>
 ### Plugins
 
+<a id="plugins-authn"></a>
 #### Authentication
 
 `authn` plugin performs authentication and optionally sets entities in the request authentication context.
@@ -596,6 +597,7 @@ Pyron calls nodes with `targetService` service-name using a round-robin load bal
 
 Below you will find instructions on how to enable service discovery providers.
 
+<a id="sd-consul"></a>
 #### Consul service discovery
 
 Add `sd-provider/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-provider/consul"]`.
@@ -612,6 +614,7 @@ Add `sd-provider/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-p
 
 Note: nodes registered in Consul need to have `http-endpoint` tag and `ssl` tag if exposed over SSL.
 
+<a id="sd-static"></a>
 #### Configuration-based service discovery
 
 Add `sd-provider/static` to `MODULES` environment variable, i.e. `MODULES=["sd-provider/static"]`.
@@ -642,6 +645,7 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
 | location.ssl       | SSL of target node                   |
 | location.root      | root path of target node (optional)  |
 
+<a id="sd-register"></a>
 #### Self-registration in Consul
 
 Pyron node can register itself in Consul for service discovery.
