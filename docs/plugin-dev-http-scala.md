@@ -1,9 +1,9 @@
 ## Call external HTTP server from a Scala plugin
 
-This how-to assumes that you read Scala plugin development [guide](plugin-dev-scala.md).
+Before proceeding with this how-to read [Scala plugin development guide](plugin-dev-scala.md).
 The samples used here can be found in `sample-scala-plugins` module.
 
-We will use `SmartHttpClient` provided by [vertx-client](https://github.com/Cloudentity/vertx-tools) library.
+We will use `SmartHttpClient` provided by [vertx-client](https://github.com/Cloudentity/vertx-tools) library to call external HTTP server.
 `SmartHttpClient` is a Future-based wrapper of Vertx HTTP client with optional service-discovery, load-balancing and retries.
 
 * [SmartHttpClient configuration](#smart-config)
