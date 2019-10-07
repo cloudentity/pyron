@@ -5,8 +5,8 @@ We use Java as programming language and Maven as build tool.
 
 In order to build and use a plugin we need to:
 
-* [Create a project](#project)
-* [Implement a plugin class](#implement)
+* [Create project](#project)
+* [Implement plugin class](#implement)
 * [Prepare configuration module](#module)
 * [Build JAR](#build)
 * [Run Pyron with plugin enabled](#run)
@@ -17,7 +17,7 @@ In order to build and use a plugin we need to:
 > * The lifecycle of a Pyron plugin is managed by a [verticle registry](https://github.com/Cloudentity/vertx-tools#di)
 
 <a id="project"></a>
-### Create a project
+### Create project
 
 All dependencies needed to implement a plugin are contained in `pyron-plugin-java` module.
 
@@ -81,7 +81,7 @@ Sample `pom.xml`:
 ```
 
 <a id="implement"></a>
-### Implement a plugin class
+### Implement plugin class
 
 There are 3 base classes you can use to implement a plugin. The one you choose depends on what request/response flow part you want to extend.
 
