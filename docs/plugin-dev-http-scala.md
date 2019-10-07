@@ -41,7 +41,8 @@ We will use `SmartHttpClient` provided by [vertx-client](https://github.com/Clou
 var client: SmartHttpClient = _
 
 override def initServiceAsyncS(): Future[Unit] = {
-  val clientConfig: JsonObject = getConfig().getJsonObject("client") // assuming that smart-client configuration is in `client` attribute of verticle config
+  // assuming that smart-client configuration is in `client` attribute of verticle config
+  val clientConfig: JsonObject = getConfig().getJsonObject("client")
 
   SmartHttp.clientBuilder(vertx, clientConfig).build().toScala.map(c => client = c)
 }

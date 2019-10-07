@@ -41,9 +41,10 @@ We will use `SmartHttpClient` provided by [vertx-client](https://github.com/Clou
 SmartHttpClient client;
 
 public Future initServiceAsync() {
+  // assuming that smart-client configuration is in `client` attribute of verticle config
   JsonObject clientConfig = getConfig().getJsonObject("client");
 
-  return SmartHttp.clientBuilder(vertx, clientConfig).build().map(c -> client = c); // assuming that smart-client configuration is in `client` attribute of verticle config
+  return SmartHttp.clientBuilder(vertx, clientConfig).build().map(c -> client = c);
 }
 ```
 
