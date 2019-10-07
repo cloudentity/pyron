@@ -126,7 +126,7 @@ PLUGIN_VERIFY_APIKEY__HEADER=apikey
 Use `JavaRequestPluginVerticle`, `JavaResponsePluginVerticle`, `JavaRequestResponsePluginVerticle` depending what request-response flow part you want to extend.
 
 ```java
-class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
+public class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
   // name of the plugin used in rule definition
   public String name() {
     return "sample-verify-key";
