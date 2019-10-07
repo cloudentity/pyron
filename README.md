@@ -278,8 +278,9 @@ Expose multiple endpoints using the same path prefix.
 | pathPrefix         | prefix appended to `pathPattern` (optional)                   |
 | dropPrefix         | drop path prefix when calling target service (default true)   |
 
-By default, the prefix is dropped when calling target service. I.e. endpoint exposed at `POST /example/user` is proxied to `POST /user` in target service.
-To preserve the prefix set `dropPrefix` to false.
+By default, the prefix is dropped when calling target service. To preserve the prefix set `dropPrefix` to false.
+
+Example: client's call `POST /example/user` is proxied to target `POST /user`.
 
 <a id="config-rewrite-path"></a>
 #### Rewrite path
