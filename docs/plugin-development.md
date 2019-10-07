@@ -9,6 +9,7 @@ For Scala development tutorial go [here](plugin-development-scala.md) for Java g
 * [TL;DR; for Scala](#tldr-scala)
 * [TL;DR; for Java](#tldr-java)
 
+<a id="tldr-scala"></a>
 #### TL;DR; for Scala
 
 * Add `pyron-plugin` dependency to your pom.xml
@@ -106,6 +107,7 @@ PLUGIN_VERIFY_APIKEY__HEADER=apikey
 }
 ```
 
+<a id="tldr-java"></a>
 #### TL;DR; for Java
 
 * Add `pyron-plugin-java` dependency to your pom.xml

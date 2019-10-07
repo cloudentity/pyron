@@ -16,6 +16,7 @@ In order to build and use a plugin we need to:
 > * A Pyron plugin is a [Vertx verticle](https://vertx.io/docs/vertx-core/java/#_verticles) and [ComponentVerticle](https://github.com/Cloudentity/vertx-tools#config-verticle)
 > * The lifecycle of a Pyron plugin is managed by a [verticle registry](https://github.com/Cloudentity/vertx-tools#di)
 
+<a id="project"></a>
 ### Create a project
 
 All dependencies needed to implement a plugin are contained in `pyron-plugin` module.
@@ -100,6 +101,7 @@ Sample `pom.xml`:
 </project>
 ```
 
+<a id="implement"></a>
 ### Implement a plugin class
 
 There are 3 base classes you can use to implement a plugin. The one you choose depends on what request/response flow part you want to extend.
@@ -235,7 +237,7 @@ override def apply(requestCtx: RequestCtx, conf: VerifyApiKeyConf): Future[Reque
 
 `apply` method accepts `RequestCtx` and plugin configuration. Remember that `RequestCtx` is immutable, so it requires [special handling](#docs/plugin-development-guidelines.md#request-ctx).
 
-Full implementation is following:
+Finally, the full implementation:
 
 ```scala
 class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf] with ConfigDecoder {
@@ -276,6 +278,7 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
 }
 ```
 
+<a id="module"></a>
 ### Prepare configuration module
 
 In order to deploy `VerifyApiKeyPluginVerticle` we need to put it's definition in `request-plugins` [registry](https://github.com/Cloudentity/vertx-tools#di).
@@ -306,11 +309,13 @@ In order to deploy `VerifyApiKeyPluginVerticle` we need to put it's definition i
 We need to put the above JSON file on plugin JAR classpath at `modules/plugin/...` path, e.g. `modules/plugin/sample/scala/verify-apikey.json`.
 Later on we will configure Pyron engine to read this JSON and deploy the plugin.
 
+<a id="build"></a>
 ### Build JAR
 
 Run `mvn install` to build JAR containing plugin verticle class `VerifyApiKeyPluginVerticle` and config module `modules/plugin/sample/scala/verify-apikey.json`.
 The JAR needs to be put on Pyron's classpath, so the verticle registry can deploy it. Depending on Pyron deployment mode put it in `run/standalone/plugin-jars` or `run/docker/plugin-jars`.
 
+<a id="run"></a>
 ### Run Pyron with plugin enabled
 
 Add plugin's configuration module to MODULES and set required environment variables in `run/standalone/envs` or `run/docker/envs`:
