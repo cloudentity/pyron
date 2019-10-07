@@ -335,9 +335,7 @@ PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE=401
 PLUGIN_VERIFY_APIKEY__HEADER=apikey
 ```
 
-Restart Pyron. Now we can use the plugin in a rule:
-
-Now we can use the plugin in a rule
+Start Pyron. Now we can use the plugin in a rule:
 
 ```json
 {
