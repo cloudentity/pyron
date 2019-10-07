@@ -32,7 +32,7 @@ case class VerifyApiKeyConf(apiKey: String)
 
 class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf] with ConfigDecoder {
   // name of the plugin used in rule definition
-  override def name: PluginName = PluginName("sample-verify-key")
+  override def name: PluginName = PluginName("sample-verify-apikey")
 
   // transforms request (or response in case of `ResponsePluginVerticle`) given plugin configuration, NOTE: `RequestCtx` is immutable
   override def apply(requestCtx: RequestCtx, conf: VerifyApiKeyConf): Future[RequestCtx] = ???
@@ -129,7 +129,7 @@ Use `JavaRequestPluginVerticle`, `JavaResponsePluginVerticle`, `JavaRequestRespo
 public class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
   // name of the plugin used in rule definition
   public String name() {
-    return "sample-verify-key";
+    return "sample-verify-apikey";
   }
 
   // transforms request (or response in case of `JavaResponsePluginVerticle`) given plugin configuration, NOTE: `RequestCtx` is immutable
