@@ -195,7 +195,7 @@ Add client configuration at `verticleConfig.client` path in plugin module config
     "abort": {
       "main": "com.cloudentity.pyron.sample.scala.AbortPluginVerticle",
       "verticleConfig": {
-        "path": "/verify",
+        "path": "$env:PLUGIN_ABORT__PATH:string:/verify",
         "client": {
           "serviceLocation": {
             "host": "$env:PLUGIN_ABORT__HOST:string",

@@ -27,7 +27,7 @@ public class AbortPluginVerticle extends JavaRequestPluginVerticle {
 
   @Override
   public String name() {
-    return "abort";
+    return "sample-abort";
   }
 
   @Override
