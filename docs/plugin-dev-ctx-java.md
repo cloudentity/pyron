@@ -2,13 +2,13 @@
 
 The plugin logic is implemented in
 
-* `def applyJava(RequestCtx ctx, JsonObject conf): Future[RequestCtx]`
-* `def applyJava(ResponseCtx ctx, JsonObject conf): Future[ResponseCtx]`.
+* `Future<RequestCtx> applyJava(RequestCtx requestCtx, JsonObject conf)`
+* `Future<ResponseCtx> applyJava(ResponseCtx responseCtx, JsonObject conf)`.
 
-According to method signature, the `apply` method accepts `RequestCtx` (or `ResponseCtx`) with some configuration and returns `RequestCtx` asynchronously.
+According to method signature, the `applyJava` method accepts `RequestCtx` (or `ResponseCtx`) with some configuration and returns `RequestCtx` asynchronously.
 The reason for accepting and returning `RequestCtx` is the fact that it is immutable. Any method executed on it does not affect it but returns a new modified instance of `RequestCtx`.
 
-Plugin `apply` method needs to return the final `RequestCtx` with all modifications applied.
+Plugin `applyJava` method needs to return the final `RequestCtx` with all modifications applied.
 
 Additionally, `RequestCtx` (and `ResponseCtx`) aggregates several immutable values, e.g. target request, extra access log items, properties, authentication context, etc.
 `RequestCtx` provides `modifyXXX` methods to make modifying nested values easier. E.g. `RequestCtx.modifyProperties` returns new `RequestCtx` with modified properties.
