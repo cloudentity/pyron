@@ -348,3 +348,7 @@ Start Pyron. Now we can use the plugin in a rule:
 > NOTE<br/>
 > It is possible to deploy/undeploy plugins at runtime, but it requires to override MODULES environment variable in `system.json` configuration file.
 > [Read about the details](https://github.com/Cloudentity/vertx-tools#override-envsys).
+
+### More
+
+* [Call external HTTP server](plugin-dev-http-java.md)

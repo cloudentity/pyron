@@ -1,0 +1,17 @@
+{
+  "registry:request-plugins": {
+    "blacklist": {
+      "main": "com.cloudentity.pyron.sample.java.AbortPluginVerticle",
+      "verticleConfig": {
+        "path": "/verify",
+        "client": {
+          "serviceLocation": {
+            "host": "$env:PLUGIN_ABORT__HOST:string",
+            "port": "$env:PLUGIN_ABORT__PORT:int",
+            "ssl": "$env:PLUGIN_ABORT__SSL:boolean"
+          }
+        }
+      }
+    }
+  }
+}
