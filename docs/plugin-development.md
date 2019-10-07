@@ -8,7 +8,6 @@ For Scala development tutorial go [here](plugin-development-scala.md) for Java g
 
 * [TL;DR; for Scala](#tldr-scala)
 * [TL;DR; for Java](#tldr-java)
-* [Development guidelines](#guidelines)
 
 #### TL;DR; for Scala
 
@@ -25,7 +24,7 @@ For Scala development tutorial go [here](plugin-development-scala.md) for Java g
 
 * Implement plugin verticle
 
-Use `RequestPluginVerticle`, `RequestPluginVerticle`, `RequestResponsePluginVerticle` depending what request-response flow part you want to extend.
+Use `RequestPluginVerticle`, `ResponsePluginVerticle`, `RequestResponsePluginVerticle` depending what request-response flow part you want to extend.
 
 ```scala
 case class VerifyApiKeyConf(apiKey: String)
@@ -45,7 +44,7 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
 }
 ```
 
-* Prepare module configuration (put it in your project at `src/main/resources/modules/plugin/sample/scala/verify-apikey.json`)
+* Prepare plugin module configuration
 
 ```json
 {
@@ -60,6 +59,8 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
   }
 }
 ```
+
+Put it in your plugin JAR classpath at `modules/plugin/{path-to-you-plugin-verticle-config}.json`, e.g. in your sources root at `src/main/resources/modules/plugin/sample/scala/verify-apikey.json`.
 
 * Build your plugin and put the resulting JAR on Pyron classpath
 
@@ -120,7 +121,7 @@ PLUGIN_VERIFY_APIKEY__HEADER=apikey
 
 * Implement plugin verticle
 
-Use `JavaRequestPluginVerticle`, `JavaRequestPluginVerticle`, `JavaRequestResponsePluginVerticle` depending what request-response flow part you want to extend.
+Use `JavaRequestPluginVerticle`, `JavaResponsePluginVerticle`, `JavaRequestResponsePluginVerticle` depending what request-response flow part you want to extend.
 
 ```java
 class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
@@ -141,7 +142,7 @@ class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
 }
 ```
 
-* Prepare module configuration (put it in your project at `src/main/resources/modules/plugin/sample/java/verify-apikey.json`)
+* Prepare module configuration
 
 ```json
 {
@@ -156,6 +157,8 @@ class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
   }
 }
 ```
+
+Put it in your plugin JAR classpath at `modules/plugin/{path-to-you-plugin-verticle-config}.json`, e.g. in your sources root at `src/main/resources/modules/plugin/sample/java/vertify-apikey.json`.
 
 * Build your plugin and put the resulting JAR on Pyron classpath
 
@@ -200,13 +203,3 @@ PLUGIN_VERIFY_APIKEY__HEADER=apikey
   ]
 }
 ```
-
-### Development guidelines
-
-> Pyron is built on top of Vertx and [cloudentity/vertx-tools](https://github.com/Cloudentity/vertx-tools).
-> A Pyron plugin is a [Vertx verticle](https://vertx.io/docs/vertx-core/java/#_verticles)
-> with some extra features provided by vertx-tools' ServiceVerticle. When implementing a plugin we need to remember
-> not to perform blocking-IO code unless it's deployed on separate thread pool (see for [configuration details](https://github.com/Cloudentity/vertx-tools#di-deployment-opts).
-
-> Instead of using environment variables you can put the `verify-apikey.json` content to `system.json` in `run/standalone` or `run/docker` directory.
-> However, from DevOps perspective it is more favorable to use environment variables because of ease of deployment to different environments (standalone, Kubernetes, OpenShift, etc.)

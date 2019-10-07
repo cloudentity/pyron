@@ -11,6 +11,11 @@ In order to build and use a plugin we need to:
 * [Build JAR](#build)
 * [Run Pyron with plugin enabled](#run)
 
+> NOTE<br/>
+> * Pyron is built on top of [Vertx](https://vertx.io) and [Cloudentity vertx-tools](https://github.com/Cloudentity/vertx-tools).
+> * A Pyron plugin is a [Vertx verticle](https://vertx.io/docs/vertx-core/java/#_verticles) and [ComponentVerticle](https://github.com/Cloudentity/vertx-tools#config-verticle)
+> * The lifecycle of a Pyron plugin is managed by a [verticle registry](https://github.com/Cloudentity/vertx-tools#di)
+
 ### Create a project
 
 All dependencies needed to implement a plugin are contained in `pyron-plugin` module.
@@ -105,12 +110,11 @@ There are 3 base classes you can use to implement a plugin. The one you choose d
 | ResponsePluginVerticle         | response           |
 | RequestResponsePluginVerticle  | request + response |
 
-```example
 As an example we will implement API key verification plugin.
 
-The plugin verifies that the API client sends an API key in the request header that matches the one configured for that API.
+The plugin verifies that the API client sends an API key in the request header matching the one configured for that API.
 If they do match then the request is proxied to the target service. Otherwise, the request is aborted and error response is sent back to the client.
-It is possible to configure the key header name for all APIs and the key value per API (at rule level).
+It is possible to configure the key value per API (at rule level per plugin application) and the key header name for all APIs an (at verticle level).
 
 The plugin rule configuration has following form:
 
@@ -141,9 +145,9 @@ The plugin rule configuration has following form:
 }
 ```
 
-The name of the plugin is `sample-verify-apikey` and configuration attribute with API key value is `apiKey`.
+The name of the plugin is `sample-verify-apikey` and the configuration object has one attribute `apiKey` containing the API key value.
 
-The example requirements mean that we are extending request flow part and we need to use `RequestPluginVerticle` to implement our `VerifyApiKeyPluginVerticle`.
+To implement the plugin logic we need to extend request part of the flow and use `RequestPluginVerticle` to create our `VerifyApiKeyPluginVerticle`.
 
 ```scala
 class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf] with ConfigDecoder {
@@ -163,9 +167,7 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
 
 `RequestPluginVerticle` is parametrized with `VerifyApiKeyConf`, i.e. a class representing plugin configuration at rule level.
 
-```example
 In our case it is `case class VerifyApiKeyConf(apiKey: String)`.
-```
 
 We can use automatic derivation of Decoder using `io.circe.generic.semiauto.deriveDecoder` method or create custom implementation.
 
@@ -173,7 +175,9 @@ We can use automatic derivation of Decoder using `io.circe.generic.semiauto.deri
 override def confDecoder: Decoder[VerifyApiKeyConf] = io.circe.generic.semiauto.deriveDecoder
 ```
 
-Making sure that API key in plugin configuration is not empty:
+`validate` method is called whenever rules configuration changes and plugin is applied in a rule. It checks whether the plugin configuration is valid.
+
+In our case, `validate` method makes sure that API key in plugin configuration is not empty:
 
 ```scala
 override def validate(conf: VerifyApiKeyConf): ValidateResponse =
@@ -181,13 +185,13 @@ override def validate(conf: VerifyApiKeyConf): ValidateResponse =
     else                      ValidateResponse.failure("'apiKey' must be not empty")
 ```
 
-Setting plugin's name:
+`name` method returns plugin's name that can be referred in rule configuration:
 
 ```scala
 override def name: PluginName = PluginName("sample-verify-apikey")
 ```
 
-Now let's read `VerifyApiKeyVerticleConf`, i.e. verticle configuration with API key header and response definition in case of invalid API key:
+Now let's read `VerifyApiKeyVerticleConf`, i.e. verticle configuration with API key header name and response definition in case of invalid API key:
 
 ```scala
 case class VerifyApiKeyVerticleConf(invalidKeyStatusCode: Int, defaultApiKeyHeader: String)
@@ -229,4 +233,120 @@ override def apply(requestCtx: RequestCtx, conf: VerifyApiKeyConf): Future[Reque
   }
 ```
 
-`apply` method accepts `RequestCtx` and plugin configuration. `RequestCtx` is immutable, so
+`apply` method accepts `RequestCtx` and plugin configuration. Remember that `RequestCtx` is immutable, so it requires [special handling](#docs/plugin-development-guidelines.md#request-ctx).
+
+Full implementation is following:
+
+```scala
+class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf] with ConfigDecoder {
+  override def name: PluginName = PluginName("sample-verify-apikey")
+
+  var verticleConf: VerifyApiKeyVerticleConf = _
+  var unauthorizedResponse: ApiResponse = _
+
+  override def initService(): Unit = {
+    implicit val PluginConfDecoder = deriveDecoder[VerifyApiKeyVerticleConf]
+    verticleConf = decodeConfigUnsafe[VerifyApiKeyVerticleConf]
+
+    unauthorizedResponse =
+      ApiResponse(
+        statusCode = verticleConf.invalidKeyStatusCode,
+        body       = Buffer.buffer(),
+        headers    = Headers()
+      )
+  }
+
+  override def apply(requestCtx: RequestCtx, conf: VerifyApiKeyConf): Future[RequestCtx] =
+    Future.successful {
+      val apiKeyValueOpt = requestCtx.request.headers.get(verticleConf.defaultApiKeyHeader)
+
+      apiKeyValueOpt match {
+        case Some(value) if (value == conf.apiKey) =>
+          requestCtx // continue request flow
+        case _ =>
+          requestCtx.abort(unauthorizedResponse) // abort request and return response to the client
+      }
+    }
+
+  override def validate(conf: VerifyApiKeyConf): ValidateResponse =
+    if (conf.apiKey.nonEmpty) ValidateOk
+    else                      ValidateFailure("'apiKey' must be not empty")
+
+  override def confDecoder: Decoder[VerifyApiKeyConf] = deriveDecoder
+}
+```
+
+### Prepare configuration module
+
+In order to deploy `VerifyApiKeyPluginVerticle` we need to put it's definition in `request-plugins` [registry](https://github.com/Cloudentity/vertx-tools#di).
+
+```json
+{
+  "registry:request-plugins": {
+    "sample-verify-apikey": {
+      "main": "com.cloudentity.pyron.sample.scala.VerifyApiKeyPluginVerticle",
+      "verticleConfig": {
+        "invalidKeyStatusCode": "$env:PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE:int:401",
+        "defaultApiKeyHeader": "$env:PLUGIN_VERIFY_APIKEY__HEADER:string:apikey"
+      }
+    }
+  }
+}
+```
+
+| Attribute         | Description                                                                                                                   |
+|:------------------|:------------------------------------------------------------------------------------------------------------------------------|
+| main              | Class name to deploy                                                                                                          |
+| verticleConfig    | Configuration injected into plugin verticle. Returned raw by `getConfig()` or decoded by `ConfigDecoder.decodeConfigUnsafe()` |
+
+> NOTE<br/>
+> Pyron supports cross-configuration, environment variables and system properties [references](https://github.com/Cloudentity/vertx-tools#config-references).
+> `verticleConfig.invalidKeyStatusCode` is set to `PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE` environment variable reference with default `401` integer value.
+
+We need to put the above JSON file on plugin JAR classpath at `modules/plugin/...` path, e.g. `modules/plugin/sample/scala/verify-apikey.json`.
+Later on we will configure Pyron engine to read this JSON and deploy the plugin.
+
+### Build JAR
+
+Run `mvn install` to build JAR containing plugin verticle class `VerifyApiKeyPluginVerticle` and config module `modules/plugin/sample/scala/verify-apikey.json`.
+The JAR needs to be put on Pyron's classpath, so the verticle registry can deploy it. Depending on Pyron deployment mode put it in `run/standalone/plugin-jars` or `run/docker/plugin-jars`.
+
+### Run Pyron with plugin enabled
+
+Add plugin's configuration module to MODULES and set required environment variables in `run/standalone/envs` or `run/docker/envs`:
+
+```
+MODULES=["plugin/sample/scala/verify-apikey"]
+
+PLUGIN_VERIFY_APIKEY__INVALID_STATUS_CODE=401
+PLUGIN_VERIFY_APIKEY__HEADER=apikey
+```
+
+Now we can use the plugin in a rule
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestPlugins": [
+            {
+              "name": "sample-verify-apikey",
+              "conf": {
+                "apiKey": "secret-api-key"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
