@@ -7,7 +7,7 @@ import com.cloudentity.pyron.plugin.verticle.RequestPluginVerticle
 import com.cloudentity.pyron.util.ConfigDecoder
 import com.cloudentity.tools.vertx.http.Headers
 import io.circe.generic.semiauto.deriveDecoder
-import io.circe.{Decoder, Json}
+import io.circe.Decoder
 import io.vertx.core.buffer.Buffer
 
 import scala.concurrent.Future

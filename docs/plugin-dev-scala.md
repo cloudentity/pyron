@@ -12,7 +12,7 @@ In order to build and use a plugin we need to:
 * [Run Pyron with plugin enabled](#run)
 
 > NOTE<br/>
-> * Pyron is built on top of [Vertx](https://vertx.io) and [Cloudentity vertx-tools](https://github.com/Cloudentity/vertx-tools).
+> * Pyron is built on top of [Vertx](https://vertx.io) and [Cloudentity vertx-tools](https://github.com/Cloudentity/vertx-tools)
 > * A Pyron plugin is a [Vertx verticle](https://vertx.io/docs/vertx-core/java/#_verticles) and [ComponentVerticle](https://github.com/Cloudentity/vertx-tools#config-verticle)
 > * The lifecycle of a Pyron plugin is managed by a [verticle registry](https://github.com/Cloudentity/vertx-tools#di)
 

@@ -12,7 +12,7 @@ In order to build and use a plugin we need to:
 * [Run Pyron with plugin enabled](#run)
 
 > NOTE<br/>
-> * Pyron is built on top of [Vertx](https://vertx.io) and [Cloudentity vertx-tools](https://github.com/Cloudentity/vertx-tools).
+> * Pyron is built on top of [Vertx](https://vertx.io) and [Cloudentity vertx-tools](https://github.com/Cloudentity/vertx-tools)
 > * A Pyron plugin is a [Vertx verticle](https://vertx.io/docs/vertx-core/java/#_verticles) and [ComponentVerticle](https://github.com/Cloudentity/vertx-tools#config-verticle)
 > * The lifecycle of a Pyron plugin is managed by a [verticle registry](https://github.com/Cloudentity/vertx-tools#di)
 
@@ -38,17 +38,10 @@ Sample `pom.xml`:
 
   <properties>
     <scala.version>2.12.9</scala.version>
-    <scala-maven-plugin.version>4.2.0</scala-maven-plugin.version>
     <pyron.version>PYRON_VERSION</pyron.version>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-      <version>${scala.version}</version>
-      <scope>provided</scope>
-    </dependency>
     <dependency>
       <groupId>com.cloudentity.pyron</groupId>
       <artifactId>pyron-plugin-java</artifactId>
@@ -60,25 +53,11 @@ Sample `pom.xml`:
   <build>
     <plugins>
       <plugin>
-        <groupId>net.alchim31.maven</groupId>
-        <artifactId>scala-maven-plugin</artifactId>
-        <version>${scala-maven-plugin.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>compile</goal>
-              <goal>testCompile</goal>
-            </goals>
-          </execution>
-        </executions>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
         <configuration>
-          <scalaVersion>${scala.version}</scalaVersion>
-          <args>
-            <arg>-unchecked</arg>
-            <arg>-deprecation</arg>
-            <arg>-Xfatal-warnings</arg>
-            <arg>-language:postfixOps</arg>
-          </args>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
         </configuration>
       </plugin>
 

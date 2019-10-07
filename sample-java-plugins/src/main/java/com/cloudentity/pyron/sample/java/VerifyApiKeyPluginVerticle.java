@@ -49,15 +49,15 @@ public class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
 
   @Override
   public Future<RequestCtx> applyJava(RequestCtx requestCtx, JsonObject conf) {
-      Option<String> apiKeyValueOpt = requestCtx.request().headers().get(defaultApiKeyHeader);
+    Option<String> apiKeyValueOpt = requestCtx.request().headers().get(defaultApiKeyHeader);
 
-      if (apiKeyValueOpt.isDefined()) {
-        // continue request flow
-        return Future.succeededFuture(requestCtx);
-      } else {
-        // abort request and return response to the client
-        return Future.succeededFuture(requestCtx.abort(unauthorizedResponse));
-      }
+    if (apiKeyValueOpt.isDefined() && apiKeyValueOpt.get().equals(conf.getString("apiKey"))) {
+      // continue request flow
+      return Future.succeededFuture(requestCtx);
+    } else {
+      // abort request and return response to the client
+      return Future.succeededFuture(requestCtx.abort(unauthorizedResponse));
+    }
   }
 
   @Override
