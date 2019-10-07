@@ -6,11 +6,12 @@ The samples used here can be found in `sample-scala-plugins` module.
 We will use `SmartHttpClient` provided by [vertx-client](https://github.com/Cloudentity/vertx-tools) library.
 `SmartHttpClient` is a Future-based wrapper of Vertx HTTP client with optional service-discovery, load-balancing and retries.
 
-* `SmartHttpClient` configuration
-* How to initialize client
-* How to use client
-* Example
+* [SmartHttpClient configuration](#smart-config)
+* [How to initialize client](#init)
+* [How to use client](#use)
+* [Example](#example)
 
+<a id="smart-config"></a>
 ### `SmartHttpClient` configuration
 
 ```json
@@ -33,6 +34,7 @@ We will use `SmartHttpClient` provided by [vertx-client](https://github.com/Clou
 | serviceLocation.root | external server base path                                                                                                              |
 | http                 | [HttpClientOptions configuration](https://vertx.io/docs/apidocs/io/vertx/core/http/HttpClientOptions.html) of underlying Vertx client  |
 
+<a id="init"></a>
 ### How to initialize client
 
 ```scala
@@ -48,6 +50,7 @@ override def initServiceAsyncS(): Future[Unit] = {
 > NOTE<br/>
 > `.toScala` and `.toJava` helper methods transform `scala.concurrent.Future` with `io.vertx.core.Future` back and forth.
 
+<a id="use"></a>
 ### How to use client
 
 `client.METHOD()` (e.g. `client.get()`) returns a request builder. Calling `.end` or `.endWithBody` on it triggers the HTTP call.
@@ -84,6 +87,7 @@ client.get("/path")
   }
 ```
 
+<a id="example"></a>
 ### Example
 
 As an example, we will implement a request plugin that calls an external HTTP server to verify if the call should be aborted based on header value sent by the Pyron client.
