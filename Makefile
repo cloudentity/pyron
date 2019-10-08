@@ -10,6 +10,6 @@ standalone:
 	@echo -e "$(OK_COLOR) > building standalone $(NO_COLOR)"
 	mvn clean install -Pbuild-standalone
 
-docker:
+docker: standalone
 	@echo -e "$(OK_COLOR) > building docker $(NO_COLOR)"
 	docker build -t cloudentity/pyron pyron-app --build-arg version=$(CURRENT_VERSION)
