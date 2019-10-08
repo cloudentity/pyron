@@ -63,7 +63,7 @@ client.get("/path")
     if (response.statusCode() == 200) {
       return requestCtx;
     } else {
-      return requestCtx.abort(ApiResponse.apply(403, Buffer.buffer(), Headers.of(new HashMap()), Option.apply(null)));
+      return requestCtx.abort(ApiResponse.create(403, Buffer.buffer(), Headers.empty()));
     }
   });
 ```
@@ -78,7 +78,7 @@ client.get("/path")
     if (response.getHttp().statusCode() == 200) {
       return requestCtx;
     } else {
-      return requestCtx.abort(ApiResponse.apply(403, response.getBody(), Headers.of(new HashMap()), Option.apply(null)));
+      return requestCtx.abort(ApiResponse.create(403, response.getBody(), Headers.empty()));
     }
   });
 ```
@@ -158,12 +158,12 @@ public class AbortPluginVerticle extends JavaRequestPluginVerticle {
         if (response.statusCode() == 200) {
           return requestCtx;
         } else {
-          ApiResponse apiResponse = ApiResponse.apply(403, Buffer.buffer(), Headers.of(new HashMap()), Option.apply(null));
+          ApiResponse apiResponse = ApiResponse.create(403, Buffer.buffer(), Headers.of(new HashMap()));
           return requestCtx.abort(apiResponse);
         }
       });
     } else {
-      ApiResponse apiResponse = ApiResponse.apply(403, Buffer.buffer(), Headers.of(new HashMap()), Option.apply(null));
+      ApiResponse apiResponse = ApiResponse.create(403, Buffer.buffer(), Headers.of(new HashMap()));
       return Future.succeededFuture(requestCtx.abort(apiResponse));
     }
 

@@ -41,12 +41,12 @@ public class AbortPluginVerticle extends JavaRequestPluginVerticle {
         if (response.statusCode() == 200) {
           return requestCtx;
         } else {
-          ApiResponse apiResponse = ApiResponse.apply(403, Buffer.buffer(), Headers.of(new HashMap()), Option.apply(null));
+          ApiResponse apiResponse = ApiResponse.create(403, Buffer.buffer(), Headers.empty());
           return requestCtx.abort(apiResponse);
         }
       });
     } else {
-      ApiResponse apiResponse = ApiResponse.apply(403, Buffer.buffer(), Headers.of(new HashMap()), Option.apply(null));
+      ApiResponse apiResponse = ApiResponse.create(403, Buffer.buffer(), Headers.empty());
       return Future.succeededFuture(requestCtx.abort(apiResponse));
     }
 

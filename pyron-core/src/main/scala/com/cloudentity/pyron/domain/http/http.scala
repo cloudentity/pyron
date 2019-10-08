@@ -78,6 +78,14 @@ case class ApiResponse(statusCode: Int, body: Buffer, headers: Headers, cookies:
     this.copy(body = body)
 }
 
+object ApiResponse {
+  def create(statusCode: Int, body: Buffer): ApiResponse =
+    ApiResponse(statusCode, body, Headers())
+
+  def create(statusCode: Int, body: Buffer, headers: Headers): ApiResponse =
+    ApiResponse(statusCode, body, headers)
+}
+
 case class OriginalRequest(method: HttpMethod, path: UriPath, queryParams: QueryParams, headers: Headers, bodyOpt: Option[Buffer], pathParams: PathParams)
 
 object RelativeUri {

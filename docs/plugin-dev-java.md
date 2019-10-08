@@ -188,11 +188,10 @@ Now let's read verticle configuration defining API key header name and response 
   @Override
   public void initService() {
     defaultApiKeyHeader = Optional.of(getConfig().getString("defaultApiKeyHeader")).get();
-    unauthorizedResponse = ApiResponse.apply(
+    unauthorizedResponse = ApiResponse.create(
       getConfig().getInteger("invalidKeyStatusCode"),
       Buffer.buffer(),
-      Headers.empty(),
-      Option.apply(null)
+      Headers.empty()
     );
   }
 ```
@@ -232,11 +231,10 @@ public class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
   @Override
   public void initService() {
     defaultApiKeyHeader = Optional.of(getConfig().getString("defaultApiKeyHeader")).get();
-    unauthorizedResponse = ApiResponse.apply(
+    unauthorizedResponse = ApiResponse.create(
       getConfig().getInteger("invalidKeyStatusCode"),
       Buffer.buffer(),
-      Headers.empty(),
-      Option.apply(null)
+      Headers.empty()
     );
   }
 

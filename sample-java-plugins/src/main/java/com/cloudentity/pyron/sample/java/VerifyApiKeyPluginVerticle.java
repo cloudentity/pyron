@@ -39,12 +39,12 @@ public class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
   @Override
   public void initService() {
     defaultApiKeyHeader = Optional.of(getConfig().getString("defaultApiKeyHeader")).get();
-    unauthorizedResponse = ApiResponse.apply(
-      getConfig().getInteger("invalidKeyStatusCode"),
-      Buffer.buffer(),
-      Headers.empty(),
-      Option.apply(null)
-    );
+    unauthorizedResponse =
+      ApiResponse.create(
+        getConfig().getInteger("invalidKeyStatusCode"),
+        Buffer.buffer(),
+        Headers.empty()
+      );
   }
 
   @Override
