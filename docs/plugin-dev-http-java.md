@@ -63,7 +63,7 @@ client.get("/path")
     if (response.statusCode() == 200) {
       return requestCtx;
     } else {
-      return requestCtx.abort(ApiResponse(403, Buffer.buffer(), Headers()));
+      return requestCtx.abort(ApiResponse.apply(403, Buffer.buffer(), Headers.of(new HashMap()), Option.apply(null)));
     }
   });
 ```
@@ -74,11 +74,11 @@ Otherwise use `.endWithBody`:
 SmartHttpClient client;
 
 client.get("/path")
-  .end().map(response -> {
+  .endWithBody().map(response -> {
     if (response.getHttp().statusCode() == 200) {
       return requestCtx;
     } else {
-      return requestCtx.abort(ApiResponse(403, response.getBody(), Headers()));
+      return requestCtx.abort(ApiResponse.apply(403, response.getBody(), Headers.of(new HashMap()), Option.apply(null)));
     }
   });
 ```
