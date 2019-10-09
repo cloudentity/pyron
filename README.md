@@ -19,6 +19,9 @@
   * [Access log](#config-access-log)
   * [Proxy headers](#config-proxy-headers)
 * [Plugin development guide](docs/plugin-dev.md)
+* [How to](#how-to)
+  * [Read configuration from Consul](docs/config-store-consul.md)
+  * [Read secrets from Vault](docs/config-store-vault.md)
 * [Performance](#performance)
 
 <a id="intro"></a>
@@ -130,7 +133,7 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
 
 * [Meta config](#config-meta)
 * [Routing rules](#config-routing)
-  * [Method and path pattern](#config-)
+  * [Method and path pattern](#config-method-path-pattern)
   * [Path prefix](#config-path-prefix)
   * [Rewrite path](#config-rewrite-path)
   * [Rewrite method](#config-rewrite-method)
@@ -186,6 +189,8 @@ Above `meta-config.json` defines two configuration stores: `config.json` from JA
 `config.json` defines minimal configuration required to run Pyron. Routing rules are provided in `rules.json`.
 
 You will find `meta-config.json` in the run folder (`run/standalone` or `run/docker`).
+
+Learn how to read configuration from [Consul](docs/config-store-consul.md) and secrets from [Vault](docs/config-store-vault.md).
 
 <a id="config-routing"></a>
 ### Routing rules
@@ -847,6 +852,13 @@ Pyron applies following request headers modification (unless disabled):
 | PROXY_HEADERS_ENABLED             | enable proxy headers (default true)                    |
 | INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
 | OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
+
+<a id="how-to"></a>
+### How to
+
+* [Read configuration from Consul](docs/config-store-consul.md)
+* [Read secrets from Vault](docs/config-store-vault.md)
+
 
 <a id="config-performance"></a>
 ## Performance
