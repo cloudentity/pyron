@@ -2,7 +2,7 @@ package com.cloudentity.pyron.rule
 
 import com.cloudentity.pyron.domain.Codecs._
 import com.cloudentity.pyron.domain.flow.{PluginConf, PluginName}
-import com.cloudentity.pyron.domain.rule.RuleConfWithPlugins
+import com.cloudentity.pyron.domain.rule.{RuleConf, RuleConfWithPlugins}
 import com.cloudentity.pyron.plugin.{ExtendRules, PluginRulesExtendService, PluginService}
 import com.cloudentity.pyron.rule.RuleBuilder.InvalidPluginConf
 import com.cloudentity.pyron.rule.RuleConfValidator.PluginConfValidationError
@@ -31,6 +31,8 @@ case class RulesChanged(rules: List[Rule], confs: List[RuleConfWithPlugins])
 case class RulesDecodingSuccess(rules: List[Rule], confs: List[RuleConfWithPlugins])
 case class RulesDecodingError(errors: List[PluginConfValidationError])
 
+case class RuleConfWithPluginNames(rule: RuleConf, requestPlugins: List[PluginName], responsePlugins: List[PluginName])
+
 class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
   val log = LoggerFactory.getLogger(this.getClass)
 
@@ -47,12 +49,14 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
   private def readRulesConf(rulesConf: Json, tag: String): Future[List[RuleConfWithPlugins]] =
     RulesConfReader.read(rulesConf.toString) match {
       case \/-(rules) =>
-        log.info(s"Rules (${tag}) configuration:\n${rules.map(rule => s"   ${rule.asJson.pretty(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
+        logRulesConf(s"Rules (${tag}) configuration", rules)
+        //log.info(s"Rules (${tag}) configuration:\n${rules.map(rule => s"   ${rule.asJson.pretty(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
         for {
           _             <- checkPluginsReady(rules)
           extendedRules <- Future.sequence(rules.map(extendedRuleConfs)).map(_.flatten).map { extendedRules =>
             if (extendedRules != rules) {
-              log.info(s"Rules (${tag}, extended) configuration:\n${extendedRules.map(rule => s"   ${rule.asJson.noSpaces}").mkString("\n")}")
+              logRulesConf(s"Rules (${tag}, extended) configuration", rules)
+              //log.info(s"Rules (${tag}, extended) configuration:\n${extendedRules.map(rule => s"   ${rule.asJson.noSpaces}").mkString("\n")}")
             }
             extendedRules
           }
@@ -60,6 +64,16 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
       case -\/(RuleDecodingError(ex)) => Future.failed(new Exception(ex))
       case -\/(RuleErrors(errors)) => Future.failed(throw new Exception(s"Could not read Rule (${tag}) configurations:\n" + errors.list.toList.mkString("\n")))
     }
+
+  private def logRulesConf(msg: String, rules: List[RuleConfWithPlugins]): Unit = {
+    val rs = rules.map { rule =>
+      val requestPlugins = (rule.requestPlugins.pre ::: rule.requestPlugins.endpoint ::: rule.requestPlugins.post).map(_.name)
+      val responsePlugins = (rule.responsePlugins.pre ::: rule.responsePlugins.endpoint ::: rule.responsePlugins.post).map(_.name)
+      RuleConfWithPluginNames(rule.rule, requestPlugins, responsePlugins)
+    }
+
+    log.info(s"$msg:\n${rs.map(rule => s"   ${rule.asJson.pretty(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
+  }
 
   private def checkPluginsReady(rules: List[RuleConfWithPlugins]): Future[Unit] = {
     val results: Future[Set[Either[PluginName, Unit]]] =
