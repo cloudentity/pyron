@@ -25,60 +25,101 @@
 * [Performance](#performance)
 
 <a id="intro"></a>
+
 ## Introduction
 
-PYRON API Gateway provides the dividing line between the Client (such as a Browser, Mobile App, Other 3rd party services) and the trusted mesh of services, microservices or applications that are deployed on-prem, cloud, hybrid or multi-cloud environments.
+**Pyron**  is a lightweight, developers, and DevOps friendly API Gateway with advanced authentication and authorization capabilities.  It's build using Scala on top of the Vertx.io framework enabling high performance and non-blocking execution. Plugin based architecture allows further extensions of capabilities and features as well as seamless integrations. Native support of the HashiCorp Consul service catalog enables Pyron to bridge the traditional network with service discovery based routing.  Support for declarative configuration model allows Pyron to be easily integrated into the  CI/CD process. 
 
 ### Supported functionality
 
-#### API endpoints publishing
-Pyron provides a number of tools to manage, transform, and secure your API endpoints:
 
-* *Routing*: API calls can be routed to different targets based on the URI path pattern
-* *Filtering and Orchestration*: API endpoint level URI rewrite and the ability to assign filters/plugins both at the service level as well as the individual API endpoint level can be defined by the URI pattern matching
-* *Header Management*: Support for X-Forwarded-For, X-TrueClient-IP, Proxy VIA headers
-* *OpenTracing support*: provides visibility into cross-service communication and instrumentation enabling the distributed tracing.
-* *API Specification Support*: Configuration for the published API endpoints can be configured via any combination of following methods
-  * JSON or YAML files
-  * Consul Key-Value pair database ◦ Cloudentity Application Service
+#### Deployment
 
-#### Authentication
-As an enforcement point, Pyron integrates with a wide range of protocols and tools to ensure the request is not only authorized but also secure in the context of a wide range of risk and business rules.
+Pyron can be deployed and run as:
 
-* *Protocol Support*
-  * OAuth2.0 JWT Access Token
-  * Anonymous authentication – ability to track public request
-* *Fallback Authorization*: Pyron has the ability to chain multiple authentication methods together and define the fallback scenarios Request authorization.
+* **Standalone JVM process**
+* **Docker Container**
+* **Kubernetes service deployed using Helm**
 
-#### Integration with protected services
+#### Routing and Proxy
+
+Pyron provides many tools to publish and manage your API endpoints:
+
+* **L7 Routing** - API calls can be routed to different targets based on the URI path patterns
+* **URI Rewrite** - ability to drop a prefix or modify the URI before the request is proxied to the upstream service
+* **TCP/IP Proxy Headers** - Support for X-Forwarded-For, X-TrueClient-IP, Proxy VIA headers
+* **Load Balancing** - Client-side load balancing support
+* **Static up-stream service discovery** - ability to configure a static set of upstream services to be used in load balancing pool 
+* **Catalog based up-stream service discovery** - ability to utilize Consul service catalog to discover instances of the up-stream services
+* **Static TLS support** - ability to enable TLS based on provided certificate and key, ability to configure desired ciphers and TLS versions
+* **Vault based TLS support** - ability to use Vault as a source for the TLS certificates
+
+#### Request/response Transformation
 
 Cloudentity Pyron can normalize your API by transforming and managing requests to the services it protects.
 
-* *Service Management*: Ability to configure/discover the location of the protected services via
-  * Consul Service discovery
-  * Static Service registry – provided as part of the Pyron API configuration (external KV or JSON flat file). Support for multiple nodes per service name to allow client based load balancing.
-* *Service Target Management*: Direct target host configuration as part of the API publishing rules
-* *Load Balancing*: When using Consul or Fixed Service registry, Pyron can provide load balancing to targets
-* *SMART HTTP client functionality*
-  * API Request retries
-  * Request failover
-  * Circuit Breaker support
-  * Open Tracing support
-  * Per service connection pooling support
-  * Per service connection keep-alive support
-* *URI Rewrite*: Provide backward compatibility or consistency by rewriting the URI proxied to protected service
+* **HTTP Request Header transformation** - ability to inject/modify headers
+* **HTTP Request path parameter transformation** - ability to inject/modify path parameter headers
+* **HTTP Request body transformation** - ability to modify the request body (currently only available for JSON based payload)
+* **Identity context injection** - *Enterprise Feature* - ability to inject the  JWT based header with client/user context to upstream services
+* **Cross-Domain Support** - CORS headers publishing and support
 
-#### API protection
+#### Logging & Monitoring
+* **Correlation ID integration** - Injection as well as utilization of the external correlation id to relate transactions for full tracing
+* **Open Tracing support** - provides visibility into cross-service communication and instrumentation, enabling the distributed tracing.
+* **Rich Access Logs** - the ability to stream logs to file, socket or Kafka 
 
-Cloudentity Pyron also provides broad API protection with a number of standard features.
 
-* URI structure enforcement and whitelisting
-* Detailed access logs including the authentication context
-* Ability to configure desired TLS version and ciphers
+#### Authentication
+
+As an enforcement point, Pyron integrates with a wide range of protocols and tools to ensure the request is not only authorized but also secure in the context of a wide range of risk and business rules.
+
+* **SSO based** - *Enterprise Feature* - authenticate and authorize the request using CE SSO token
+* **JWT OAuth Access Token based** - authenticate and authorize the request using OAuth Token
+* **Opaque OAuth Access Token based** - authenticate and authorize the request using Opaque OAuth Token with Introspection
+* **OAuth1.0 access token based** - *Enterprise Feature* - authenticate and authorize the request using OAuth 1.0b access token
+* **Custom JWT based** - *Enterprise Feature* - authenticate and authorize the request using custom JWT
+* **HMAC header-based** - **Enterprise Feature** - authenticate and authorize the request using HMAC authorization headers
+* **Fallback Authentication** - the ability to chain multiple authentication methods together and define the fallback scenarios Request authentication.
+
+
+#### Authorization (Enterprise Feature)
+
+* **Distributed Authorization** - *Enterprise Feature* - ability to integrate with Cloudentity * MicroPerimeter PDP to perform local authorization decisions including RBAC and ABAC and PBAC
+* **Centralized Authorization** - *Enterprise Feature* - ability to integrate with Cloudentity centralized Trust Engine to perform advanced risk adaptive and data-level authorization 
+* **Policy-based authorization** - *Enterprise Feature* - enforce conditional, if/then/else policies as defined in the TrUST Engine.
+
+#### Configuration
+
+Pyron offers support for declarative configuration model out of the box with support for various sources of configuration.
+
+* **File-based Declarative configuration** - the ability to load configuration from JSON/YAML based configuration files 
+* **Consul & Vault based declarative configuration** - the ability to load configuration from Consul Key-Value Store as well as secrets and certificates from Vault
+* **HTTP based declarative configuration** - the ability to load configuration from an external HTTP endpoint
+
+#### Integration with Microservices
+
+* **Ingress for Zero Trust Network** - *Enterprise Feature* - Integration with Zero Trust networks and ability to inject the client/user identity & service identity fingerprints to enable transaction-based micro-segmentation
+* **API Request retries** - ability to configure failure conditions and count of the API request retries strategy
+* **Request failover** - the ability to failover the request to next health instance of the upstream microservice
+* **Circuit Breaker support** - support for the circuit breaker pattern, works in concert with request retries and request failover
+* **OpenAPI Specification publishing and transformation** - ability to transform and published the OpenAPI specs provided by the upstream services
+
+#### API Security
+
+Cloudentity Pyron also provides broad API protection with many standard features.
+
+* **Brute Force Protection(in-memory implementation)** - Ability to protect APIs against brute force attacks or perform simple rate spike arrests - in-memory implementation 
+* **Brute Force Protection(IMDG based)** - *Enterprise Feature* - Ability to protect APIs against brute force attacks or make simple rate spike arrests - implementation using IMDG enabling shared state between all instances of the API Gateway.
+* **API Throttling** - *Enterprise Feature* - the ability to throttle the request based on IP/client ID/user
+* **Audit** - *Enterprise Feature* - Detailed audit logs enriched with authentication context of the user/client 
 
 #### Extensibility
 
-Pyron also allows for custom plugins which can be used to integrate legacy or proprietary systems as part of the standard data flow and enforcement. This could include custom callouts, complex business logic, or custom protocol/security management.
+Pyron also allows for custom plugins, which can be used to integrate legacy or proprietary systems as part of the standard data flow and enforcement. This could include custom callouts, complex business logic, or custom protocol/security management.
+
+* **Plugins** - ability to add third-party plugins in Java or Scala
+* **Plugins Reload** - ability to add plugins in runtime
 
 <a id="build"></a>
 ## Build
@@ -861,6 +902,7 @@ Pyron applies following request headers modification (unless disabled):
 
 
 <a id="config-performance"></a>
+
 ## Performance
 
 We have put Pyron Gateway under load to see how performant it is.
@@ -882,13 +924,6 @@ With no target service delay and 30 connections:
 | 22692        | 1.42 ms     | 1.25 ms       | 2.34 ms     | 5.18 ms     |
 
 
-With 50 ms target service delay and 200 connections:
-
-| Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
-|:-------------|:------------|:--------------|:------------|:------------|
-| 3787         | 2.69 ms     | 2.62 ms       | 5.70 ms     | 13.23 ms    |
-
-NOTE: due to 50 ms delay the target service can't respond to more than 4000 requests/s.
 
 ### Proxying request with applying JWT-signing plugin
 
@@ -900,13 +935,6 @@ With no target service delay and 30 connections:
 |:-------------|:------------|:--------------|:------------|:------------|
 | 12415        | 2.65 ms     | 3.33 ms       | 3.62 ms     | 9.27 ms     |
 
-With 50 ms target service delay and 200 connections:
-
-| Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
-|:-------------|:------------|:--------------|:------------|:------------|
-| 3233         | 10.41 ms    | 9.28 ms       | 24.01 ms    | 40.85 ms    |
-
-NOTE: due to 50 ms delay the target service can't respond to more than 4000 requests/s.
 
 
 [cloudentity-logo]: docs/logo-3x.png
