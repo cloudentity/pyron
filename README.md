@@ -856,7 +856,7 @@ Pyron applies following request headers modification (unless disabled):
 <a id="how-to"></a>
 ### How to
 
-* [Read configuration from Consul](docs/config-store-consul.md)
+* [Read routing rules from Consul](docs/config-store-consul.md)
 * [Read secrets from Vault](docs/config-store-vault.md)
 
 
