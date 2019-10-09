@@ -20,7 +20,7 @@
   * [Proxy headers](#config-proxy-headers)
 * [Plugin development guide](docs/plugin-dev.md)
 * [How to](#how-to)
-  * [Read configuration from Consul](docs/config-store-consul.md)
+  * [Read routing rules from Consul](docs/config-store-consul.md)
   * [Read secrets from Vault](docs/config-store-vault.md)
 * [Performance](#performance)
 
