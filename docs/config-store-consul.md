@@ -44,7 +44,7 @@ In this how-to we will configure Pyron to read routing rules from Consul KV stor
 | CONSUL_ACL_TOKEN              | ACL token (optional)                                    |
 | CONSUL_DC                     | data center (optional)                                  |
 | CONSUL_TIMEOUT                | connection timeout (optional)                           |
-| CONSUL_RULES_STORE_PATH       | path in Consul KV store                                 |
+| CONSUL_RULES_STORE_PATH       | path in Consul KV where routing rules are stored        |
 | CONSUL_STORE_FALLBACK_CONFIG  | fallback configuration if no value in Consul (optional) |
 
 Now you can start Pyron and routing rules will be read from Consul. Similarly, you can move `system.json` configuration to Consul.
