@@ -166,7 +166,7 @@ $ ./run.sh
 
 ```
 $ cd run/docker
-$ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/configs -d cloudentity/pyron
+$ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/configs -v "$(pwd)"/plugin-jars:/plugin-jars -d cloudentity/pyron
 ```
 
 <a id="config"></a>

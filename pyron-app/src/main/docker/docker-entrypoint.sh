@@ -9,13 +9,13 @@ if [[ "$1" == "pyron" ]]; then
   if [ "$(id -u)" != "0" ]; then
     exec java $JAVA_OPTS \
       -Dlogback.configurationFile=/logback.xml \
-      -cp app.jar com.cloudentity.pyron.Application \
+      -cp "app.jar:plugin-jars/*" com.cloudentity.pyron.Application \
       run com.cloudentity.pyron.Application \
       -conf /configs/meta-config.json
   else
     exec su-exec cloudentity java $JAVA_OPTS \
       -Dlogback.configurationFile=/logback.xml \
-      -cp app.jar com.cloudentity.pyron.Application \
+      -cp "app.jar:plugin-jars/*" com.cloudentity.pyron.Application \
       run com.cloudentity.pyron.Application \
       -conf /configs/meta-config.json
   fi
