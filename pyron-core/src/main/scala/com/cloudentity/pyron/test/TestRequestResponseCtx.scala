@@ -13,6 +13,6 @@ trait TestRequestResponseCtx {
   val emptyRequest = TargetRequest(HttpMethod.GET, StaticService(TargetHost("localhost"), 100, false), RelativeUri.of("/").get, Headers(), None)
   val emptyRequestCtx = RequestCtx(emptyRequest, emptyOriginal, Properties(), TracingContext.dummy(), ProxyHeaders(Map(), ""), correlationCtx, AuthnCtx(), AccessLogItems())
 
-  val emptyResponse = ApiResponse(200, Buffer.buffer(), Headers(), None)
+  val emptyResponse = ApiResponse(200, Buffer.buffer(), Headers())
   val emptyResponseCtx = ResponseCtx(emptyResponse, emptyRequest, emptyOriginal, correlationCtx, TracingContext.dummy(), Properties(), AuthnCtx(), AccessLogItems(), false)
 }

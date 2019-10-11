@@ -8,7 +8,6 @@ object Responses {
   case class Error(httpCode: Int, body: ErrorBody) {
     def toApiResponse() = ApiResponse(httpCode, Buffer.buffer(mkString(body)), Headers.of("Content-Type" -> "application/json"))
     def toApiResponse(headers: Headers) = ApiResponse(httpCode, Buffer.buffer(mkString(body)), headers.set("Content-Type", "application/json"))
-    def toApiResponse(cookies: Option[ClientCookies]) = ApiResponse(httpCode, Buffer.buffer(mkString(body)), Headers.of("Content-Type" -> "application/json"), cookies)
   }
   case class ErrorBody(code: String, message: String)
 

@@ -2,7 +2,6 @@ package com.cloudentity.pyron.domain
 
 import java.time.Duration
 
-import com.cloudentity.pyron.cookie._
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
 import com.cloudentity.pyron.domain.rule.{RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
@@ -14,7 +13,6 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, ObjectEncoder, _}
-import io.netty.handler.codec.http.cookie.Cookie
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.json.{JsonObject => VxJsonObject}
@@ -101,24 +99,8 @@ object Codecs {
   implicit lazy val bufferEnc: Encoder[Buffer] = Encoder.encodeString.contramap(_.toString)
   implicit lazy val bufferDec: Decoder[Buffer] = Decoder.decodeString.map(Buffer.buffer)
 
-  implicit lazy val cookieEnc: Encoder[List[Cookie]] = new Encoder[List[Cookie]] {
-    def apply(cs: List[Cookie]): Json = Json.arr(cs.map(_.toString).map(Json.fromString):_*)
-  }
-  implicit lazy val cookieDec: Decoder[List[Cookie]] = new Decoder[List[Cookie]] {
-
-    override def apply(c: HCursor): Result[List[Cookie]] = {
-      c.focus.flatMap(_.asString).flatMap(header => Try(CookieUtils.decode(header)).toOption) match {
-        case Some(cookies) => Right(cookies)
-        case None => Left(DecodingFailure("Failed to decode cookie list", c.history))
-      }
-    }
-  }
-
   implicit lazy val headersEnc: Encoder[Headers] = (a: Headers) => a.toMap.asJson
   implicit lazy val headersDec: Decoder[Headers] = Decoder.decodeJson.emap(_.as[Map[String, List[String]]].left.map(_.message)).map(Headers.apply)
-
-  implicit lazy val clientCookiesEnc: Encoder[ClientCookies] = deriveEncoder
-  implicit lazy val clientCookiesDec: Decoder[ClientCookies] = deriveDecoder
 
   implicit lazy val apiResponseEnc: Encoder[ApiResponse] = deriveEncoder
   implicit lazy val apiResponseDec: Decoder[ApiResponse] = deriveDecoder
@@ -198,20 +180,4 @@ object Codecs {
   implicit lazy val BasePathDecoder: Decoder[BasePath] = Decoder.decodeString.map(BasePath.apply)
   implicit lazy val DomainPatternDecoder: Decoder[DomainPattern] = Decoder.decodeString.map(DomainPattern.apply)
   implicit lazy val GroupMatchCriteriaDecoder: Decoder[GroupMatchCriteria] = deriveDecoder
-
-  implicit lazy val cookiesConfigEnc: ObjectEncoder[CookiesConfig] = deriveEncoder[CookiesConfig]
-  implicit lazy val cookiesConfigDec: Decoder[CookiesConfig] = deriveDecoder[CookiesConfig]
-
-  implicit lazy val cookieActionDecoder: Decoder[CookieAction] = Decoder.decodeString.emap {
-    case "rewrite" => Right(RewriteCookie)
-    case "remove"  => Right(RemoveCookie)
-    case x         => Left(s"Unrecognized cookie action: ${x}")
-  }
-
-  implicit lazy val injectPlaceDecoder: Decoder[InjectPlace] = Decoder.decodeString.emap {
-    case "body"   => Right(Body)
-    case "jwt"    => Right(Jwt)
-    case "header" => Right(Header)
-    case x        => Left(s"Unrecognized request part: ${x}")
-  }
 }
