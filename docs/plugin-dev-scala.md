@@ -162,6 +162,9 @@ The name of the plugin is `sample-verify-apikey` and the configuration object ha
 To implement the plugin logic we need to extend request part of the flow and use `RequestPluginVerticle` to create our `VerifyApiKeyPluginVerticle`.
 
 ```scala
+case class VerifyApiKeyVerticleConf(invalidKeyStatusCode: Int, defaultApiKeyHeader: String)
+case class VerifyApiKeyConf(apiKey: String)
+
 class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf] with ConfigDecoder {
   // name of the plugin used in rule definition
   override def name: PluginName
