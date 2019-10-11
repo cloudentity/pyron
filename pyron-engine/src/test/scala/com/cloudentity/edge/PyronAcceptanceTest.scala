@@ -1,6 +1,6 @@
 package com.cloudentity.pyron
 
-import com.cloudentity.tools.test.utils.VertxServerTest
+import com.cloudentity.tools.vertx.test.VertxServerTest
 import io.restassured.RestAssured
 import io.vertx.core.json.JsonObject
 import org.junit.Ignore
