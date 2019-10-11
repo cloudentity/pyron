@@ -5,7 +5,6 @@ import io.circe.Decoder
 import io.circe.parser._
 import com.cloudentity.pyron.accesslog.AccessLogHelper.{AccessLogConf, LogAllFields, LogWhitelistedFields, MaskFieldsConf}
 import com.cloudentity.pyron.accesslog.AccessLogPlugin.AccessLogPluginConf
-import com.cloudentity.pyron.commons.BodyUtils
 import com.cloudentity.pyron.domain.flow.{PluginName, RequestCtx}
 import com.cloudentity.pyron.plugin.RequestPluginService
 import com.cloudentity.pyron.plugin.config.{ValidateOk, ValidateResponse}
@@ -26,7 +25,7 @@ object AccessLogPlugin extends AccessLogHelper {
   implicit val requestBodyLogConfDecoder: Decoder[RequestBodyLogConf] = deriveDecoder[RequestBodyLogConf]
 }
 
-class AccessLogPlugin extends RequestPluginVerticle[AccessLogPluginConf] with RequestPluginService with ConfigDecoder with BodyUtils with AccessLogHelper {
+class AccessLogPlugin extends RequestPluginVerticle[AccessLogPluginConf] with RequestPluginService with ConfigDecoder with AccessLogHelper {
   override def name: PluginName = PluginName("accessLog")
 
   override def apply(requestCtx: RequestCtx, pluginConf: AccessLogPluginConf): Future[RequestCtx] = {
