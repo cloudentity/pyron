@@ -3,7 +3,6 @@ package com.cloudentity.pyron.api
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupsChanged, ApiGroupsStore, ApiGroupsStoreVerticle}
 import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
-import com.cloudentity.pyron.cookie.CookieUtils
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
 import com.cloudentity.pyron.domain.rule.RuleConf
@@ -269,7 +268,6 @@ object ApiResponseHandler {
 
   def handleApiResponse(ctx: TracingContext, requestSignature: String, vertxResponse: HttpServerResponse, apiResponse: ApiResponse): Unit = {
     copyHeadersWithoutContentLength(apiResponse, vertxResponse)
-    apiResponse.cookies.foreach(cookies => overrideSetCookieHeader(ctx, cookies, apiResponse, vertxResponse))
 
     if (isChunked(apiResponse)) {
       vertxResponse.setChunked(true) // don't do vertxResponse.setChunked(false) - Vertx 3.5.4 throws NPE in that case
@@ -304,12 +302,6 @@ object ApiResponseHandler {
     */
   private def dropContentLengthHeader(response: HttpServerResponse) =
     response.headers().remove("Content-Length")
-
-  def overrideSetCookieHeader(ctx: TracingContext, clientCookies: ClientCookies, apiResponse: ApiResponse, vertxResponse: HttpServerResponse): Unit =
-    CookieUtils.encode(clientCookies.cookies).foreach { cookie =>
-      log.debug(ctx, s"add Set-Cookie header: $cookie")
-      vertxResponse.headers().add("Set-Cookie", cookie)
-    }
 
   def endWith(ctx: TracingContext, response: HttpServerResponse, error: Error): Unit = {
     if (!response.closed()) {

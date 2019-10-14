@@ -3,7 +3,6 @@ package com.cloudentity.pyron.domain.http
 import java.net.{URI, URLEncoder}
 import java.nio.charset.Charset
 
-import io.netty.handler.codec.http.cookie.Cookie
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpHeaders, HttpMethod}
@@ -67,7 +66,7 @@ case class TargetRequest(
     this.copy(uri = uri.modifyPathParams(f))
 }
 
-case class ApiResponse(statusCode: Int, body: Buffer, headers: Headers, cookies: Option[ClientCookies] = None) {
+case class ApiResponse(statusCode: Int, body: Buffer, headers: Headers) {
   def modifyHeaders(f: Headers => Headers): ApiResponse =
     this.copy(headers = f(headers))
 
@@ -247,13 +246,6 @@ object QueryParams {
 }
 
 case class UriPath(value: String) extends AnyVal
-
-object ClientCookies {
-  def apply(headerValue: String): ClientCookies = this(headerValue: String, List())
-}
-
-case class ClientCookies(headerValue: String, cookies: List[Cookie])
-
 
 object PathOperations {
   /**
