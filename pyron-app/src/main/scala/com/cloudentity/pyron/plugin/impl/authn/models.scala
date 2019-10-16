@@ -1,6 +1,5 @@
 package com.cloudentity.pyron.plugin.impl.authn
 
-import io.circe.Json
 import com.cloudentity.pyron.plugin.impl.authn.AuthnPlugin.{AuthnEntityType, AuthnMethodName}
 import com.nimbusds.jose.{JWSAlgorithm, JWSObject}
 import com.nimbusds.jose.jwk.JWKSet
@@ -11,7 +10,6 @@ import com.nimbusds.jwt.proc.DefaultJWTProcessor
 
 import scala.util.Try
 
-case class FlowCtx(name: String, value: Json)
 case class AuthnPluginConf(
   methods: List[AuthnMethodName],
   entities: Option[List[AuthnEntityType]],
@@ -19,10 +17,6 @@ case class AuthnPluginConf(
   tokenHeader: Option[String],
   ctxKey: Option[String]
 )
-case class AuthnProxyPluginResponse(ctx: List[FlowCtx])
-
-case class AuthnTargetRequest(headers: Map[String, List[String]])
-case class AuthnProxyPluginRequest(request: AuthnTargetRequest, conf: AuthnPluginConf)
 
 object OAuthAccessToken {
   def parse(token: String, keySet: JWKSet): Either[Throwable, JWTClaimsSet] = {

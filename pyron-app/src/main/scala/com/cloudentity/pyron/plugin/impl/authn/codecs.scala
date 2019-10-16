@@ -7,9 +7,6 @@ import io.circe.syntax._
 import com.cloudentity.pyron.plugin.impl.authn.methods._
 
 object codecs {
-  implicit lazy val FlowCtxEnc = deriveEncoder[FlowCtx]
-  implicit lazy val FlowCtxDec = deriveDecoder[FlowCtx]
-
   implicit lazy val OpenApiOauth2FlowDec: Decoder[OpenApiOauth2Flow] = Decoder.decodeString.emap {
     case "implicit"          => Right(ImplicitFlow)
     case "authorizationCode" => Right(AuthorizationCodeFlow)
@@ -66,15 +63,6 @@ object codecs {
 
   implicit lazy val AuthnPluginConfEnc = deriveEncoder[AuthnPluginConf]
   implicit lazy val AuthnPluginConfDec = deriveDecoder[AuthnPluginConf]
-
-  implicit lazy val AuthnProxyPluginResponseEnc = deriveEncoder[AuthnProxyPluginResponse]
-  implicit lazy val AuthnProxyPluginResponseDec = deriveDecoder[AuthnProxyPluginResponse]
-
-  implicit lazy val AuthnTargetRequestEnc = deriveEncoder[AuthnTargetRequest]
-  implicit lazy val AuthnTargetRequestDec = deriveDecoder[AuthnTargetRequest]
-
-  implicit lazy val AuthnProxyPluginRequestEnc = deriveEncoder[AuthnProxyPluginRequest]
-  implicit lazy val AuthnProxyPluginRequestDec = deriveDecoder[AuthnProxyPluginRequest]
 
   implicit lazy val AuthnPluginVerticleConfEnc = deriveEncoder[AuthnPluginVerticleConf]
   implicit lazy val AuthnPluginVerticleConfDec = deriveDecoder[AuthnPluginVerticleConf]
