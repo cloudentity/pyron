@@ -43,7 +43,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
     } yield ()
     }.toJava()
 
-  private def deployRegistries(): Future[Unit] =
+  def deployRegistries(): Future[Unit] =
     for {
       _ <- deployRegistryIfConfigured("sd")
       _ <- deployRegistryIfConfigured("system")
@@ -67,7 +67,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
     } yield Conf.decodeUnsafe(confJson.toString)
   }
 
-  private def deployRegistryIfConfigured(registryType: String): Future[String] =
+  def deployRegistryIfConfigured(registryType: String): Future[String] =
     VertxDeploy.deploy(vertx, new RegistryVerticle(new RegistryType(registryType), false)).toScala()
 
   // deploying ApiHandler per ApiServer
