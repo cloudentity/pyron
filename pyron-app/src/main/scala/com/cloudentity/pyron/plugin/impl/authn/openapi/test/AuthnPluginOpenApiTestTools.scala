@@ -1,24 +1,21 @@
-package com.cloudentity.pyron.plugin.impl.authn.openapi
+package com.cloudentity.pyron.plugin.impl.authn.openapi.test
 
-import io.circe.syntax._
-import com.cloudentity.pyron.plugin.openapi.{ConvertOpenApiResponse, ConvertedOpenApi}
-import com.cloudentity.pyron.domain.flow.{GroupMatchCriteria, PathPattern, PathPrefix, PluginConf, PluginName, TargetHost}
+import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.openapi.{OpenApiRule, StaticServiceId}
 import com.cloudentity.pyron.plugin.impl.authn.codecs._
 import com.cloudentity.pyron.plugin.impl.authn.openapi.AuthnPluginOpenApiConverter.convert
+import com.cloudentity.pyron.plugin.impl.authn.openapi.test.AuthnPluginOpenApiTestTools.SimpleTestEndpoint
 import com.cloudentity.pyron.plugin.impl.authn.{AuthnApiOpenApiConf, AuthnPluginConf}
-import com.cloudentity.pyron.util.OpenApiTestUtils
+import com.cloudentity.pyron.plugin.openapi.{ConvertOpenApiResponse, ConvertedOpenApi}
+import io.circe.syntax._
 import io.swagger.models.{Operation, Path, Swagger}
 import io.vertx.core.http.HttpMethod
-import org.scalatest.{Matchers, WordSpec}
 
-object AuthnPluginOpenApiTestTools extends WordSpec with Matchers with OpenApiTestUtils {
+object AuthnPluginOpenApiTestTools extends {
+  case class SimpleTestEndpoint(path: String, method: HttpMethod)
+}
 
-  case class SimpleTestEndpoint(
-     path: String,
-     method: HttpMethod
-   )
-
+trait AuthnPluginOpenApiTestTools extends OpenApiTestUtils {
   def convertMultipleEndpoints(swagger: Swagger, endpoints: List[(OpenApiRule, AuthnPluginConf)], pluginConf: AuthnApiOpenApiConf): List[ConvertOpenApiResponse] = {
     endpoints.headOption.map(ruleConf => {
       val headResp = convert(swagger, ruleConf._1, ruleConf._2, pluginConf)
@@ -27,11 +24,11 @@ object AuthnPluginOpenApiTestTools extends WordSpec with Matchers with OpenApiTe
           (list, tup) => {
             list.last match {
               case ConvertedOpenApi(swag) => list :+ convert(swag, tup._1, tup._2, pluginConf)
-              case e                      => fail(s"Could not convert swagger $e")
+              case e                      => throw new Exception(s"Could not convert swagger $e")
             }
           }
         }
-        case e => fail(s"Could not convert swagger $e")
+        case e => throw new Exception(s"Could not convert swagger $e")
       }
     }).getOrElse(List())
   }
@@ -70,6 +67,4 @@ object AuthnPluginOpenApiTestTools extends WordSpec with Matchers with OpenApiTe
   def convertWithSingleGetEndpoint(endpointConf: AuthnPluginConf, pluginConf: AuthnApiOpenApiConf): ConvertOpenApiResponse = {
     convertWithParams(singleEndpointParams(endpointConf, pluginConf))
   }
-
-
 }

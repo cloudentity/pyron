@@ -1,8 +1,8 @@
-package com.cloudentity.pyron.plugin.impl.authn.openapi
+package com.cloudentity.edge.plugin.impl.authn.openapi
 
-import AuthnPluginOpenApiTestTools._
 import com.cloudentity.pyron.plugin.impl.authn._
-import com.cloudentity.pyron.util.OpenApiTestUtils
+import com.cloudentity.pyron.plugin.impl.authn.openapi.test.AuthnPluginOpenApiTestTools.SimpleTestEndpoint
+import com.cloudentity.pyron.plugin.impl.authn.openapi.test.{AuthnPluginOpenApiTestTools, OpenApiTestUtils}
 import io.swagger.models.auth.OAuth2Definition
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
@@ -12,7 +12,7 @@ import org.scalatest.{Inside, Matchers, WordSpec}
 import scala.collection.JavaConverters._
 
 @RunWith(classOf[JUnitRunner])
-class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with OpenApiTestUtils with Inside  {
+class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with AuthnPluginOpenApiTestTools with Inside  {
 
   val baseEndpointConf: AuthnPluginConf = AuthnPluginConf(
     methods = List("authorizationCodeOAuth"),
@@ -35,7 +35,7 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with O
 
     "append oauth to security definitions" in {
       val resp = convertWithSingleGetEndpoint(baseEndpointConf, pluginConf)
-      resp securityDefinitionsShould (contain key "oauth2_implicit")
+      resp securityDefinitionsAssert { _.contains("oauth2_implicit") should be(true) }
     }
 
     "set proper flows in oauth security definitions" in {
@@ -55,8 +55,8 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with O
           Map("authorizationCodeOAuth" -> Oauth2SecurityDefinitionConf(List(ImplicitFlow, AuthorizationCodeFlow)))
         )
       )
-      resp securityDefinitionsShould (contain key "oauth2_implicit")
-      resp securityDefinitionsShould (contain key "oauth2_authorizationCode")
+      resp securityDefinitionsAssert { _.contains("oauth2_implicit") should be(true) }
+      resp securityDefinitionsAssert { _.contains("oauth2_authorizationCode") should be(true) }
 
       inside(resp.getSecurityDefinitions.get("oauth2_implicit")) {
         case Some(oauthDef: OAuth2Definition) => oauthDef.getFlow should be ("implicit")
@@ -80,9 +80,9 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with O
           )
         )
       )
-      resp securityDefinitionsShould (contain key "oauth2_implicit")
-      resp securityDefinitionsShould (contain key "oauth2_authorizationCode")
-      resp securityDefinitionsShould (have size 2)
+      resp securityDefinitionsAssert { _.contains("oauth2_implicit") should be(true) }
+      resp securityDefinitionsAssert { _.contains("oauth2_authorizationCode") should be(true) }
+      resp securityDefinitionsAssert { _.size should be(2) }
     }
 
     "add only one security definition when the same configuration is used on two endpoints" in {
@@ -98,7 +98,7 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with O
         pluginConf
       )
 
-      responses.last securityDefinitionsShould (have size 1)
+      responses.last securityDefinitionsAssert { _.size should be (1) }
     }
 
     "add multiple oauth definitions and security schemes when two endpoints with two different methods are used" in {
@@ -124,12 +124,12 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with O
         altPluginConf
       )
 
-      responses.last securityDefinitionsShould (have size 2)
+      responses.last securityDefinitionsAssert { _.size should be (2) }
     }
 
     "not add anything to security definitions when there are no configured methods, despite mappings being defined" in {
       val resp = convertWithSingleGetEndpoint(baseEndpointConf.copy(methods = List()), pluginConf)
-      resp securityDefinitionsShould be (null)
+      resp securityDefinitionsAssert { _ should be(null) }
     }
 
     "add security scheme to endpoint definition" in {
@@ -171,23 +171,22 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with O
       expectedOauthUrlsForFlow(PasswordGrantFlow, null, "http://localhost/oauth/token")
     }
 
-  def expectedOauthUrlsForFlow(flow: OpenApiOauth2Flow, authorizationUrl: String, tokenUrl: String): Unit = {
-    val resp = convertWithSingleGetEndpoint(baseEndpointConf,
-      AuthnApiOpenApiConf(
-        Some(oauthConf),
-        Map("authorizationCodeOAuth" -> Oauth2SecurityDefinitionConf(List(flow)))
+    def expectedOauthUrlsForFlow(flow: OpenApiOauth2Flow, authorizationUrl: String, tokenUrl: String): Unit = {
+      val resp = convertWithSingleGetEndpoint(baseEndpointConf,
+        AuthnApiOpenApiConf(
+          Some(oauthConf),
+          Map("authorizationCodeOAuth" -> Oauth2SecurityDefinitionConf(List(flow)))
+        )
       )
-    )
-    inside(resp.getSecurityDefinitions.get(s"oauth2_${flow.name}")) {
-      case Some(oauthDef: OAuth2Definition) => {
-        oauthDef.getAuthorizationUrl should be (authorizationUrl)
-        oauthDef.getTokenUrl should be (tokenUrl)
+
+      inside(resp.getSecurityDefinitions.get(s"oauth2_${flow.name}")) {
+        case Some(oauthDef: OAuth2Definition) =>
+          oauthDef.getAuthorizationUrl should be (authorizationUrl)
+          oauthDef.getTokenUrl should be (tokenUrl)
+        case _ => fail("Expected Oauth2Definition object")
       }
-      case _ => fail("Expected Oauth2Definition object")
     }
   }
-  }
-
 }
 
 

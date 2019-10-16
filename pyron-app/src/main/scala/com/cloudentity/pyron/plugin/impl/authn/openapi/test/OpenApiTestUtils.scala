@@ -1,15 +1,11 @@
-package com.cloudentity.pyron.util
+package com.cloudentity.pyron.plugin.impl.authn.openapi.test
 
 import com.cloudentity.pyron.domain.flow.TargetHost
 import com.cloudentity.pyron.domain.openapi.{OpenApiRule, StaticServiceId}
-import com.cloudentity.pyron.plugin.openapi.{ConvertOpenApiResponse, ConvertedOpenApi}
 import com.cloudentity.pyron.openapi.OpenApiConverterUtils
+import com.cloudentity.pyron.plugin.openapi.{ConvertOpenApiResponse, ConvertedOpenApi}
 import io.swagger.models._
 import io.swagger.models.auth.SecuritySchemeDefinition
-import org.scalatest.Assertions._
-import org.scalatest.Inside._
-import org.scalatest.matchers.Matcher
-import org.scalatest.{Assertion, Succeeded}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -52,31 +48,24 @@ trait OpenApiTestUtils extends OpenApiConverterUtils {
 
     def getOperationByRule(rule: OpenApiRule): Operation = resp match {
       case ConvertedOpenApi(respSwagger) => com.cloudentity.pyron.openapi.OpenApiPluginUtils.findOperation(respSwagger, rule)
-        .getOrElse(fail(s"Could not find operation"))
-      case e => fail(s"Failed to convert swagger $e")
+        .getOrElse(throw new Exception(s"Could not find operation"))
+      case e => throw new Exception(s"Failed to convert swagger $e")
     }
 
     def getSecurityDefinitions: mutable.Map[String, SecuritySchemeDefinition] = resp match {
       case ConvertedOpenApi(respSwagger) => respSwagger.getSecurityDefinitions.asScala
-      case e => fail(s"Failed to convert swagger $e")
+      case e => throw new Exception(s"Failed to convert swagger $e")
     }
 
-    def securityDefinitionsShould(matcher: Matcher[mutable.Map[String, SecuritySchemeDefinition]]): Assertion =
-      execMatcherOnResp(resp, matcher, _.getSecurityDefinitions.asScala)
+    def securityDefinitionsAssert(assertion: mutable.Map[String, SecuritySchemeDefinition] => Unit): Unit =
+      execMatcherOnResp(resp, assertion, _.getSecurityDefinitions.asScala)
   }
 
-  def execMatcherOnResp[T](resp: ConvertOpenApiResponse, matcher: Matcher[T], extractor: Swagger => T): Assertion = {
-    inside(resp) {
-      case ConvertedOpenApi(respSwagger) => {
-        val res = matcher.apply(extractor.apply(respSwagger))
-        if (res.matches)
-          Succeeded
-        else
-          fail(res.failureMessage)
-      }
-      case e => fail(s"Failed to convert Swagger $e")
-    }
+  def execMatcherOnResp[T](resp: ConvertOpenApiResponse, assertion: T => Unit, extractor: Swagger => T): Unit =
+    resp match {
+      case ConvertedOpenApi(respSwagger) =>
+        assertion.apply(extractor.apply(respSwagger))
+      case e =>
+        throw new Exception(s"Failed to convert Swagger $e")
   }
-
-
 }
