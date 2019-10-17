@@ -24,7 +24,7 @@
 
 ## sd-provider/consul
 #CONSUL_HOST=localhost
-#CONSUL_POST=8500
+#CONSUL_PORT=8500
 #CONSUL_SSL=false
 #CONSUL_ACL_TOKEN=
 #CONSUL_DC=
@@ -33,7 +33,7 @@
 
 ## sd-registrar/consul
 #CONSUL_HOST=localhost
-#CONSUL_POST=8500
+#CONSUL_PORT=8500
 #CONSUL_SSL=false
 #CONSUL_ACL_TOKEN=
 #CONSUL_DC=
