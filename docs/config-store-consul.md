@@ -39,7 +39,7 @@ In this how-to we will configure Pyron to read routing rules from Consul KV stor
 | Name                          | Description                                             |
 |:------------------------------|:--------------------------------------------------------|
 | CONSUL_HOST                   | host                                                    |
-| CONSUL_POST                   | port (default 8500)                                     |
+| CONSUL_PORT                   | port (default 8500)                                     |
 | CONSUL_SSL                    | SSL enabled (default false)                             |
 | CONSUL_ACL_TOKEN              | ACL token (optional)                                    |
 | CONSUL_DC                     | data center (optional)                                  |
