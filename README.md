@@ -651,7 +651,7 @@ Add `sd-provider/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-p
 | Env variable          | Description                                         |
 |:----------------------|:----------------------------------------------------|
 | CONSUL_HOST           | host                                                |
-| CONSUL_POST           | port (default 8500)                                 |
+| CONSUL_PORT           | port (default 8500)                                 |
 | CONSUL_SSL            | SSL enabled (default false)                         |
 | CONSUL_ACL_TOKEN      | ACL token (optional)                                |
 | CONSUL_DC             | data center (optional)                              |
@@ -701,7 +701,7 @@ Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-
 | Env variable                     | Description                                                    |
 |:---------------------------------|:---------------------------------------------------------------|
 | CONSUL_HOST                      | host                                                           |
-| CONSUL_POST                      | port (default 8500)                                            |
+| CONSUL_PORT                      | port (default 8500)                                            |
 | CONSUL_SSL                       | SSL enabled (default false)                                    |
 | CONSUL_ACL_TOKEN                 | ACL token (optional)                                           |
 | CONSUL_DC                        | data center (optional)                                         |
