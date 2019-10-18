@@ -1,0 +1,26 @@
+{
+  "scanPeriod": 5000,
+  "stores": [
+    {
+      "type": "classpath",
+      "format": "json",
+      "config": {
+        "path": "config.json"
+      }
+    },
+    {
+      "type": "json",
+      "format": "json",
+      "config": {
+        "modules": ["plugin/transform-request"]
+      }
+    },
+    {
+      "type": "file",
+      "format": "json",
+      "config": {
+        "path": "src/test/resources/plugins/transformer/rules.json"
+      }
+    }
+  ]
+}
