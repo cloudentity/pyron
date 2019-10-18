@@ -184,6 +184,7 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
 * [Plugins](#config-plugins)
   * [Authentication](#plugins-authn)
     * OAuth 2 with JWT access token
+  * [Request transformation](#plugins-transform-request)
 * [API groups](#config-api-groups)
 * [Service discovery](#config-service-discovery)
   * [Consul service discovery](#sd-consul)
@@ -571,6 +572,52 @@ Configure OIDC server:
 | OIDC_TRUST_ALL                       | trust all OIDC SSL certificates (optional, default false)                                                                                                                   |
 | OIDC_PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
 | OIDC_PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html)) |
+
+<a id="plugins-transform-request"></a>
+#### Request transformation
+
+`transform-request` plugin performs request transformations (e.g. setting header values, JSON body attributes, path parameters etc.).
+
+Enable `transform-request` plugin by adding `plugin/transform-request` to `MODULES` environment variable.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user/{id}",
+          "rewritePath": "/user",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "X-USER-ID": "$pathParams.id"
+                  }
+                },
+                "body": {
+                  "set": {
+                    "withdraw.allowDebit": true
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+[Read more](docs/plugins/transform-request.md).
 
 <a id="config-api-groups"></a>
 ### API Groups
