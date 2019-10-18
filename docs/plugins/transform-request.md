@@ -54,7 +54,7 @@ Supported reference types:
 * `pathParams`
 * `authn`
 
-> [Trasnformation details](#transformation-details).
+> [Transformation details](#transformation-details).
 
 <a id="json-body"></a>
 #### JSON body
