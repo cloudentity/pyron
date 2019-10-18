@@ -483,6 +483,9 @@ By default, Pyron sends target host in Host header to target service, set `prese
 <a id="config-plugins"></a>
 ### Plugins
 
+* [Authentication](#plugins-authn)
+* [Request transformation](#plugins-transform-request)
+
 <a id="plugins-authn"></a>
 #### Authentication
 
