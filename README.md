@@ -59,9 +59,9 @@ Pyron provides many tools to publish and manage your API endpoints:
 Cloudentity Pyron can normalize your API by transforming and managing requests to the services it protects.
 
 * **HTTP Request Header transformation** - ability to inject/modify headers
-* **HTTP Request path parameter transformation** - ability to inject/modify path parameter headers
+* **HTTP Request path parameter transformation** - ability to inject/modify path parameters
 * **HTTP Request body transformation** - ability to modify the request body (currently only available for JSON based payload)
-* **Identity context injection** - *Enterprise Feature* - ability to inject the  JWT based header with client/user context to upstream services
+* **Identity context injection** - *Enterprise Feature* - ability to inject the JWT based header with client/user context to upstream services
 * **Cross-Domain Support** - CORS headers publishing and support
 
 #### Logging & Monitoring
@@ -79,7 +79,7 @@ As an enforcement point, Pyron integrates with a wide range of protocols and too
 * **Opaque OAuth Access Token based** - authenticate and authorize the request using Opaque OAuth Token with Introspection
 * **OAuth1.0 access token based** - *Enterprise Feature* - authenticate and authorize the request using OAuth 1.0b access token
 * **Custom JWT based** - *Enterprise Feature* - authenticate and authorize the request using custom JWT
-* **HMAC header-based** - **Enterprise Feature** - authenticate and authorize the request using HMAC authorization headers
+* **HMAC header-based** - *Enterprise Feature* - authenticate and authorize the request using HMAC authorization headers
 * **Fallback Authentication** - the ability to chain multiple authentication methods together and define the fallback scenarios Request authentication.
 
 
@@ -109,8 +109,8 @@ Pyron offers support for declarative configuration model out of the box with sup
 
 Cloudentity Pyron also provides broad API protection with many standard features.
 
-* **Brute Force Protection(in-memory implementation)** - Ability to protect APIs against brute force attacks or perform simple rate spike arrests - in-memory implementation 
-* **Brute Force Protection(IMDG based)** - *Enterprise Feature* - Ability to protect APIs against brute force attacks or make simple rate spike arrests - implementation using IMDG enabling shared state between all instances of the API Gateway.
+* **Brute Force Protection (in-memory implementation)** - Ability to protect APIs against brute force attacks or perform simple rate spike arrests - in-memory implementation
+* **Brute Force Protection (IMDG based)** - *Enterprise Feature* - Ability to protect APIs against brute force attacks or make simple rate spike arrests - implementation using IMDG enabling shared state between all instances of the API Gateway.
 * **API Throttling** - *Enterprise Feature* - the ability to throttle the request based on IP/client ID/user
 * **Audit** - *Enterprise Feature* - Detailed audit logs enriched with authentication context of the user/client 
 
