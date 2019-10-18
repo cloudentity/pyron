@@ -2,6 +2,8 @@
 
 `transform-request` performs request transformations (e.g. setting header values, body attributes, path parameters etc.).
 
+Transformation how-tos:
+
 * [JSON body](#json-body)
   * [Set body attribute to static value](#json-body-static)
   * [Set body attribute to request attribute](#json-body-ref)
@@ -46,14 +48,18 @@ Supported subjects with operations:
 * `headers` - set
 * `pathParams` - set
 
-Supported reference attributes:
+Supported reference types:
 * `body`
 * `headers`
 * `pathParams`
 * `authn`
 
+> [Trasnformation details](#transformation-details).
+
+<a id="json-body"></a>
 #### JSON body
 
+<a id="json-body-static"></a>
 ##### Set body attribute to static value
 
 ```json
@@ -92,6 +98,7 @@ then the body sent to target service is transformed to:
 }
 ```
 
+<a id="json-body-ref"></a>
 ##### Set body attribute to request attribute
 
 Set JSON body attribute from header:
@@ -156,6 +163,7 @@ then target request body would look like this, provided `X-Account-No` header ha
 }
 ```
 
+<a id="json-body-drop"></a>
 ##### Drop body
 
 Given following configuration the target request will have empty body:
@@ -171,6 +179,7 @@ Given following configuration the target request will have empty body:
 }
 ```
 
+<a id="headers"></a>
 #### Headers
 
 Set header from authentication context:
@@ -188,9 +197,10 @@ Set header from authentication context:
 }
 ```
 
+<a id="path-params"></a>
 #### Path parameters
 
-If `rewritePath` attribute of routing rule contains path parameters then it can be transformed.
+If `rewritePath` attribute of routing rule contains path parameter then it can be transformed.
 
 Let's suppose we want to use header value as a path parameter.
 Following configuration takes `X-USER-ID` header and uses it as `userId` path parameter.
@@ -215,7 +225,8 @@ Following configuration takes `X-USER-ID` header and uses it as `userId` path pa
 }
 ```
 
-#### Transformations details
+<a id="transformation-details"></a>
+#### Transformation details
 
 Edge cases can get tricky, e.g. what should be a path-param value if we are setting it to header that contains multiple values?
 
@@ -233,10 +244,10 @@ Following table describes what values an operation expects. If transformation re
 
 Following table describes how the request attribute are cast to required value types.
 
-| Type                   | Description            | Example                    | Value as string                                                   | Value as list of strings                                                                       | Value as JSON                              |
-|------------------------|------------------------|----------------------------|-------------------------------------------------------------------|------------------------------------------------------------------------------------------------|--------------------------------------------|
-| body                   | JSON object attribute  | $body.withdraw.amount      | string value if it's string or boolean or number, otherwise null  | all strings from the value (and boolean or number as strings) if it's an array, otherwise null | attribute value                            |
-| pathParams             | path parameter         | $pathParams.accountNo      | param value                                                       | one-element list containing param value                                                        | param value as JSON string                 |
-| authn                  | authentication context | $authn.sub                 | string value if it's string or boolean or number, otherwise null  | all strings from the value (and boolean or number as strings) if it's an array, otherwise null | attribute value                            |
-| headers (first value)  | first value of header  | $headers.X-Account-No      | first header value                                                | one-element list containing first header value                                                 | first header value as JSON string          |
-| headers (all values)   | all values of header   | $headers.X-Forwarded-For.* | first header value                                                | all header values as list of strings                                                           | all header values as JSON array of strings |
+| Type                   | Example                    | Value as string                                                   | Value as list of strings                                                         | Value as JSON                              |
+|------------------------|----------------------------|-------------------------------------------------------------------|----------------------------------------------------------------------------------|--------------------------------------------|
+| body                   | $body.withdraw.amount      | string value if it's string or boolean or number, otherwise null  | string values if it's an array of strings or booleans or numbers, otherwise null | attribute value                            |
+| pathParams             | $pathParams.accountNo      | param value                                                       | one-element list containing param value                                          | param value as JSON string                 |
+| authn                  | $authn.sub                 | string value if it's string or boolean or number, otherwise null  | string values if it's an array of strings or booleans or numbers, otherwise null | attribute value                            |
+| headers (first value)  | $headers.X-Account-No      | first header value                                                | one-element list containing first header value                                   | first header value as JSON string          |
+| headers (all values)   | $headers.X-Forwarded-For.* | first header value                                                | all header values as list of strings                                             | all header values as JSON array of strings |
