@@ -252,6 +252,15 @@ case class ResponseCtx(
 
   def withTracingCtx(ctx: TracingContext): ResponseCtx =
     this.copy(tracingCtx = ctx)
+
+  def modifyProperties(f: Properties => Properties): ResponseCtx =
+    this.copy(properties = f(properties))
+
+  def modifyAccessLog(f: AccessLogItems => AccessLogItems): ResponseCtx =
+    this.copy(accessLog = f(accessLog))
+
+  def withAccessLog(name: String, value: Json): ResponseCtx =
+    this.copy(accessLog = accessLog.updated(name, value))
 }
 
 case class PluginName(value: String) extends AnyVal
