@@ -18,7 +18,7 @@ trait PluginConfValidator[C] {
   def decodeRuleConf(rawRuleConf: Json): Either[Throwable, C] =
     confDecoder.decodeJson(rawRuleConf)
       .left.map { failure =>
-        new NoStackTraceThrowable(s"Could not decode '${name.value}' plugin rule configuration '${rawRuleConf.noSpaces}': invalid 'conf${CursorOp.opsToPath(failure.history)}'")
+        new NoStackTraceThrowable(s"Could not decode '${name.value}' plugin rule configuration '${rawRuleConf.noSpaces}': invalid 'conf${CursorOp.opsToPath(failure.history)}' (${failure.message})")
       }
 
   def handleValidate(req: ValidateRequest): Future[ValidateResponse] =
