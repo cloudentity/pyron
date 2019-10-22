@@ -10,9 +10,9 @@ object Conf {
   val defaultSmartHttpClientKey = "smart-http-target-client-default"
   val defaultFixedHttpClientKey = "fixed-http-target-client-default"
 
-  val appConfPath = "app"
-  val apiGroupsConfPath = "apiGroups"
-  val rulesConfPath = "rules"
+  val appConfKey = "app"
+  val apiGroupsConfKey = "apiGroups"
+  val rulesConfKey = "rules"
 
   case class AppConf(
     port: Option[Int],

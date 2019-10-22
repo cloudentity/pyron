@@ -61,10 +61,10 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
   override def configPath(): String = "apiGroups"
 
   private def getAppConf(): Future[AppConf] =
-    getConfService.getConf(Conf.appConfPath).toScala().map(Option(_).getOrElse(new JsonObject)).flatMap(decodeAppConf)
+    getConfService.getConf(Conf.appConfKey).toScala().map(Option(_).getOrElse(new JsonObject)).flatMap(decodeAppConf)
 
   private def getRulesConf(): Future[Option[Json]] =
-    getConfService.getGlobalConf().toScala().map(conf => Option(conf.getValue(Conf.rulesConfPath))).flatMap { rulesOpt =>
+    getConfService.getGlobalConf().toScala().map(conf => Option(conf.getValue(Conf.rulesConfKey))).flatMap { rulesOpt =>
       rulesOpt match {
         case Some(rules) =>
           io.circe.parser.parse(rules.toString) match {
@@ -112,10 +112,10 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
   }
 
   private def extractRulesConfig(root: JsonObject): AnyRef =
-    Option(root.getValue(Conf.rulesConfPath)).getOrElse(new JsonArray())
+    Option(root.getValue(Conf.rulesConfKey)).getOrElse(new JsonArray())
 
   private def extractApiGroupsConfig(root: JsonObject): AnyRef =
-    JsonExtractor.resolve(root, Conf.apiGroupsConfPath).flatMap[AnyRef](groupsConf => Optional.ofNullable(groupsConf)).orElse(new JsonObject())
+    JsonExtractor.resolve(root, Conf.apiGroupsConfKey).flatMap[AnyRef](groupsConf => Optional.ofNullable(groupsConf)).orElse(new JsonObject())
 
   private def publishApiGroups(): Unit =
     VertxBus.publish(vertx.eventBus(), ApiGroupsStoreVerticle.PUBLISH_API_GROUPS_ADDRESS, ApiGroupsChanged(apiGroups, confs))

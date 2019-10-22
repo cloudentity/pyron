@@ -89,7 +89,7 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
   private def getRules(): Operation[ApiError, List[RuleConfWithPlugins]] =
     for {
       rulesJson <- getConfService.getGlobalConf().toOperation[ApiError]
-      rules     <- RulesConfReader.read(rulesJson.getJsonArray(Conf.rulesConfPath).toString)
+      rules     <- RulesConfReader.read(rulesJson.getJsonArray(Conf.rulesConfKey).toString)
         .toOperation.leftMap[ApiError](_ => ApiError.`with`(500, "InvalidRules", "Invalid rules"))
     } yield (rules)
 
