@@ -1,8 +1,7 @@
 {
   "app": {
     "port": 8080,
-    "serverVerticles": 1,
-    "rules": "$ref:rules"
+    "serverVerticles": 1
   },
   "registry:request-plugins": {
   },

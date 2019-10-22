@@ -2,7 +2,6 @@
   "requiredModules": ["http-server", "http-client", "proxy-headers", "access-log"],
   "modules": "$env:?MODULES:array",
   "app": {
-    "rules": "$ref:rules",
     "alivePath": "$env:?ALIVE_PATH:string"
   },
   "registry:request-plugins": {
