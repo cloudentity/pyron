@@ -2,6 +2,7 @@ package com.cloudentity.pyron.openapi
 
 import com.cloudentity.pyron.apigroup.{ApiGroupConf, ApiGroupsChanged, ApiGroupsStore, ApiGroupsStoreVerticle}
 import com.cloudentity.pyron.client.TargetClient
+import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.{RelativeUri, TargetRequest}
 import com.cloudentity.pyron.domain.openapi._
@@ -28,7 +29,6 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
   var targetClient: TargetClient = _
   var confs: List[ApiGroupConf] = List()
 
-  private val appConfPath = "app"
   lazy val converter = createClient(classOf[OpenApiConverter])
 
   override def configPath(): String = "openApi"
@@ -88,8 +88,8 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
 
   private def getRules(): Operation[ApiError, List[RuleConfWithPlugins]] =
     for {
-      rulesJson <- getConfService.getConf(appConfPath).toOperation[ApiError]
-      rules     <- RulesConfReader.read(rulesJson.getJsonArray("rules").toString)
+      rulesJson <- getConfService.getGlobalConf().toOperation[ApiError]
+      rules     <- RulesConfReader.read(rulesJson.getJsonArray(Conf.rulesConfPath).toString)
         .toOperation.leftMap[ApiError](_ => ApiError.`with`(500, "InvalidRules", "Invalid rules"))
     } yield (rules)
 
