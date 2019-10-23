@@ -2,7 +2,6 @@ package com.cloudentity.pyron.apigroup
 
 import java.util.Optional
 
-import io.circe.parser.decode
 import com.cloudentity.pyron.config.Conf.AppConf
 import com.cloudentity.tools.vertx.bus.{VertxBus, VertxEndpoint}
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
@@ -16,6 +15,7 @@ import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.rule.RulesStore
 import com.cloudentity.tools.vertx.json.JsonExtractor
 import io.circe.Json
+import io.vertx.core.impl.NoStackTraceThrowable
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -37,9 +37,6 @@ object ApiGroupsStoreVerticle {
 class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
   val log = LoggerFactory.getLogger(this.getClass)
 
-  private val appConfPath = "app"
-  private val apiGroupsConfPath = "apiGroups"
-
   var apiGroups: List[ApiGroup] = _
   var confs: List[ApiGroupConf] = _
 
@@ -57,13 +54,26 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
   private def loadGroups(): Future[(List[ApiGroup], List[ApiGroupConf])] =
     for {
       conf            <- getAppConf()
-      (groups, confs) <- buildApiGroupsOrFallbackToRules(conf, Option(getConfig()))
+      rules           <- getRulesConf()
+      (groups, confs) <- buildApiGroupsOrFallbackToRules(conf, rules, Option(getConfig()))
     } yield (groups, confs)
 
   override def configPath(): String = "apiGroups"
 
   private def getAppConf(): Future[AppConf] =
-    getConfService.getConf(appConfPath).toScala().map(Option(_).getOrElse(new JsonObject)).flatMap(decodeAppConf)
+    getConfService.getConf(Conf.appConfKey).toScala().map(Option(_).getOrElse(new JsonObject)).flatMap(decodeAppConf)
+
+  private def getRulesConf(): Future[Option[Json]] =
+    getConfService.getGlobalConf().toScala().map(conf => Option(conf.getValue(Conf.rulesConfKey))).flatMap { rulesOpt =>
+      rulesOpt match {
+        case Some(rules) =>
+          io.circe.parser.parse(rules.toString) match {
+            case Right(parsedRules) => Future.successful(Some(parsedRules))
+            case Left(_)            => Future.failed(new NoStackTraceThrowable("Could not parse 'rules' configuration"))
+          }
+        case None => Future.successful(None)
+      }
+    }
 
   private def decodeAppConf(conf: JsonObject): Future[AppConf] = {
     Try(Conf.decodeUnsafe(conf.toString)).toEither match {
@@ -102,18 +112,18 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
   }
 
   private def extractRulesConfig(root: JsonObject): AnyRef =
-    JsonExtractor.resolve(root, appConfPath).flatMap[AnyRef](rulesConf => Optional.ofNullable(rulesConf)).orElse(new JsonArray())
+    Option(root.getValue(Conf.rulesConfKey)).getOrElse(new JsonArray())
 
   private def extractApiGroupsConfig(root: JsonObject): AnyRef =
-    JsonExtractor.resolve(root, apiGroupsConfPath).flatMap[AnyRef](groupsConf => Optional.ofNullable(groupsConf)).orElse(new JsonObject())
+    JsonExtractor.resolve(root, Conf.apiGroupsConfKey).flatMap[AnyRef](groupsConf => Optional.ofNullable(groupsConf)).orElse(new JsonObject())
 
   private def publishApiGroups(): Unit =
     VertxBus.publish(vertx.eventBus(), ApiGroupsStoreVerticle.PUBLISH_API_GROUPS_ADDRESS, ApiGroupsChanged(apiGroups, confs))
 
-  private def buildApiGroupsOrFallbackToRules(conf: AppConf, apiGroupsConfOpt: Option[JsonObject]): Future[(List[ApiGroup], List[ApiGroupConf])] = {
+  private def buildApiGroupsOrFallbackToRules(conf: AppConf, rules: Option[Json], apiGroupsConfOpt: Option[JsonObject]): Future[(List[ApiGroup], List[ApiGroupConf])] = {
     val defaultProxyRulesOpt = conf.defaultProxyRules.filter(_ => conf.defaultProxyRulesEnabled.getOrElse(false))
 
-    (conf.rules, apiGroupsConfOpt) match {
+    (rules, apiGroupsConfOpt) match {
       case (None, None) =>
         Future.failed(new Exception("API Groups and Rules are missing. Configure 'apiGroups' or 'rules'."))
       case (Some(rules), None) =>

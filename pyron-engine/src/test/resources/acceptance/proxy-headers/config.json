@@ -2,7 +2,6 @@
   "app": {
     "port": 8080,
     "serverVerticles": 1,
-    "rules": "$ref:rules",
     "proxyHeaders": {
       "inputTrueClientIp": "IN-MY-TRUE-IP",
       "outputTrueClientIp": "OUT-MY-TRUE-IP"
