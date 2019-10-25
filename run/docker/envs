@@ -20,7 +20,7 @@
 #INPUT_TRUE_CLIENT_IP_HEADER=X-Real-IP
 #OUTPUT_TRUE_CLIENT_IP_HEADER=X-Real-IP
 
-#MODULES=["sd-provider/consul","sd-provider/static","sd-registrar/consul","tracing/jaeger","plugin/authn","plugin/authn/oauth2","plugin/transform-request"]
+#MODULES=["sd-provider/consul","sd-provider/static","sd-registrar/consul","tracing/jaeger","plugin/authn","plugin/authn/oauth2","plugin/transform-request","plugin/cors"]
 
 ## sd-provider/consul
 #CONSUL_HOST=localhost
@@ -64,3 +64,10 @@
 #OIDC_TRUST_ALL=false
 #OIDC_PEM_TRUST_OPTIONS__CERT_PATHS=["cert.pem"]
 #OIDC_PEM_TRUST_OPTIONS__CERT_VALUES=[""]
+
+## plugin/cors
+#PLUGIN_CORS__ALLOW_CREDENTIALS=true
+#PLUGIN_CORS__ALLOWED_HTTP_HEADERS=["*"]
+#PLUGIN_CORS__ALLOWED_HTTP_METHODS=["*"]
+#PLUGIN_CORS__ALLOWED_ORIGINS=["*"]
+#PLUGIN_CORS__PREFLIGHT_MAX_AGE_IN_SECONDS=600
