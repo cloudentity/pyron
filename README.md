@@ -676,13 +676,13 @@ Please refer to https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS for detai
 
 Set default configuration attributes in environment variables:
 
-| Env variable                              | Description                                   |
-|:------------------------------------------|:----------------------------------------------|
-| PLUGIN_CORS__ALLOW_CREDENTIALS            | default value for `allowCredentials`          |
-| PLUGIN_CORS__ALLOWED_HTTP_HEADERS         | default value for `allowedHttpHeaders`        |
-| PLUGIN_CORS__ALLOWED_HTTP_METHODS         | default value for `allowedHttpMethods`        |
-| PLUGIN_CORS__ALLOWED_ORIGINS              | default value for `allowedOrigins`            |
-| PLUGIN_CORS__PREFLIGHT_MAX_AGE_IN_SECONDS | default value for `preflightMaxAgeInSeconds`  |
+| Env variable                              | Description                                  |
+|:------------------------------------------|:---------------------------------------------|
+| PLUGIN_CORS__ALLOW_CREDENTIALS            | default value of `allowCredentials`          |
+| PLUGIN_CORS__ALLOWED_HTTP_HEADERS         | default value of `allowedHttpHeaders`        |
+| PLUGIN_CORS__ALLOWED_HTTP_METHODS         | default value of `allowedHttpMethods`        |
+| PLUGIN_CORS__ALLOWED_ORIGINS              | default value of `allowedOrigins`            |
+| PLUGIN_CORS__PREFLIGHT_MAX_AGE_IN_SECONDS | default value of `preflightMaxAgeInSeconds`  |
 
 <a id="config-api-groups"></a>
 ### API Groups
