@@ -185,6 +185,7 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
   * [Authentication](#plugins-authn)
     * OAuth 2 with JWT access token
   * [Request transformation](#plugins-transform-request)
+  * [CORS](#plugins-cors)
 * [API groups](#config-api-groups)
 * [Service discovery](#config-service-discovery)
   * [Consul service discovery](#sd-consul)
@@ -485,6 +486,7 @@ By default, Pyron sends target host in Host header to target service, set `prese
 
 * [Authentication](#plugins-authn)
 * [Request transformation](#plugins-transform-request)
+* [CORS](#plugins-cors)
 
 <a id="plugins-authn"></a>
 #### Authentication
@@ -621,6 +623,66 @@ Enable `transform-request` plugin by adding `plugin/transform-request` to `MODUL
 ```
 
 [Read more](docs/plugins/transform-request.md).
+
+<a id="plugins-cors"></a>
+#### CORS
+
+`cors` plugin adds support for Cross-Origin Resource Sharing.
+
+Enable `cors` plugin by adding `plugin/cors` to `MODULES` environment variable.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 8000
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/user/{id}",
+          "requestPlugins": [
+            {
+              "name": "cors",
+              "conf": {
+                "allowCredentials": true,
+                "allowedHttpHeaders": ["*"],
+                "allowedHttpMethods": ["*"],
+                "allowedOrigins": ["*"],
+                "preflightMaxAgeInSeconds": 600
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Configuration attributes:
+
+| Name                     | Description                                                                                                                                                                                                                                                  |
+|:-------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| allowCredentials         | if true then `Access-Control-Allow-Credentials` preflight response header set to true, boolean flag, default `true`                                                                                                                                           |
+| allowedHttpHeaders       | `Access-Control-Allow-Headers` preflight response header value is set to string of comma-separated values from `allowedHttpHeaders`, default `["*"]`                                                                                                          |
+| allowedHttpMethods       | `Access-Control-Allow-Methods` preflight response header value is set to string of comma-separated values from `allowedHttpMethods`, default `["*"]`                                                                                                          |
+| allowedOrigins           | if `allowedOrigins` is set to `*` or one of its values matches request origin then `Access-Control-Allow-Origin` preflight response header is set to request origin, otherwise set to string of comma-separated values from `allowedOrigins`, default `["*"]` |
+| preflightMaxAgeInSeconds | value of `Access-Control-Max-Age` preflight response header, default `600`                                                                                                                                                                                    |
+
+Please refer to https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS for details regarding Access-Control headers.
+
+Set default configuration attributes in environment variables:
+
+| Env variable                              | Description                                   |
+|:------------------------------------------|:----------------------------------------------|
+| PLUGIN_CORS__ALLOW_CREDENTIALS            | default value for `allowCredentials`          |
+| PLUGIN_CORS__ALLOWED_HTTP_HEADERS         | default value for `allowedHttpHeaders`        |
+| PLUGIN_CORS__ALLOWED_HTTP_METHODS         | default value for `allowedHttpMethods`        |
+| PLUGIN_CORS__ALLOWED_ORIGINS              | default value for `allowedOrigins`            |
+| PLUGIN_CORS__PREFLIGHT_MAX_AGE_IN_SECONDS | default value for `preflightMaxAgeInSeconds`  |
 
 <a id="config-api-groups"></a>
 ### API Groups

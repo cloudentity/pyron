@@ -1,0 +1,14 @@
+{
+  "registry:request-plugins": {
+    "cors": {
+      "main": "com.cloudentity.pyron.plugin.impl.cors.CorsPlugin",
+      "verticleConfig": {
+        "allowCredentials": "$env:?PLUGIN_CORS__ALLOW_CREDENTIALS:boolean",
+        "allowedHttpHeaders": "$env:?PLUGIN_CORS__ALLOWED_HTTP_HEADERS:array",
+        "allowedHttpMethods": "$env:?PLUGIN_CORS__ALLOWED_HTTP_METHODS:array",
+        "allowedOrigins": "$env:?PLUGIN_CORS__ALLOWED_ORIGINS:array",
+        "preflightMaxAgeInSeconds": "$env:?PLUGIN_CORS__PREFLIGHT_MAX_AGE_IN_SECONDS:int"
+      }
+    }
+  }
+}
