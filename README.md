@@ -238,7 +238,7 @@ Learn how to read configuration from [Consul](docs/config-store-consul.md) and s
 <a id="config-routing"></a>
 ### Routing rules
 
-The rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in the `default` object.
+A rule defines routing to a target endpoint. Rules are grouped in blocks that share common attributes in the `default` object.
 If an endpoint attribute is missing then it is taken from `default`.
 
 ```json
