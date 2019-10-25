@@ -1,0 +1,19 @@
+{
+  "scanPeriod": 5000,
+  "stores": [
+    {
+      "type": "file",
+      "format": "json",
+      "config": {
+        "path": "src/test/resources/plugins/cors/config.json"
+      }
+    },
+    {
+      "type": "file",
+      "format": "json",
+      "config": {
+        "path": "src/test/resources/plugins/cors/rules.json"
+      }
+    }
+  ]
+}
