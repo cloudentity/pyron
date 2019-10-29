@@ -6,17 +6,17 @@
         "jwkReload": 60000,
         "idps": [
           {
-            "host": "$env:OIDC_HOST:string",
-            "port": "$env:OIDC_PORT:int",
-            "ssl": "$env:OIDC_SSL:boolean",
-            "jwkEndpoint": "$env:OIDC_JWK_ENDPOINT:string",
+            "host": "$env:PLUGIN_AUTHN_OAUTH2__SERVER_HOST:string",
+            "port": "$env:PLUGIN_AUTHN_OAUTH2__SERVER_PORT:int",
+            "ssl": "$env:PLUGIN_AUTHN_OAUTH2__SERVER_SSL:boolean",
+            "jwkEndpoint": "$env:PLUGIN_AUTHN_OAUTH2__JWK_ENDPOINT:string",
             "http": {
               "_nullify": true,
-              "trustAll": "$env:?OIDC_TRUST_ALL:boolean",
+              "trustAll": "$env:?PLUGIN_AUTHN_OAUTH2__TRUST_ALL:boolean",
               "pemTrustOptions": {
                 "_nullify": true,
-                "certPaths": "$env:?OIDC_PEM_TRUST_OPTIONS__CERT_PATHS:array",
-                "certValues": "$env:?OIDC_PEM_TRUST_OPTIONS__CERT_VALUES:array"
+                "certPaths": "$env:?PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_PATHS:array",
+                "certValues": "$env:?PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_VALUES:array"
               }
             }
           }

@@ -1,0 +1,16 @@
+{
+  "app": {
+    "port": 8080,
+    "serverVerticles": 1
+  },
+  "modules": ["plugin/authn", "plugin/authn/oauth2-introspect"],
+  "env": {
+    "PLUGIN_AUTHN_OAUTH2_INTROSPECT__INTROSPECT_ENDPOINT": "/oauth2/introspect",
+    "PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_ID": "client-id",
+    "PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_SECRET": "client-secret",
+    "PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER": "Authorization",
+    "PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_HOST": "localhost",
+    "PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_PORT": "7761",
+    "PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_SSL": "false"
+  }
+}

@@ -20,8 +20,8 @@
 #INPUT_TRUE_CLIENT_IP_HEADER=X-Real-IP
 #OUTPUT_TRUE_CLIENT_IP_HEADER=X-Real-IP
 
-#MODULES=["sd-provider/consul","sd-provider/static","sd-registrar/consul","tracing/jaeger","plugin/authn","plugin/authn/oauth2","plugin/transform-request","plugin/cors"]
-MODULES=["plugin/cors"]
+#MODULES=["sd-provider/consul","sd-provider/static","sd-registrar/consul","tracing/jaeger","plugin/authn","plugin/authn/oauth2","plugin/authn/oauth2-introspect","plugin/transform-request","plugin/cors"]
+
 ## sd-provider/consul
 #CONSUL_HOST=localhost
 #CONSUL_PORT=8500
@@ -57,13 +57,28 @@ MODULES=["plugin/cors"]
 #JAEGER_SAMPLER_MANAGER_HOST_PORT=
 
 ## plugin/authn/oauth2
-#OIDC_HOST=idaas.cloudentity.com
-#OIDC_PORT=443
-#OIDC_SSL=true
-#OIDC_JWK_ENDPOINT=/oauth/jwk
-#OIDC_TRUST_ALL=false
-#OIDC_PEM_TRUST_OPTIONS__CERT_PATHS=["cert.pem"]
-#OIDC_PEM_TRUST_OPTIONS__CERT_VALUES=[""]
+#PLUGIN_AUTHN_OAUTH2__SERVER_HOST=idaas.cloudentity.com
+#PLUGIN_AUTHN_OAUTH2__SERVER_PORT=443
+#PLUGIN_AUTHN_OAUTH2__SERVER_SSL=true
+#PLUGIN_AUTHN_OAUTH2__JWK_ENDPOINT=/oauth/jwk
+#PLUGIN_AUTHN_OAUTH2__TRUST_ALL=false
+#PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_PATHS=["cert.pem"]
+#PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_VALUES=[""]
+
+## plugin/authn/oauth2-introspect
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__INTROSPECT_ENDPOINT=/oauth2/introspect
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__EXTRA_FORM_PARAMS={"token_type_hint":"access_token"}
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_ID=client-id
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_SECRET=client-secret
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER=Authorization
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER_REGEX=Bearer(.*)
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_HOST=idaas.cloudentity.com
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_PORT=443
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_SSL=true
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__MAX_POOL_SIZE=50
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__TRUST_ALL=false
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_PATHS=["cert.pem"]
+#PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_VALUES=[""]
 
 ## plugin/cors
 #PLUGIN_CORS__ALLOW_CREDENTIALS=true
