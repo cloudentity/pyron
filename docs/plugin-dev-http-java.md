@@ -96,7 +96,7 @@ The plugin rule configuration has following form:
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {

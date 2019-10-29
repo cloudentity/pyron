@@ -3,7 +3,7 @@
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {

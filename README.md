@@ -248,7 +248,7 @@ If an endpoint attribute is missing then it is taken from `default`.
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         ...
@@ -272,7 +272,7 @@ If an endpoint attribute is missing then it is taken from `default`.
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -303,7 +303,7 @@ Expose multiple endpoints using the same path prefix.
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000,
+        "targetPort": 80,
         "pathPrefix": "/example",
         "dropPrefix": true
       },
@@ -340,7 +340,7 @@ Example: client's call `POST /example/user` is proxied to target `POST /user`.
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -369,7 +369,7 @@ Example: client's call `GET /user/123` is proxied to target `GET /entities/user/
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -398,7 +398,7 @@ Example: client's call `POST /user` is proxied to target `PUT /user`.
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -427,7 +427,7 @@ Example: client's call `POST /user` is proxied to target `PUT /user`.
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -462,7 +462,7 @@ Example: client's call `POST /user` is proxied to target `PUT /user`.
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -502,7 +502,7 @@ Enable `authn` plugin by adding `plugin/authn` to `MODULES` environment variable
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -546,7 +546,7 @@ Token header sent by the client should have following format: `Bearer {access-to
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -594,7 +594,7 @@ The method uses `Basic` authentication scheme with client id and secret to call 
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -647,7 +647,7 @@ Enable `transform-request` plugin by adding `plugin/transform-request` to `MODUL
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -693,7 +693,7 @@ Enable `cors` plugin by adding `plugin/cors` to `MODULES` environment variable.
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -842,7 +842,7 @@ Add `sd-records` configuration attribute (e.g. in `system.json` file).
       "name": "example-service",
       "location": {
         "host": "example.com",
-        "port": 8000,
+        "port": 80,
         "ssl": false,
         "root": "/v1"
       }

@@ -86,7 +86,7 @@ PLUGIN_VERIFY_APIKEY__HEADER=apikey
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -185,7 +185,7 @@ PLUGIN_VERIFY_APIKEY__HEADER=apikey
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {

@@ -83,7 +83,7 @@ The snippet below configures a routing rule with secret reference:
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {

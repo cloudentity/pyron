@@ -126,7 +126,7 @@ The plugin rule configuration has following form:
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
@@ -349,7 +349,7 @@ Start Pyron. Now we can use the plugin in a rule:
     {
       "default": {
         "targetHost": "example.com",
-        "targetPort": 8000
+        "targetPort": 80
       },
       "endpoints": [
         {
