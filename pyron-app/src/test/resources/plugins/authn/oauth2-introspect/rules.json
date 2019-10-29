@@ -1,0 +1,24 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/oauth2-introspect",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "methods": ["oauth2-introspect"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
