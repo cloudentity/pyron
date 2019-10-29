@@ -576,7 +576,7 @@ Configure:
 | PLUGIN_AUTHN_OAUTH2__SERVER_PORT                     | Authorization Server port                                                                                                                    |
 | PLUGIN_AUTHN_OAUTH2__SERVER_SSL                      | SSL enabled (default false)                                                                                                                  |
 | PLUGIN_AUTHN_OAUTH2__JWK_ENDPOINT                    | public server JSON Web Key endpoint path                                                                                                     |
-| PLUGIN_AUTHN_OAUTH2__TRUST_ALL                       | trust all OIDC SSL certificates (optional, default false)                                                                                    |
+| PLUGIN_AUTHN_OAUTH2__TRUST_ALL                       | trust all Authorization Server SSL certificates (default false)                                                                             |
 | PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
 | PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))  |
 
@@ -629,8 +629,8 @@ Configure:
 | PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_HOST                     | Authorization Server host                                                                                                                    |
 | PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_PORT                     | Authorization Server port                                                                                                                    |
 | PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_SSL                      | SSL enabled flag                                                                                                                             |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__MAX_POOL_SIZE                   | max HTTP connections pool size to introspection endpoint, default 5                                                                          |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__TRUST_ALL                       | trust all OIDC SSL certificates (optional, default false)                                                                                    |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__MAX_POOL_SIZE                   | max HTTP connections pool size to introspection endpoint (default 5)                                                                         |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__TRUST_ALL                       | trust all Authorization Server SSL certificates (default false)                                                                              |
 | PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
 | PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))  |
 
