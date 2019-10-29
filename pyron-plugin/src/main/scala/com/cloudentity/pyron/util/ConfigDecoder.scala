@@ -3,6 +3,7 @@ package com.cloudentity.pyron.util
 import io.circe.{CursorOp, Decoder, DecodingFailure, ParsingFailure}
 import com.cloudentity.pyron.util.ConfigDecoder._
 import com.cloudentity.tools.vertx.bus.ServiceVerticle
+import io.vertx.core.impl.NoStackTraceThrowable
 
 import scala.util.{Failure, Success, Try}
 
@@ -31,14 +32,14 @@ trait ConfigDecoder { self: ServiceVerticle =>
       case Left(error) =>
         error match {
           case ConfigMissing() =>
-            throw new Exception(s"Config is missing ${configSignature(keyOpt)}")
+            throw new NoStackTraceThrowable(s"Config is missing ${configSignature(keyOpt)}")
           case ConfigDecodingException(ex) =>
-            throw new Exception(s"Could not get verticle config ${configSignature(keyOpt)}", ex)
+            throw new NoStackTraceThrowable(s"Could not get verticle config ${configSignature(keyOpt)}: ${ex.getMessage}")
           case ConfigCirceError(ParsingFailure(msg, ex)) =>
             // should never happen since we have JsonObject as input
             throw new Exception(s"Could not parse verticle config: $msg ${configSignature(keyOpt)}", ex)
           case ConfigCirceError(DecodingFailure(msg, ops)) =>
-            throw new Exception(s"Could not decode verticle config attribute at '${self.configPath() + keyOpt.map("." + _).getOrElse("")}${CursorOp.opsToPath(ops)}' ${configSignature(keyOpt)}")
+            throw new NoStackTraceThrowable(s"Could not decode verticle config attribute at '${self.configPath() + keyOpt.map("." + _).getOrElse("")}${CursorOp.opsToPath(ops)}' ${configSignature(keyOpt)}")
         }
     }
 
