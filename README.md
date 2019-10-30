@@ -10,7 +10,6 @@
 * [Configure](#config)
   * [Meta config](#config-meta)
   * [Routing rules](#config-routing)
-  * [Plugins](#config-plugins)
   * [API groups](#config-api-groups)
   * [Service discovery](#config-service-discovery)
   * [HTTP server](#config-http-server)
@@ -18,6 +17,12 @@
   * [Open tracing](#config-open-tracing)
   * [Access log](#config-access-log)
   * [Proxy headers](#config-proxy-headers)
+* [Plugins](#plugins)
+  * [Authentication](#plugins-authn)
+    * OAuth 2 with JWT access token
+    * OAuth 2 with opaque token introspection
+  * [Request transformation](#plugins-transform-request)
+  * [CORS](#plugins-cors)
 * [Plugin development guide](docs/plugin-dev.md)
 * [How to](#how-to)
   * [Read routing rules from Consul](docs/config-store-consul.md)
@@ -181,12 +186,6 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
   * [Response timeout](#config-response-timeout)
   * [Retry](#config-retry)
   * [Preserve Host header](#config-preserve-host--header)
-* [Plugins](#config-plugins)
-  * [Authentication](#plugins-authn)
-    * OAuth 2 with JWT access token
-    * OAuth 2 with opaque token introspection
-  * [Request transformation](#plugins-transform-request)
-  * [CORS](#plugins-cors)
 * [API groups](#config-api-groups)
 * [Service discovery](#config-service-discovery)
   * [Consul service discovery](#sd-consul)
@@ -481,264 +480,6 @@ Example: client's call `POST /user` is proxied to target `PUT /user`.
 | preserveHostHeader   | should send to target service Host header received from the client (default false) |
 
 By default, Pyron sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
-
-<a id="config-plugins"></a>
-### Plugins
-
-* [Authentication](#plugins-authn)
-* [Request transformation](#plugins-transform-request)
-* [CORS](#plugins-cors)
-
-<a id="plugins-authn"></a>
-#### Authentication
-
-`authn` plugin performs authentication and optionally sets entities in the request authentication context.
-
-Enable `authn` plugin by adding `plugin/authn` to `MODULES` environment variable.
-
-```json
-{
-  "rules": [
-    {
-      "default": {
-        "targetHost": "example.com",
-        "targetPort": 80
-      },
-      "endpoints": [
-        {
-          "method": "POST",
-          "pathPattern": "/user",
-          "requestPlugins": [
-            {
-              "name": "authn",
-              "conf": {
-                "methods": [ ... ],
-                "entities": [ ... ]
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-
-Configuration attributes:
-
-| Name               | Description                                                                     |
-|:-------------------|:--------------------------------------------------------------------------------|
-| `methods`          | list of enabled authentication methods                                          |
-| `entities`         | required entities set in authentication context                                 |
-| `tokenHeader`      | name of the HTTP header containing authentication token (default Authorization) |
-
-##### OAuth 2 with JWT access token
-
-Enable OAuth 2 authentication method for JWT access tokens by adding `plugin/authn/oauth2` to `MODULES` environment variable.
-
-This module enables `oauth2` authentication method with `jwt` entity provider. `jwt` provider puts all JWT claims in authentication context.
-
-Token header sent by the client should have following format: `Bearer {access-token}`.
-
-```json
-{
-  "rules": [
-    {
-      "default": {
-        "targetHost": "example.com",
-        "targetPort": 80
-      },
-      "endpoints": [
-        {
-          "method": "POST",
-          "pathPattern": "/user",
-          "requestPlugins": [
-            {
-              "name": "authn",
-              "conf": {
-                "methods": ["oauth2"],
-                "entities": ["jwt"]
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-
-Configure:
-
-| Env variable                                         | Description                                                                                                                                  |
-|:-----------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------|
-| PLUGIN_AUTHN_OAUTH2__SERVER_HOST                     | Authorization Server host                                                                                                                    |
-| PLUGIN_AUTHN_OAUTH2__SERVER_PORT                     | Authorization Server port                                                                                                                    |
-| PLUGIN_AUTHN_OAUTH2__SERVER_SSL                      | SSL enabled (default false)                                                                                                                  |
-| PLUGIN_AUTHN_OAUTH2__JWK_ENDPOINT                    | public server JSON Web Key endpoint path                                                                                                     |
-| PLUGIN_AUTHN_OAUTH2__TRUST_ALL                       | trust all Authorization Server SSL certificates (default false)                                                                             |
-| PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
-| PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))  |
-
-##### OAuth 2 with opaque token introspection
-
-Enable OAuth 2 authentication method for opaque token introspection by adding `plugin/authn/oauth2-introspect` to `MODULES` environment variable.
-
-This module enables `oauth2-introspect` authentication method with `jwt` entity provider. `jwt` provider puts in authentication context all claims returned in introspection response.
-
-The method uses `Basic` authentication scheme with client id and secret to call introspection endpoint and expects a response with `application/json` content type.
-
-```json
-{
-  "rules": [
-    {
-      "default": {
-        "targetHost": "example.com",
-        "targetPort": 80
-      },
-      "endpoints": [
-        {
-          "method": "POST",
-          "pathPattern": "/user",
-          "requestPlugins": [
-            {
-              "name": "authn",
-              "conf": {
-                "methods": ["oauth2-introspect"],
-                "entities": ["jwt"]
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-
-Configure:
-
-| Env variable                                                    | Description                                                                                                                                  |
-|:----------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------|
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__INTROSPECT_ENDPOINT             | introspection endpoint path                                                                                                                  |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__EXTRA_FORM_PARAMS               | extra form parameters sent in introspection request, e.g. `{"token_type_hint":"access_token"}`                                               |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_ID                       | client id used in basic authentication                                                                                                       |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_SECRET                   | client secret used in basic authentication                                                                                                   |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER                    | token header name (default `Authorization`)                                                                                                  |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER_REGEX              | token header value regex pattern (default `Bearer(.*)`)                                                                                      |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_HOST                     | Authorization Server host                                                                                                                    |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_PORT                     | Authorization Server port                                                                                                                    |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_SSL                      | SSL enabled flag                                                                                                                             |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__MAX_POOL_SIZE                   | max HTTP connections pool size to introspection endpoint (default 5)                                                                         |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__TRUST_ALL                       | trust all Authorization Server SSL certificates (default false)                                                                              |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
-| PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))  |
-
-<a id="plugins-transform-request"></a>
-#### Request transformation
-
-`transform-request` plugin performs request transformations (e.g. setting header values, JSON body attributes, path parameters etc.).
-
-Enable `transform-request` plugin by adding `plugin/transform-request` to `MODULES` environment variable.
-
-```json
-{
-  "rules": [
-    {
-      "default": {
-        "targetHost": "example.com",
-        "targetPort": 80
-      },
-      "endpoints": [
-        {
-          "method": "POST",
-          "pathPattern": "/user/{id}",
-          "rewritePath": "/user",
-          "requestPlugins": [
-            {
-              "name": "transform-request",
-              "conf": {
-                "headers": {
-                  "set": {
-                    "X-USER-ID": "$pathParams.id"
-                  }
-                },
-                "body": {
-                  "set": {
-                    "withdraw.allowDebit": true
-                  }
-                }
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-
-[Read more](docs/plugins/transform-request.md).
-
-<a id="plugins-cors"></a>
-#### CORS
-
-`cors` plugin adds support for Cross-Origin Resource Sharing.
-
-Enable `cors` plugin by adding `plugin/cors` to `MODULES` environment variable.
-
-```json
-{
-  "rules": [
-    {
-      "default": {
-        "targetHost": "example.com",
-        "targetPort": 80
-      },
-      "endpoints": [
-        {
-          "method": "GET",
-          "pathPattern": "/user/{id}",
-          "requestPlugins": [
-            {
-              "name": "cors",
-              "conf": {
-                "allowCredentials": true,
-                "allowedHttpHeaders": ["*"],
-                "allowedHttpMethods": ["*"],
-                "allowedOrigins": ["*"],
-                "preflightMaxAgeInSeconds": 600
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-
-Configuration attributes:
-
-| Name                     | Description                                                                                                                                                                                                                                                  |
-|:-------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| allowCredentials         | if true then `Access-Control-Allow-Credentials` preflight response header set to true, boolean flag, default `true`                                                                                                                                           |
-| allowedHttpHeaders       | `Access-Control-Allow-Headers` preflight response header value is set to string of comma-separated values from `allowedHttpHeaders`, default `["*"]`                                                                                                          |
-| allowedHttpMethods       | `Access-Control-Allow-Methods` preflight response header value is set to string of comma-separated values from `allowedHttpMethods`, default `["*"]`                                                                                                          |
-| allowedOrigins           | if `allowedOrigins` is set to `*` or one of its values matches request origin then `Access-Control-Allow-Origin` preflight response header is set to request origin, otherwise set to string of comma-separated values from `allowedOrigins`, default `["*"]` |
-| preflightMaxAgeInSeconds | value of `Access-Control-Max-Age` preflight response header, default `600`                                                                                                                                                                                    |
-
-Please refer to https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS for details regarding Access-Control headers.
-
-Set default configuration attributes in environment variables:
-
-| Env variable                              | Description                                  |
-|:------------------------------------------|:---------------------------------------------|
-| PLUGIN_CORS__ALLOW_CREDENTIALS            | default value of `allowCredentials`          |
-| PLUGIN_CORS__ALLOWED_HTTP_HEADERS         | default value of `allowedHttpHeaders`        |
-| PLUGIN_CORS__ALLOWED_HTTP_METHODS         | default value of `allowedHttpMethods`        |
-| PLUGIN_CORS__ALLOWED_ORIGINS              | default value of `allowedOrigins`            |
-| PLUGIN_CORS__PREFLIGHT_MAX_AGE_IN_SECONDS | default value of `preflightMaxAgeInSeconds`  |
 
 <a id="config-api-groups"></a>
 ### API Groups
@@ -1061,6 +802,266 @@ Pyron applies following request headers modification (unless disabled):
 | PROXY_HEADERS_ENABLED             | enable proxy headers (default true)                    |
 | INPUT_TRUE_CLIENT_IP_HEADER       | True Client IP header name (default X-Real-IP)         |
 | OUTPUT_TRUE_CLIENT_IP_HEADER      | Outgoing True Client IP header name (default X-Real-IP)|
+
+<a id="plugins"></a>
+### Plugins
+
+Plugins extend request-response flow, e.g. can enforce authorization rules, modify request or response, enhance access or audit logs, etc. Read about [configuring plugins](docs/plugins.md) in routing rules.
+
+* [Authentication](#plugins-authn)
+* [Request transformation](#plugins-transform-request)
+* [CORS](#plugins-cors)
+
+<a id="plugins-authn"></a>
+#### Authentication
+
+`authn` plugin performs authentication and optionally sets entities in the request authentication context.
+
+Enable `authn` plugin by adding `plugin/authn` to `MODULES` environment variable.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "methods": [ ... ],
+                "entities": [ ... ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Configuration attributes:
+
+| Name               | Description                                                                     |
+|:-------------------|:--------------------------------------------------------------------------------|
+| `methods`          | list of enabled authentication methods                                          |
+| `entities`         | required entities set in authentication context                                 |
+| `tokenHeader`      | name of the HTTP header containing authentication token (default Authorization) |
+
+##### OAuth 2 with JWT access token
+
+Enable OAuth 2 authentication method for JWT access tokens by adding `plugin/authn/oauth2` to `MODULES` environment variable.
+
+This module enables `oauth2` authentication method with `jwt` entity provider. `jwt` provider puts all JWT claims in authentication context.
+
+Token header sent by the client should have following format: `Bearer {access-token}`.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "methods": ["oauth2"],
+                "entities": ["jwt"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Configure:
+
+| Env variable                                         | Description                                                                                                                                  |
+|:-----------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------|
+| PLUGIN_AUTHN_OAUTH2__SERVER_HOST                     | Authorization Server host                                                                                                                    |
+| PLUGIN_AUTHN_OAUTH2__SERVER_PORT                     | Authorization Server port                                                                                                                    |
+| PLUGIN_AUTHN_OAUTH2__SERVER_SSL                      | SSL enabled (default false)                                                                                                                  |
+| PLUGIN_AUTHN_OAUTH2__JWK_ENDPOINT                    | public server JSON Web Key endpoint path                                                                                                     |
+| PLUGIN_AUTHN_OAUTH2__TRUST_ALL                       | trust all Authorization Server SSL certificates (default false)                                                                             |
+| PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
+| PLUGIN_AUTHN_OAUTH2__PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))  |
+
+##### OAuth 2 with opaque token introspection
+
+Enable OAuth 2 authentication method for opaque token introspection by adding `plugin/authn/oauth2-introspect` to `MODULES` environment variable.
+
+This module enables `oauth2-introspect` authentication method with `jwt` entity provider. `jwt` provider puts in authentication context all claims returned in introspection response.
+
+The method uses `Basic` authentication scheme with client id and secret to call introspection endpoint and expects a response with `application/json` content type.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "methods": ["oauth2-introspect"],
+                "entities": ["jwt"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Configure:
+
+| Env variable                                                    | Description                                                                                                                                  |
+|:----------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------|
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__INTROSPECT_ENDPOINT             | introspection endpoint path                                                                                                                  |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__EXTRA_FORM_PARAMS               | extra form parameters sent in introspection request, e.g. `{"token_type_hint":"access_token"}`                                               |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_ID                       | client id used in basic authentication                                                                                                       |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_SECRET                   | client secret used in basic authentication                                                                                                   |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER                    | token header name (default `Authorization`)                                                                                                  |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER_REGEX              | token header value regex pattern (default `Bearer(.*)`)                                                                                      |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_HOST                     | Authorization Server host                                                                                                                    |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_PORT                     | Authorization Server port                                                                                                                    |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_SSL                      | SSL enabled flag                                                                                                                             |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__MAX_POOL_SIZE                   | max HTTP connections pool size to introspection endpoint (default 5)                                                                         |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__TRUST_ALL                       | trust all Authorization Server SSL certificates (default false)                                                                              |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_PATHS   | array of trusted SSL cert paths (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))                  |
+| PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_VALUES  | array of Base64-encoded trusted SSL cert values (optional, [details](https://vertx.io/docs/apidocs/io/vertx/core/net/PemTrustOptions.html))  |
+
+<a id="plugins-transform-request"></a>
+#### Request transformation
+
+`transform-request` plugin performs request transformations (e.g. setting header values, JSON body attributes, path parameters etc.).
+
+Enable `transform-request` plugin by adding `plugin/transform-request` to `MODULES` environment variable.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user/{id}",
+          "rewritePath": "/user",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "X-USER-ID": "$pathParams.id"
+                  }
+                },
+                "body": {
+                  "set": {
+                    "withdraw.allowDebit": true
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+[Read more](docs/plugins/transform-request.md).
+
+<a id="plugins-cors"></a>
+#### CORS
+
+`cors` plugin adds support for Cross-Origin Resource Sharing.
+
+Enable `cors` plugin by adding `plugin/cors` to `MODULES` environment variable.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/user/{id}",
+          "requestPlugins": [
+            {
+              "name": "cors",
+              "conf": {
+                "allowCredentials": true,
+                "allowedHttpHeaders": ["*"],
+                "allowedHttpMethods": ["*"],
+                "allowedOrigins": ["*"],
+                "preflightMaxAgeInSeconds": 600
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Configuration attributes:
+
+| Name                     | Description                                                                                                                                                                                                                                                  |
+|:-------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| allowCredentials         | if true then `Access-Control-Allow-Credentials` preflight response header set to true, boolean flag, default `true`                                                                                                                                           |
+| allowedHttpHeaders       | `Access-Control-Allow-Headers` preflight response header value is set to string of comma-separated values from `allowedHttpHeaders`, default `["*"]`                                                                                                          |
+| allowedHttpMethods       | `Access-Control-Allow-Methods` preflight response header value is set to string of comma-separated values from `allowedHttpMethods`, default `["*"]`                                                                                                          |
+| allowedOrigins           | if `allowedOrigins` is set to `*` or one of its values matches request origin then `Access-Control-Allow-Origin` preflight response header is set to request origin, otherwise set to string of comma-separated values from `allowedOrigins`, default `["*"]` |
+| preflightMaxAgeInSeconds | value of `Access-Control-Max-Age` preflight response header, default `600`                                                                                                                                                                                    |
+
+Please refer to https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS for details regarding Access-Control headers.
+
+Set default configuration attributes in environment variables:
+
+| Env variable                              | Description                                  |
+|:------------------------------------------|:---------------------------------------------|
+| PLUGIN_CORS__ALLOW_CREDENTIALS            | default value of `allowCredentials`          |
+| PLUGIN_CORS__ALLOWED_HTTP_HEADERS         | default value of `allowedHttpHeaders`        |
+| PLUGIN_CORS__ALLOWED_HTTP_METHODS         | default value of `allowedHttpMethods`        |
+| PLUGIN_CORS__ALLOWED_ORIGINS              | default value of `allowedOrigins`            |
+| PLUGIN_CORS__PREFLIGHT_MAX_AGE_IN_SECONDS | default value of `preflightMaxAgeInSeconds`  |
 
 <a id="how-to"></a>
 ### How to
