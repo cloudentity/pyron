@@ -273,7 +273,7 @@
       </build>
     </profile>
     <profile>
-      <id>check-deps</id>
+      <id>check-owasp</id>
       <activation>
         <activeByDefault>false</activeByDefault>
       </activation>

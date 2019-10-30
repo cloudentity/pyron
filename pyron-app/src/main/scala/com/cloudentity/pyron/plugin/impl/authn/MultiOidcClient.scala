@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import scalaz.\/-
 
 import scala.concurrent.Future
+import scala.collection.JavaConverters._
 import com.cloudentity.pyron.domain.Codecs._
 
 object MultiOidcClient {
@@ -87,10 +88,7 @@ class MultiOidcClient extends ScalaServiceVerticle with OidcClient with ConfigDe
   }
 
   def flattenSets(sets: List[JWKSet]): JWKSet =
-    sets.foldLeft(new JWKSet())((set, s) => {
-      set.getKeys.addAll(s.getKeys)
-      set
-    })
+    new JWKSet(sets.flatMap(_.getKeys.asScala).asJava)
 
   override def getPublicKeys(): VxFuture[OidcClientError \/ JWKSet] =
     keys match {
