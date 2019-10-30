@@ -806,11 +806,13 @@ Pyron applies following request headers modification (unless disabled):
 <a id="plugins"></a>
 ### Plugins
 
-Plugins extend request-response flow, e.g. can enforce authorization rules, modify request or response, enhance access or audit logs, etc. Read about [configuring plugins](docs/plugins.md) in routing rules.
+Plugins extend request-response flow, e.g. can enforce authorization rules, modify request or response, enhance access or audit logs, etc.
 
 * [Authentication](#plugins-authn)
 * [Request transformation](#plugins-transform-request)
 * [CORS](#plugins-cors)
+
+Read about [plugins configuration](docs/plugins.md) in routing rules.
 
 <a id="plugins-authn"></a>
 #### Authentication

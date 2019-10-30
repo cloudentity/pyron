@@ -76,12 +76,17 @@ If you want to apply a plugin to a response, then configure it in `responsePlugi
 
 It is common case to apply a plugin for all endpoints (e.g. authentication) and then apply specific plugins per endpoint.
 
-Plugins applied to a request are defined in `request.preFlow.plugins`, `endpoints[].requestPlugins` and `request.postFlow.plugins` attributes.
-Similarly, for a response we have `response.preFlow.plugins`, `endpoints[].responsePlugins` and `response.postFlow.plugins`.
+Plugins applied to a request are defined in following attributes:
 
-The following Pyron flow diagram shows when the plugins are applied to request and response.
+* `request.preFlow.plugins`
+* `endpoints[].requestPlugins`
+* `request.postFlow.plugins`
 
-![][flow]
+Similarly, for a response we have:
+
+* `response.preFlow.plugins`
+* `endpoints[].responsePlugins`
+* `response.postFlow.plugins`
 
 If you want to apply a plugin before endpoint plugins then configure it in `request.preFlow.plugins` attribute:
 
@@ -202,7 +207,11 @@ Similarly, you can define `preFlow` and `postFlow` plugins for response of all e
 }
 ```
 
-Following configuration defines `preFlow`, `endpoint` and `postFlow` plugins:
+The following flow diagram shows what is the order of plugins application:
+
+![][flow]
+
+This configuration snippet defines `preFlow`, `endpoint` and `postFlow` plugins:
 
 ```json
 {
