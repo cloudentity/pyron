@@ -7,7 +7,44 @@
 
 ### Routing rule
 
-Configure `authn` plugin to inject access token claims into authentication context and then put `sub` claim  into `X-USER-ID` request header.
+Configure `authn` plugin to inject access token claims into authentication context:
+
+```
+...
+"requestPlugins": [
+  {
+    "name": "authn",
+    "conf": {
+      "methods": ["oauth2"],
+      "entities": ["jwt"]
+    }
+  },
+  ...
+]
+...
+```
+
+ and then put `sub` claim  into `X-USER-ID` request header:
+
+ ```
+ ...
+ "requestPlugins": [
+   ...
+   {
+     "name": "transform-request",
+     "conf": {
+       "headers": {
+         "set": {
+           "X-USER-ID": "$authn.sub"
+         }
+       }
+     }
+   }
+ ]
+ ...
+ ```
+
+Full configuration:
 
 ```json
 {
