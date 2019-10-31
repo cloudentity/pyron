@@ -1,0 +1,51 @@
+## How to inject OAuth 2 subject into request
+
+### Prerequisites
+
+* Enable [transform-request](../../README.md#plugins-transform-request) plugin
+* Enable [authn](../../README.md#plugins-authn) plugin with `oauth2` or `oauth2-introspect` authentication method
+
+### Routing rule
+
+Configure `authn` plugin to inject access token claims into authentication context and then put `sub` claim  into `X-USER-ID` request header.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/user",
+          "requestPlugins": [
+            {
+              "name": "authn",
+              "conf": {
+                "methods": ["oauth2"],
+                "entities": ["jwt"]
+              }
+            },
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "X-USER-ID": "$authn.sub"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+> NOTE<br/>
+> Instead of `oauth2` authentication method you can use `oauth2-introspect` and read the subject from token introspection response body.

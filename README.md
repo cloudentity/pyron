@@ -25,8 +25,9 @@
   * [CORS](#plugins-cors)
 * [Plugin development guide](docs/plugin-dev.md)
 * [How to](#how-to)
-  * [Read routing rules from Consul](docs/config-store-consul.md)
-  * [Read secrets from Vault](docs/config-store-vault.md)
+  * [Read routing rules from Consul](docs/howtos/config-store-consul.md)
+  * [Read secrets from Vault](docs/howtos/config-store-vault.md)
+  * [Inject OAuth2 subject into request](docs/howtos/inject-oauth2-sub.md)
 * [Performance](#performance)
 
 <a id="intro"></a>
@@ -1068,9 +1069,9 @@ Set default configuration attributes in environment variables:
 <a id="how-to"></a>
 ### How to
 
-* [Read routing rules from Consul](docs/config-store-consul.md)
-* [Read secrets from Vault](docs/config-store-vault.md)
-
+* [Read routing rules from Consul](docs/howtos/config-store-consul.md)
+* [Read secrets from Vault](docs/howtos/config-store-vault.md)
+* [Inject OAuth2 subject into request](docs/howtos/inject-oauth2-sub.md)
 
 <a id="config-performance"></a>
 
