@@ -37,7 +37,7 @@ IC0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQogTUlJRGV6Q0NBbU9nQXdJQk...
 
 ### Trusted certificates from Vault
 
-Add `ssl/vault-keycerts` config store module in `meta-config.json`:
+Add `ssl/vault-trust` config store module in `meta-config.json`:
 
 ```json
 {

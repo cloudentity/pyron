@@ -7,7 +7,7 @@ We recommend storing keys and certificates in Vault. However, you can also provi
 In order to enable SSL/TLS, set related environment variables in `envs` file.
 
 > NOTE<br/>
-> [Read](http-server-mtls.md) how to configure mutual SSL/TLS for ingress traffic
+> [Read](http-server-mtls.md) how to configure mutual SSL/TLS for ingress traffic.
 
 ### Prerequisites
 
@@ -76,8 +76,6 @@ IC0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQogTUlJ...
 
 ### Keys/certs from Vault
 
-### Trusted certificates from Vault
-
 Add `ssl/vault-keycerts` config store module in `meta-config.json`:
 
 ```json
@@ -99,7 +97,7 @@ Add `ssl/vault-keycerts` config store module in `meta-config.json`:
       }
     },
     {
-      "module": "ssl/vault-trust"
+      "module": "ssl/vault-keycerts"
     }
   ]
 }
