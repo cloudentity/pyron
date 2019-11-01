@@ -1,0 +1,24 @@
+{
+  "type": "vault-keycerts-ext",
+  "format": "json",
+  "config": {
+    "host": "$env:CONFIG_STORE_SSL_VAULT_TRUST__VAULT_HOST:string",
+    "port": "$env:CONFIG_STORE_SSL_VAULT_TRUST__VAULT_PORT:int",
+    "keyCertPath": "$env:CONFIG_STORE_SSL_VAULT_TRUST__VAULT_PATH:string:/pyron/trust/global",
+    "vaultToken": "$env:CONFIG_STORE_SSL_VAULT_TRUST__VAULT_SECRET_TOKEN:string",
+    "http": {
+      "ssl": "$env:CONFIG_STORE_SSL_VAULT_TRUST__VAULT_SSL:boolean",
+      "pemTrustOptions": {
+        "certValues": ["$env:CONFIG_STORE_SSL_VAULT_TRUST__ROOT_CA:string"]
+      }
+    },
+    "output": {
+      "keys": "keyValues",
+      "certs": "certValues"
+    },
+    "ext": {
+      "outputPath": "app.server.http.pemTrustOptions"
+    },
+    "fallback": {}
+  }
+}
