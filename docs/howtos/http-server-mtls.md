@@ -99,4 +99,4 @@ curl -v -X POST localhost:8200/v1/secret/data/pyron/ssl-trust/client_a \
 
 Example:
 
-`HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_VALUES: ["IC0tLS0tQkVHSU4g...", "IC0tLS0tQkVHSU4g..."]`
+`HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_VALUES=["IC0tLS0tQkVHSU4g...","IC0tLS0tQkVHSU4g..."]`
