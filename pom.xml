@@ -24,6 +24,7 @@
     <scala.version>2.12.9</scala.version>
     <java.version>1.8</java.version>
 
+    <!-- compile -->
     <vertx.version>3.8.0</vertx.version>
     <vertx-tools.version>1.0.0-SNAPSHOT</vertx-tools.version>
     <circe.version>0.11.1</circe.version>
@@ -32,7 +33,12 @@
     <slf4j.version>1.8.0-beta4</slf4j.version>
     <bouncycastle.bcprov.version>1.62</bouncycastle.bcprov.version>
     <apache.httpclient.version>4.5.6</apache.httpclient.version>
+    <nimbus.version>7.9</nimbus.version>
 
+    <!-- test -->
+    <scala-test.version>3.1.0-RC1</scala-test.version>
+
+    <!-- plugins -->
     <scala-maven-plugin.version>4.2.0</scala-maven-plugin.version>
     <mvn-source-plugin.version>3.0.1</mvn-source-plugin.version>
     <license-maven-plugin.version>2.0.0</license-maven-plugin.version>
@@ -246,7 +252,7 @@
       <dependency>
         <groupId>com.nimbusds</groupId>
         <artifactId>nimbus-jose-jwt</artifactId>
-        <version>5.1</version>
+        <version>${nimbus.version}</version>
       </dependency>
       <dependency>
         <groupId>io.swagger</groupId>
@@ -291,7 +297,7 @@
       <dependency>
         <groupId>org.scalatest</groupId>
         <artifactId>scalatest_2.12</artifactId>
-        <version>3.0.1</version>
+        <version>${scala-test.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
