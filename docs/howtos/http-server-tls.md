@@ -25,8 +25,7 @@ In order to configure Pyron, set related environment variables in `envs` file.
 
 A private key must be in PKCS8 format wrapped in a PEM block, for example:
 
-PEM block:
-
+_PEM block:_
 ```
 -----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDV6zPk5WqLwS0a
@@ -35,8 +34,7 @@ K5xBhtm1AhdnZjx5KfW3BecE
 -----END PRIVATE KEY-----
 ```
 
-Base64-encoded PEM block:
-
+_Base64-encoded PEM block:_
 ```
 LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2Z...
 ```
@@ -153,7 +151,7 @@ If you want to use different Vault authentication backend than `token`, then con
 
 Create a Vault secret at `/v1/{CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH}` path and set the Base64-encoded private key at `value` key (or `CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY`).
 
-Example:
+__Example:__
 
 ```
 CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH=secret/data/example_com
