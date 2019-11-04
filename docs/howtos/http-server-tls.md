@@ -5,15 +5,15 @@ We will store a TLS private key using Vault secret, environment variable or file
 
 In order to configure Pyron, set related environment variables in `envs` file.
 
-> NOTE<br/>
-> [Read](http-server-mtls.md) how to configure mutual SSL/TLS for ingress traffic.
-
 * [Prerequisites](#pre)
 * [Key/cert format](#format)
 * [Enable SSL/TLS](#enable)
 * [Store private key in environment variable or file](#key-env)
 * [Store private key in Vault](#key-vault)
 * [Store certificate in environment variable or file](#cert-env)
+
+> NOTE<br/>
+> [Read](http-server-mtls.md) how to configure mutual SSL/TLS for ingress traffic.
 
 <a id="pre"></a>
 ### Prerequisites
@@ -23,7 +23,7 @@ In order to configure Pyron, set related environment variables in `envs` file.
 <a id="format"></a>
 ### Key/cert format
 
-A private key must be a in PKCS8 format wrapped in a PEM block, for example:
+A private key must be in PKCS8 format wrapped in a PEM block, for example:
 
 PEM block:
 
@@ -43,8 +43,7 @@ LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2Z...
 
 or in PKCS1 format wrapped in a PEM block, for example:
 
-PEM block:
-
+_PEM block:_
 ```
 -----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAlO4gbHeFb/fmbUF/tOJfNPJumJUEqgzAzx8MBXv9Acyw9IRa
@@ -53,16 +52,14 @@ zJ14Yd+t2fsLYVs2H0gxaA4DW6neCzgY3eKpSU0EBHUCFSXp/1+/
 -----END RSA PRIVATE KEY-----
 ```
 
-Base64-encoded PEM block:
-
+_Base64-encoded PEM block:_
 ```
 IC0tLS0tQkVHSU4gUlNBIFBSSVZBVEUgS0VZLS0tLS0K...
 ```
 
 Likewise, a certificate must be in X.509 format wrapped in a PEM block, for example:
 
-PEM block:
-
+_PEM block:_
 ```
 -----BEGIN CERTIFICATE-----
 MIIDezCCAmOgAwIBAgIEZOI/3TANBgkqhkiG9w0BAQsFADBuMRAwDgYDVQQGEwdV
@@ -71,8 +68,7 @@ MIIDezCCAmOgAwIBAgIEZOI/3TANBgkqhkiG9w0BAQsFADBuMRAwDgYDVQQGEwdV
 -----END CERTIFICATE-----
 ```
 
-Base64-encoded PEM block:
-
+_Base64-encoded PEM block:_
 ```
 IC0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQogTUlJ...
 ```
@@ -142,7 +138,7 @@ Configure environment variables:
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY     | secret key with private key value (default `value`)                                               |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__TOKEN         | Vault authentication token                                                                        |
 
-If you want to use different authentication backend than `token`, then configure following environment variables:
+If you want to use different Vault authentication backend than `token`, then configure following environment variables:
 
 | Env                                              | Description                                                                                       |
 |:-------------------------------------------------|:--------------------------------------------------------------------------------------------------|
@@ -155,7 +151,7 @@ If you want to use different authentication backend than `token`, then configure
 
 #### Upload domain private key
 
-Create a Vault secret at `/v1/{CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH}` path and set the Base64-encoded private key at `value` (or `CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY`) key.
+Create a Vault secret at `/v1/{CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH}` path and set the Base64-encoded private key at `value` key (or `CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY`).
 
 Example:
 

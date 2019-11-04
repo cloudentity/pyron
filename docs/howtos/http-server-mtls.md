@@ -13,12 +13,12 @@ Pyron can be configured to require client authentication in SSL/TLS communicatio
 * You have configured [server SSL/TLS](http-server-tls.md).
 * You have a valid SSL certificate you want Pyron to trust.
 
+<a id="format"></a>
 ### Certificate format
 
 A certificate must be in X.509 format wrapped in a PEM block, for example:
 
-PEM block:
-
+_PEM block:_
 ```
 -----BEGIN CERTIFICATE-----
 MIIDezCCAmOgAwIBAgIEZOI/3TANBgkqhkiG9w0BAQsFADBuMRAwDgYDVQQGEwdV
@@ -27,8 +27,7 @@ MIIDezCCAmOgAwIBAgIEZOI/3TANBgkqhkiG9w0BAQsFADBuMRAwDgYDVQQGEwdV
 -----END CERTIFICATE-----
 ```
 
-Base64-encoded PEM block:
-
+_Base64-encoded PEM block:_
 ```
 IC0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQogTUlJRGV6Q0NBbU9nQXdJQk...
 ```
