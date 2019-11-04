@@ -15,12 +15,12 @@ In order to configure Pyron, set related environment variables in `envs` file.
 * [Store private key in Vault](#key-vault)
 * [Store certificate in environment variable or file](#cert-env)
 
-<a href="pre"></a>
+<a id="pre"></a>
 ### Prerequisites
 
 * You have a valid TLS private key and certificate.
 
-<a href="format"></a>
+<a id="format"></a>
 ### Key/cert format
 
 A private key must be a in PKCS8 format wrapped in a PEM block, for example:
@@ -77,13 +77,13 @@ Base64-encoded PEM block:
 IC0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQogTUlJ...
 ```
 
-<a href="enable"></a>
+<a id="enable"></a>
 ### Enable SSL/TLS
 
 * Set `HTTP_SERVER_SSL` to `true`.
 * Set `HTTP_SERVER_SNI` to `true` (optional, enables Server Name Indication).
 
-<a href="key-env"></a>
+<a id="key-env"></a>
 ### Store private key in environment variable or file
 
 Set `HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_VALUE` with Base64-encoded private key PEM block:
@@ -101,7 +101,7 @@ HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_PATH=/mykey.pem
 > NOTE<br/>
 > Storing private key in environment variable is not secure. Use Vault instead.
 
-<a href="key-vault"></a>
+<a id="key-vault"></a>
 ### Store private key in Vault
 
 Add `tls/vault-secret-key` config store module in `meta-config.json`:
@@ -170,7 +170,7 @@ curl -v -X POST localhost:8200/v1/secret/data/example_com \
 -H "X-Vault-Token: {TOKEN}"
 ```
 
-<a href="cert-env"></a>
+<a id="cert-env"></a>
 ### Store certificate in environment variable or file
 
 Set `HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_VALUE` with a Base64-encoded certificate PEM block:

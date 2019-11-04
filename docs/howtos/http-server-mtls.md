@@ -7,7 +7,7 @@ Pyron can be configured to require client authentication in SSL/TLS communicatio
 * [Enable client authentication](#enable)
 * [Store certificate in environment variable or file](#cert-env)
 
-<a href="pre"></a>
+<a id="pre"></a>
 ### Prerequisites
 
 * You have configured [server SSL/TLS](http-server-tls.md).
@@ -33,12 +33,12 @@ Base64-encoded PEM block:
 IC0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQogTUlJRGV6Q0NBbU9nQXdJQk...
 ```
 
-<a href="enable"></a>
+<a id="enable"></a>
 ### Enable client authentication
 
 * Set `HTTP_SERVER_CLIENT_AUTH` to `REQUEST` or `REQUIRED`.
 
-<a href="cert-env"></a>
+<a id="cert-env"></a>
 ### Store certificate in environment variable or file
 
 Configure one of:
