@@ -90,7 +90,7 @@ CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY=value
 
 ```
 curl -v -X POST localhost:8200/v1/secret/data/example_com \
---data '{"data":{"value": "LS0tLS1CRUdJTiB..."}' \
+--data '{"data":{"value": "LS0tLS1CRUdJTiB..."}}' \
 -H "X-Vault-Token: {TOKEN}"
 ```
 
