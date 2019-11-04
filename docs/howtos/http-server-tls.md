@@ -110,7 +110,7 @@ Configure environment variables:
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PORT    | Vault port                                                                                        |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_SSL     | Vault SSL enabled flag (default false)                                                            |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH    | secrets Vault path with private key                                                               |
-| CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY     | secret key with private key (default value)                                                       |
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY     | secret key with private key value (default `value`)                                               |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__AUTH_BACKEND  | Vault auth backend: `token`, `approle`, `userpass` or `cert` (default token)                      |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__TOKEN         | token (optional, `token` auth backend)                                                            |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERT          | Base64-encoded certificate used for TLS communication with Vault  (optional, `cert` auth backend) |
