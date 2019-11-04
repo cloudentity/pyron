@@ -1,7 +1,7 @@
 ## Configure SSL/TLS for ingress traffic with Vault or env variables
 
 In this how-to, we will use X.509 certificates to secure ingress communication using SSL/TLS.
-We will store a TLS private key as a Vault secret (or environment variable) and enable it in Pyron with its certificate.
+We will store a TLS private key as a Vault secret (or environment variable) and enable it in Pyron with its corresponding certificate.
 
 In order to configure Pyron, set related environment variables in `envs` file.
 
@@ -32,7 +32,7 @@ Base64-encoded PEM block:
 LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2Z...
 ```
 
-or be in PKCS1 format wrapped in a PEM block, for example:
+or in PKCS1 format wrapped in a PEM block, for example:
 
 PEM block:
 
@@ -75,7 +75,7 @@ IC0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQogTUlJ...
 
 ### Private key from Vault
 
-Add `ssl/vault-secret-key` config store module in `meta-config.json`:
+Add `tls/vault-secret-key` config store module in `meta-config.json`:
 
 ```json
 {
@@ -111,8 +111,13 @@ Configure environment variables:
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_SSL     | Vault SSL enabled flag (default false)                                                            |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH    | secrets Vault path with private key                                                               |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY     | secret key with private key value (default `value`)                                               |
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__TOKEN         | Vault authentication token                                                                        |
+
+If you want to use different authentication backend than `token`, then configure following environment variables:
+
+| Env                                              | Description                                                                                       |
+|:-------------------------------------------------|:--------------------------------------------------------------------------------------------------|
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__AUTH_BACKEND  | Vault auth backend: `token`, `approle`, `userpass` or `cert` (default token)                      |
-| CONFIG_STORE_TLS_VAULT_SECRET_KEY__TOKEN         | token (optional, `token` auth backend)                                                            |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERT          | Base64-encoded certificate used for TLS communication with Vault  (optional, `cert` auth backend) |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__ROLE_ID       | role id  (optional, `approle` auth backend)                                                       |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__SECRET_ID     | secret id  (optional, `approle` auth backend)                                                     |
@@ -121,11 +126,14 @@ Configure environment variables:
 
 #### Upload domain private key
 
-Create Vault secret at `/v1/{CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH}` path and set the Base64-encoded private key in PEM format to `value` key.
+Create a Vault secret at `/v1/{CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH}` path and set the Base64-encoded private key at `value` (or `CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY`) key.
 
 Example:
 
-* CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH=secret/data/example_com
+```
+CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH=secret/data/example_com
+CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_KEY=value
+```
 
 ```
 curl -v -X POST localhost:8200/v1/secret/data/example_com \
@@ -149,7 +157,7 @@ HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_PATH=/mykey.pem
 
 ### Set certificate in environment variable
 
-Set `HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_VALUES` with a Base64-encoded certificate PEM block:
+Set `HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_VALUE` with a Base64-encoded certificate PEM block:
 
 ```
 HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_VALUE=IC0tLS0tQkVHSU4g...
