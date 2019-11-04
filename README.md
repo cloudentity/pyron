@@ -28,7 +28,8 @@
   * [Read routing rules from Consul](docs/howtos/config-store-consul.md)
   * [Read secrets from Vault](docs/howtos/config-store-vault.md)
   * [Inject OAuth2 subject into request](docs/howtos/inject-oauth2-sub.md)
-  * [Configure SSL/TLS for ingress traffic with Vault or env variables](docs/howtos/http-server-tls.md)
+  * [Configure SSL/TLS for ingress traffic with private key in Vault secret](docs/howtos/tls/http-server-tls-vault.md)
+  * [Configure SSL/TLS for ingress traffic with private key in environment variable or file](docs/howtos/tls/http-server-tls-env.md)
 * [Performance](#performance)
 
 <a id="intro"></a>

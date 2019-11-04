@@ -10,7 +10,7 @@ Pyron can be configured to require client authentication in SSL/TLS communicatio
 <a id="pre"></a>
 ### Prerequisites
 
-* You have configured [server SSL/TLS](http-server-tls.md).
+* You have configured SSL/TLS for ingress traffic either using [Vault secret]((http-server-tls-vault.md)) or [environment variable]((http-server-tls-env.md)).
 * You have a valid SSL certificate you want Pyron to trust.
 
 <a id="format"></a>
