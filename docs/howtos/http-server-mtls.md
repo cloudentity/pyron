@@ -9,7 +9,7 @@ Pyron can be configured to require client authentication in SSL/TLS communicatio
 
 ### Certificate format
 
-A certificate must be a X.509 certificate wrapped in a PEM block, for example:
+A certificate must be in X.509 format wrapped in a PEM block, for example:
 
 PEM block:
 

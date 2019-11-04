@@ -50,7 +50,7 @@ Base64-encoded PEM block:
 IC0tLS0tQkVHSU4gUlNBIFBSSVZBVEUgS0VZLS0tLS0K...
 ```
 
-Likewise, a certificate must be a X.509 certificate wrapped in a PEM block, for example:
+Likewise, a certificate must be in X.509 format wrapped in a PEM block, for example:
 
 PEM block:
 
