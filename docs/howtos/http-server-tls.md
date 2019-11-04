@@ -1,17 +1,26 @@
 ## Configure SSL/TLS for ingress traffic with Vault or env variables
 
 In this how-to, we will use X.509 certificates to secure ingress communication using SSL/TLS.
-We will store a TLS private key as a Vault secret (or environment variable) and enable it in Pyron with its corresponding certificate.
+We will store a TLS private key using Vault secret, environment variable or file and enable it in Pyron with its corresponding certificate.
 
 In order to configure Pyron, set related environment variables in `envs` file.
 
 > NOTE<br/>
 > [Read](http-server-mtls.md) how to configure mutual SSL/TLS for ingress traffic.
 
+* [Prerequisites](#pre)
+* [Key/cert format](#format)
+* [Enable SSL/TLS](#enable)
+* [Store private key in environment variable or file](#key-env)
+* [Store private key in Vault](#key-vault)
+* [Store certificate in environment variable or file](#cert-env)
+
+<a href="pre"></a>
 ### Prerequisites
 
 * You have a valid TLS private key and certificate.
 
+<a href="format"></a>
 ### Key/cert format
 
 A private key must be a in PKCS8 format wrapped in a PEM block, for example:
@@ -68,12 +77,32 @@ Base64-encoded PEM block:
 IC0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQogTUlJ...
 ```
 
+<a href="enable"></a>
 ### Enable SSL/TLS
 
 * Set `HTTP_SERVER_SSL` to `true`.
 * Set `HTTP_SERVER_SNI` to `true` (optional, enables Server Name Indication).
 
-### Private key from Vault
+<a href="key-env"></a>
+### Store private key in environment variable or file
+
+Set `HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_VALUE` with Base64-encoded private key PEM block:
+
+```
+HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_VALUE=LS0tLS1CRUdJTiB...
+```
+
+or set path to private key file:
+
+```
+HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_PATH=/mykey.pem
+```
+
+> NOTE<br/>
+> Storing private key in environment variable is not secure. Use Vault instead.
+
+<a href="key-vault"></a>
+### Store private key in Vault
 
 Add `tls/vault-secret-key` config store module in `meta-config.json`:
 
@@ -141,21 +170,8 @@ curl -v -X POST localhost:8200/v1/secret/data/example_com \
 -H "X-Vault-Token: {TOKEN}"
 ```
 
-#### Set private key in environment variable (alternative)
-
-Set `HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_VALUE` with Base64-encoded private key PEM block:
-
-```
-HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_VALUE=LS0tLS1CRUdJTiB...
-```
-
-or set path to private key file:
-
-```
-HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_PATH=/mykey.pem
-```
-
-### Set certificate in environment variable
+<a href="cert-env"></a>
+### Store certificate in environment variable or file
 
 Set `HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_VALUE` with a Base64-encoded certificate PEM block:
 
