@@ -1,8 +1,47 @@
-### transform-request plugin
+## Request transformation plugin
 
-`transform-request` performs request transformations (e.g. setting header values, body attributes, path parameters etc.).
+`transform-request` plugin performs request transformations (e.g. setting header values, JSON body attributes, path parameters etc.).
 
-Transformation how-tos:
+Enable `transform-request` plugin by adding `plugin/transform-request` to `MODULES` environment variable.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user/{id}",
+          "rewritePath": "/user",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "X-USER-ID": "$pathParams.id"
+                  }
+                },
+                "body": {
+                  "set": {
+                    "withdraw.allowDebit": true
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Transformation how-tos:
 
 * [JSON body](#json-body)
   * [Set body attribute to static value](#json-body-static)
@@ -226,7 +265,7 @@ Following configuration takes `X-USER-ID` header and uses it as `userId` path pa
 ```
 
 <a id="transformation-details"></a>
-#### Transformation details
+### Transformation details
 
 Edge cases can get tricky, e.g. what should be a path-param value if we are setting it to header that contains multiple values?
 

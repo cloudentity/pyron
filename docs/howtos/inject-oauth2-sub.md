@@ -2,8 +2,8 @@
 
 ### Prerequisites
 
-* Enable [transform-request](../../README.md#plugins-transform-request) plugin
-* Enable [authn](../../README.md#plugins-authn) plugin with `oauth2` or `oauth2-introspect` authentication method
+* Enable [transform-request](../plugins/transform-request.md) plugin
+* Enable [authn](../plugins/authn.md) plugin with `oauth2` or `oauth2-introspect` authentication method
 
 ### Routing rule
 
