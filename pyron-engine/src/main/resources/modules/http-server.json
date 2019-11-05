@@ -67,9 +67,13 @@
         },
         "pemKeyCertOptions": {
           "_nullify": true,
+          "keyPath": "$env:?HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_PATH:string",
           "keyPaths": "$env:?HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_PATHS:array",
+          "keyValue": "$env:?HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_VALUE:string",
           "keyValues": "$env:?HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_VALUES:array",
+          "certPath": "$env:?HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_PATH:string",
           "certPaths": "$env:?HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_PATHS:array",
+          "certValue": "$env:?HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_VALUE:string",
           "certValues": "$env:?HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_VALUES:array"
         },
         "pemTrustOptions": {

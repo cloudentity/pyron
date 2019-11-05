@@ -28,6 +28,8 @@
   * [Read routing rules from Consul](docs/howtos/config-store-consul.md)
   * [Read secrets from Vault](docs/howtos/config-store-vault.md)
   * [Inject OAuth2 subject into request](docs/howtos/inject-oauth2-sub.md)
+  * [Configure SSL/TLS for ingress traffic with private key in Vault secret](docs/howtos/tls/http-server-tls-vault.md)
+  * [Configure SSL/TLS for ingress traffic with private key in environment variable or file](docs/howtos/tls/http-server-tls-env.md)
 * [Performance](#performance)
 
 <a id="intro"></a>
@@ -234,7 +236,7 @@ Above `meta-config.json` defines two configuration stores: `config.json` from JA
 
 You will find `meta-config.json` in the run folder (`run/standalone` or `run/docker`).
 
-Learn how to read configuration from [Consul](docs/config-store-consul.md) and secrets from [Vault](docs/config-store-vault.md).
+Learn how to read configuration from [Consul](docs/howtos/config-store-consul.md) and secrets from [Vault](docs/howtos/config-store-vault.md).
 
 <a id="config-routing"></a>
 ### Routing rules

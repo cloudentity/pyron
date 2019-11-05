@@ -20,6 +20,27 @@
 #INPUT_TRUE_CLIENT_IP_HEADER=X-Real-IP
 #OUTPUT_TRUE_CLIENT_IP_HEADER=X-Real-IP
 
+### SSL/TLS
+
+#HTTP_SERVER_SSL=true
+#HTTP_SERVER_SNI=true
+
+#HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_VALUE=LS0tLS1CRUdJTiB...
+#HTTP_SERVER_PEM_KEY_CERT_OPTIONS__KEY_PATH=/mykey.pem
+#HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_VALUE=IC0tLS0tQkVHSU4g...
+#HTTP_SERVER_PEM_KEY_CERT_OPTIONS__CERT_PATH=/mycert.pem
+
+#HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_VALUES=["IC0tLS0tQkVHSU4g...","IC0tLS0tQkVHSU4g..."]
+#HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS=["/mycert1.pem","/mycert2.pem"]
+
+## tls/vault-secret-key
+#CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_HOST=localhost
+#CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PORT=8200
+#CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_SSL=false
+#CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH=/secret/data/example_com
+#CONFIG_STORE_TLS_VAULT_SECRET_KEY__TOKEN=token
+#CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERTS=["IC0tLS0tQkVHSU4g..."]
+
 #MODULES=["sd-provider/consul","sd-provider/static","sd-registrar/consul","tracing/jaeger","plugin/authn","plugin/authn/oauth2","plugin/authn/oauth2-introspect","plugin/transform-request","plugin/cors"]
 
 ## sd-provider/consul
@@ -55,6 +76,8 @@
 #TRACING_FORMAT=cloudentity|jaeger|zipkin
 #JAEGER_AGENT_PORT=5775
 #JAEGER_SAMPLER_MANAGER_HOST_PORT=
+
+### PLUGINS
 
 ## plugin/authn/oauth2
 #PLUGIN_AUTHN_OAUTH2__SERVER_HOST=idaas.cloudentity.com
