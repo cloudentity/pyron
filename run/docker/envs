@@ -38,8 +38,8 @@
 #CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PORT=8200
 #CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_SSL=false
 #CONFIG_STORE_TLS_VAULT_SECRET_KEY__VAULT_PATH=/secret/data/example_com
-#CONFIG_STORE_TLS_VAULT_SECRET_KEY__TOKEN=root
-#CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERT=IC0tLS0tQkVHSU4g...
+#CONFIG_STORE_TLS_VAULT_SECRET_KEY__TOKEN=token
+#CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERTS=["IC0tLS0tQkVHSU4g..."]
 
 #MODULES=["sd-provider/consul","sd-provider/static","sd-registrar/consul","tracing/jaeger","plugin/authn","plugin/authn/oauth2","plugin/authn/oauth2-introspect","plugin/transform-request","plugin/cors"]
 

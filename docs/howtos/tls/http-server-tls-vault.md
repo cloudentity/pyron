@@ -71,6 +71,7 @@ If you want to use different Vault authentication backend than `token`, then con
 |:-------------------------------------------------|:-----------------------------------------------------------------------------------------------------------|
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__AUTH_BACKEND  | Vault auth backend: `token`, `approle`, `userpass` or `cert` (default token)                               |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERTS         | array of Base64-encoded TLS certificates used by Vault, e.g. `["IC0t..."]` (optional, `cert` auth backend) |
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERT_PATHS    | array of paths to certificate files used by Vault, e.g. `["mycert.pem"]` (optional, `cert` auth backend)   |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__ROLE_ID       | role id  (optional, `approle` auth backend)                                                                |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__SECRET_ID     | secret id  (optional, `approle` auth backend)                                                              |
 | CONFIG_STORE_TLS_VAULT_SECRET_KEY__USERNAME      | username  (optional, `userpass` auth backend)                                                              |
