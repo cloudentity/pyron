@@ -1074,6 +1074,8 @@ Set default configuration attributes in environment variables:
 * [Read routing rules from Consul](docs/howtos/config-store-consul.md)
 * [Read secrets from Vault](docs/howtos/config-store-vault.md)
 * [Inject OAuth2 subject into request](docs/howtos/inject-oauth2-sub.md)
+* [Configure SSL/TLS for ingress traffic with private key in Vault secret](docs/howtos/tls/http-server-tls-vault.md)
+* [Configure SSL/TLS for ingress traffic with private key in environment variable or file](docs/howtos/tls/http-server-tls-env.md)
 
 <a id="config-performance"></a>
 
