@@ -11,8 +11,7 @@ In order to configure Pyron, set related environment variables in `envs` file.
 * [Store certificate](#cert-env)
 
 > NOTE<br/>
-> Read about [private key and certificate format](keycert-format.md).<br/>
-> Read how to configure [mutual SSL/TLS](http-server-mtls.md) for ingress traffic.
+> Read about [private key and certificate format](keycert-format.md).
 
 <a id="pre"></a>
 ### Prerequisites
@@ -68,14 +67,14 @@ Configure environment variables:
 
 If you want to use different Vault authentication backend than `token`, then configure following environment variables:
 
-| Env                                              | Description                                                                                       |
-|:-------------------------------------------------|:--------------------------------------------------------------------------------------------------|
-| CONFIG_STORE_TLS_VAULT_SECRET_KEY__AUTH_BACKEND  | Vault auth backend: `token`, `approle`, `userpass` or `cert` (default token)                      |
-| CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERT          | Base64-encoded certificate used for TLS communication with Vault  (optional, `cert` auth backend) |
-| CONFIG_STORE_TLS_VAULT_SECRET_KEY__ROLE_ID       | role id  (optional, `approle` auth backend)                                                       |
-| CONFIG_STORE_TLS_VAULT_SECRET_KEY__SECRET_ID     | secret id  (optional, `approle` auth backend)                                                     |
-| CONFIG_STORE_TLS_VAULT_SECRET_KEY__USERNAME      | username  (optional, `userpass` auth backend)                                                     |
-| CONFIG_STORE_TLS_VAULT_SECRET_KEY__PASSWORD      | password  (optional, `userpass` auth backend)                                                     |
+| Env                                              | Description                                                                                                |
+|:-------------------------------------------------|:-----------------------------------------------------------------------------------------------------------|
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__AUTH_BACKEND  | Vault auth backend: `token`, `approle`, `userpass` or `cert` (default token)                               |
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__CERTS         | array of Base64-encoded TLS certificates used by Vault, e.g. `["IC0t..."]` (optional, `cert` auth backend) |
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__ROLE_ID       | role id  (optional, `approle` auth backend)                                                                |
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__SECRET_ID     | secret id  (optional, `approle` auth backend)                                                              |
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__USERNAME      | username  (optional, `userpass` auth backend)                                                              |
+| CONFIG_STORE_TLS_VAULT_SECRET_KEY__PASSWORD      | password  (optional, `userpass` auth backend)                                                              |
 
 #### Upload domain private key
 

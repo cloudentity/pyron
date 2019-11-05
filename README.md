@@ -236,7 +236,7 @@ Above `meta-config.json` defines two configuration stores: `config.json` from JA
 
 You will find `meta-config.json` in the run folder (`run/standalone` or `run/docker`).
 
-Learn how to read configuration from [Consul](docs/config-store-consul.md) and secrets from [Vault](docs/config-store-vault.md).
+Learn how to read configuration from [Consul](docs/howtos/config-store-consul.md) and secrets from [Vault](docs/howtos/config-store-vault.md).
 
 <a id="config-routing"></a>
 ### Routing rules

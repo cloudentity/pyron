@@ -78,9 +78,7 @@
         },
         "pemTrustOptions": {
           "_nullify": true,
-          "certPath": "$env:?HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATH:string",
           "certPaths": "$env:?HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_PATHS:array",
-          "certValue": "$env:?HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_VALUE:string",
           "certValues": "$env:?HTTP_SERVER_PEM_TRUST_OPTIONS__CERT_VALUES:array"
         },
         "pfxKeyCertOptions": {
