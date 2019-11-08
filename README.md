@@ -716,13 +716,20 @@ Configure `io.vertx.circuitbreaker.CircuitBreakerOptions` in `circuitBreaker` ob
 
 Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/jaeger"]`.
 
-| Env variable                      | Description                                    |
-|:----------------------------------|:-----------------------------------------------|
-| TRACING_SERVICE_NAME              | Pyron name in Jaeger                            |
-| JAEGER_AGENT_HOST                 | Jaeger agent host                              |
-| JAEGER_AGENT_PORT                 | Jaeger agent port (optional)                   |
-| JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port (optional)            |
-| TRACING_FORMAT                    | tracing format - cloudentity, jaeger, zipkin   |
+| Env variable                      | Description                                                       |
+|:----------------------------------|:------------------------------------------------------------------|
+| TRACING_SERVICE_NAME              | Pyron name in Jaeger                                              |
+| JAEGER_AGENT_HOST                 | Jaeger agent host                                                 |
+| JAEGER_AGENT_PORT                 | Jaeger agent port (optional)                                      |
+| JAEGER_SAMPLER_MANAGER_HOST_PORT  | Jaeger sampler host:port (optional)                               |
+| TRACING_FORMAT                    | tracing format: cloudentity, jaeger, zipkin (default cloudentity) |
+
+`cloudentity` tracing format allows configuration of span context key and baggage item prefix:
+
+| Env variable            | Description                                            |
+|:------------------------|:-------------------------------------------------------|
+| TRACING_TRACE_ID        | span context key (default `x-trace-id`)                |
+| TRACING_BAGGAGE_PREFIX  | baggage item prefix (default `x-ctx-`)                 |
 
 <a id="config-access-log"></a>
 ### Access log
