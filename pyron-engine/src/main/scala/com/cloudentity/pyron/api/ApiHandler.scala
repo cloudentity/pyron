@@ -166,7 +166,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler {
   }
 
   def toResponseCtx(requestCtx: RequestCtx, response: ApiResponse): ResponseCtx = ResponseCtx(
-    response, requestCtx.request, requestCtx.original, requestCtx.correlationCtx, requestCtx.tracingCtx,
+    response, requestCtx.request, requestCtx.original, requestCtx.tracingCtx,
     requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined
   )
 
@@ -341,12 +341,11 @@ object HttpConversions {
       )
 
     RequestCtx(
-      correlationCtx = buildCorrelationCtx(ctx),
       tracingCtx = tracingCtx,
       request = targetRequest,
       original = original,
       proxyHeaders = proxyHeaders,
-      properties = Properties(),
+      properties = Properties(CorrelationCtx.routingContextKey -> buildCorrelationCtx(ctx)),
       authnCtx = AuthnCtx(),
       aborted = None
     )
