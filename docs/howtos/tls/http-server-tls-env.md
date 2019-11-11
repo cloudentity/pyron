@@ -12,6 +12,7 @@ In order to configure Pyron, set related environment variables in `envs` file.
 
 > NOTE<br/>
 > Read about [private key and certificate format](keycert-format.md).
+> Read how to [configure mutual SSL/TLS](http-server-mtls-env.md).
 
 <a id="pre"></a>
 ### Prerequisites
