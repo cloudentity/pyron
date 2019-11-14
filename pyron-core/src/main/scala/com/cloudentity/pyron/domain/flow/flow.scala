@@ -192,7 +192,6 @@ case class RequestCtx(
   properties: Properties = Properties(),
   tracingCtx: TracingContext,
   proxyHeaders: ProxyHeaders,
-  correlationCtx: CorrelationCtx,
   authnCtx: AuthnCtx = AuthnCtx(),
   accessLog: AccessLogItems = AccessLogItems(),
   modifyResponse: List[ApiResponse => Future[ApiResponse]] = Nil,
@@ -240,7 +239,6 @@ case class ResponseCtx(
   response: ApiResponse,
   request: TargetRequest,
   original: OriginalRequest,
-  correlationCtx: CorrelationCtx,
   tracingCtx: TracingContext,
   properties: Properties = Properties(),
   authnCtx: AuthnCtx = AuthnCtx(),
@@ -271,6 +269,7 @@ case class FixedHttpClientConf(value: JsonObject)
 
 case class FlowId(value: String) extends AnyVal
 
+// deprecated
 case class CorrelationCtx(signature: String, flowId: FlowId, ids: Map[String, String]) {
   def appendId(key: String, value: String): CorrelationCtx =
     CorrelationCtx(
@@ -287,12 +286,15 @@ case class CorrelationCtx(signature: String, flowId: FlowId, ids: Map[String, St
     )
 }
 
+// deprecated
 object CorrelationCtx {
   def withFlowId(flowId: String): CorrelationCtx =
     CorrelationCtx(flowId, FlowId(flowId), Map("API_GW_FLOW_ID" -> flowId))
 
   def withFlowId(): CorrelationCtx =
     withFlowId(UUID.randomUUID().toString)
+
+  val routingContextKey = "_correlationCtx"
 }
 
 case class ProxyHeaders(headers: Map[String, List[String]], trueClientIp: String)
