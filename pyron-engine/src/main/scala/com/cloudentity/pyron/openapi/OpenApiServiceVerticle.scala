@@ -1,6 +1,6 @@
 package com.cloudentity.pyron.openapi
 
-import com.cloudentity.pyron.apigroup.{ApiGroupConf, ApiGroupsChanged, ApiGroupsStore, ApiGroupsStoreVerticle}
+import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.TargetClient
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow._
@@ -11,7 +11,6 @@ import com.cloudentity.pyron.openapi.Codecs._
 import com.cloudentity.pyron.openapi.OpenApiService._
 import com.cloudentity.pyron.rule.RulesConfReader
 import com.cloudentity.pyron.util.ConfigDecoder
-import com.cloudentity.tools.vertx.bus.VertxBus
 import com.cloudentity.tools.vertx.http.Headers
 import com.cloudentity.tools.vertx.scala.Operation
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
@@ -24,10 +23,10 @@ import io.vertx.core.http.HttpMethod
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService with ConfigDecoder {
+class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService with ConfigDecoder with ApiGroupsChangeListener {
 
   var targetClient: TargetClient = _
-  var confs: List[ApiGroupConf] = List()
+  var apiGroupConfs: List[ApiGroupConf] = List()
 
   lazy val converter = createClient(classOf[OpenApiConverter])
 
@@ -37,15 +36,17 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
 
   override def initServiceAsyncS(): Future[Unit] = {
     cfg = Option(getConfig).flatMap(json => decodeConfigUnsafe[Option[OpenApiConf]]).getOrElse(OpenApiConf(None, None, None))
-    VertxBus.consumePublished(vertx.eventBus(), ApiGroupsStoreVerticle.PUBLISH_API_GROUPS_ADDRESS, classOf[ApiGroupsChanged], resetRulesAndTargetClient)
 
     lazy val apiGroupsStore = createClient(classOf[ApiGroupsStore])
     for {
       confs     <- apiGroupsStore.getGroupConfs().toScala()
       rules     <- apiGroupsStore.getGroups().toScala()
-      _         <- resetRulesAndTargetClient(ApiGroupsChanged(rules, confs))
+      _         <- resetRulesAndTargetClient(rules, confs)
     } yield ()
   }
+
+  override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit =
+    resetRulesAndTargetClient(groups, confs)
 
   private def getSourceConf(serviceId: ServiceId) =
     cfg.services.getOrElse(Map()).get(serviceId).flatMap(_.source)
@@ -58,17 +59,17 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
       .getOrElse(ConverterConf(None, None))
 
 
-  def resetRulesAndTargetClient(change: ApiGroupsChanged): Future[Unit] =
-    TargetClient.resetTargetClient(vertx, getConfService, getTracing, change.groups.flatMap(_.rules).map(_.conf), Option(targetClient))
+  def resetRulesAndTargetClient(groups: List[ApiGroup], confs: List[ApiGroupConf]): Future[Unit] =
+    TargetClient.resetTargetClient(vertx, getConfService, getTracing, groups.flatMap(_.rules).map(_.conf), Option(targetClient))
       .map { client =>
-        confs        = change.confs
-        targetClient = client
+        apiGroupConfs = confs
+        targetClient  = client
       }
 
   override def build(ctx: TracingContext, serviceId: ServiceId, tag: Option[String]): VxFuture[OpenApiServiceError \/ Swagger] = {
     val openApiRules = {
       for {
-        group <- confs
+        group <- apiGroupConfs
         rule  <- group.rules
       } yield OpenApiRuleBuilder.from(rule, group.matchCriteria)
     }.flatten
@@ -85,13 +86,6 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
 
     program.run.toJava()
   }
-
-  private def getRules(): Operation[ApiError, List[RuleConfWithPlugins]] =
-    for {
-      rulesJson <- getConfService.getGlobalConf().toOperation[ApiError]
-      rules     <- RulesConfReader.read(rulesJson.getJsonArray(Conf.rulesConfKey).toString)
-        .toOperation.leftMap[ApiError](_ => ApiError.`with`(500, "InvalidRules", "Invalid rules"))
-    } yield (rules)
 
   private def filterOpenApiRules(rules: List[OpenApiRule], serviceId: ServiceId, tag: Option[String]): List[OpenApiRule] =
     rules.filter(_.serviceId == serviceId).filter(r => tag.forall(r.tags.contains(_)))

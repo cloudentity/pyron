@@ -1,29 +1,25 @@
-package com.cloudentity.pyron.openapi
+package com.cloudentity.pyron.openapi.routes
 
-import io.circe.{Decoder, Encoder, Printer}
-import io.circe.syntax._
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import com.cloudentity.pyron.domain.Codecs._
-import com.cloudentity.pyron.openapi.Codecs._
-import com.cloudentity.pyron.apigroup.{ApiGroupConf, ApiGroupsChanged, ApiGroupsStore, ApiGroupsStoreVerticle}
+import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore, ApiGroupsStoreVerticle}
 import com.cloudentity.pyron.domain.Codecs.{AnyValDecoder, AnyValEncoder}
 import com.cloudentity.pyron.domain.flow.ServiceClientName
+import com.cloudentity.pyron.domain.Codecs._
+import com.cloudentity.pyron.openapi.Codecs._
 import com.cloudentity.pyron.domain.openapi.ServiceId
-import com.cloudentity.pyron.domain.rule.RuleConfWithPlugins
-import com.cloudentity.pyron.openapi.ListOpenApiRoute.{ListOpenApiResponse, ListOpenApiRouteConf, ServiceMetadata, Url}
 import com.cloudentity.pyron.openapi._
-import com.cloudentity.pyron.rule.{RulesChanged, RulesStore, RulesStoreVerticle}
+import com.cloudentity.pyron.openapi.routes.ListOpenApiRoute._
 import com.cloudentity.pyron.util.ConfigDecoder
 import com.cloudentity.tools.vertx.scala.Operation
+import com.cloudentity.tools.vertx.server.api.errors.ApiError
 import com.cloudentity.tools.vertx.server.api.routes.ScalaRouteVerticle
 import com.cloudentity.tools.vertx.server.api.routes.utils.CirceRouteOperations
 import com.cloudentity.tools.vertx.server.http.HttpStatus
-import io.vertx.ext.web.RoutingContext
-import com.cloudentity.tools.vertx.bus.VertxBus
-import com.cloudentity.tools.vertx.server.api.errors.ApiError
 import com.cloudentity.tools.vertx.tracing.LoggingWithTracing
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder}
 import io.swagger.models.Swagger
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.ext.web.RoutingContext
 import scalaz.{-\/, \/-}
 
 import scala.collection.JavaConverters._
@@ -59,7 +55,7 @@ object ListOpenApiRoute {
   implicit lazy val listOpenApiRouteConfDecoder = deriveDecoder[ListOpenApiRouteConf]
 }
 
-class ListOpenApiRoute extends ScalaRouteVerticle with CirceRouteOperations with ConfigDecoder {
+class ListOpenApiRoute extends ScalaRouteVerticle with CirceRouteOperations with ConfigDecoder with ApiGroupsChangeListener {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
   var confs: List[ApiGroupConf] = List()
@@ -71,21 +67,20 @@ class ListOpenApiRoute extends ScalaRouteVerticle with CirceRouteOperations with
   lazy val client = createClient(classOf[OpenApiService], new DeliveryOptions().setSendTimeout(30000))
 
   override def initServiceAsyncS(): Future[Unit] = {
-    cfg = Option(getConfig).flatMap(json => decodeConfigUnsafe[Option[ListOpenApiRouteConf]]).getOrElse(ListOpenApiRouteConf(None, None))
-    VertxBus.consumePublished(vertx.eventBus(), ApiGroupsStoreVerticle.PUBLISH_API_GROUPS_ADDRESS, classOf[ApiGroupsChanged], reloadApiGroups)
+    cfg = decodeConfigOptUnsafe(ListOpenApiRouteConf(None, None))
 
     lazy val apiGroupsStore = createClient(classOf[ApiGroupsStore])
     for {
       confs     <- apiGroupsStore.getGroupConfs().toScala()
       groups    <- apiGroupsStore.getGroups().toScala()
-      _         <- reloadApiGroups(ApiGroupsChanged(groups, confs))
-    } yield ()
+    } yield reloadApiGroups(groups, confs)
   }
 
-  def reloadApiGroups(change: ApiGroupsChanged): Future[Unit] = {
-    confs = change.confs
-    Future.successful(())
-  }
+  override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit =
+    reloadApiGroups(groups, confs)
+
+  def reloadApiGroups(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit =
+    this.confs = confs
 
   override protected def handle(ctx: RoutingContext): Unit = {
     val tag = ctx.queryParam("tag").asScala.headOption

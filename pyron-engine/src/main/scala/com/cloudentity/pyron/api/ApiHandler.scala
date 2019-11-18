@@ -1,6 +1,6 @@
 package com.cloudentity.pyron.api
 
-import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupsChanged, ApiGroupsStore, ApiGroupsStoreVerticle}
+import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow._
@@ -35,7 +35,7 @@ trait ApiHandler {
   def handle(ctx: RoutingContext): VxFuture[Unit]
 }
 
-class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler {
+class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGroupsChangeListener {
 
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
@@ -53,12 +53,14 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler {
   override def initServiceAsyncS(): Future[Unit] = {
     routingCtxService = createClient(classOf[RoutingCtxService])
     registerConfChangeConsumer(onSmartClientsChanged)
-    VertxBus.consumePublished(vertx.eventBus(), ApiGroupsStoreVerticle.PUBLISH_API_GROUPS_ADDRESS, classOf[ApiGroupsChanged], (change: ApiGroupsChanged) => resetRulesAndSmartClients(change.groups))
 
     createClient(classOf[ApiGroupsStore]).getGroups().toScala()
       .map(apiGroups = _)
       .flatMap(_ => resetRulesAndSmartClients(apiGroups))
   }
+
+  override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit =
+    resetRulesAndSmartClients(groups)
 
   private def onSmartClientsChanged(change: ConfigChange): Unit = {
     val prev = change.getPreviousConfiguration.getJsonObject(Conf.smartHttpClientsKey)
