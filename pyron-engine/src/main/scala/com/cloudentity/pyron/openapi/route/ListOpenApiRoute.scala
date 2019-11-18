@@ -1,4 +1,4 @@
-package com.cloudentity.pyron.openapi.routes
+package com.cloudentity.pyron.openapi.route
 
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore, ApiGroupsStoreVerticle}
 import com.cloudentity.pyron.domain.Codecs.{AnyValDecoder, AnyValEncoder}
@@ -7,7 +7,7 @@ import com.cloudentity.pyron.domain.Codecs._
 import com.cloudentity.pyron.openapi.Codecs._
 import com.cloudentity.pyron.domain.openapi.ServiceId
 import com.cloudentity.pyron.openapi._
-import com.cloudentity.pyron.openapi.routes.ListOpenApiRoute._
+import com.cloudentity.pyron.openapi.route.ListOpenApiRoute._
 import com.cloudentity.pyron.util.ConfigDecoder
 import com.cloudentity.tools.vertx.scala.Operation
 import com.cloudentity.tools.vertx.server.api.errors.ApiError

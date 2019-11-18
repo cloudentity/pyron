@@ -1,11 +1,11 @@
-package com.cloudentity.pyron.openapi.routes
+package com.cloudentity.pyron.openapi.route
 
 import com.cloudentity.pyron.domain.flow.{ServiceClientName, TargetHost}
 import com.cloudentity.pyron.domain.Codecs._
 import com.cloudentity.pyron.domain.openapi.{DiscoverableServiceId, ServiceId, StaticServiceId}
 import com.cloudentity.pyron.openapi.OpenApiService._
 import com.cloudentity.pyron.openapi._
-import com.cloudentity.pyron.openapi.routes.GetOpenApiRoute.GetOpenApiRouteConf
+import com.cloudentity.pyron.openapi.route.GetOpenApiRoute.GetOpenApiRouteConf
 import com.cloudentity.pyron.util.ConfigDecoder
 import com.cloudentity.tools.vertx.http.Headers
 import com.cloudentity.tools.vertx.http.headers.ContentType

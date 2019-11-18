@@ -1,11 +1,11 @@
-package com.cloudentity.pyron.admin.route.openapi
+package com.cloudentity.pyron.openapi.route
 
 import io.circe.Printer
 import io.circe.syntax._
 import com.cloudentity.pyron.PyronAcceptanceTest
 import com.cloudentity.pyron.domain.flow.ServiceClientName
 import com.cloudentity.pyron.domain.openapi.DiscoverableServiceId
-import com.cloudentity.pyron.openapi.routes.ListOpenApiRoute.{ListOpenApiResponse, ServiceMetadata, Url}
+import com.cloudentity.pyron.openapi.route.ListOpenApiRoute.{ListOpenApiResponse, ServiceMetadata, Url}
 import com.cloudentity.pyron.util.MockUtils
 import io.restassured.RestAssured.given
 import org.hamcrest.{BaseMatcher, Description}
