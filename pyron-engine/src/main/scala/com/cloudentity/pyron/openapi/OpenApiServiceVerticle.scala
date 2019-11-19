@@ -9,12 +9,10 @@ import com.cloudentity.pyron.domain.openapi._
 import com.cloudentity.pyron.domain.rule.RuleConfWithPlugins
 import com.cloudentity.pyron.openapi.Codecs._
 import com.cloudentity.pyron.openapi.OpenApiService._
-import com.cloudentity.pyron.rule.RulesConfReader
 import com.cloudentity.pyron.util.ConfigDecoder
 import com.cloudentity.tools.vertx.http.Headers
 import com.cloudentity.tools.vertx.scala.Operation
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
-import com.cloudentity.tools.vertx.server.api.errors.ApiError
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.swagger.models.Swagger
 import io.swagger.parser.SwaggerParser
@@ -138,7 +136,8 @@ object OpenApiRuleBuilder {
         rewritePath    = r.rule.rewritePath,
         rewriteMethod  = r.rule.rewriteMethod,
         plugins        = r.requestPlugins.toList ::: r.responsePlugins.toList,
-        tags           = r.rule.tags
+        tags           = r.rule.tags,
+        operationId    = r.rule.ext.openapi.flatMap(_.operationId)
       )
     )
   }

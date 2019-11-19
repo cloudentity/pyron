@@ -1,6 +1,6 @@
 package com.cloudentity.pyron.openapi.route
 
-import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore, ApiGroupsStoreVerticle}
+import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.domain.Codecs.{AnyValDecoder, AnyValEncoder}
 import com.cloudentity.pyron.domain.flow.ServiceClientName
 import com.cloudentity.pyron.domain.Codecs._
@@ -58,13 +58,13 @@ object ListOpenApiRoute {
 class ListOpenApiRoute extends ScalaRouteVerticle with CirceRouteOperations with ConfigDecoder with ApiGroupsChangeListener {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  var confs: List[ApiGroupConf] = List()
+  var apiGroupConfs: List[ApiGroupConf] = List()
   var cfg: ListOpenApiRouteConf = _
 
   protected override def vertxServiceAddressPrefixS: Option[String] = Some(ListOpenApiRoute.verticleId)
   override def configPath(): String = ListOpenApiRoute.verticleId
 
-  lazy val client = createClient(classOf[OpenApiService], new DeliveryOptions().setSendTimeout(30000))
+  lazy val openApiService = createClient(classOf[OpenApiService], new DeliveryOptions().setSendTimeout(30000))
 
   override def initServiceAsyncS(): Future[Unit] = {
     cfg = decodeConfigOptUnsafe(ListOpenApiRouteConf(None, None))
@@ -80,14 +80,15 @@ class ListOpenApiRoute extends ScalaRouteVerticle with CirceRouteOperations with
     reloadApiGroups(groups, confs)
 
   def reloadApiGroups(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit =
-    this.confs = confs
+    apiGroupConfs = confs
 
   override protected def handle(ctx: RoutingContext): Unit = {
     val tag = ctx.queryParam("tag").asScala.headOption
 
-    val futures: Set[Future[(ServiceId, OpenApiService.OpenApiServiceError \/ Swagger)]] = servicesWithAtLeastOneRule.map(service =>
-      client.build(ctx.tracing, service, tag).toScala().map(openapi => (service, openapi))
-    )
+    val futures: Set[Future[(ServiceId, OpenApiService.OpenApiServiceError \/ Swagger)]] =
+      servicesWithAtLeastOneRule.map { service =>
+        openApiService.build(ctx.tracing, service, tag).toScala().map(openapi => (service, openapi))
+      }
 
     val program: Operation[ApiError, ListOpenApiResponse] =
       Future.sequence(futures).toOperation[ApiError]
@@ -118,7 +119,7 @@ class ListOpenApiRoute extends ScalaRouteVerticle with CirceRouteOperations with
 
   private def servicesWithAtLeastOneRule(): Set[ServiceId] = {
     for {
-        group <- confs
+        group <- apiGroupConfs
         rule  <- group.rules
       } yield OpenApiRuleBuilder.from(rule, group.matchCriteria)
     }.flatten

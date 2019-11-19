@@ -3,7 +3,7 @@ package com.cloudentity.pyron.rule
 import io.circe.Json
 import com.cloudentity.pyron.domain._
 import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPattern, PathPrefix, PluginConf, PluginName, ServiceClientName, StaticServiceRule, TargetHost}
-import com.cloudentity.pyron.domain.rule.{RequestPluginsConf, ResponsePluginsConf, RuleConf}
+import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf}
 import com.cloudentity.pyron.rule.RulesConfReader._
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
@@ -13,10 +13,10 @@ import scalaz.{Failure, Success}
 
 @RunWith(classOf[JUnitRunner])
 class RulesConfReaderSpec extends WordSpec with MustMatchers {
-  val emptyRuleConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+  val emptyRuleConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
   val emptyConf = ServiceConf(emptyRuleConf, None, None)
-  val fullRuleConfWoPlugins = RuleRawConf(Some("endpointName"), Some(TargetHost("targetHost")), Some(80), None, None, None, Some(PathPattern("pathPattern")), None, None, None, None, Some(PathPrefix("pathPrefix")), Some(HttpMethod.GET), Some(true), None, None, None, None)
-  val otherFullRuleConfWoPlugins = RuleRawConf(Some("endpointName2"), Some(TargetHost("targetHost2")), Some(802), None, None, None, Some(PathPattern("pathPattern2")), None, None, None, None, Some(PathPrefix("pathPrefix2")), Some(HttpMethod.POST), Some(false), None, None, None, None)
+  val fullRuleConfWoPlugins = RuleRawConf(Some("endpointName"), Some(TargetHost("targetHost")), Some(80), None, None, None, Some(PathPattern("pathPattern")), None, None, None, None, Some(PathPrefix("pathPrefix")), Some(HttpMethod.GET), Some(true), None, None, None, None, None)
+  val otherFullRuleConfWoPlugins = RuleRawConf(Some("endpointName2"), Some(TargetHost("targetHost2")), Some(802), None, None, None, Some(PathPattern("pathPattern2")), None, None, None, None, Some(PathPrefix("pathPrefix2")), Some(HttpMethod.POST), Some(false), None, None, None, None, None)
 
   def serviceConf(rule: RuleRawConf) = ServiceConf(rule, None, None)
   def endpointConf(rule: RuleRawConf) = EndpointConf(rule, None, None)
@@ -84,7 +84,8 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
           copyQueryOnRewrite = fullRuleConfWoPlugins.copyQueryOnRewrite,
           preserveHostHeader = fullRuleConfWoPlugins.preserveHostHeader,
           tags               = fullRuleConfWoPlugins.tags.getOrElse(Nil),
-          call               = fullRuleConfWoPlugins.call
+          call               = fullRuleConfWoPlugins.call,
+          ext                = ExtRuleConf(None)
         ),
       requestPlugins  = Nil,
       responsePlugins = Nil

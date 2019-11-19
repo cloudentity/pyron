@@ -5,7 +5,7 @@ import io.circe.parser._
 import com.cloudentity.pyron.domain._
 import com.cloudentity.pyron.domain.flow.{DiscoverableServiceRule, EndpointMatchCriteria, PathMatching, PathPattern, PathPrefix, PluginConf, PluginName, ProxyServiceRule, RewriteMethod, RewritePath, ServiceClientName, StaticServiceRule, TargetHost, TargetServiceRule}
 import com.cloudentity.pyron.domain.http.CallOpts
-import com.cloudentity.pyron.domain.rule.{RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
+import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.vertx.core.http.HttpMethod
@@ -44,7 +44,8 @@ object RulesConfReader {
     requestPlugins: Option[List[PluginConf]],
     responsePlugins: Option[List[PluginConf]],
     tags: Option[List[String]],
-    call: Option[CallOpts]
+    call: Option[CallOpts],
+    ext: Option[ExtRuleConf]
   )
 
   sealed trait ReadRulesError
@@ -147,6 +148,7 @@ object RulesConfReader {
           retryOnException    = readCallOptsAttribute(opts, defaultConf.rule.call, _.retryOnException)
         )
       ).orElse(defaultConf.rule.call)
+    val ext = composeExtRuleConf(defaultConf, endpointConf)
 
 
     val ruleValidation: ValidationNel[String, RuleConfWithPlugins] =
@@ -155,12 +157,19 @@ object RulesConfReader {
           val pathMatching = PathMatching.build(pathPrefix, rf.pathPattern)
           val criteria = EndpointMatchCriteria(rf.method, pathMatching)
           val service  = rf.service
-          val ruleConf = RuleConf(endpointName, criteria, service, dropPrefix, endpointConf.rule.rewriteMethod, endpointConf.rule.rewritePath, copyQueryOnRewrite, preserveHostHeader, tags.getOrElse(Nil), call)
+          val ruleConf =
+            RuleConf(endpointName, criteria, service, dropPrefix, endpointConf.rule.rewriteMethod, endpointConf.rule.rewritePath,
+              copyQueryOnRewrite, preserveHostHeader, tags.getOrElse(Nil), call, ext)
           RuleConfWithPlugins(ruleConf, requestPluginsConf, responsePluginConfs)
         }
 
     ruleValidation
   }
+
+  def composeExtRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf): ExtRuleConf =
+    ExtRuleConf(
+      openapi = endpointConf.rule.ext.flatMap(_.openapi).orElse(defaultConf.rule.ext.flatMap(_.openapi))
+    )
 
   def readCallOptsAttribute[A](opts: CallOpts, fallback: Option[CallOpts], read: CallOpts => Option[A]): Option[A] =
     read(opts).orElse(fallback.flatMap(read))
