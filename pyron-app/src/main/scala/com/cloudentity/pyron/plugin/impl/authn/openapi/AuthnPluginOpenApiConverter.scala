@@ -41,6 +41,7 @@ object AuthnPluginOpenApiConverter extends OpenApiPluginUtils {
       new HeaderParameter()
         .name(tokenHeader)
         .required(false)
+        .`type`("string")
         .description(s"Contains extra token used to build authentication context. Supported token types: [${endpointConf.methods.filterNot(_ == "anonymous").mkString(", ")}]")
 
     op.getParameters.add(param)
