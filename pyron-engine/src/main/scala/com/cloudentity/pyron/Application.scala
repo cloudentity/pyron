@@ -4,7 +4,7 @@ import com.cloudentity.pyron.api.{ApiHandlerVerticle, ApiServer, RoutingCtxVerti
 import com.cloudentity.pyron.apigroup.ApiGroupsStoreVerticle
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.config.Conf.AppConf
-import com.cloudentity.pyron.openapi.{GetOpenApiRoute, ListOpenApiRoute}
+import com.cloudentity.pyron.openapi.route.{GetOpenApiRoute, ListOpenApiRoute}
 import com.cloudentity.pyron.rule.RulesStoreVerticle
 import com.cloudentity.tools.vertx.bus.ServiceClientFactory
 import com.cloudentity.tools.vertx.conf.ConfService

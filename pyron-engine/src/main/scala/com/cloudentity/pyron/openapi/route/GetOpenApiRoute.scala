@@ -1,36 +1,34 @@
-package com.cloudentity.pyron.openapi
+package com.cloudentity.pyron.openapi.route
 
-import io.circe.generic.semiauto.deriveDecoder
+import com.cloudentity.pyron.domain.flow.{ServiceClientName, TargetHost}
+import com.cloudentity.pyron.domain.Codecs._
+import com.cloudentity.pyron.domain.openapi.{DiscoverableServiceId, ServiceId, StaticServiceId}
 import com.cloudentity.pyron.openapi.OpenApiService._
 import com.cloudentity.pyron.openapi._
+import com.cloudentity.pyron.openapi.route.GetOpenApiRoute.GetOpenApiRouteConf
 import com.cloudentity.pyron.util.ConfigDecoder
+import com.cloudentity.tools.vertx.http.Headers
+import com.cloudentity.tools.vertx.http.headers.ContentType
+import com.cloudentity.tools.vertx.http.headers.ContentType.{ApplicationJson, ApplicationYaml}
 import com.cloudentity.tools.vertx.scala.Operation
+import com.cloudentity.tools.vertx.server.api.errors.ApiError
 import com.cloudentity.tools.vertx.server.api.routes.ScalaRouteVerticle
 import com.cloudentity.tools.vertx.server.api.routes.utils.{CirceRouteOperations, VertxEncoder}
-import com.cloudentity.tools.vertx.http.Headers
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
+import io.circe.generic.semiauto.deriveDecoder
 import io.swagger.models.Swagger
+import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.http.HttpServerRequest
 import io.vertx.ext.web.RoutingContext
 import scalaz.\/
-import com.cloudentity.pyron.domain.Codecs._
-import com.cloudentity.pyron.domain.flow.{ServiceClientName, TargetHost}
-import com.cloudentity.pyron.domain.openapi.{DiscoverableServiceId, ServiceId, StaticServiceId}
-import com.cloudentity.pyron.openapi.GetOpenApiRoute.GetOpenApiRouteConf
-import com.cloudentity.tools.vertx.http.headers.ContentType
-import com.cloudentity.tools.vertx.http.headers.ContentType.{ApplicationJson, ApplicationYaml}
-import com.cloudentity.tools.vertx.server.api.errors.ApiError
-import io.vertx.core.eventbus.DeliveryOptions
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.util.Try
 
 object GetOpenApiRoute {
   val verticleId = "getOpenApi"
 
   case class GetOpenApiRouteConf(excludedServices: Option[List[ServiceClientName]])
-
   implicit lazy val getOpenApiRouteConfDecoder = deriveDecoder[GetOpenApiRouteConf]
 }
 
@@ -47,9 +45,8 @@ class GetOpenApiRoute extends ScalaRouteVerticle with CirceRouteOperations with 
     override def encode(a: String): String = a
   }
 
-  override def initServiceAsyncS(): Future[Unit] = {
-    cfg = Option(getConfig).flatMap(json => decodeConfigUnsafe[Option[GetOpenApiRouteConf]]).getOrElse(GetOpenApiRouteConf(None))
-    Future.successful(())
+  override def initService(): Unit = {
+    cfg = decodeConfigOptUnsafe(GetOpenApiRouteConf(None))
   }
 
   def getContentType(request: HttpServerRequest): ContentType =

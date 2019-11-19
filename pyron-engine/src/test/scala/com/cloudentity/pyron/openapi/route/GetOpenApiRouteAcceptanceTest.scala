@@ -1,4 +1,4 @@
-package com.cloudentity.pyron.admin.route.openapi
+package com.cloudentity.pyron.openapi.route
 
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.cloudentity.pyron.PyronAcceptanceTest

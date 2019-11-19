@@ -4,7 +4,7 @@ import java.time.Duration
 
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
-import com.cloudentity.pyron.domain.rule.{RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
+import com.cloudentity.pyron.domain.rule.{ExtRuleConf, OpenApiRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.CursorOp.DownField
 import io.circe.Decoder.Result
@@ -164,6 +164,12 @@ object Codecs {
 
   implicit lazy val CallOptsEnc: Encoder[CallOpts] = deriveEncoder
   implicit lazy val CallOptsDec: Decoder[CallOpts] = deriveDecoder
+
+  implicit lazy val openApiRuleConfEnc: Encoder[OpenApiRuleConf] = deriveEncoder
+  implicit lazy val openApiRuleConfDec: Decoder[OpenApiRuleConf] = deriveDecoder
+
+  implicit lazy val extRuleConfEnc: Encoder[ExtRuleConf] = deriveEncoder
+  implicit lazy val extRuleConfDec: Decoder[ExtRuleConf] = deriveDecoder
 
   implicit lazy val ruleConfEnc: Encoder[RuleConf] = deriveEncoder
   implicit lazy val ruleConfDec: Decoder[RuleConf] = deriveDecoder

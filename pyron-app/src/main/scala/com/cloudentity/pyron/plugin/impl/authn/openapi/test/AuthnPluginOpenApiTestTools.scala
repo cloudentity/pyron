@@ -45,7 +45,8 @@ trait AuthnPluginOpenApiTestTools extends OpenApiTestUtils {
       None,
       None,
       List(jsonPluginConf),
-      Nil
+      Nil,
+      None
     )
   }
 

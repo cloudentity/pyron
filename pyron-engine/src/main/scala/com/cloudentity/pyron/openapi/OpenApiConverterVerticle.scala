@@ -44,7 +44,7 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
                        conf: ConverterConf): VxFuture[Swagger] = {
     preProcess(swagger, conf)
       .compose(swagger => filterExposedApis(ctx, swagger, rules))
-      .compose(swagger => rewritePathsAndMethods(ctx, swagger, rules))
+      .compose(swagger => rewritePathsAndMethodsAndOperationId(ctx, swagger, rules))
       .compose(swagger => applyPlugins(ctx, swagger, rules))
       .compose(swagger => resolveOperationIdConflicts(ctx, swagger))
       .compose(swagger => modifyMetadata(ctx, swagger, conf))
@@ -63,7 +63,7 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
         acc.compose(processor.postProcess)
       }
 
-  def rewritePathsAndMethods(ctx: TracingContext, swagger: Swagger, rules: List[OpenApiRule]): VxFuture[Swagger] = {
+  def rewritePathsAndMethodsAndOperationId(ctx: TracingContext, swagger: Swagger, rules: List[OpenApiRule]): VxFuture[Swagger] = {
     val paths: Map[String, Map[HttpMethod, Operation]] = rules.flatMap { rule =>
       val targetServicePath = rule.targetServicePath
       val apiGwPath = rule.apiGwPath
@@ -71,7 +71,12 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
       val apiGwMethod = toSwaggerMethod(rule.method)
 
       findOperation(swagger, targetServicePath, targetMethod) match {
-        case Some(operation) => Some((apiGwPath, (apiGwMethod, deepCopyOperation(operation))))
+        case Some(operation) =>
+          val outOperation = deepCopyOperation(operation)
+          val operationId = rule.operationId.getOrElse(operation.getOperationId)
+          outOperation.setOperationId(operationId)
+
+          Some((apiGwPath, (apiGwMethod, outOperation)))
         case None =>
           log.warn(ctx, s"Can't find rule definition: ${rule} in target service docs")
           None

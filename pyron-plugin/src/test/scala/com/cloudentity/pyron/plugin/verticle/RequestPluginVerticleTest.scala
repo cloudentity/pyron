@@ -228,7 +228,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       }.setHandler(ctx.asyncAssertSuccess())
   }
 
-  val openApiRule = OpenApiRule(HttpMethod.GET, DiscoverableServiceId(ServiceClientName("service")), GroupMatchCriteria.empty, PathPattern("/x"), PathPrefix(""), false, None, None, Nil, Nil)
+  val openApiRule = OpenApiRule(HttpMethod.GET, DiscoverableServiceId(ServiceClientName("service")), GroupMatchCriteria.empty, PathPattern("/x"), PathPrefix(""), false, None, None, Nil, Nil, None)
 
   @Test
   def requestPluginVerticleConvertOpenApiShouldReturnConvertOpenApiErrorWhenConfigDecodingError(ctx: TestContext): Unit = {

@@ -3,7 +3,7 @@ package com.cloudentity.pyron.apigroup
 import java.util.Optional
 
 import com.cloudentity.pyron.config.Conf.AppConf
-import com.cloudentity.tools.vertx.bus.{VertxBus, VertxEndpoint}
+import com.cloudentity.tools.vertx.bus.VertxEndpoint
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import io.vertx.config.ConfigChange
 import io.vertx.core.json.{JsonArray, JsonObject}
@@ -28,10 +28,9 @@ trait ApiGroupsStore {
   def getGroupConfs(): VxFuture[List[ApiGroupConf]]
 }
 
-case class ApiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf])
-
-object ApiGroupsStoreVerticle {
-  val PUBLISH_API_GROUPS_ADDRESS = "com.cloudentity.pyron.publish-api-groups"
+trait ApiGroupsChangeListener {
+  @VertxEndpoint
+  def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit
 }
 
 class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
@@ -41,9 +40,11 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
   var confs: List[ApiGroupConf] = _
 
   var rulesStore: RulesStore = _
+  var apiGroupsListener: ApiGroupsChangeListener = _
 
   override def initServiceAsyncS(): Future[Unit] = {
     rulesStore = createClient(classOf[RulesStore])
+    apiGroupsListener = createClient(classOf[ApiGroupsChangeListener])
     registerConfChangeConsumer(onApiGroupsChanged)
     loadGroups().map { case (groups, confs) =>
       this.apiGroups = groups
@@ -118,7 +119,7 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
     JsonExtractor.resolve(root, Conf.apiGroupsConfKey).flatMap[AnyRef](groupsConf => Optional.ofNullable(groupsConf)).orElse(new JsonObject())
 
   private def publishApiGroups(): Unit =
-    VertxBus.publish(vertx.eventBus(), ApiGroupsStoreVerticle.PUBLISH_API_GROUPS_ADDRESS, ApiGroupsChanged(apiGroups, confs))
+    apiGroupsListener.apiGroupsChanged(apiGroups, confs)
 
   private def buildApiGroupsOrFallbackToRules(conf: AppConf, rules: Option[Json], apiGroupsConfOpt: Option[JsonObject]): Future[(List[ApiGroup], List[ApiGroupConf])] = {
     val defaultProxyRulesOpt = conf.defaultProxyRules.filter(_ => conf.defaultProxyRulesEnabled.getOrElse(false))

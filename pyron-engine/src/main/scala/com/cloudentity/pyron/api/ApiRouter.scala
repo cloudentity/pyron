@@ -3,8 +3,9 @@ package com.cloudentity.pyron.api
 import java.util.Optional
 
 import com.cloudentity.pyron.accesslog.AccessLogHandler
-import com.cloudentity.pyron.openapi.{GetOpenApiRoute, ListOpenApiRoute}
+import com.cloudentity.pyron.openapi.route._
 import com.cloudentity.pyron.config.Conf.{AppConf, OpenApiConf}
+import com.cloudentity.pyron.openapi.route.GetOpenApiRoute
 import com.cloudentity.tools.vertx.bus.ServiceClientFactory
 import com.cloudentity.tools.vertx.scala.FutureConversions
 import com.cloudentity.tools.vertx.server.api.routes.RouteService
