@@ -37,14 +37,14 @@ Let's have a look at simple API Group that exposes rules on `demo.com` domain an
 }
 ```
 
-In our example `apiGroups.single-group` is a leaf node and stores grouping config with rules at `group` and `rules` keys respectively.
+In our example `apiGroups.single-group` is a leaf node and stores grouping config with rules at `_group` and `_rules` keys respectively.
 
 <a id="multiple-api-groups"></a>
 ##### Multiple API Groups config
 
 In following example we have 2 API Groups exposed on `demo.com` domain, but on different base-paths: `/service-a` and `/service-b`.
 
-For simplicity, we use references to define `rules`.
+For simplicity, we use references to define `_rules`.
 
 ```json
 {
