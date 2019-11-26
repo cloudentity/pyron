@@ -50,7 +50,7 @@ RUN mkdir /logs /.vertx /file-uploads /plugin-jars && \
 COPY --chown=cloudentity:cloudentity src/main/docker/docker-entrypoint.sh \
 									 src/main/docker/healthcheck.sh \
 									 src/main/docker/logback.xml /
-COPY --chown=cloudentity:cloudentity target/pyron-app-${version}.jar /app.jar
+COPY --chown=cloudentity:cloudentity target/pyron-app-${version}-fat.jar /app.jar
 COPY --chown=cloudentity:cloudentity src/main/docker/meta-config.json \
 									 src/main/docker/system.json \
 									 src/main/docker/rules.json /configs/
