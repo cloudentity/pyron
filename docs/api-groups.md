@@ -178,7 +178,7 @@ Finally the request with dropped base-path (i.e. `GET demo.com/list`) would be m
 
 If `domains` is not set then the API Group matches all domains.
 
-`domains` attribute supports wildcard `\*`.
+`domains` attribute supports wildcard `*`.
 The wildcard matches single domain part in the prefix, e.g. `*.baz` matches `foo.baz`, but not `foo.bar.baz`, etc.
 
 Given `GET cloudentity.com/api` or `GET demo.cloudentity.com/api` requests, we would match `cloudentity` API Group. Note that the `basePath` may be empty and thus match all paths.
