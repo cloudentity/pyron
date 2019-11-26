@@ -39,6 +39,7 @@ Let's have a look at simple API Group that exposes rules on `demo.com` domain an
 
 In our example `apiGroups.single-group` is a leaf node and stores grouping config with rules at `group` and `rules` keys respectively.
 
+<a id="multiple-api-groups"></a>
 ##### Multiple API Groups config
 
 In following example we have 2 API Groups exposed on `demo.com` domain, but on different base-paths: `/service-a` and `/service-b`.
@@ -99,7 +100,7 @@ In our example, `service-a` rules would be added before `service-b`.
 ##### Nested API Groups
 
 Consider situation when you have 2 sets of rules. You want to expose them on `/apis/service-a` and `/apis/service-b` paths.
-You can either use approach described in <<Multiple API Groups config>> or use groups nesting:
+You can either use approach described in [Multiple API Groups config](#multiple-api-groups) or use groups nesting:
 
 ```json
 {
