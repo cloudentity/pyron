@@ -17,29 +17,10 @@ import io.circe.{Decoder, Encoder, Json}
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.DeliveryOptions
 import scalaz.{-\/, \/-}
+import io.circe.syntax._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
-sealed trait IdentifierLocation
-case object HeaderIdentifier extends IdentifierLocation
-case object BodyIdentifier extends IdentifierLocation
-
-object IdentifierLocation {
-  implicit val IdentifierLocationDec: Decoder[IdentifierLocation] =
-    Decoder.decodeString.emap {
-      case "header" => Right(HeaderIdentifier)
-      case "body" => Right(BodyIdentifier)
-      case x => Left(s"Unsupported brute-force identifier location: '$x'")
-    }
-}
-
-case class BruteForceIdentifier(location: IdentifierLocation, name: String)
-case class BruteForcePluginState(attempts: List[BruteForceAttempt], identifier: String)
-
-object BruteForceIdentifier {
-  implicit val BruteForceIdentifierDec = deriveDecoder[BruteForceIdentifier]
-}
 
 case class BruteForceConfig(
   maxAttempts: Int,
@@ -47,22 +28,13 @@ case class BruteForceConfig(
   blockFor: Int,
   successCodes: List[Int],
   errorCodes: List[Int],
-  identifier: BruteForceIdentifier,
+  identifier: IdentifierSource,
   lockedResponse: Json,
   counterName: String
 )
 
-case class BruteForceAttempt(blocked: Boolean, timestamp: Instant, blockFor: Long)
-
-object BruteForceAttempt {
-  implicit val InstantDecoder: Decoder[Instant] = Decoder.decodeLong.map(Instant.ofEpochMilli)
-  implicit val InstantEncoder: Encoder[Instant] = Encoder.encodeLong.contramap(_.toEpochMilli)
-
-  implicit val BruteForceAttemptDecoder: Decoder[BruteForceAttempt] = deriveDecoder
-  implicit val BruteForceAttemptEncoder: Encoder[BruteForceAttempt] = deriveEncoder
-}
-
 case class BruteForcePluginConfig(cacheTimeoutMs: Option[Int], leaseDurationMs: Option[Int])
+case class BruteForcePluginState(attempts: List[Attempt], identifier: String)
 
 class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] with PluginState[BruteForcePluginState] with ConfigDecoder {
   var cache: BruteForceCache = _
@@ -72,6 +44,7 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
   override def validate(conf: BruteForceConfig): ValidateResponse = ValidateResponse.ok()
   override def confDecoder: Decoder[BruteForceConfig] = deriveDecoder
 
+  implicit lazy val confEncoder: Encoder[BruteForceConfig] = deriveEncoder
   implicit lazy val pluginConfDecoder: Decoder[BruteForcePluginConfig] = deriveDecoder
 
   override def initService(): Unit = {
@@ -110,15 +83,15 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
 
         program.flatMap {
           case \/-(ctx) =>
-            log.debug(ctx.tracingCtx, s"Passing attempt: $conf")
+            if (log.isDebugEnabled) log.debug(ctx.tracingCtx, s"Passing attempt: ${conf.asJson.noSpaces}")
             ctx |> Future.successful
 
           case -\/(LockAlreadyAcquired) =>
-            log.warn(ctx.tracingCtx, s"Lock already acquired on brute-force attempts cache: $conf")
+            log.warn(ctx.tracingCtx, s"Lock already acquired on brute-force attempts cache: ${conf.asJson.noSpaces}")
             ctx.abort(blockedResponse(conf.lockedResponse)) |> Future.successful
 
           case -\/(BruteForceBlocked) =>
-            log.debug(ctx.tracingCtx, s"Brute-force attempt blocked: $conf")
+            log.debug(ctx.tracingCtx, s"Brute-force attempt blocked: ${conf.asJson.noSpaces}")
             unlockCache(ctx.tracingCtx, counterName, identifier)
               .map(_ => ctx.abort(blockedResponse(conf.lockedResponse)))
 
@@ -150,7 +123,7 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
         Future.successful(ctx)
     }
 
-    private def clearOrUpdateAttempts(ctx: TracingContext, resp: ApiResponse, attempts: List[BruteForceAttempt], conf: BruteForceConfig, identifier: String): Future[Unit] = {
+    private def clearOrUpdateAttempts(ctx: TracingContext, resp: ApiResponse, attempts: List[Attempt], conf: BruteForceConfig, identifier: String): Future[Unit] = {
       val counterName = conf.counterName
 
       if (conf.successCodes.contains(resp.statusCode)) {
@@ -163,13 +136,13 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
 
         val now = Instant.now
         val shouldBlock = BruteForceEvaluator.shouldBlockNextAttempt(now, attempts, conf.maxAttempts, conf.blockSpan)
-        updateAttempts(ctx, BruteForceAttempt(shouldBlock, now, conf.blockFor), counterName, identifier, attempts, conf)
+        updateAttempts(ctx, Attempt(shouldBlock, now, conf.blockFor), counterName, identifier, attempts, conf)
       } else {
         Future.successful(())
       }
     }
 
-  private def updateAttempts(ctx: TracingContext, attempt: BruteForceAttempt, counterName: String, identifier: String, attempts: List[BruteForceAttempt], conf: BruteForceConfig): Future[Unit] = {
+  private def updateAttempts(ctx: TracingContext, attempt: Attempt, counterName: String, identifier: String, attempts: List[Attempt], conf: BruteForceConfig): Future[Unit] = {
     val pastBlockTime = Instant.now.minusSeconds(conf.blockFor)
     val relevantAttempts = attempts.filter(_.timestamp.isAfter(pastBlockTime))
     cache.set(ctx, counterName, identifier,  relevantAttempts ::: List(attempt), (conf.blockSpan + conf.blockFor) seconds)
@@ -185,13 +158,13 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
 }
 
 object BruteForceIdentifierReader {
-  def read(req: TargetRequest, id: BruteForceIdentifier): Option[String] =
+  def read(req: TargetRequest, id: IdentifierSource): Option[String] =
     id.location match {
       case BodyIdentifier   => readIdentifierFromBody(req, id)
       case HeaderIdentifier => req.headers.get(id.name)
     }
 
-  private def readIdentifierFromBody(req: TargetRequest, id: BruteForceIdentifier) =
+  private def readIdentifierFromBody(req: TargetRequest, id: IdentifierSource) =
     for {
       bodyBuffer <- req.bodyOpt
       bodyJson   <- parse(bodyBuffer.toString()).toOption

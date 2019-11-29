@@ -1,18 +1,20 @@
 package com.cloudentity.pyron.plugin.impl.bruteforce.cache
 
-import com.cloudentity.pyron.plugin.impl.bruteforce.{BruteForceAttempt, BruteForceCache}
+import com.cloudentity.pyron.plugin.impl.bruteforce.{Attempt, BruteForceCache}
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
-import com.cloudentity.tools.vertx.tracing.TracingContext
+import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.core.{Future => VxFuture}
 
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 
 class InMemoryBruteForceCacheVerticle extends ScalaServiceVerticle with BruteForceCache {
-  case class Cleanup(counter: String, identifier: String, exp: Long)
+  val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
+
+  case class Cleanup(counter: String, identifier: String, attempt: Attempt, exp: Long)
 
   var locks: Map[String, Set[String]] = Map()
-  var counters: Map[String, Map[String, List[BruteForceAttempt]]] = Map()
+  var counters: Map[String, Map[String, List[Attempt]]] = Map()
 
   val attemptCleanUps: mutable.PriorityQueue[Cleanup] = new mutable.PriorityQueue[Cleanup]()(Ordering.by(cleanup => -cleanup.exp))
 
@@ -21,17 +23,26 @@ class InMemoryBruteForceCacheVerticle extends ScalaServiceVerticle with BruteFor
   }
 
   private def cleanUpAttempts(): Unit = {
+    if (log.isDebugEnabled) {
+      log.debug(TracingContext.dummy(), s"Attempts cleanup. Cleanup queue size: ${attemptCleanUps.size}. Counters size: ${counters.values.map(_.values.size).sum}. Locks size: ${locks.values.map(_.size).sum}")
+    }
+
     val t = System.currentTimeMillis()
     while (attemptCleanUps.size > 0) {
       val el = attemptCleanUps.dequeue()
       if (el.exp < t) {
-        clear(TracingContext.dummy(), el.counter, el.identifier)
+        if (!wasCounterUpdatedAfterCleanupSchedule(el)) {
+          clear(TracingContext.dummy(), el.counter, el.identifier)
+        }
       } else {
         attemptCleanUps.enqueue(el)
         return
       }
     }
   }
+
+  private def wasCounterUpdatedAfterCleanupSchedule(el: Cleanup): Boolean =
+    counters.getOrElse(el.counter, Map()).getOrElse(el.identifier, Nil).lastOption.filter(_.timestamp.isAfter(el.attempt.timestamp)).isDefined
 
   override def lock(ctx: TracingContext, counter: String, identifier: String, leaseTime: Duration): VxFuture[Boolean] =
     if (isLocked(counter, identifier)) {
@@ -48,20 +59,18 @@ class InMemoryBruteForceCacheVerticle extends ScalaServiceVerticle with BruteFor
     VxFuture.succeededFuture(())
   }
 
-  override def set(ctx: TracingContext, counter: String, identifier: String, attempts: List[BruteForceAttempt], ttl: Duration): VxFuture[Unit] = {
+  override def set(ctx: TracingContext, counter: String, identifier: String, attempts: List[Attempt], ttl: Duration): VxFuture[Unit] = {
     counters.get(counter) match {
-      case Some(entries) =>
-        counters = counters.updated(counter, entries.updated(identifier, attempts))
-      case None =>
-        counters = counters.updated(counter, Map(identifier -> attempts))
+      case Some(entries) => counters = counters.updated(counter, entries.updated(identifier, attempts))
+      case None          => counters = counters.updated(counter, Map(identifier -> attempts))
     }
 
-    attempts.lastOption.foreach(attempt => attemptCleanUps.enqueue(Cleanup(counter, identifier, attempt.timestamp.toEpochMilli + ttl.toMillis)))
+    attempts.lastOption.foreach(attempt => attemptCleanUps.enqueue(Cleanup(counter, identifier, attempt, attempt.timestamp.toEpochMilli + ttl.toMillis)))
 
     VxFuture.succeededFuture(())
   }
 
-  override def get(ctx: TracingContext, counter: String, identifier: String): VxFuture[Option[List[BruteForceAttempt]]] =
+  override def get(ctx: TracingContext, counter: String, identifier: String): VxFuture[Option[List[Attempt]]] =
     VxFuture.succeededFuture(counters.getOrElse(counter, Map()).get(identifier))
 
   private def isLocked(counter: String, identifier: String): Boolean =

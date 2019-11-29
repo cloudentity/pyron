@@ -3,7 +3,7 @@ package com.cloudentity.pyron.plugin.impl.bruteforce
 import java.time.Instant
 
 object BruteForceEvaluator {
-  def isBlocked(now: Instant, attempts: List[BruteForceAttempt]): Boolean =
+  def isBlocked(now: Instant, attempts: List[Attempt]): Boolean =
     attempts.reverse match {
       case last :: _ => {
         val blockForTimestamp = last.timestamp.plusSeconds(last.blockFor)
@@ -12,7 +12,7 @@ object BruteForceEvaluator {
       case Nil => false
     }
 
-  def shouldBlockNextAttempt(now: Instant, attempts: List[BruteForceAttempt], maxAttempts: Int, blockSpan: Int): Boolean = {
+  def shouldBlockNextAttempt(now: Instant, attempts: List[Attempt], maxAttempts: Int, blockSpan: Int): Boolean = {
     val blockSpanStart = now.minusSeconds(blockSpan)
     val attemptsInBlockSpan = attempts.filter(_.timestamp.isAfter(blockSpanStart))
     attemptsInBlockSpan.size + 1 >= maxAttempts
