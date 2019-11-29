@@ -1,0 +1,7 @@
+{
+  "app": {
+    "port": 8080,
+    "serverVerticles": 1
+  },
+  "modules": ["plugin/bruteforce"]
+}
