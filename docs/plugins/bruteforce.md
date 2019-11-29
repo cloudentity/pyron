@@ -1,6 +1,6 @@
 ## Brute-force protection plugin
 
-`bruteForce` plugin protects against brute force attacks or perform simple rate spike arrests.
+`bruteForce` plugin protects against brute force attacks.
 
 Enable `bruteForce` plugin with in-memory storage by adding `plugin/bruteforce` to `MODULES` environment variable.
 
