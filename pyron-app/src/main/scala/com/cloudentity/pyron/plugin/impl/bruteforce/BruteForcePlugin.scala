@@ -68,14 +68,17 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
 
         val program: Future[BruteForceResult \/ RequestCtx] = {
           for {
-            lockAcquired <- tryLockWithLeaseTime(ctx.tracingCtx, counterName, identifier, cacheLockLeaseDuration).toOperation[BruteForceResult].recover(ex => -\/(FailureWithoutLock(ex)))
-            _            <- if (lockAcquired) Operation.success[BruteForceResult, Unit](()) else Operation.error[BruteForceResult, Unit](LockAlreadyAcquired)
+            lockAcquired <- tryLockWithLeaseTime(ctx.tracingCtx, counterName, identifier, cacheLockLeaseDuration)
+            _            <- if (lockAcquired) Operation.success[BruteForceResult, Unit](())
+                            else              Operation.error[BruteForceResult, Unit](LockAlreadyAcquired)
             _             = log.debug(ctx.tracingCtx, s"Lock $counterName.$identifier acquired")
-            attemptsOpt  <- cache.get(ctx.tracingCtx, counterName, identifier).toOperation[BruteForceResult]
-            attempts      = attemptsOpt.getOrElse(Nil)
+
+            attempts     <- loadAttempts(ctx, identifier, counterName)
             _             = log.debug(ctx.tracingCtx, s"Attempts for $counterName.$identifier: $attempts")
             blocked       = BruteForceEvaluator.isBlocked(Instant.now(), attempts)
-            _            <- if (!blocked) Operation.success[BruteForceResult, Unit](()) else Operation.error[BruteForceResult, Unit](BruteForceBlocked)
+
+            _            <- if (!blocked) Operation.success[BruteForceResult, Unit](())
+                            else          Operation.error[BruteForceResult, Unit](BruteForceBlocked)
           } yield {
             ctx.withPluginState(BruteForcePluginState(attempts, identifier))
           }
@@ -107,6 +110,12 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
         Future.successful(ctx)
     }
   }
+
+  private def loadAttempts(ctx: RequestCtx, identifier: String, counterName: String):Operation[BruteForceResult, List[Attempt]] =
+    cache.get(ctx.tracingCtx, counterName, identifier).toOperation[BruteForceResult].map(_.getOrElse(Nil))
+
+  private def tryLockWithLeaseTime(ctx: TracingContext, counterName: String, identifier: String, leaseTime: Duration): Operation[BruteForceResult, Boolean] =
+    cache.lock(ctx, counterName, identifier, leaseTime).toOperation[BruteForceResult].recover(ex => -\/(FailureWithoutLock(ex)))
 
   override def apply(ctx: ResponseCtx, conf: BruteForceConfig): Future[ResponseCtx] =
     ctx.getPluginState() match {
@@ -147,9 +156,6 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
     val relevantAttempts = attempts.filter(_.timestamp.isAfter(pastBlockTime))
     cache.set(ctx, counterName, identifier,  relevantAttempts ::: List(attempt), (conf.blockSpan + conf.blockFor) seconds)
   }.toScala
-
-  private def tryLockWithLeaseTime(ctx: TracingContext, counterName: String, identifier: String, leaseTime: Duration): VxFuture[Boolean] =
-    cache.lock(ctx, counterName, identifier, leaseTime)
 
   private def unlockCache(ctx: TracingContext, counterName: String, identifier: String): Future[Unit] = {
     log.debug(ctx, s"Unlocking cache: $counterName.$identifier")
