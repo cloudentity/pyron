@@ -154,7 +154,7 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
   private def updateAttempts(ctx: TracingContext, attempt: Attempt, counterName: String, identifier: String, attempts: List[Attempt], conf: BruteForceConfig): Future[Unit] = {
     val pastBlockTime = Instant.now.minusSeconds(conf.blockFor)
     val relevantAttempts = attempts.filter(_.timestamp.isAfter(pastBlockTime))
-    cache.set(ctx, counterName, identifier,  relevantAttempts ::: List(attempt), (conf.blockSpan + conf.blockFor) seconds)
+    cache.set(ctx, counterName, identifier,  attempt :: relevantAttempts, (conf.blockSpan + conf.blockFor) seconds)
   }.toScala
 
   private def unlockCache(ctx: TracingContext, counterName: String, identifier: String): Future[Unit] = {

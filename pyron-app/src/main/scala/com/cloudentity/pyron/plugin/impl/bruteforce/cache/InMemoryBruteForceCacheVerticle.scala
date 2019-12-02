@@ -42,7 +42,7 @@ class InMemoryBruteForceCacheVerticle extends ScalaServiceVerticle with BruteFor
   }
 
   private def wasCounterUpdatedAfterCleanupSchedule(el: Cleanup): Boolean =
-    counters.getOrElse(el.counter, Map()).getOrElse(el.identifier, Nil).lastOption.filter(_.timestamp.isAfter(el.attempt.timestamp)).isDefined
+    counters.getOrElse(el.counter, Map()).getOrElse(el.identifier, Nil).headOption.filter(_.timestamp.isAfter(el.attempt.timestamp)).isDefined
 
   override def lock(ctx: TracingContext, counter: String, identifier: String, leaseTime: Duration): VxFuture[Boolean] =
     if (isLocked(counter, identifier)) {
@@ -65,7 +65,7 @@ class InMemoryBruteForceCacheVerticle extends ScalaServiceVerticle with BruteFor
       case None          => counters = counters.updated(counter, Map(identifier -> attempts))
     }
 
-    attempts.lastOption.foreach(attempt => attemptCleanUps.enqueue(Cleanup(counter, identifier, attempt, attempt.timestamp.toEpochMilli + ttl.toMillis)))
+    attempts.headOption.foreach(attempt => attemptCleanUps.enqueue(Cleanup(counter, identifier, attempt, attempt.timestamp.toEpochMilli + ttl.toMillis)))
 
     VxFuture.succeededFuture(())
   }
