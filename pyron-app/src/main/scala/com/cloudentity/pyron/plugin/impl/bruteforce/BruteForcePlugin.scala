@@ -6,6 +6,7 @@ import com.cloudentity.pyron.api.Responses
 import com.cloudentity.pyron.domain.flow.{PluginName, RequestCtx, ResponseCtx}
 import com.cloudentity.pyron.domain.http.{ApiResponse, TargetRequest}
 import com.cloudentity.pyron.plugin.config._
+import com.cloudentity.pyron.plugin.util.value._
 import com.cloudentity.pyron.plugin.verticle.{PluginState, RequestResponsePluginVerticle}
 import com.cloudentity.pyron.util.ConfigDecoder
 import com.cloudentity.tools.vertx.http.Headers
@@ -13,11 +14,10 @@ import com.cloudentity.tools.vertx.scala.Operation
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.generic.semiauto._
 import io.circe.parser._
-import io.circe.{Decoder, Encoder, Json}
+import io.circe.{Decoder, Json}
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.DeliveryOptions
 import scalaz.{-\/, \/-}
-import io.circe.syntax._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -44,7 +44,6 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
   override def validate(conf: BruteForceConfig): ValidateResponse = ValidateResponse.ok()
   override def confDecoder: Decoder[BruteForceConfig] = deriveDecoder
 
-  implicit lazy val confEncoder: Encoder[BruteForceConfig] = deriveEncoder
   implicit lazy val pluginConfDecoder: Decoder[BruteForcePluginConfig] = deriveDecoder
 
   override def initService(): Unit = {
@@ -61,7 +60,7 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
     case class FailureWithoutLock(ex: Throwable) extends BruteForceResult
 
   override def apply(ctx: RequestCtx, conf: BruteForceConfig): Future[RequestCtx] = {
-    BruteForceIdentifierReader.read(ctx.request, conf.identifier) match {
+    BruteForceIdentifierReader.read(ctx, conf.identifier) match {
       case Some(identifier) =>
         val counterName = conf.counterName
         log.debug(ctx.tracingCtx, s"Checking brute-force for $counterName.$identifier")
@@ -86,15 +85,15 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
 
         program.flatMap {
           case \/-(ctx) =>
-            if (log.isDebugEnabled) log.debug(ctx.tracingCtx, s"Passing attempt: ${conf.asJson.noSpaces}")
+            if (log.isDebugEnabled) log.debug(ctx.tracingCtx, s"Passing attempt: ${conf.counterName}")
             ctx |> Future.successful
 
           case -\/(LockAlreadyAcquired) =>
-            log.warn(ctx.tracingCtx, s"Lock already acquired on brute-force attempts cache: ${conf.asJson.noSpaces}")
+            log.warn(ctx.tracingCtx, s"Lock already acquired on brute-force attempts cache: ${conf.counterName}")
             ctx.abort(blockedResponse(conf.lockedResponse)) |> Future.successful
 
           case -\/(BruteForceBlocked) =>
-            log.debug(ctx.tracingCtx, s"Brute-force attempt blocked: ${conf.asJson.noSpaces}")
+            log.debug(ctx.tracingCtx, s"Brute-force attempt blocked: ${conf.counterName}")
             unlockCache(ctx.tracingCtx, counterName, identifier)
               .map(_ => ctx.abort(blockedResponse(conf.lockedResponse)))
 
@@ -164,17 +163,23 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
 }
 
 object BruteForceIdentifierReader {
-  def read(req: TargetRequest, id: IdentifierSource): Option[String] =
-    id.location match {
-      case BodyIdentifier   => readIdentifierFromBody(req, id)
-      case HeaderIdentifier => req.headers.get(id.name)
+  def read(ctx: RequestCtx, id: IdentifierSource): Option[String] =
+    id match {
+      case ValueOrRefIdentifierSource(valueOrRef) =>
+        ValueResolver.resolveString(ctx, valueOrRef)
+      case DeprecatedIdentifierSource(location, name) =>
+        location match {
+          case BodyIdentifier   => readIdentifierFromBody(ctx.request, name)
+          case HeaderIdentifier => ctx.request.headers.get(name)
+        }
     }
 
-  private def readIdentifierFromBody(req: TargetRequest, id: IdentifierSource) =
+
+  private def readIdentifierFromBody(req: TargetRequest, name: String) =
     for {
       bodyBuffer <- req.bodyOpt
       bodyJson   <- parse(bodyBuffer.toString()).toOption
-      path        = id.name.split("\\.").toList
+      path        = name.split("\\.").toList
       id         <- readString(bodyJson, path)
     } yield (id)
 
