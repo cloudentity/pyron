@@ -29,10 +29,6 @@
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-sd-consul</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-    </dependency>
   </dependencies>
 
   <profiles>
