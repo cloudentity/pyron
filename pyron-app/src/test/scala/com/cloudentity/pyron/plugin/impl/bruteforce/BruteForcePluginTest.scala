@@ -36,6 +36,13 @@ class BruteForcePluginTest extends PluginAcceptanceTest with MustMatchers  {
     }
 
   @Test
+  def shouldUnlockWhenTargetServiceNotAvailable(): Unit = {
+    targetService.stop()
+    callWithExpectedStatusAndTargetStatus("/brute-force-3-attempt", 500, 401)
+    callWithExpectedStatusAndTargetStatus("/brute-force-3-attempt", 500, 401)
+  }
+
+  @Test
   def shouldBlockAfterThirdWrongAttemptIf3MaxAttempt(): Unit = {
       callWithExpectedStatusAndTargetStatus("/brute-force-3-attempt", 401, 401)
       callWithExpectedStatusAndTargetStatus("/brute-force-3-attempt", 401, 401)
