@@ -1,0 +1,78 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/brute-force-1-attempt",
+          "requestPlugins": [
+            {
+              "name": "bruteForce",
+              "conf": {
+                "maxAttempts": 1,
+                "blockSpan": 10,
+                "blockFor": 10,
+                "successCodes": [200],
+                "errorCodes": [401],
+                "identifier": {
+                  "location": "header",
+                  "name": "ID"
+                },
+                "lockedResponse": {},
+                "counterName": "brute-force-1-attempt"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/brute-force-3-attempt",
+          "requestPlugins": [
+            {
+              "name": "bruteForce",
+              "conf": {
+                "maxAttempts": 3,
+                "blockSpan": 10,
+                "blockFor": 10,
+                "successCodes": [200],
+                "errorCodes": [401],
+                "identifier": {
+                  "location": "header",
+                  "name": "ID"
+                },
+                "lockedResponse": {},
+                "counterName": "brute-force-3-attempt"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/brute-force-reset",
+          "requestPlugins": [
+            {
+              "name": "bruteForce",
+              "conf": {
+                "maxAttempts": 3,
+                "blockSpan": 10,
+                "blockFor": 10,
+                "successCodes": [200],
+                "errorCodes": [401],
+                "identifier": {
+                  "location": "header",
+                  "name": "ID"
+                },
+                "lockedResponse": {},
+                "counterName": "brute-force-reset"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

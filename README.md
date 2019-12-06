@@ -23,6 +23,7 @@
     * OAuth 2 with opaque token introspection
   * [Request transformation](docs/plugins/transform-request.md)
   * [CORS](docs/plugins/cors.md)
+  * [Brute-force protection](docs/plugins/bruteforce.md)
 * [Plugin development guide](docs/plugin-dev.md)
 * [How to](#how-to)
   * [Read routing rules from Consul](docs/howtos/config-store-consul.md)
