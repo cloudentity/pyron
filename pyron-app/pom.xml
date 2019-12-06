@@ -14,33 +14,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-    </dependency>
-    <!-- cloudentity -->
-    <dependency>
-      <groupId>com.cloudentity.pyron</groupId>
-      <artifactId>pyron-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.pyron</groupId>
-      <artifactId>pyron-plugin</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.pyron</groupId>
-      <artifactId>pyron-plugin-java</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.cloudentity.pyron</groupId>
       <artifactId>pyron-engine</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-bus</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-json</artifactId>
+      <groupId>com.cloudentity.pyron</groupId>
+      <artifactId>pyron-plugin-impl</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
@@ -50,153 +29,11 @@
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-sd-consul</artifactId>
     </dependency>
-    <!-- vertx -->
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-    </dependency>
-    <!-- utils -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.scalaz</groupId>
-      <artifactId>scalaz-core_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-core_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-parser_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-generic_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-java8_2.12</artifactId>
-    </dependency>
-    <!-- logging -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-    </dependency>
-    <!-- test -->
-    <dependency>
-      <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_2.12</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.scalacheck</groupId>
-      <artifactId>scalacheck_2.12</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.rest-assured</groupId>
-      <artifactId>rest-assured</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-test-scala</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mock-server</groupId>
-      <artifactId>mockserver-netty</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>io.netty</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.swagger</groupId>
-      <artifactId>swagger-parser</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-ext</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-ext</artifactId>
-      <version>${slf4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-server-test</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>net.alchim31.maven</groupId>
-        <artifactId>scala-maven-plugin</artifactId>
-        <version>${scala-maven-plugin.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>compile</goal>
-              <goal>testCompile</goal>
-              <goal>add-source</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <scalaVersion>${scala.version}</scalaVersion>
-          <args>
-            <arg>-unchecked</arg>
-            <arg>-deprecation</arg>
-            <!--<arg>-Xfatal-warnings</arg> uncomment when Scala supports warnings suppression-->
-            <arg>-language:postfixOps</arg>
-          </args>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>${maven-surefire-plugin.version}</version>
-        <configuration>
-          <includes>
-            <include>**/*Spec.*</include>
-            <include>**/*Test.*</include>
-          </includes>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 
   <profiles>
     <profile>
@@ -286,8 +123,7 @@
             <artifactId>dependency-check-maven</artifactId>
             <version>${dependency-check-maven.version}</version>
             <configuration>
-              <skipProvidedScope>true</skipProvidedScope>
-              <skipRuntimeScope>true</skipRuntimeScope>
+              <failBuildOnCVSS>1</failBuildOnCVSS>
               <formats>
                 <format>HTML</format>
                 <format>JUNIT</format>

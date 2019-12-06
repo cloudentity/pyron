@@ -10,14 +10,14 @@ import io.circe.{Decoder, Json, JsonObject}
 import com.cloudentity.pyron.plugin.impl.authn.AuthnPlugin.{AuthnFailure, AuthnProviderResult, AuthnSuccess}
 import com.cloudentity.pyron.plugin.impl.authn.{AuthnMethodConf, AuthnProvider}
 import com.cloudentity.pyron.util.ConfigDecoder
+import com.cloudentity.tools.vertx.http.builder.RequestCtxBuilder
 import com.cloudentity.tools.vertx.http.{Headers, SmartHttp, SmartHttpClient}
 import com.cloudentity.tools.vertx.scala.Operation
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
-import com.cloudentity.tools.vertx.tracing.LoggingWithTracing
+import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.json.{JsonObject => VxJsonObject}
 import io.vertx.core.{Future => VxFuture}
-import com.cloudentity.pyron.commons.ClientWithTracing._
 import com.cloudentity.pyron.domain.authn.CloudentityAuthnCtx
 import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx}
 import com.cloudentity.pyron.domain.http.ApiResponse
@@ -98,6 +98,11 @@ class OAuthTokenIntrospectionAuthnProvider extends ScalaServiceVerticle with Aut
           }.toJava
       case None => VxFuture.succeededFuture(None)
     }
+  }
+
+  implicit class RequestCtxBuilderWithTracing(builder: RequestCtxBuilder) {
+    def withTracing(ctx: TracingContext): RequestCtxBuilder =
+      ctx.foldOverContext[RequestCtxBuilder](builder, (e, b) => b.putHeader(e.getKey, e.getValue))
   }
 
   private def buildIntrospectionForm(token: String): String = {

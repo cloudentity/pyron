@@ -1,4 +1,5 @@
 package com.cloudentity.pyron.api
+
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import com.cloudentity.pyron.domain.http._
