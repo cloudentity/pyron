@@ -86,7 +86,6 @@ object AccessLogHandler extends AccessLogHelper {
         isoDate,
         getTrueClientIp(ctx),
         getClientAddress(req.remoteAddress()),
-        getCorrelationIds(ctx),
         tracingContextMap,
 
         HttpParams(
@@ -154,24 +153,6 @@ object AccessLogHandler extends AccessLogHelper {
     )
   }
 
-  def getCorrelationIds(ctx: RoutingContext): Option[CorrelationIds] = {
-    RoutingCtxData.getCorrelationSignature(ctx).split(" ").toList match {
-      case localId :: ids => Some(CorrelationIds(localId, ids))
-      case Nil            => None
-    }
-  }
-
-  def getCorrelationIdsJson(ctx: RoutingContext): Json =
-    RoutingCtxData.getCorrelationSignature(ctx).split(" ").toList match {
-      case localId :: ids =>
-        val items = ("local" -> localId.asJson) :: ids.zipWithIndex.map { case (id, num) =>
-          s"external$num" -> id.asJson
-        }
-
-        Json.obj(items:_*)
-      case Nil => Json.obj()
-    }
-
   def getClientAddress(inetSocketAddress: SocketAddress): Option[String] =
     Option(inetSocketAddress.host())
 
@@ -236,7 +217,6 @@ case class AccessLog(
   timestamp: Instant,
   trueClientIp: Option[String],
   remoteClient: Option[String],
-  correlationIds: Option[CorrelationIds],
   tracing: Map[String, String],
   http: HttpParams,
   authnCtx: JsonObject,
@@ -244,11 +224,6 @@ case class AccessLog(
   timeMs: Long,
   extraItems: AccessLogItems,
   gateway: GatewayLog
-)
-
-case class CorrelationIds(
-  local: String,
-  external: List[String]
 )
 
 case class HttpParams(

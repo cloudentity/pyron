@@ -111,14 +111,6 @@ object Codecs {
   implicit lazy val propertiesEnc: Encoder[Properties] = Encoder.encodeString.contramap(_ => "properties")
   implicit lazy val propertiesDec: Decoder[Properties] = Decoder.decodeString.map(_ => Properties())
 
-  implicit lazy val correlationCtxEnc: Encoder[CorrelationCtx] = deriveEncoder
-  lazy val strictCorrelationCtxDec: Decoder[CorrelationCtx] = deriveDecoder
-  implicit lazy val correlationCtxDec: Decoder[CorrelationCtx] = (c: HCursor) =>
-    c.focus match {
-      case Some(json) => strictCorrelationCtxDec.decodeJson(json)
-      case None       => Right(CorrelationCtx("", FlowId(""), Map()))
-    }
-
   implicit lazy val tracingCtxEnc: Encoder[TracingContext] = Encoder.encodeString.contramap(_.getTraceId)
   implicit lazy val tracingCtxDec: Decoder[TracingContext] = Decoder.decodeString.map(_ => TracingContext.dummy())
 

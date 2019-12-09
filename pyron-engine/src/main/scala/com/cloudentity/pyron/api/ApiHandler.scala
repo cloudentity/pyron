@@ -10,8 +10,7 @@ import com.cloudentity.pyron.plugin.PluginFunctions
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
 import com.cloudentity.pyron.rule.{ApiGroupMatcher, Rule, RuleMatcher, RulesStore}
 import com.cloudentity.pyron.rule.RuleMatcher.{Match, NoMatch}
-import com.cloudentity.tools.vertx.bus.{VertxBus, VertxEndpoint}
-import com.cloudentity.tools.vertx.scala.Operation
+import com.cloudentity.tools.vertx.bus.VertxEndpoint
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import com.cloudentity.tools.vertx.server.api.RouteHandler
 import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
@@ -27,7 +26,7 @@ import io.vertx.ext.web.RoutingContext
 import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import scalaz.{-\/, EitherT, \/, \/-}
+import scalaz.{-\/, \/, \/-}
 
 import scala.collection.JavaConverters._
 
@@ -44,15 +43,12 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   import ApiRequestHandler._
   import ApiResponseHandler._
   import HttpConversions._
-  import Responses._
 
   var targetClient: TargetClient = _
   var apiGroups: List[ApiGroup] = List()
   var rulesStore: RulesStore = _
-  var routingCtxService: RoutingCtxService = _
 
   override def initServiceAsyncS(): Future[Unit] = {
-    routingCtxService = createClient(classOf[RoutingCtxService])
     registerConfChangeConsumer(onSmartClientsChanged)
 
     createClient(classOf[ApiGroupsStore]).getGroups().toScala()
@@ -126,7 +122,6 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
 
       program.onComplete { result =>
         try {
-          cleanup(ctx)
           result match {
             case Success(\/-(apiResponse)) =>
               handleApiResponse(tracingContext, requestSignature, vertxResponse, apiResponse)
@@ -171,9 +166,6 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     response, requestCtx.request, requestCtx.original, requestCtx.tracingCtx,
     requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined
   )
-
-  def cleanup(ctx: RoutingContext): Unit =
-    routingCtxService.remove(RoutingCtxData.getFlowId(ctx))
 
   def getProxyHeaders(ctx: RoutingContext): Future[ApiError \/ ProxyHeaders] =
     ProxyHeadersHandler.getProxyHeaders(ctx) match {
@@ -347,14 +339,11 @@ object HttpConversions {
       request = targetRequest,
       original = original,
       proxyHeaders = proxyHeaders,
-      properties = Properties(CorrelationCtx.routingContextKey -> buildCorrelationCtx(ctx)),
+      properties = Properties(RoutingCtxData.propertiesKey -> ctx),
       authnCtx = AuthnCtx(),
       aborted = None
     )
   }
-
-  def buildCorrelationCtx(ctx: RoutingContext): CorrelationCtx =
-    CorrelationCtx.withFlowId(RoutingCtxData.getFlowId(ctx).value)
 
   def toOriginalRequest(req: HttpServerRequest, pathParams: PathParams, bodyOpt: Option[Buffer]): OriginalRequest =
     OriginalRequest(

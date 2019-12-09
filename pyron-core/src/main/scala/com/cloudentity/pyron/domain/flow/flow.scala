@@ -1,7 +1,6 @@
 package com.cloudentity.pyron.domain.flow
 
 import java.net.URL
-import java.util.UUID
 
 import io.circe.Json
 import com.cloudentity.pyron.domain.http.{ApiResponse, OriginalRequest, TargetRequest}
@@ -9,7 +8,6 @@ import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.json.JsonObject
 import io.vertx.core.http.HttpServerRequest
-import io.vertx.ext.web.RoutingContext
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -266,35 +264,5 @@ case class PluginConf(name: PluginName, conf: Json)
 
 case class SmartHttpClientConf(value: JsonObject)
 case class FixedHttpClientConf(value: JsonObject)
-
-case class FlowId(value: String) extends AnyVal
-
-// deprecated
-case class CorrelationCtx(signature: String, flowId: FlowId, ids: Map[String, String]) {
-  def appendId(key: String, value: String): CorrelationCtx =
-    CorrelationCtx(
-      signature = s"${this.signature}  $value",
-      flowId,
-      ids = this.ids + (key -> value)
-    )
-
-  def appendIds(kvs: List[(String, String)]): CorrelationCtx =
-    CorrelationCtx(
-      signature = s"${this.signature} ${kvs.map(_._2).mkString(" ")}",
-      flowId,
-      ids = this.ids ++ kvs.toMap
-    )
-}
-
-// deprecated
-object CorrelationCtx {
-  def withFlowId(flowId: String): CorrelationCtx =
-    CorrelationCtx(flowId, FlowId(flowId), Map("API_GW_FLOW_ID" -> flowId))
-
-  def withFlowId(): CorrelationCtx =
-    withFlowId(UUID.randomUUID().toString)
-
-  val routingContextKey = "_correlationCtx"
-}
 
 case class ProxyHeaders(headers: Map[String, List[String]], trueClientIp: String)

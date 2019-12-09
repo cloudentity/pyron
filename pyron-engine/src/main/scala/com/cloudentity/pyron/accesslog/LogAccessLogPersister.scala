@@ -33,7 +33,6 @@ object Encoders {
     case _ => "-"
   }
 
-  implicit val correlationIdsEncoder: Encoder[CorrelationIds] = deriveEncoder[CorrelationIds]
   implicit val requestLogEncoder: Encoder[RequestLog] = deriveEncoder[RequestLog]
   implicit val GatewayLogEncoder: Encoder[GatewayLog] = deriveEncoder
 
@@ -43,7 +42,6 @@ object Encoders {
         ("timestamp", a.timestamp.toString.asJson),
         ("trueClientIp", a.trueClientIp.asJson),
         ("remoteClient", a.remoteClient.asJson),
-        ("correlationIds", a.correlationIds.asJson),
         ("tracing", a.tracing.asJson),
         ("http", Json.obj(
           ("httpVersion", a.http.httpVersion.asJson),
