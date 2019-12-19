@@ -2,49 +2,33 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.cloudentity.pyron</groupId>
-    <artifactId>pyron-root</artifactId>
     <version>1.1.0-SNAPSHOT</version>
+    <artifactId>pyron-root</artifactId>
   </parent>
+  <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>pyron-engine</artifactId>
-  <packaging>jar</packaging>
+  <artifactId>pyron-plugin-impl</artifactId>
 
   <dependencies>
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.cloudentity.pyron</groupId>
-      <artifactId>pyron-core</artifactId>
-    </dependency>
+    <!-- pyron -->
     <dependency>
       <groupId>com.cloudentity.pyron</groupId>
       <artifactId>pyron-plugin</artifactId>
     </dependency>
+    <!-- cloudentity -->
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-server</artifactId>
+      <artifactId>vertx-registry</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-bus</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudentity.tools.vertx</groupId>
-      <artifactId>vertx-json</artifactId>
-    </dependency>
-    <!-- vertx -->
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
     </dependency>
     <!-- utils -->
     <dependency>
@@ -52,70 +36,43 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.scalaz</groupId>
-      <artifactId>scalaz-core_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-core_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-parser_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-generic_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-java8_2.12</artifactId>
-    </dependency>
-    <!-- logging -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
+      <groupId>com.nimbusds</groupId>
+      <artifactId>nimbus-jose-jwt</artifactId>
     </dependency>
     <!-- test -->
     <dependency>
-      <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_2.12</artifactId>
+      <groupId>com.cloudentity.pyron</groupId>
+      <artifactId>pyron-engine</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-testing_2.12</artifactId>
+      <groupId>com.cloudentity.tools.vertx</groupId>
+      <artifactId>vertx-config-all</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.scalacheck</groupId>
-      <artifactId>scalacheck_2.12</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.rest-assured</groupId>
-      <artifactId>rest-assured</artifactId>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15on</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-test-scala</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-test</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-server-test</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.12</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -128,11 +85,6 @@
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -155,10 +107,8 @@
           <scalaVersion>${scala.version}</scalaVersion>
           <args>
             <arg>-unchecked</arg>
-            <!--<arg>-deprecation</arg>
-            <arg>-Xfatal-warnings</arg> uncomment when Scala supports warnings suppression-->
+            <arg>-deprecation</arg>
             <arg>-language:postfixOps</arg>
-            <arg>-J-Xss8m</arg>
           </args>
         </configuration>
       </plugin>
@@ -176,4 +126,5 @@
       </plugin>
     </plugins>
   </build>
+
 </project>
