@@ -10,7 +10,7 @@ import scala.util.Try
 object RoutingCtxData {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  val flowStateKey            = "FLOW_STATE"
+  val flowStateKey            = "_internal.flowState"
   val propertiesKey           = "_internal.routingContext"
 
   def updateFlowState(ctx: RoutingContext, f: FlowState => FlowState): Unit =
