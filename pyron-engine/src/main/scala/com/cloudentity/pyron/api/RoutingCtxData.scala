@@ -10,10 +10,7 @@ import scala.util.Try
 object RoutingCtxData {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  val correlationSignatureKey = "CORRELATION_SIGNATURE" // we store concatenated flow-id and correlation IDs (from CorrelationIdPlugin) at this key in RoutingContext.data
   val flowStateKey            = "FLOW_STATE"
-  val flowIdKey               = "FLOW_ID"
-
   val propertiesKey           = "_internal.routingContext"
 
   def updateFlowState(ctx: RoutingContext, f: FlowState => FlowState): Unit =

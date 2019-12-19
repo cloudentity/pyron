@@ -2,7 +2,6 @@ package com.cloudentity.pyron.accesslog
 
 import java.time.{Instant, ZoneId}
 
-import io.circe.syntax._
 import io.circe.{Json, JsonObject}
 import com.cloudentity.pyron.accesslog.AccessLogHandler.RequestLog
 import com.cloudentity.pyron.accesslog.AccessLogHelper.{AccessLogConf, LogAllFields, LogWhitelistedFields, MaskFieldsConf}
@@ -16,7 +15,7 @@ import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingManager}
 import io.vertx.core.http.{HttpMethod, HttpServerRequest, HttpVersion}
 import io.vertx.core.{Handler, Vertx}
 import com.cloudentity.pyron.api.ApiHandler.FlowState
-import com.cloudentity.pyron.domain.flow.{AccessLogItems, AuthnCtx, DiscoverableServiceRule, ProxyServiceRule, ServiceClientName, StaticServiceRule, TargetHost}
+import com.cloudentity.pyron.domain.flow.{AccessLogItems, AuthnCtx, DiscoverableServiceRule, Properties, ProxyServiceRule, ServiceClientName, StaticServiceRule, TargetHost}
 import io.vertx.core.net.SocketAddress
 import io.vertx.ext.web.RoutingContext
 
@@ -98,7 +97,8 @@ object AccessLogHandler extends AccessLogHelper {
         getRequestLog(req, conf),
         System.currentTimeMillis() - timestamp,
         extraAccessLog,
-        gatewayLog
+        gatewayLog,
+        Properties()
       )
 
       accessLogPersister.persist(tracingContext, log)
@@ -223,7 +223,8 @@ case class AccessLog(
   request: Option[RequestLog],
   timeMs: Long,
   extraItems: AccessLogItems,
-  gateway: GatewayLog
+  gateway: GatewayLog,
+  properties: Properties
 )
 
 case class HttpParams(
