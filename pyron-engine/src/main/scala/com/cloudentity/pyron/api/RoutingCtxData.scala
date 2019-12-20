@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.api
 
 import com.cloudentity.pyron.api.ApiHandler.FlowState
-import com.cloudentity.pyron.domain.flow.{AccessLogItems}
+import com.cloudentity.pyron.domain.flow.{AccessLogItems, Properties}
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -23,5 +23,5 @@ object RoutingCtxData {
         log.error("Could not read FlowState from RoutingContext", ex)
         None
     }
-  }.getOrElse(FlowState(None, None, None, AccessLogItems()))
+  }.getOrElse(FlowState(None, None, None, AccessLogItems(), Properties()))
 }

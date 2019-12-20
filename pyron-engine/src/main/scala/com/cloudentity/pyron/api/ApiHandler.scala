@@ -106,6 +106,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
           _                     = ApiRequestHandler.setAuthnCtx(ctx, finalRequestCtx.authnCtx)
           _                     = ApiRequestHandler.setAborted(ctx, finalRequestCtx.aborted.isDefined)
           _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalRequestCtx.accessLog)
+          _                     = ApiRequestHandler.addProperties(ctx, finalRequestCtx.properties)
 
           initialResponse      <- finalRequestCtx.aborted match {
                                     case None =>
@@ -117,6 +118,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
           responseCtx           = toResponseCtx(finalRequestCtx, modifiedResponse)
           finalResponseCtx     <- applyResponsePlugins(responseCtx, rule.responsePlugins).toOperation
           _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalResponseCtx.accessLog)
+          _                     = ApiRequestHandler.addProperties(ctx, finalResponseCtx.properties)
         } yield finalResponseCtx.response
       }.run
 
@@ -180,7 +182,7 @@ object ApiHandler {
     case class RequestPluginError(err: Throwable) extends ApiError
     case class ResponsePluginError(err: Throwable) extends ApiError
 
-  case class FlowState(authnCtx: Option[AuthnCtx], rule: Option[Rule], aborted: Option[Boolean], extraAccessLogs: AccessLogItems)
+  case class FlowState(authnCtx: Option[AuthnCtx], rule: Option[Rule], aborted: Option[Boolean], extraAccessLogs: AccessLogItems, properties: Properties)
 }
 
 object ApiRequestHandler {
@@ -197,6 +199,9 @@ object ApiRequestHandler {
 
   def addExtraAccessLogItems(ctx: RoutingContext, items: AccessLogItems): Unit =
     RoutingCtxData.updateFlowState(ctx, state => state.copy(extraAccessLogs = state.extraAccessLogs.merge(items)))
+
+  def addProperties(ctx: RoutingContext, props: Properties): Unit =
+    RoutingCtxData.updateFlowState(ctx, state => state.copy(properties = Properties(state.properties.toMap ++ props.toMap)))
 
   case class RuleWithPathParams(rule: Rule, params: PathParams)
 

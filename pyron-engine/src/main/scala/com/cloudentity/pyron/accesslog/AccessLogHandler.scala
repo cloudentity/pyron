@@ -98,7 +98,7 @@ object AccessLogHandler extends AccessLogHelper {
         System.currentTimeMillis() - timestamp,
         extraAccessLog,
         gatewayLog,
-        Properties()
+        flowState.properties
       )
 
       accessLogPersister.persist(tracingContext, log)
