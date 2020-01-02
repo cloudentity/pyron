@@ -23,5 +23,5 @@ object RoutingCtxData {
         log.error("Could not read FlowState from RoutingContext", ex)
         None
     }
-  }.getOrElse(FlowState(None, None, None, AccessLogItems(), Properties()))
+  }.getOrElse(FlowState(None, None, None, None, AccessLogItems(), Properties()))
 }

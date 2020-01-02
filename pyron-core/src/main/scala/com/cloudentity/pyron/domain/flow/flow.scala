@@ -184,6 +184,11 @@ object AccessLogItems {
   def apply(cs: (String, Json)*): AccessLogItems = AccessLogItems(cs.toMap)
 }
 
+sealed trait FlowFailure
+  case object RequestPluginFailure extends FlowFailure
+  case object ResponsePluginFailure extends FlowFailure
+  case object CallFailure extends FlowFailure
+
 case class RequestCtx(
   request: TargetRequest,
   original: OriginalRequest,
@@ -194,7 +199,8 @@ case class RequestCtx(
   accessLog: AccessLogItems = AccessLogItems(),
   modifyResponse: List[ApiResponse => Future[ApiResponse]] = Nil,
 
-  aborted: Option[ApiResponse] = None
+  aborted: Option[ApiResponse] = None,
+  failed: Option[FlowFailure] = None
 ) {
   def modifyRequest(f: TargetRequest => TargetRequest): RequestCtx =
     this.copy(request = f(request))
@@ -231,17 +237,22 @@ case class RequestCtx(
 
   def isAborted(): Boolean =
     aborted.isDefined
+
+  def isFailed(): Boolean =
+    failed.isDefined
 }
 
 case class ResponseCtx(
+  targetResponse: Option[ApiResponse],
   response: ApiResponse,
   request: TargetRequest,
-  original: OriginalRequest,
+  originalRequest: OriginalRequest,
   tracingCtx: TracingContext,
   properties: Properties = Properties(),
   authnCtx: AuthnCtx = AuthnCtx(),
   accessLog: AccessLogItems = AccessLogItems(),
-  requestAborted: Boolean
+  requestAborted: Boolean,
+  failed: Option[FlowFailure] = None
 ) {
   def modifyResponse(f: ApiResponse => ApiResponse): ResponseCtx =
     this.copy(response = f(response))
@@ -257,6 +268,9 @@ case class ResponseCtx(
 
   def withAccessLog(name: String, value: Json): ResponseCtx =
     this.copy(accessLog = accessLog.updated(name, value))
+
+  def isFailed(): Boolean =
+    failed.isDefined
 }
 
 case class PluginName(value: String) extends AnyVal

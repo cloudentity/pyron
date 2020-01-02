@@ -21,6 +21,7 @@ class ResponsePluginFunctionsSpec extends WordSpec with MustMatchers with TestRe
   val request = TargetRequest(HttpMethod.GET, StaticService(TargetHost("host"), 100, false), RelativeUri.of("uri").get, Headers(), None)
 
   val response200 = ApiResponse(200, Buffer.buffer(), Headers())
+  val response300 = ApiResponse(300, Buffer.buffer(), Headers())
   val response400 = ApiResponse(400, Buffer.buffer(), Headers())
 
   def responseCtx(resp: ApiResponse) = emptyResponseCtx.copy(response = resp)
@@ -38,23 +39,23 @@ class ResponsePluginFunctionsSpec extends WordSpec with MustMatchers with TestRe
 
       //when
       val f: Future[ResponseCtx] =
-        PluginFunctions.applyResponsePlugins(responseCtx(response200), plugins)
+        PluginFunctions.applyResponsePlugins(responseCtx(response200), plugins)(_ => emptyResponse)
 
       //then
       Await.result(f, 1 second).response must be(response400)
     }
 
-    "break applying plugins when applied plugin returned failure" in {
+    "not break applying plugins when applied plugin returned failure" in {
       //given
       val ex = new Exception()
       val plugins: List[ResponsePlugin] = List(increaseStatusCodePlugin(100), failingPlugin(ex), increaseStatusCodePlugin(100))
 
       //when
       val f: Future[ResponseCtx] =
-        PluginFunctions.applyResponsePlugins(responseCtx(response200), plugins)
+        PluginFunctions.applyResponsePlugins(responseCtx(response200), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f.failed, 1 second) must be(ex)
+      Await.result(f, 1 second).response must be(response300)
     }
   }
 }

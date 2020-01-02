@@ -117,12 +117,6 @@ object Codecs {
   implicit lazy val authnCtxEnc: Encoder[AuthnCtx] = Encoder.encodeJsonObject.contramap(ctx => JsonObject.fromMap(ctx.value))
   implicit lazy val authnCtxDec: Decoder[AuthnCtx] = Decoder.decodeJsonObject.map(o => AuthnCtx(o.toMap))
 
-  implicit lazy val requestCtxEnc: Encoder[RequestCtx] = deriveEncoder
-  implicit lazy val requestCtxDec: Decoder[RequestCtx] = deriveDecoder
-
-  implicit lazy val responseCtxEnc: Encoder[ResponseCtx] = deriveEncoder
-  implicit lazy val responseCtxDec: Decoder[ResponseCtx] = deriveDecoder
-
   implicit lazy val QueryParamsEnc: Encoder[QueryParams] = Encoder.encodeString.contramap(_.toString)
   implicit lazy val QueryParamsDec: Decoder[QueryParams] = Decoder.decodeString.emapTry(QueryParams.fromString)
 

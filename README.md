@@ -781,7 +781,9 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 | gateway.method        | method of matching rule                                                                                   |
 | gateway.path          | path pattern of matching rule                                                                             |
 | gateway.pathPrefix    | path prefix of matching rule                                                                              |
-| gateway.aborted       | true if Pyron aborted the call without proxying to target service; false otherwise                         |
+| gateway.aborted       | true if Pyron aborted the call without proxying to target service; false otherwise                        |
+| gateway.interrupted   | true if the call was interrupted by the client; false otherwise                                           |
+| gateway.failed        | true if an exception occurred on target call or plugin application; not set otherwise                     |
 | gateway.targetService | target service of matching rule                                                                           |
 | request.headers       | request headers                                                                                           |
 | timeMs                | time from receiving the request body till writing full response body                                      |

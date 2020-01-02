@@ -1,9 +1,10 @@
 package com.cloudentity.pyron.api
 
+import com.cloudentity.pyron.api.Responses.Errors
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
-import com.cloudentity.pyron.domain.flow._
+import com.cloudentity.pyron.domain.flow.{FlowFailure, _}
 import com.cloudentity.pyron.domain.http._
 import com.cloudentity.pyron.domain.rule.RuleConf
 import com.cloudentity.pyron.plugin.PluginFunctions
@@ -39,7 +40,6 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
 
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  import ApiHandler._
   import ApiRequestHandler._
   import ApiResponseHandler._
   import HttpConversions._
@@ -77,85 +77,100 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       }
 
   def handle(ctx: RoutingContext): VxFuture[Unit] = {
-      val vertxRequest   = ctx.request()
-      val vertxResponse  = ctx.response()
-      val bodyOpt        = ctx.getBody()
-      val tracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
+    val vertxRequest   = ctx.request()
+    val vertxResponse  = ctx.response()
+    val bodyOpt        = ctx.getBody()
+    val tracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
 
-      val requestSignature = Option(vertxRequest.host()) match {
-        case Some(_) => s"${vertxRequest.method()} ${vertxRequest.uri()}"
-        case None => s"${vertxRequest.method()} ${vertxRequest.absoluteURI()}"
+    val requestSignature = Option(vertxRequest.host()) match {
+      case Some(_) => s"${vertxRequest.method()} ${vertxRequest.uri()}"
+      case None => s"${vertxRequest.method()} ${vertxRequest.absoluteURI()}"
+    }
+    log.debug(tracingContext, s"Received request: $requestSignature")
+    log.trace(tracingContext, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
+
+    val matchOpt =
+      for {
+        apiGroup             <- findMatchingApiGroup(apiGroups, vertxRequest)
+        ruleWithPathParams   <- findMatchingRule(apiGroup, vertxRequest)
+      } yield (apiGroup, ruleWithPathParams)
+
+    val program: Future[ApiResponse] =
+      matchOpt match {
+        case None =>
+          Future.successful(Errors.ruleNotFound.toApiResponse())
+
+        case Some((apiGroup, ruleWithPathParams)) =>
+          val rule = ruleWithPathParams.rule
+          val pathParams = ruleWithPathParams.params
+
+          ApiRequestHandler.setRule(ctx, rule)
+          setTracingOperationName(ctx, rule)
+          log.debug(tracingContext, s"Found ${ruleWithPathParams.rule} for, request='$requestSignature'")
+
+          for {
+            proxyHeaders         <- getProxyHeaders(ctx)
+            initRequestCtx        = toRequestCtx(ctx, tracingContext, proxyHeaders, rule.conf, apiGroup.matchCriteria.basePathResolved, pathParams, Option(bodyOpt)).modifyRequest(withProxyHeaders(proxyHeaders))
+
+            finalRequestCtx      <- applyRequestPlugins(initRequestCtx, rule.requestPlugins)
+
+            _                     = ApiRequestHandler.setAuthnCtx(ctx, finalRequestCtx.authnCtx)
+            _                     = ApiRequestHandler.setAborted(ctx, finalRequestCtx.aborted.isDefined)
+            _                     = ApiRequestHandler.setFailure(ctx, finalRequestCtx.failed)
+
+            _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalRequestCtx.accessLog)
+            _                     = ApiRequestHandler.addProperties(ctx, finalRequestCtx.properties)
+
+            (initResponse, fail) <- finalRequestCtx.aborted match {
+                                      case None =>
+                                        callTarget(tracingContext, finalRequestCtx.request, rule.conf.call)
+                                      case Some(response) =>
+                                        Future.successful((response, false))
+                                    }
+            modifiedResponse     <- finalRequestCtx.modifyResponse(initResponse)
+            responseCtx           = toResponseCtx(finalRequestCtx, fail, modifiedResponse)
+
+            finalResponseCtx     <- applyResponsePlugins(responseCtx, rule.responsePlugins)
+
+            _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalResponseCtx.accessLog)
+            _                     = ApiRequestHandler.addProperties(ctx, finalResponseCtx.properties)
+          } yield finalResponseCtx.response
       }
-      log.debug(tracingContext, s"Received request: $requestSignature")
-      log.trace(tracingContext, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
-      val program: Future[ApiError \/ ApiResponse] = {
-        for {
-          apiGroup             <- findMatchingApiGroup(apiGroups, vertxRequest).toOperation
-          ruleWithPathParams   <- findMatchingRule(apiGroup, vertxRequest).toOperation
-          rule                  = ruleWithPathParams.rule
-          _                     = ApiRequestHandler.setRule(ctx, rule)
-          pathParams            = ruleWithPathParams.params
-          _                     = log.debug(tracingContext, s"Found ${ruleWithPathParams.rule} for, request='$requestSignature'")
-          _                     = setTracingOperationName(ctx, rule)
-          proxyHeaders         <- getProxyHeaders(ctx).toOperation
-          initialRequestCtx     = toRequestCtx(ctx, tracingContext, proxyHeaders, rule.conf, apiGroup.matchCriteria.basePathResolved, pathParams, Option(bodyOpt)).modifyRequest(withProxyHeaders(proxyHeaders))
-
-          finalRequestCtx      <- applyRequestPlugins(initialRequestCtx, rule.requestPlugins).toOperation
-
-          _                     = ApiRequestHandler.setAuthnCtx(ctx, finalRequestCtx.authnCtx)
-          _                     = ApiRequestHandler.setAborted(ctx, finalRequestCtx.aborted.isDefined)
-          _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalRequestCtx.accessLog)
-          _                     = ApiRequestHandler.addProperties(ctx, finalRequestCtx.properties)
-
-          initialResponse      <- finalRequestCtx.aborted match {
-                                    case None =>
-                                      callTarget(tracingContext, finalRequestCtx.request, rule.conf.call).toOperation
-                                    case Some(response) =>
-                                      \/.right[ApiError, ApiResponse](response).toOperation
-                                  }
-          modifiedResponse     <- finalRequestCtx.modifyResponse(initialResponse).map(\/.right[ApiError, ApiResponse]).toOperation
-          responseCtx           = toResponseCtx(finalRequestCtx, modifiedResponse)
-          finalResponseCtx     <- applyResponsePlugins(responseCtx, rule.responsePlugins).toOperation
-          _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalResponseCtx.accessLog)
-          _                     = ApiRequestHandler.addProperties(ctx, finalResponseCtx.properties)
-        } yield finalResponseCtx.response
-      }.run
-
-      program.onComplete { result =>
-        try {
-          result match {
-            case Success(\/-(apiResponse)) =>
-              handleApiResponse(tracingContext, requestSignature, vertxResponse, apiResponse)
-            case Success(-\/(apiError)) =>
-              handleApiError(tracingContext, requestSignature, vertxResponse, apiError)
-            case Failure(ex) =>
-              log.error(tracingContext, s"Unexpected error, request='$requestSignature'", ex)
-              endWithException(tracingContext, vertxResponse, ex)
-          }
-        } catch { case ex: Throwable =>
-          log.error(tracingContext, s"Unexpected error, request='$requestSignature'", ex)
-          endWithException(tracingContext, vertxResponse, ex)
+    program.onComplete { result =>
+      try {
+        result match {
+          case Success(apiResponse) =>
+            handleApiResponse(tracingContext, vertxResponse, apiResponse)
+          case Failure(ex) =>
+            log.error(tracingContext, s"Unexpected error, request='$requestSignature'", ex)
+            endWithException(tracingContext, vertxResponse, ex)
         }
+      } catch { case ex: Throwable =>
+        log.error(tracingContext, s"Unexpected error, request='$requestSignature'", ex)
+        endWithException(tracingContext, vertxResponse, ex)
       }
-
-      VxFuture.succeededFuture(())
     }
 
-  def applyRequestPlugins(requestCtx: RequestCtx, plugins: List[RequestPlugin]): Future[ApiError \/ RequestCtx] =
-    PluginFunctions.applyRequestPlugins(requestCtx, plugins)
-      .map(\/-(_))
-      .recover { case ex => -\/(RequestPluginError(ex)) }
+    VxFuture.succeededFuture(())
+  }
 
-  def applyResponsePlugins(responseCtx: ResponseCtx, plugins: List[ResponsePlugin]): Future[ApiError \/ ResponseCtx] =
-    PluginFunctions.applyResponsePlugins(responseCtx, plugins)
-      .map(\/-(_))
-      .recover { case ex => -\/(ResponsePluginError(ex)) }
+  def applyRequestPlugins(requestCtx: RequestCtx, plugins: List[RequestPlugin]): Future[RequestCtx] =
+    PluginFunctions.applyRequestPlugins(requestCtx, plugins) { case ex =>
+        log.error(requestCtx.tracingCtx, s"Could not apply request plugin", ex)
+        exceptionToApiResponse(ex)
+      }
 
-  def callTarget(tracing: TracingContext, targetRequest: TargetRequest, callOpts: Option[CallOpts]): Future[ApiError \/ ApiResponse] =
+  def applyResponsePlugins(responseCtx: ResponseCtx, plugins: List[ResponsePlugin]): Future[ResponseCtx] =
+    PluginFunctions.applyResponsePlugins(responseCtx, plugins) { case ex =>
+        log.error(responseCtx.tracingCtx, s"Could not apply response plugin", ex)
+        exceptionToApiResponse(ex)
+      }
+
+  def callTarget(tracing: TracingContext, targetRequest: TargetRequest, callOpts: Option[CallOpts]): Future[(ApiResponse, Boolean)] =
     targetClient.call(tracing, targetRequest, callOpts).map {
-      case \/-(response) => \/-(toApiResponse(response))
-      case -\/(ex)       => \/-(mapTargetClientException(tracing, ex))
+      case \/-(response) => (toApiResponse(response), false)
+      case -\/(ex)       => (mapTargetClientException(tracing, ex), true)
     }
 
   def setTracingOperationName(ctx: RoutingContext, rule: Rule): Unit = {
@@ -164,14 +179,16 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     RoutingWithTracingS.getOrCreate(ctx, getTracing).setOperationName(name)
   }
 
-  def toResponseCtx(requestCtx: RequestCtx, response: ApiResponse): ResponseCtx = ResponseCtx(
-    response, requestCtx.request, requestCtx.original, requestCtx.tracingCtx,
-    requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined
-  )
+  def toResponseCtx(requestCtx: RequestCtx, targetCallFailed: Boolean, response: ApiResponse): ResponseCtx =
+    ResponseCtx(
+      if (requestCtx.isAborted() || targetCallFailed) None else Some(response),
+      response, requestCtx.request, requestCtx.original, requestCtx.tracingCtx,
+      requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined, requestCtx.failed
+    )
 
-  def getProxyHeaders(ctx: RoutingContext): Future[ApiError \/ ProxyHeaders] =
+  def getProxyHeaders(ctx: RoutingContext): Future[ProxyHeaders] =
     ProxyHeadersHandler.getProxyHeaders(ctx) match {
-      case Some(headers) => Future.successful(\/-(headers))
+      case Some(headers) => Future.successful(headers)
       case None          => Future.failed(new Exception("ProxyHeaders not set in RoutingContext"))
     }
 }
@@ -182,12 +199,10 @@ object ApiHandler {
     case class RequestPluginError(err: Throwable) extends ApiError
     case class ResponsePluginError(err: Throwable) extends ApiError
 
-  case class FlowState(authnCtx: Option[AuthnCtx], rule: Option[Rule], aborted: Option[Boolean], extraAccessLogs: AccessLogItems, properties: Properties)
+  case class FlowState(authnCtx: Option[AuthnCtx], rule: Option[Rule], aborted: Option[Boolean], failure: Option[FlowFailure], extraAccessLogs: AccessLogItems, properties: Properties)
 }
 
 object ApiRequestHandler {
-  import ApiHandler._
-
   def setAuthnCtx(ctx: RoutingContext, authnCtx: AuthnCtx): Unit =
     RoutingCtxData.updateFlowState(ctx, _.copy(authnCtx = Some(authnCtx)))
 
@@ -197,6 +212,9 @@ object ApiRequestHandler {
   def setAborted(ctx: RoutingContext, aborted: Boolean): Unit =
     RoutingCtxData.updateFlowState(ctx, _.copy(aborted = Some(aborted)))
 
+  def setFailure(ctx: RoutingContext, failure: Option[FlowFailure]): Unit =
+    RoutingCtxData.updateFlowState(ctx, _.copy(failure = failure))
+
   def addExtraAccessLogItems(ctx: RoutingContext, items: AccessLogItems): Unit =
     RoutingCtxData.updateFlowState(ctx, state => state.copy(extraAccessLogs = state.extraAccessLogs.merge(items)))
 
@@ -205,18 +223,12 @@ object ApiRequestHandler {
 
   case class RuleWithPathParams(rule: Rule, params: PathParams)
 
-  def findMatchingApiGroup(apiGroups: List[ApiGroup], vertxRequest: HttpServerRequest): ApiError \/ ApiGroup = {
+  def findMatchingApiGroup(apiGroups: List[ApiGroup], vertxRequest: HttpServerRequest): Option[ApiGroup] =
     apiGroups.find { group =>
       ApiGroupMatcher.makeMatch(Option(vertxRequest.host()), Option(vertxRequest.path()).getOrElse(""), group.matchCriteria)
-    } match {
-      case Some(apiGroup) =>
-        \/-(apiGroup)
-      case None =>
-        -\/(NoRuleError)
     }
-  }
 
-  def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): ApiError \/ RuleWithPathParams = {
+  def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithPathParams] = {
     @tailrec def rec(basePath: BasePath, left: List[Rule]): Option[RuleWithPathParams] =
       left match {
         case rule :: tail =>
@@ -227,10 +239,7 @@ object ApiRequestHandler {
         case Nil => None
       }
 
-    rec(apiGroup.matchCriteria.basePathResolved, apiGroup.rules) match {
-      case Some(result) => \/-(result)
-      case None         => -\/(NoRuleError)
-    }
+    rec(apiGroup.matchCriteria.basePathResolved, apiGroup.rules)
   }
 
   def withProxyHeaders(proxyHeaders: ProxyHeaders)(req: TargetRequest): TargetRequest =
@@ -240,22 +249,7 @@ object ApiRequestHandler {
 object ApiResponseHandler {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  import ApiHandler._
   import Responses._
-
-  def handleApiError(ctx: TracingContext, requestSignature: String, vertxResponse: HttpServerResponse, apiError: ApiError): Unit = {
-    apiError match {
-      case NoRuleError =>
-        log.debug(ctx, s"Rule not found, request='$requestSignature'")
-        endWith(ctx, vertxResponse, Errors.ruleNotFound)
-      case RequestPluginError(ex) =>
-        log.error(ctx, s"Could not apply request plugin, request='$requestSignature'", ex)
-        endWithException(ctx, vertxResponse, ex)
-      case ResponsePluginError(ex) =>
-        log.error(ctx, s"Could not apply response plugin, request='$requestSignature'", ex)
-        endWithException(ctx, vertxResponse, ex)
-    }
-  }
 
   def mapTargetClientException(tracing: TracingContext, ex: Throwable): ApiResponse =
     if (ex.getMessage().contains("timeout") && ex.getMessage().contains("exceeded")) {
@@ -265,7 +259,7 @@ object ApiResponseHandler {
       Errors.targetUnreachable.toApiResponse()
     }
 
-  def handleApiResponse(ctx: TracingContext, requestSignature: String, vertxResponse: HttpServerResponse, apiResponse: ApiResponse): Unit = {
+  def handleApiResponse(ctx: TracingContext, vertxResponse: HttpServerResponse, apiResponse: ApiResponse): Unit = {
     copyHeadersWithoutContentLength(apiResponse, vertxResponse)
 
     if (isChunked(apiResponse)) {
@@ -302,24 +296,25 @@ object ApiResponseHandler {
   private def dropContentLengthHeader(response: HttpServerResponse) =
     response.headers().remove("Content-Length")
 
-  def endWith(ctx: TracingContext, response: HttpServerResponse, error: Error): Unit = {
+  def endWithException(tracing: TracingContext, response: HttpServerResponse, ex: Throwable): Unit = {
+    val apiResponse = exceptionToApiResponse(ex)
+
     if (!response.closed()) {
-      val apiResponse = error.toApiResponse()
       for ((k, v) <- apiResponse.headers.toMap) response.putHeader(k, v.asJava)
-      response.setStatusCode(apiResponse.statusCode).end(mkString(error.body))
+      response.setStatusCode(apiResponse.statusCode).end(apiResponse.body)
     } else {
-      log.debug(ctx, "Response already closed. Tried to end with error {}", error.toApiResponse())
+      log.debug(tracing, "Response already closed. Tried to end with error {}", apiResponse)
     }
   }
 
-  def endWithException(tracing: TracingContext, vertxResponse: HttpServerResponse, ex: Throwable): Unit = {
+  def exceptionToApiResponse(ex: Throwable): ApiResponse = {
     def isEvenBusTimeout(ex: Throwable) =
       ex.isInstanceOf[ReplyException] && ex.getMessage().contains("Timed out")
 
     if (isEvenBusTimeout(ex) || (ex.getCause != null && isEvenBusTimeout(ex.getCause))) {
-      endWith(tracing, vertxResponse, Errors.systemTimeout)
+      Errors.systemTimeout.toApiResponse()
     } else {
-      endWith(tracing, vertxResponse, Errors.unexpected)
+      Errors.unexpected.toApiResponse()
     }
   }
 }
