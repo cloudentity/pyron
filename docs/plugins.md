@@ -1,9 +1,9 @@
 ## Plugins in routing rule
 
-* [Introduction](intro)
-* [Pre/post flow plugins](pre-post)
-* [Request-response plugins](req-resp)
-* [Exception handling](exception)
+* [Introduction](#intro)
+* [Pre/post flow plugins](#pre-post)
+* [Request-response plugins](#req-resp)
+* [Exception handling](#exception)
 
 <a href="intro"></a>
 ### [Introduction]
