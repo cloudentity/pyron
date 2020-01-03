@@ -5,8 +5,8 @@
 * [Request-response plugins](#req-resp)
 * [Exception handling](#exception)
 
-<a href="intro"></a>
-### [Introduction]
+<a id="intro"></a>
+### Introduction
 
 Plugin configuration has two attributes `name` and `conf`:
 
@@ -80,7 +80,7 @@ If you want to apply a plugin to a response, then configure it in `responsePlugi
 }
 ```
 
-<a href="pre-post"></a>
+<a id="pre-post"></a>
 ### Pre/post flow plugins
 
 It is common case to apply a plugin for all endpoints (e.g. authentication) and then apply specific plugins per endpoint.
@@ -375,7 +375,7 @@ Let's disable `plugin-b` `postFlow` plugin:
 ...
 ```
 
-<a href="req-resp"></a>
+<a id="req-resp"></a>
 ### Request-response plugins
 
 So far we've seen plugins applied to request or response. However, a plugin can modify both request and response.
@@ -416,7 +416,7 @@ Given the following rule configuration:
 First `plugin-x` and then `plugin-y` are applied to the request. After receiving response the plugins are applied to it in following order:
 [`plugin-y`, `plugin-x`, `plugin-a`, `plugin-b`].
 
-<a href="exception"></a>
+<a id="exception"></a>
 ### Exception handling
 
 In request-response processing an exception can be thrown either on plugin processing request, calling target service or plugin processing response.
