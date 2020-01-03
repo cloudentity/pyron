@@ -413,7 +413,7 @@ Given the following rule configuration:
 ...
 ```
 
-First `plugin-x` and then `plugin-y` are applied to the request. After receiving response the plugins are applied to it in following order:
+First `plugin-x` and then `plugin-y` are applied to the request. After receiving response the plugins are applied to it in the following order:
 [`plugin-y`, `plugin-x`, `plugin-a`, `plugin-b`].
 
 <a id="exception"></a>
