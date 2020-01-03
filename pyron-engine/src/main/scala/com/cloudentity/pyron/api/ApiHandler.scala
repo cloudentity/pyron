@@ -179,12 +179,16 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     RoutingWithTracingS.getOrCreate(ctx, getTracing).setOperationName(name)
   }
 
-  def toResponseCtx(requestCtx: RequestCtx, targetCallFailed: Boolean, response: ApiResponse): ResponseCtx =
+  def toResponseCtx(requestCtx: RequestCtx, targetCallFailed: Boolean, response: ApiResponse): ResponseCtx = {
+    val targetResponse = if (requestCtx.isAborted() || targetCallFailed) None else Some(response)
+    val failed         = if (targetCallFailed) Some(CallFailure) else requestCtx.failed
+
     ResponseCtx(
-      if (requestCtx.isAborted() || targetCallFailed) None else Some(response),
+      targetResponse,
       response, requestCtx.request, requestCtx.original, requestCtx.tracingCtx,
-      requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined, requestCtx.failed
+      requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined, failed
     )
+  }
 
   def getProxyHeaders(ctx: RoutingContext): Future[ProxyHeaders] =
     ProxyHeadersHandler.getProxyHeaders(ctx) match {

@@ -1,5 +1,13 @@
 ## Plugins in routing rule
 
+* [Introduction](intro)
+* [Pre/post flow plugins](pre-post)
+* [Request-response plugins](req-resp)
+* [Exception handling](exception)
+
+<a href="intro"></a>
+### [Introduction]
+
 Plugin configuration has two attributes `name` and `conf`:
 
 ```json
@@ -72,6 +80,7 @@ If you want to apply a plugin to a response, then configure it in `responsePlugi
 }
 ```
 
+<a href="pre-post"></a>
 ### Pre/post flow plugins
 
 It is common case to apply a plugin for all endpoints (e.g. authentication) and then apply specific plugins per endpoint.
@@ -314,7 +323,7 @@ See an example, only `plugin-a` and `plugin-x` plugins are applied:
       "postFlow": {
         "disableAllPlugins": true
       }
-    }
+    },
     "requestPlugins": [
       {
         "name": "plugin-x"
@@ -355,7 +364,7 @@ Let's disable `plugin-b` `postFlow` plugin:
       "postFlow": {
         "disablePlugins": ["plugin-b"]
       }
-    }
+    },
     "requestPlugins": [
       {
         "name": "plugin-x"
@@ -365,6 +374,57 @@ Let's disable `plugin-b` `postFlow` plugin:
 ]
 ...
 ```
+
+<a href="req-resp"></a>
+### Request-response plugins
+
+So far we've seen plugins applied to request or response. However, a plugin can modify both request and response.
+A rule configuration for request-response plugin looks the same as for regular request plugin, but it is also applied to the response.
+The request-response plugins are applied to response in the reverse order they were applied to the request.
+After applying request-response plugins to the response, regular response plugins are applied.
+
+Let's assume `plugin-x` and `plugin-y` are request-response plugins, `plugin-a` and `plugin-b` are response plugins.
+Given the following rule configuration:
+
+```
+...
+"endpoints": [
+  {
+    "method": "POST",
+    "pathPattern": "/user",
+    "requestPlugins": [
+      {
+        "name": "plugin-x"
+      },
+      {
+        "name": "plugin-y"
+      }
+    ],
+    "requestPlugins": [
+      {
+        "name": "plugin-a"
+      },
+      {
+        "name": "plugin-b"
+      }
+    ]
+  }
+]
+...
+```
+
+First `plugin-x` and then `plugin-y` are applied to the request. After receiving response the plugins are applied to it in following order:
+[`plugin-y`, `plugin-x`, `plugin-a`, `plugin-b`].
+
+<a href="exception"></a>
+### Exception handling
+
+In request-response processing an exception can be thrown either on plugin processing request, calling target service or plugin processing response.
+
+If an exception is thrown by a plugin processing request or on target service call then all remaining request plugins are skipped,
+the call to target service is aborted and the error response with 500 status code is passed to response plugins for processing.
+
+If an exception is thrown by a plugin processing response then the response is exchanged with error response with 500 status code and passed to the remaining response plugins.
 
 [flow]: flow.png
 [plugins-example]: plugins-example.png

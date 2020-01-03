@@ -825,7 +825,7 @@ Plugins extend request-response flow, e.g. can enforce authorization rules, modi
 * [Request transformation](docs/plugins/transform-request.md)
 * [CORS](docs/plugins/cors.md)
 
-Read about [plugins configuration](docs/plugins.md) in routing rules.
+Read about [plugins application](docs/plugins.md) in routing rules.
 
 <a id="how-to"></a>
 ### How to
