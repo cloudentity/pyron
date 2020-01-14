@@ -146,6 +146,26 @@ class ApiHandlerGroupsAcceptanceTest extends ApiHandlerRulesAcceptanceTest {
       .statusCode(200)
       .header("X-B", "b")
   }
+
+  @Test
+  def shouldOverwriteApiGroupPlugin(ctx: TestContext): Unit = {
+    mockOnPath(targetService)("/should-overwrite-api-group-plugin", resp().withStatusCode(200))
+
+    // we make the call twice to detect plugins binding to the same bus address
+    given()
+    .when()
+      .get("/plugins/overwrite/a/should-overwrite-api-group-plugin")
+    .`then`()
+      .statusCode(200)
+      .header("X-A", "a")
+
+    given()
+    .when()
+      .get("/plugins/overwrite/b/should-overwrite-api-group-plugin")
+    .`then`()
+      .statusCode(200)
+      .header("X-B", "b")
+  }
 }
 
 class TestApiGroupsStore(apiGroups: List[ApiGroup]) extends ScalaServiceVerticle with ApiGroupsStore {

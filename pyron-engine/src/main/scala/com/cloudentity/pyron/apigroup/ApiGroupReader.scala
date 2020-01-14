@@ -54,15 +54,15 @@ object ApiGroupReader {
   }
 
   def buildApiGroupConfsUnresolved(root: ApiGroupLevel): List[ReadResult[ApiGroupConfUnresolved]] = {
-    def rec(levelPath: List[String], groupLevel: ApiGroupLevel): List[ReadResult[ApiGroupConfUnresolved]] = {
-      val nonEmptySubsOpt = groupLevel.subs.headOption.map(_ => groupLevel.subs)
+    def rec(levelPath: List[String], level: ApiGroupLevel): List[ReadResult[ApiGroupConfUnresolved]] = {
+      val nonEmptySubsOpt = level.subs.headOption.map(_ => level.subs)
 
-      (groupLevel.rules, nonEmptySubsOpt) match {
+      (level.rules, nonEmptySubsOpt) match {
         case (Some(rules), Some(subs)) =>
           List(InvalidResult(levelPath, "leaf node with rules can't have sub-levels"))
 
         case (Some(rules), None) =>
-          List(ValidResult(levelPath, ApiGroupConfUnresolved(groupLevel.group.getOrElse(GroupMatchCriteria.empty), rules, groupLevel.plugins)))
+          List(ValidResult(levelPath, ApiGroupConfUnresolved(level.group.getOrElse(GroupMatchCriteria.empty), rules, level.plugins)))
 
         case (None, None) =>
           Nil
@@ -82,7 +82,7 @@ object ApiGroupReader {
 
           compactRulesInSubGroups(levelPath, validSubGroups)
             .map {
-              case ValidResult(subPath, validSub) => mergeSubGroupWithParent(groupLevel, subPath, validSub)
+              case ValidResult(subPath, validSub) => mergeSubGroupWithParent(level, subPath, validSub)
               case InvalidResult(path, msg)       => InvalidResult[ApiGroupConfUnresolved](path, msg)
             } ++ invalidSubGroups
       }
