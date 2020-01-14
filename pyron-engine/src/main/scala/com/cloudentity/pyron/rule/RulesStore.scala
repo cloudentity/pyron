@@ -20,10 +20,10 @@ import scala.concurrent.Future
 
 trait RulesStore {
   @VertxEndpoint
-  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json], ids: Map[PluginName, PluginAddressPrefix]): VxFuture[(List[Rule], List[RuleConfWithPlugins])]
+  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json], addresses: Map[PluginName, PluginAddressPrefix]): VxFuture[(List[Rule], List[RuleConfWithPlugins])]
 
   @VertxEndpoint
-  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json], ids: Map[PluginName, PluginAddressPrefix]): VxFuture[List[RuleConfWithPlugins]]
+  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json], addresses: Map[PluginName, PluginAddressPrefix]): VxFuture[List[RuleConfWithPlugins]]
 }
 
 case class RulesChanged(rules: List[Rule], confs: List[RuleConfWithPlugins])
@@ -36,18 +36,18 @@ case class RuleConfWithPluginNames(rule: RuleConf, requestPlugins: List[PluginNa
 class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
   val log = LoggerFactory.getLogger(this.getClass)
 
-  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json], ids: Map[PluginName, PluginAddressPrefix]): VxFuture[(List[Rule], List[RuleConfWithPlugins])] =
-    decodeRuleConfsWithPlugins(tag, rules, proxyRulesOpt, ids).toScala.flatMap(confs => buildRules(confs).map((_, confs))).toJava
+  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json], addresses: Map[PluginName, PluginAddressPrefix]): VxFuture[(List[Rule], List[RuleConfWithPlugins])] =
+    decodeRuleConfsWithPlugins(tag, rules, proxyRulesOpt, addresses).toScala.flatMap(confs => buildRules(confs).map((_, confs))).toJava
 
-  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json], ids: Map[PluginName, PluginAddressPrefix]): VxFuture[List[RuleConfWithPlugins]] = {
+  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json], addresses: Map[PluginName, PluginAddressPrefix]): VxFuture[List[RuleConfWithPlugins]] = {
     for {
-      rules <- readRulesConf(rules, tag, ids)
-      proxyRules <- proxyRulesOpt.map(readRulesConf(_, tag + "_proxy", ids)).getOrElse(Future.successful(Nil))
+      rules <- readRulesConf(rules, tag, addresses)
+      proxyRules <- proxyRulesOpt.map(readRulesConf(_, tag + "_proxy", addresses)).getOrElse(Future.successful(Nil))
     } yield (rules ::: proxyRules)
     }.toJava
 
-  private def readRulesConf(rulesConf: Json, tag: String, ids: Map[PluginName, PluginAddressPrefix]): Future[List[RuleConfWithPlugins]] =
-    RulesConfReader.read(rulesConf.toString, ids) match {
+  private def readRulesConf(rulesConf: Json, tag: String, addresses: Map[PluginName, PluginAddressPrefix]): Future[List[RuleConfWithPlugins]] =
+    RulesConfReader.read(rulesConf.toString, addresses) match {
       case \/-(rules) =>
         logRulesConf(s"Rules (${tag}) configuration", rules)
         //log.info(s"Rules (${tag}) configuration:\n${rules.map(rule => s"   ${rule.asJson.pretty(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
