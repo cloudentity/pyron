@@ -110,9 +110,9 @@ sealed trait TargetServiceRule
   case object ProxyServiceRule extends TargetServiceRule
 
 trait PluginsConf {
-  def pre: List[PluginConf]
-  def endpoint: List[PluginConf]
-  def post: List[PluginConf]
+  def pre: List[ApiGroupPluginConf]
+  def endpoint: List[ApiGroupPluginConf]
+  def post: List[ApiGroupPluginConf]
 
   def toList = pre ::: endpoint ::: post
 }
@@ -274,7 +274,9 @@ case class ResponseCtx(
 }
 
 case class PluginName(value: String) extends AnyVal
+case class PluginAddressPrefix(value: String) extends AnyVal
 case class PluginConf(name: PluginName, conf: Json)
+case class ApiGroupPluginConf(name: PluginName, conf: Json, addressPrefixOpt: Option[PluginAddressPrefix] = None)
 
 case class SmartHttpClientConf(value: JsonObject)
 case class FixedHttpClientConf(value: JsonObject)

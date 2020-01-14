@@ -1,0 +1,12 @@
+{
+  "registry:response-plugins": {
+    "{MODULE_ID-}responseHeader": {
+      "main": "com.cloudentity.pyron.acceptance.ResponseHeaderPlugin",
+      "prefix": "{MODULE_ID-}responseHeader",
+      "verticleConfig": {
+        "headerName": "$env:PLUGIN_RESPONSE_HEADER_NAME:string",
+        "headerValue": "$env:PLUGIN_RESPONSE_HEADER_VALUE:string"
+      }
+    }
+  }
+}

@@ -122,7 +122,7 @@ class CorsPlugin extends RequestResponsePluginVerticle[CorsPluginConf] with Conf
       criteria = ruleConf.rule.criteria.copy(method = HttpMethod.OPTIONS)
     )
 
-    val preRequestPlugin = PluginConf(PluginName("cors"), confEncoder(conf))
+    val preRequestPlugin = ApiGroupPluginConf(PluginName("cors"), confEncoder(conf))
 
     ExtendRules(append = List(RuleConfWithPlugins(
       rule = ruleConfWithOptions,

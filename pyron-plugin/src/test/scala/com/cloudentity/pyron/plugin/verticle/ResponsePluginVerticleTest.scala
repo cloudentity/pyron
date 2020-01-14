@@ -5,7 +5,7 @@ import java.util.{Optional, UUID}
 import io.circe.generic.semiauto._
 import io.circe.{Decoder, Json}
 import com.cloudentity.pyron.domain._
-import com.cloudentity.pyron.domain.flow.{PluginConf, PluginName, ResponseCtx}
+import com.cloudentity.pyron.domain.flow.{PluginConf, ApiGroupPluginConf, PluginName, ResponseCtx}
 import com.cloudentity.pyron.plugin.ResponsePluginService
 import com.cloudentity.pyron.plugin.bus.response._
 import com.cloudentity.pyron.plugin.config._
@@ -32,7 +32,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
     override def confDecoder: Decoder[DummyConfig] = deriveDecoder
   }
 
-  def dummyConf(pluginName: PluginName) = PluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))))
+  def dummyConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))))
 
   private def createClient(plugin: DummyPlugin) = {
     ServiceClientFactory.make(vertx.eventBus(), classOf[ResponsePluginService], Optional.of(plugin.name.value))
@@ -43,7 +43,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
       // given
       val plugin = new DummyPlugin
       val pluginClient = createClient(plugin)
-      val conf = PluginConf(plugin.name, Json.fromFields(Nil))
+      val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil))
 
       VertxDeploy.deploy(vertx, plugin)
         .compose { _ =>

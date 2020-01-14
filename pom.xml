@@ -27,7 +27,7 @@
 
     <!-- compile -->
     <vertx.version>3.8.0</vertx.version>
-    <vertx-tools.version>1.0.0</vertx-tools.version>
+    <vertx-tools.version>1.1.0-SNAPSHOT</vertx-tools.version>
     <circe.version>0.11.1</circe.version>
     <jackson-databind.version>2.9.10.1</jackson-databind.version>
     <embedded-consul.version>1.0.0</embedded-consul.version>

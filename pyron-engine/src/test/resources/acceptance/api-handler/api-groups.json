@@ -116,6 +116,72 @@
           ]
         }
       ]
+    },
+    "test-api-group-plugins": {
+      "_group": {
+        "basePath": "/plugins"
+      },
+      "group-a": {
+        "_group": {
+          "basePath": "/a"
+        },
+        "_plugins": [
+          {
+            "module": "test/plugin/responseheader",
+            "plugin": "responseHeader",
+            "env": {
+              "PLUGIN_RESPONSE_HEADER_NAME": "X-A",
+              "PLUGIN_RESPONSE_HEADER_VALUE": "a"
+            }
+          }
+        ],
+        "_rules": [
+          {
+            "default": {
+              "targetHost": "localhost",
+              "targetPort": 7760
+            },
+            "endpoints": [
+              {
+                "method": "GET",
+                "pathPattern": "/should-set-response-header",
+                "responsePlugins": [{"name": "responseHeader"}]
+              }
+            ]
+          }
+        ]
+      },
+      "group-b": {
+        "_group": {
+          "basePath": "/b"
+        },
+        "_plugins": [
+          {
+            "module": "test/plugin/responseheader",
+            "plugin": "responseHeader",
+            "env": {
+              "PLUGIN_RESPONSE_HEADER_NAME": "X-B",
+              "PLUGIN_RESPONSE_HEADER_VALUE": "b"
+            }
+          }
+        ],
+        "_rules": [
+          {
+            "default": {
+              "targetHost": "localhost",
+              "targetPort": 7760
+            },
+            "endpoints": [
+              {
+                "method": "GET",
+                "pathPattern": "/should-set-response-header",
+                "responsePlugins": [{"name": "responseHeader"}]
+              }
+            ]
+          }
+        ]
+      }
     }
+
   }
 }

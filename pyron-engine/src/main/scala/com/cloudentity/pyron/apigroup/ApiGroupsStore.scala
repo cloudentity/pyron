@@ -10,8 +10,8 @@ import io.vertx.core.json.{JsonArray, JsonObject}
 import io.vertx.core.{Future => VxFuture}
 import org.slf4j.LoggerFactory
 import io.circe.generic.auto._
-import com.cloudentity.pyron.apigroup.ApiGroupReader.ApiGroupConfUnresolved
 import com.cloudentity.pyron.config.Conf
+import com.cloudentity.pyron.domain.flow.PluginAddressPrefix
 import com.cloudentity.pyron.rule.RulesStore
 import com.cloudentity.tools.vertx.json.JsonExtractor
 import io.circe.Json
@@ -155,7 +155,12 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
 
         val resolvedGroupFuts: List[Future[ReadResult[(ApiGroup, ApiGroupConf)]]] =
           okGroups.map { group =>
-            rulesStore.decodeRules(loggingTag(group), group.value.rules, defaultProxyRulesOpt).toScala()
+            val pluginIds =
+              group.value.plugins
+                .map(plugin => plugin.plugin -> PluginAddressPrefix(s"${plugin.id.value}-${plugin.plugin.value}"))
+                .toMap
+
+            rulesStore.decodeRules(loggingTag(group), group.value.rules, defaultProxyRulesOpt, pluginIds).toScala()
               .map { case (rs, rsConfs) =>
                 ValidResult(group.path, (ApiGroup(group.value.matchCriteria, rs), ApiGroupConf(group.value.matchCriteria, rsConfs)))
               }
@@ -200,6 +205,6 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
       }
 
   private def invalidMsg(invalid: InvalidResult[_]): String =
-    if (invalid.path.nonEmpty) s"${invalid.path.mkString(".")}=${invalid.msg}"
+    if (invalid.path.nonEmpty) s"${invalid.path.reverse.mkString(".")}=${invalid.msg}"
     else invalid.msg
 }

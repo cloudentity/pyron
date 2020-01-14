@@ -2,7 +2,7 @@ package com.cloudentity.pyron.openapi
 
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
-import com.cloudentity.pyron.domain.flow.{GroupMatchCriteria, PathPattern, PathPrefix, PluginConf, PluginName, RequestCtx}
+import com.cloudentity.pyron.domain.flow.{GroupMatchCriteria, PathPattern, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, RequestCtx}
 import com.cloudentity.pyron.domain.openapi.OpenApiRule
 import com.cloudentity.pyron.plugin.RequestPluginService
 import com.cloudentity.pyron.plugin.openapi._
@@ -40,7 +40,7 @@ class OpenApiConverterApplyPluginsTest extends ScalaVertxUnitTest with OpenApiTe
     val verticle = new OpenApiConverterVerticle()
     val swagger = sampleSwagger("/", Map())
     val pluginConf = io.circe.Json.fromString("")
-    val plugins = List(PluginConf(PluginName("dummy"), pluginConf))
+    val plugins = List(ApiGroupPluginConf(PluginName("dummy"), pluginConf))
     val rules = List(OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/test"), PathPrefix(""), false, None, None, plugins, Nil, None))
 
     FixedConfVerticle.deploy(vertx, new JsonObject())

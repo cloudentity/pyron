@@ -1,8 +1,8 @@
 package com.cloudentity.pyron.plugin.config
 
-import com.cloudentity.pyron.domain.flow.PluginConf
+import com.cloudentity.pyron.domain.flow.ApiGroupPluginConf
 
-case class ValidateRequest(conf: PluginConf)
+case class ValidateRequest(conf: ApiGroupPluginConf)
 
 sealed trait ValidateResponse
   case object ValidateOk extends ValidateResponse

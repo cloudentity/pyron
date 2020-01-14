@@ -5,7 +5,7 @@ import com.cloudentity.pyron.domain.http.RelativeUri
 import io.vertx.core.http.HttpMethod
 
 case class OpenApiRule(method: HttpMethod, serviceId: ServiceId, group: GroupMatchCriteria, pathPattern: PathPattern, pathPrefix: PathPrefix,
-                       dropPathPrefix: Boolean, rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], plugins: List[PluginConf], tags: List[String], operationId: Option[String]) {
+                       dropPathPrefix: Boolean, rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], plugins: List[ApiGroupPluginConf], tags: List[String], operationId: Option[String]) {
   lazy val targetServicePath: String =
     rewritePath.map(_.value).getOrElse {
       if (dropPathPrefix) pathPattern.value
