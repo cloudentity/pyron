@@ -40,7 +40,7 @@ class OpenApiConverterApplyPluginsTest extends ScalaVertxUnitTest with OpenApiTe
     val verticle = new OpenApiConverterVerticle()
     val swagger = sampleSwagger("/", Map())
     val pluginConf = io.circe.Json.fromString("")
-    val plugins = List(ApiGroupPluginConf(PluginName("dummy"), pluginConf))
+    val plugins = List(ApiGroupPluginConf(PluginName("dummy"), pluginConf, None))
     val rules = List(OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/test"), PathPrefix(""), false, None, None, plugins, Nil, None))
 
     FixedConfVerticle.deploy(vertx, new JsonObject())

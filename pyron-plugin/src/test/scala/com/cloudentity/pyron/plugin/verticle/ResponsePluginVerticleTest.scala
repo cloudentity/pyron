@@ -32,7 +32,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
     override def confDecoder: Decoder[DummyConfig] = deriveDecoder
   }
 
-  def dummyConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))))
+  def dummyConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))), None)
 
   private def createClient(plugin: DummyPlugin) = {
     ServiceClientFactory.make(vertx.eventBus(), classOf[ResponsePluginService], Optional.of(plugin.name.value))
@@ -43,7 +43,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
       // given
       val plugin = new DummyPlugin
       val pluginClient = createClient(plugin)
-      val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil))
+      val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil), None)
 
       VertxDeploy.deploy(vertx, plugin)
         .compose { _ =>

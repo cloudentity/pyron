@@ -34,7 +34,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     override def confDecoder: Decoder[DummyConfig] = deriveDecoder
   }
 
-  def dummyConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))))
+  def dummyConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))), None)
 
   private def createClient(plugin: DummyPlugin) = {
     ServiceClientFactory.make(vertx.eventBus(), classOf[RequestPluginService], Optional.of(plugin.name.value))
@@ -45,7 +45,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     // given
     val plugin = new DummyPlugin
     val pluginClient = createClient(plugin)
-    val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil))
+    val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil), None)
 
     VertxDeploy.deploy(vertx, plugin)
       .compose { _ =>
@@ -235,7 +235,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     // given
     val plugin = new DummyPlugin
     val pluginClient = createClient(plugin)
-    val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil))
+    val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil), None)
 
     VertxDeploy.deploy(vertx, plugin)
       .compose { _ => pluginClient.convertOpenApi(TracingContext.dummy(), ConvertOpenApiRequest(new Swagger(), openApiRule, conf)) }
@@ -260,7 +260,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     val conf = dummyConf(plugin.name)
 
     VertxDeploy.deploy(vertx, plugin)
-      .compose { _ => pluginClient.convertOpenApi(TracingContext.dummy(), ConvertOpenApiRequest(new Swagger(), openApiRule, ApiGroupPluginConf(conf.name, conf.conf))) }
+      .compose { _ => pluginClient.convertOpenApi(TracingContext.dummy(), ConvertOpenApiRequest(new Swagger(), openApiRule, ApiGroupPluginConf(conf.name, conf.conf, None))) }
       .compose { response =>
         // then
         response match {
@@ -282,7 +282,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     val conf = dummyConf(plugin.name)
 
     VertxDeploy.deploy(vertx, plugin)
-      .compose { _ => pluginClient.convertOpenApi(TracingContext.dummy(), ConvertOpenApiRequest(new Swagger(), openApiRule, ApiGroupPluginConf(conf.name, conf.conf))) }
+      .compose { _ => pluginClient.convertOpenApi(TracingContext.dummy(), ConvertOpenApiRequest(new Swagger(), openApiRule, ApiGroupPluginConf(conf.name, conf.conf, None))) }
       .compose { response =>
         // then
         response match {

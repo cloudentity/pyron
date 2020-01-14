@@ -42,7 +42,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
     override def confDecoder: Decoder[ResponseConfig] = deriveDecoder
   }
 
-  def pluginConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))))
+  def pluginConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))), None)
 
   "RuleBuilder.build" should {
     val ruleConf = RuleConf(None, EndpointMatchCriteria(HttpMethod.GET, PathMatching("".r, Nil, PathPrefix(""), "")), StaticServiceRule(TargetHost(""), 9000, false), true, None, None, None, None, Nil, None, ExtRuleConf(None))

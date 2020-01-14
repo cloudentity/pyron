@@ -276,7 +276,7 @@ case class ResponseCtx(
 case class PluginName(value: String) extends AnyVal
 case class PluginAddressPrefix(value: String) extends AnyVal
 case class PluginConf(name: PluginName, conf: Json)
-case class ApiGroupPluginConf(name: PluginName, conf: Json, addressPrefixOpt: Option[PluginAddressPrefix] = None)
+case class ApiGroupPluginConf(name: PluginName, conf: Json, addressPrefixOpt: Option[PluginAddressPrefix])
 
 case class SmartHttpClientConf(value: JsonObject)
 case class FixedHttpClientConf(value: JsonObject)

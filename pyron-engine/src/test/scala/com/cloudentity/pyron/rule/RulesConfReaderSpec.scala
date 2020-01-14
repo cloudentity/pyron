@@ -127,10 +127,10 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     }
   }
 
-  val preFlowRequestPluginConfs = List(ApiGroupPluginConf(PluginName("pre-req-plugin1"), Json.Null), ApiGroupPluginConf(PluginName("pre-req-plugin2"), Json.Null))
-  val postFlowRequestPluginConfs = List(ApiGroupPluginConf(PluginName("post-req-plugin1"), Json.Null), ApiGroupPluginConf(PluginName("post-req-plugin2"), Json.Null))
-  val preFlowResponsePluginConfs = List(ApiGroupPluginConf(PluginName("pre-resp-plugin1"), Json.Null), ApiGroupPluginConf(PluginName("pre-resp-plugin2"), Json.Null))
-  val postFlowResponsePluginConfs = List(ApiGroupPluginConf(PluginName("post-resp-plugin1"), Json.Null), ApiGroupPluginConf(PluginName("post-resp-plugin2"), Json.Null))
+  val preFlowRequestPluginConfs = List(ApiGroupPluginConf(PluginName("pre-req-plugin1"), Json.Null, None), ApiGroupPluginConf(PluginName("pre-req-plugin2"), Json.Null, None))
+  val postFlowRequestPluginConfs = List(ApiGroupPluginConf(PluginName("post-req-plugin1"), Json.Null, None), ApiGroupPluginConf(PluginName("post-req-plugin2"), Json.Null, None))
+  val preFlowResponsePluginConfs = List(ApiGroupPluginConf(PluginName("pre-resp-plugin1"), Json.Null, None), ApiGroupPluginConf(PluginName("pre-resp-plugin2"), Json.Null, None))
+  val postFlowResponsePluginConfs = List(ApiGroupPluginConf(PluginName("post-resp-plugin1"), Json.Null, None), ApiGroupPluginConf(PluginName("post-resp-plugin2"), Json.Null, None))
 
   val serviceConf  = ServiceConf(emptyRuleConf,
     request  = Some(ServiceFlowsConf(preFlow = Some(ServiceFlowConf(preFlowRequestPluginConfs.map(p => PluginConf(p.name, p.conf)))),  postFlow = Some(ServiceFlowConf(postFlowRequestPluginConfs.map(p => PluginConf(p.name, p.conf)))))),
