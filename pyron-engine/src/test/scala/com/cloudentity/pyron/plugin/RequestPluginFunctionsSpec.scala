@@ -1,5 +1,6 @@
 package com.cloudentity.pyron.plugin
 
+import com.cloudentity.pyron.api.Responses
 import com.cloudentity.pyron.test.TestRequestResponseCtx
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
@@ -46,35 +47,35 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
 
       //when
       val f: Future[RequestCtx] =
-        PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)
+        PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)(_ => emptyResponse)
 
       //then
       Await.result(f, 1 second).request must be(requestDelete)
     }
 
-    "break applying plugins when applied plugin returned ApiResponse" in {
+    "break applying request plugins when applied plugin returned ApiResponse" in {
       //given
       val plugins = List(requestPlugin(requestPost), responsePlugin(response), requestPlugin(requestDelete))
 
       //when
       val f: Future[RequestCtx] =
-        PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)
+        PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f, 1 second).aborted must be(Some(response))
+      Await.result(f, 1 second).aborted must be(Some(emptyResponse))
     }
 
-    "break applying plugins when applied plugin returned failure" in {
+    "break applying request plugins when applied plugin returned failure" in {
       //given
       val ex = new Exception()
       val plugins: List[RequestPlugin] = List(requestPlugin(requestPost), failingPlugin(ex), requestPlugin(requestDelete))
 
       //when
       val f: Future[RequestCtx] =
-        PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)
+        PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f.failed, 1 second) must be(ex)
+      Await.result(f, 1 second).aborted must be(Some(emptyResponse))
     }
   }
 

@@ -147,6 +147,7 @@ object AccessLogHandler extends AccessLogHelper {
       pathPrefix    = flowState.rule.map(_.conf.criteria.path.prefix.value),
       aborted       = flowState.aborted.getOrElse(true),
       interrupted   = interrupted,
+      failed        = flowState.failure.map(_ => true),
       targetService = targetServiceNameOpt,
       targetHost    = targetHostOpt,
       targetPort    = targetPortOpt
@@ -211,7 +212,17 @@ object AccessLogHandler extends AccessLogHelper {
     }
 }
 
-case class GatewayLog(method: Option[HttpMethod], path: Option[String], pathPrefix: Option[String], aborted: Boolean, interrupted: Boolean, targetService: Option[ServiceClientName], targetHost: Option[TargetHost], targetPort: Option[Int])
+case class GatewayLog(
+  method: Option[HttpMethod],
+  path: Option[String],
+  pathPrefix: Option[String],
+  aborted: Boolean,
+  interrupted: Boolean,
+  failed: Option[Boolean],
+  targetService: Option[ServiceClientName],
+  targetHost: Option[TargetHost],
+  targetPort: Option[Int]
+)
 
 case class AccessLog(
   timestamp: Instant,

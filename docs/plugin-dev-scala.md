@@ -290,6 +290,11 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
 }
 ```
 
+> NOTE<br/>
+> When applying a plugin to response, bear in mind that the plugin apply-chain or call to the target service might have already failed.
+> ResponseCtx.targetResponse contains optional API response received from the target service. If the call failed or was aborted then it is empty.
+> If plugin applied to request/response or call to target service failed then ResponseCtx.failed is set with failure type.
+
 <a id="module"></a>
 ### Prepare configuration module
 
