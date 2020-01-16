@@ -8,7 +8,7 @@ import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import com.nimbusds.jose.jwk.JWKSet
 import io.vertx.core.http.{HttpClient, HttpClientOptions, HttpClientResponse}
 import io.vertx.core.{Future, Promise}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import scalaz.{-\/, \/, \/-}
 
 import scala.util.Try
@@ -91,15 +91,13 @@ class HttpOidcClient extends ScalaServiceVerticle with OidcClient with ConfigDec
   }
 
   private def fetchKeys(): Future[OidcClientError \/ JWKSet] = {
-    OidcHttpClient.fetchKeys(httpClient, s"${oidcServiceConf.path}${oidcServiceConf.jwkEndpoint}")
+    OidcHttpClient.fetchKeys(log, httpClient, s"${oidcServiceConf.path}${oidcServiceConf.jwkEndpoint}")
   }
 
 }
 
 object OidcHttpClient {
-  val log = LoggerFactory.getLogger(this.getClass)
-
-  def fetchKeys(client: HttpClient, endpointPath: String): Future[OidcClientError \/ JWKSet] = {
+  def fetchKeys(log: Logger, client: HttpClient, endpointPath: String): Future[OidcClientError \/ JWKSet] = {
     val promise = Promise.promise[OidcClientError \/ JWKSet]
 
     client.get(endpointPath, (response: HttpClientResponse) => {

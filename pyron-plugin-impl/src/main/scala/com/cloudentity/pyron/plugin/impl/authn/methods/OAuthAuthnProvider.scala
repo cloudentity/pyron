@@ -1,5 +1,7 @@
 package com.cloudentity.pyron.plugin.impl.authn.methods
 
+import java.util.Optional
+
 import com.nimbusds.jwt.JWTClaimsSet
 import io.circe.parser.parse
 import io.circe.Json
@@ -13,6 +15,7 @@ import io.vertx.core.{Future => VxFuture}
 import com.cloudentity.pyron.domain.authn.CloudentityAuthnCtx
 import com.cloudentity.pyron.domain.flow.AuthnCtx
 import com.cloudentity.pyron.domain.http.TargetRequest
+import io.vertx.core.json.JsonObject
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -24,7 +27,7 @@ abstract class AbstractOAuthAuthnProvider extends ScalaServiceVerticle with Auth
   var oidcClient: OidcClient = _
 
   override def initService(): Unit = {
-    oidcClient = createClient(classOf[OidcClient])
+    oidcClient = createClient(classOf[OidcClient], Optional.ofNullable(Option(getConfig()).getOrElse(new JsonObject()).getString("oidcId")))
   }
 
   override def start(start: VxFuture[Void]): Unit = super.start(start)

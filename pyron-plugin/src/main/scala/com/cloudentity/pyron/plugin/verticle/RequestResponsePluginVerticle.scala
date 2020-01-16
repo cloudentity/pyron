@@ -25,7 +25,8 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
   with ResponsePluginService with ValidatePluginService with ConvertOpenApiService with PluginConfValidator[C]
   with PluginRulesExtender[C] with PluginOpenApiConverter[C] with ConfigDecoder {
 
-  val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
+  private lazy val loggerName = this.getClass + Try(vertxServiceAddressPrefixS.filter(_ != name.value).map(":" + _).get).getOrElse("")
+  lazy val log: LoggingWithTracing = LoggingWithTracing.getLogger(loggerName)
   var confCache: Map[Json, C] = Map()
 
     // TO IMPLEMENT
