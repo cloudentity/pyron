@@ -1,7 +1,8 @@
 {
   "registry:request-plugins": {
-    "cors": {
+    "{MODULE_ID-}cors": {
       "main": "com.cloudentity.pyron.plugin.impl.cors.CorsPlugin",
+      "prefix": "$env:?{MODULE_ID-}{PLUGIN_NAME}:string:cors",
       "verticleConfig": {
         "allowCredentials": "$env:?PLUGIN_CORS__ALLOW_CREDENTIALS:boolean",
         "allowedHttpHeaders": "$env:?PLUGIN_CORS__ALLOWED_HTTP_HEADERS:array",

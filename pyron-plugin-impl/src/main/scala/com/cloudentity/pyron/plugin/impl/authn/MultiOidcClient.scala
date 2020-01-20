@@ -2,6 +2,7 @@ package com.cloudentity.pyron.plugin.impl.authn
 
 import com.nimbusds.jose.jwk.JWKSet
 import io.circe.Decoder
+import io.circe.generic.semiauto._
 import com.cloudentity.pyron.domain.Codecs.AnyValDecoder
 import MultiOidcClient._
 import com.cloudentity.pyron.util.ConfigDecoder
@@ -25,7 +26,8 @@ object MultiOidcClient {
   case class IdpConf(host: IdpHost, port: Option[Int], ssl: Option[Boolean], basePath: Option[BasePath],
                      jwkEndpoint: JwkEndpoint, http: Option[JsonObject])
 
-  case class MultiOidcClientConf(jwkReload: Long, idps: List[IdpConf])
+  case class IdpConfigs(configs: List[IdpConf])
+  case class MultiOidcClientConf(jwkReload: Long, idps: IdpConfigs)
 
   implicit lazy val idpHostDecoder: Decoder[IdpHost] = AnyValDecoder(IdpHost)
   implicit lazy val jwkEndpointDecoder: Decoder[JwkEndpoint] = AnyValDecoder(JwkEndpoint)
@@ -33,7 +35,12 @@ object MultiOidcClient {
 }
 
 class MultiOidcClient extends ScalaServiceVerticle with OidcClient with ConfigDecoder {
-  val log = LoggerFactory.getLogger(this.getClass)
+  lazy val log = LoggerFactory.getLogger(this.getClass + vertxServiceAddressPrefixS.map("-"+_).getOrElse(""))
+
+  implicit val IdpConfDecoder: Decoder[IdpConf] = deriveDecoder
+  implicit val IdpConfigsDecoder: Decoder[IdpConfigs] =
+    Decoder.decodeList[IdpConf].or(Decoder.decodeMap[String, IdpConf]
+      .map(_.values.toList)).map(IdpConfigs.apply)
 
   var clients: List[(HttpClient, IdpConf)] = _
   var conf: MultiOidcClientConf = _
@@ -60,7 +67,7 @@ class MultiOidcClient extends ScalaServiceVerticle with OidcClient with ConfigDe
   }
 
   def initClients(): List[(HttpClient, IdpConf)] =
-    conf.idps.map(idp => (initClient(idp), idp))
+    conf.idps.configs.map(idp => (initClient(idp), idp))
 
   def initClient(idpConf: IdpConf): HttpClient = {
     val options = new HttpClientOptions(idpConf.http.getOrElse(new JsonObject()))
@@ -75,7 +82,7 @@ class MultiOidcClient extends ScalaServiceVerticle with OidcClient with ConfigDe
   def fetchAll(): Future[JWKSet] =
     Operation.traverseAndCollect(clients) { case (client, idpCfg) =>
       val endpointPath = s"${idpCfg.basePath.map(_.value).getOrElse("")}${idpCfg.jwkEndpoint.value}"
-      OidcHttpClient.fetchKeys(client, endpointPath).toOperation
+      OidcHttpClient.fetchKeys(log, client, endpointPath).toOperation
     }.map { case (errors, jwks) =>
       logErrors(errors)
       flattenSets(jwks)

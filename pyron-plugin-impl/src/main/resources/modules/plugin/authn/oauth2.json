@@ -1,11 +1,12 @@
 {
   "registry:system": {
-    "oidc-client": {
+    "oidc-{MODULE_ID-}client": {
       "main": "com.cloudentity.pyron.plugin.impl.authn.MultiOidcClient",
+      "prefix": "{MODULE_ID}",
       "verticleConfig": {
-        "jwkReload": 60000,
-        "idps": [
-          {
+        "jwkReload": "$env:?PLUGIN_AUTHN_OAUTH2__RELOAD_PERIOD:int:60000",
+        "idps": {
+          "default": {
             "host": "$env:PLUGIN_AUTHN_OAUTH2__SERVER_HOST:string",
             "port": "$env:PLUGIN_AUTHN_OAUTH2__SERVER_PORT:int",
             "ssl": "$env:PLUGIN_AUTHN_OAUTH2__SERVER_SSL:boolean",
@@ -20,24 +21,29 @@
               }
             }
           }
-        ]
+        }
       }
     }
   },
-  "plugin:authn": {
+  "plugin:{MODULE_ID-}authn": {
     "methodsMapping": {
-      "oauth2": "oauthJWTAuthnProvider"
+      "oauth2": "{MODULE_ID-}oauthJWTAuthnProvider"
     },
     "entitiesMapping": {
       "oauth2": {
-        "jwt": "jwtContentProvider"
+        "jwt": "{MODULE_ID-}jwtContentProvider"
       }
     }
   },
-  "registry:authn-method-providers": {
-    "oauthJWTAuthnProvider": { "main": "com.cloudentity.pyron.plugin.impl.authn.methods.OAuthAuthorizationCodeAuthnProvider" }
+  "registry:{MODULE_ID-}authn-method-providers": {
+    "{MODULE_ID-}oauthJWTAuthnProvider": {
+      "main": "com.cloudentity.pyron.plugin.impl.authn.methods.OAuthAuthorizationCodeAuthnProvider",
+      "verticleConfig": {
+        "oidcId": "{MODULE_ID}"
+      }
+    }
   },
-  "registry:authn-entity-providers": {
-    "jwtContentProvider": { "main": "com.cloudentity.pyron.plugin.impl.authn.entities.JWTContentProvider" }
+  "registry:{MODULE_ID-}authn-entity-providers": {
+    "{MODULE_ID-}jwtContentProvider": { "main": "com.cloudentity.pyron.plugin.impl.authn.entities.JWTContentProvider" }
   }
 }
