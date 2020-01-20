@@ -1,9 +1,9 @@
 package com.cloudentity.pyron.plugin.bus
 
-import com.cloudentity.pyron.domain.flow.{PluginConf, ResponseCtx}
+import com.cloudentity.pyron.domain.flow.{ApiGroupPluginConf, ResponseCtx}
 
 object response {
-  case class ApplyRequest(ctx: ResponseCtx, conf: PluginConf)
+  case class ApplyRequest(ctx: ResponseCtx, conf: ApiGroupPluginConf)
 
   sealed trait ApplyResponse
     case class Continue(ctx: ResponseCtx) extends ApplyResponse

@@ -1,5 +1,13 @@
 {
-  "requiredModules": ["http-server", "http-client", "proxy-headers", "access-log"],
+  "requiredModules": [
+    "http-server", "http-client", "proxy-headers", "access-log",
+    {
+      "collect": "tree",
+      "path": "apiGroups",
+      "key": "_plugins",
+      "idWithPath": true
+    }
+  ],
   "modules": "$env:?MODULES:array",
   "app": {
     "alivePath": "$env:?ALIVE_PATH:string"

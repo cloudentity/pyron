@@ -3,8 +3,8 @@ package com.cloudentity.pyron.domain.rule
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.CallOpts
 
-case class RequestPluginsConf(pre: List[PluginConf], endpoint: List[PluginConf], post: List[PluginConf]) extends PluginsConf
-case class ResponsePluginsConf(pre: List[PluginConf], endpoint: List[PluginConf], post: List[PluginConf]) extends PluginsConf
+case class RequestPluginsConf(pre: List[ApiGroupPluginConf], endpoint: List[ApiGroupPluginConf], post: List[ApiGroupPluginConf]) extends PluginsConf
+case class ResponsePluginsConf(pre: List[ApiGroupPluginConf], endpoint: List[ApiGroupPluginConf], post: List[ApiGroupPluginConf]) extends PluginsConf
 
 case class RuleConf(
   endpointName: Option[String],

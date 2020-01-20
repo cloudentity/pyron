@@ -1,11 +1,17 @@
 package com.cloudentity.pyron.acceptance
 
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsStore}
+import com.cloudentity.pyron.domain.flow.{PluginName, ResponseCtx}
+import com.cloudentity.pyron.plugin.config.ValidateResponse
+import com.cloudentity.pyron.plugin.verticle.ResponsePluginVerticle
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
+import io.circe.Decoder
 import io.restassured.RestAssured._
 import io.vertx.core.{Future => VxFuture}
 import io.vertx.ext.unit.TestContext
 import org.junit.Test
+
+import scala.concurrent.Future
 
 class ApiHandlerGroupsAcceptanceTest extends ApiHandlerRulesAcceptanceTest {
   override def getMetaConfPath() = "src/test/resources/acceptance/api-handler/meta-config-api-groups.json"
@@ -106,9 +112,76 @@ class ApiHandlerGroupsAcceptanceTest extends ApiHandlerRulesAcceptanceTest {
     .`then`()
       .statusCode(404)
   }
+
+  @Test
+  def shouldUseApiGroupPlugin(ctx: TestContext): Unit = {
+    mockOnPath(targetService)("/should-set-response-header", resp().withStatusCode(200))
+
+    // we make the call twice to detect plugins binding to the same bus address
+    given()
+    .when()
+      .get("/plugins/a/should-set-response-header")
+    .`then`()
+      .statusCode(200)
+      .header("X-A", "a")
+
+    given()
+      .when()
+      .get("/plugins/a/should-set-response-header")
+      .`then`()
+      .statusCode(200)
+      .header("X-A", "a")
+
+    given()
+      .when()
+      .get("/plugins/b/should-set-response-header")
+      .`then`()
+      .statusCode(200)
+      .header("X-B", "b")
+
+    given()
+    .when()
+      .get("/plugins/b/should-set-response-header")
+    .`then`()
+      .statusCode(200)
+      .header("X-B", "b")
+  }
+
+  @Test
+  def shouldOverwriteApiGroupPlugin(ctx: TestContext): Unit = {
+    mockOnPath(targetService)("/should-overwrite-api-group-plugin", resp().withStatusCode(200))
+
+    // we make the call twice to detect plugins binding to the same bus address
+    given()
+    .when()
+      .get("/plugins/overwrite/a/should-overwrite-api-group-plugin")
+    .`then`()
+      .statusCode(200)
+      .header("X-A", "a")
+
+    given()
+    .when()
+      .get("/plugins/overwrite/b/should-overwrite-api-group-plugin")
+    .`then`()
+      .statusCode(200)
+      .header("X-B", "b")
+  }
 }
 
 class TestApiGroupsStore(apiGroups: List[ApiGroup]) extends ScalaServiceVerticle with ApiGroupsStore {
   override def getGroups(): VxFuture[List[ApiGroup]] = VxFuture.succeededFuture(apiGroups)
   override def getGroupConfs(): VxFuture[List[ApiGroupConf]] = VxFuture.succeededFuture(Nil)
+}
+
+class ResponseHeaderPlugin extends ResponsePluginVerticle[Unit] {
+  override def name: PluginName = PluginName("responseHeader")
+
+  override def apply(responseCtx: ResponseCtx, conf: Unit): Future[ResponseCtx] =
+    Future.successful {
+      responseCtx.modifyResponse(_.modifyHeaders(_.setHeaders(Map(getConfig().getString("headerName") -> getConfig().getString("headerValue")))))
+    }
+
+  override def validate(conf: Unit): ValidateResponse = ValidateResponse.ok()
+
+  override def confDecoder: Decoder[Unit] = Decoder.decodeUnit
 }

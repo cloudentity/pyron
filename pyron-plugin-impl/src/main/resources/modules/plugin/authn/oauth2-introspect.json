@@ -1,16 +1,16 @@
 {
-  "plugin:authn": {
+  "plugin:{MODULE_ID-}authn": {
     "methodsMapping": {
-      "oauth2-introspect": "oauthIntrospectJWTAuthnProvider"
+      "oauth2-introspect": "{MODULE_ID-}oauthIntrospectJWTAuthnProvider"
     },
     "entitiesMapping": {
       "oauth2-introspect": {
-        "jwt": "jwtContentProvider"
+        "jwt": "{MODULE_ID-}jwtContentProvider"
       }
     }
   },
-  "registry:authn-method-providers": {
-    "oauthIntrospectJWTAuthnProvider": {
+  "registry:{MODULE_ID-}authn-method-providers": {
+    "{MODULE_ID-}oauthIntrospectJWTAuthnProvider": {
       "main": "com.cloudentity.pyron.plugin.impl.authn.methods.OAuthTokenIntrospectionAuthnProvider",
       "verticleConfig": {
         "endpointPath": "$env:PLUGIN_AUTHN_OAUTH2_INTROSPECT__INTROSPECT_ENDPOINT:string",
@@ -41,7 +41,7 @@
       }
     }
   },
-  "registry:authn-entity-providers": {
-    "jwtContentProvider": { "main": "com.cloudentity.pyron.plugin.impl.authn.entities.JWTContentProvider" }
+  "registry:{MODULE_ID-}authn-entity-providers": {
+    "{MODULE_ID-}jwtContentProvider": { "main": "com.cloudentity.pyron.plugin.impl.authn.entities.JWTContentProvider" }
   }
 }

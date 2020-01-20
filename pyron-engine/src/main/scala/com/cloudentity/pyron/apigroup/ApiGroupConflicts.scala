@@ -1,6 +1,5 @@
 package com.cloudentity.pyron.apigroup
 
-import com.cloudentity.pyron.apigroup.ApiGroupReader.ApiGroupConfUnresolved
 import com.cloudentity.pyron.domain.flow.{BasePath, DomainPattern, GroupMatchCriteria}
 
 object ApiGroupConflicts {

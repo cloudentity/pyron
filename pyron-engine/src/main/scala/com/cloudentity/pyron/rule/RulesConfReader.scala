@@ -3,7 +3,7 @@ package com.cloudentity.pyron.rule
 import io.circe._
 import io.circe.parser._
 import com.cloudentity.pyron.domain._
-import com.cloudentity.pyron.domain.flow.{DiscoverableServiceRule, EndpointMatchCriteria, PathMatching, PathPattern, PathPrefix, PluginConf, PluginName, ProxyServiceRule, RewriteMethod, RewritePath, ServiceClientName, StaticServiceRule, TargetHost, TargetServiceRule}
+import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.CallOpts
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import io.circe.generic.semiauto._
@@ -93,10 +93,10 @@ object RulesConfReader {
 
   import codecs._
 
-  def read(json: String): ReadRulesError \/ List[RuleConfWithPlugins] =
+  def read(json: String, addresses: Map[PluginName, PluginAddressPrefix]): ReadRulesError \/ List[RuleConfWithPlugins] =
     decodeRules(json) match {
       case Right(groupConfs) =>
-        composeRuleConfs(groupConfs) match {
+        composeRuleConfs(groupConfs, addresses) match {
           case Success(rules)     => \/-(rules)
           case Failure(errorMsgs) => -\/(RuleErrors(errorMsgs))
         }
@@ -116,22 +116,22 @@ object RulesConfReader {
     }
 
   // returns list of Rules on success or non-empty list of missing fields
-  def composeRuleConfs(serviceConfs: List[ServiceRulesConf]): ValidationNel[String, List[RuleConfWithPlugins]] = {
+  def composeRuleConfs(serviceConfs: List[ServiceRulesConf], addresses: Map[PluginName, PluginAddressPrefix]): ValidationNel[String, List[RuleConfWithPlugins]] = {
     val validations: List[ValidationNel[String, RuleConfWithPlugins]] =
       for {
         (serviceConf, i)  <- serviceConfs.zipWithIndex
         (endpointConf, j) <- serviceConf.endpoints.zipWithIndex
       } yield {
-        composeRuleConf(ServiceConf(serviceConf.default, serviceConf.request, serviceConf.response), endpointConf)
+        composeRuleConf(addresses, ServiceConf(serviceConf.default, serviceConf.request, serviceConf.response), endpointConf)
           .leftMap(errorMsgs => errorMsgs.map(errorMsg => s"Service $i, endpoint $j,${endpointConf.rule.endpointName.map(n => s" '$n'").getOrElse("")} $errorMsg"))
       }
 
     validations.sequenceU // IntelliJ has problems with understanding sequenceU - it actually compiles
   }
 
-  def composeRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf): ValidationNel[String, RuleConfWithPlugins] = {
-    val requestPluginsConf = composeRequestPluginsConf(defaultConf, endpointConf)
-    val responsePluginConfs = composeResponsePluginsConf(defaultConf, endpointConf)
+  def composeRuleConf(addresses: Map[PluginName, PluginAddressPrefix], defaultConf: ServiceConf, endpointConf: EndpointConf): ValidationNel[String, RuleConfWithPlugins] = {
+    val requestPluginsConf = composeRequestPluginsConf(addresses, defaultConf, endpointConf)
+    val responsePluginConfs = composeResponsePluginsConf(addresses, defaultConf, endpointConf)
     val endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName)
     val pathPrefix = endpointConf.rule.pathPrefix.orElse(defaultConf.rule.pathPrefix).getOrElse(PathPrefix(""))
     val dropPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true)
@@ -174,13 +174,16 @@ object RulesConfReader {
   def readCallOptsAttribute[A](opts: CallOpts, fallback: Option[CallOpts], read: CallOpts => Option[A]): Option[A] =
     read(opts).orElse(fallback.flatMap(read))
 
-  def composeRequestPluginsConf(defaultConf: ServiceConf, endpointConf: EndpointConf): RequestPluginsConf = {
+  def composeRequestPluginsConf(addresses: Map[PluginName, PluginAddressPrefix], defaultConf: ServiceConf, endpointConf: EndpointConf): RequestPluginsConf = {
     val preRequestPluginConfs  = composeFlow(_.request.flatMap(_.preFlow), _.request.flatMap(_.preFlow))(defaultConf, endpointConf)
     val postRequestPluginConfs = composeFlow(_.request.flatMap(_.postFlow), _.request.flatMap(_.postFlow))(defaultConf, endpointConf)
     val requestPluginConfs     = endpointConf.rule.requestPlugins.orElse(defaultConf.rule.requestPlugins).getOrElse(Nil)
 
-    RequestPluginsConf(preRequestPluginConfs, requestPluginConfs, postRequestPluginConfs)
+    RequestPluginsConf(preRequestPluginConfs.map(toApiGroupPluginConf(addresses)), requestPluginConfs.map(toApiGroupPluginConf(addresses)), postRequestPluginConfs.map(toApiGroupPluginConf(addresses)))
   }
+
+  def toApiGroupPluginConf(addresses: Map[PluginName, PluginAddressPrefix])(conf: PluginConf): ApiGroupPluginConf =
+    ApiGroupPluginConf(conf.name, conf.conf, addresses.get(conf.name))
 
   def composeFlow(f: ServiceConf => Option[ServiceFlowConf], g: EndpointConf => Option[EndpointFlowConf])(sc: ServiceConf, ec: EndpointConf): List[PluginConf] =
     composePluginConfs(f(sc).getOrElse(ServiceFlowConf(Nil)), g(ec).getOrElse(EndpointFlowConf(None, None)))
@@ -189,12 +192,12 @@ object RulesConfReader {
     if (endpointFlow.disableAllPlugins.getOrElse(false)) Nil
     else serviceFlow.plugins.filter(filterPlugin(endpointFlow.disablePlugins.getOrElse(Nil)))
 
-  def composeResponsePluginsConf(defaultConf: ServiceConf, endpointConf: EndpointConf): ResponsePluginsConf = {
+  def composeResponsePluginsConf(addresses: Map[PluginName, PluginAddressPrefix], defaultConf: ServiceConf, endpointConf: EndpointConf): ResponsePluginsConf = {
     val preResponsePluginConfs  = composeFlow(_.response.flatMap(_.preFlow), _.response.flatMap(_.preFlow))(defaultConf, endpointConf)
     val postResponsePluginConfs = composeFlow(_.response.flatMap(_.postFlow), _.response.flatMap(_.postFlow))(defaultConf, endpointConf)
     val responsePluginConfs     = endpointConf.rule.responsePlugins.orElse(defaultConf.rule.responsePlugins).getOrElse(Nil)
 
-    ResponsePluginsConf(preResponsePluginConfs, responsePluginConfs, postResponsePluginConfs)
+    ResponsePluginsConf(preResponsePluginConfs.map(toApiGroupPluginConf(addresses)), responsePluginConfs.map(toApiGroupPluginConf(addresses)), postResponsePluginConfs.map(toApiGroupPluginConf(addresses)))
   }
 
   private def filterPlugin(disabled: List[PluginName])(conf: PluginConf): Boolean =
