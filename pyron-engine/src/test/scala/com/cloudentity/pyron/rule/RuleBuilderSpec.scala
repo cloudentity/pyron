@@ -45,7 +45,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
   def pluginConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))), None)
 
   "RuleBuilder.build" should {
-    val ruleConf = RuleConf(None, EndpointMatchCriteria(HttpMethod.GET, PathMatching("".r, Nil, PathPrefix(""), "")), StaticServiceRule(TargetHost(""), 9000, false), true, None, None, None, None, Nil, None, ExtRuleConf(None))
+    val ruleConf = RuleConf(None, EndpointMatchCriteria(HttpMethod.GET, PathMatching("".r, Nil, PathPrefix(""), "")), StaticServiceRule(TargetHost(""), 9000, false), true, None, None, None, None, Nil, None, None, None, ExtRuleConf(None))
     "build Rule without plugins" in {
       // given
       val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, Nil, Nil), ResponsePluginsConf(Nil, Nil, Nil))

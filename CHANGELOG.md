@@ -5,6 +5,8 @@
 - ResponseCtx.targetResponse (original target service response without any transformations)
 - plugins per api-group
 - MultiOidcClient support for oidc-server configs in map format
+- request body piping, buffering, dropping
+- request body max size limit
 
 ### Changed
 - RoutingCtx moved to flow Properties
@@ -12,6 +14,9 @@
 - vertx-tools upgraded to 1.1.0
 - plugin logger names contain bus address prefix
 - 'authn' and 'cors' plugin modules adjusted for use in api-groups
+
+### Fixed
+- multipart Content-Type handling
 
 ### Removed
 - CorrelationCtx

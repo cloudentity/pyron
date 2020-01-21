@@ -23,6 +23,7 @@ object Responses {
     val targetUnreachable             = Error(500, ErrorBody("Target.Unreachable", "Could not call target service"))
     val responseTimeout               = Error(504, ErrorBody("Response.Timeout", "Call to target service timed-out"))
     val systemTimeout                 = Error(504, ErrorBody("System.Timeout", "Request processing timed-out"))
+    val requestBodyTooLarge           = Error(413, ErrorBody("Rule.RequestBodyTooLarge", "Request body is too large"))
     val unexpected                    = Error(500, ErrorBody("System.Unexpected","Sorry, unexpected error occurred"))
   }
 }
