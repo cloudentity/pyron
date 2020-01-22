@@ -37,7 +37,7 @@ object ApiRouter extends FutureConversions {
 
     router.route("/*").handler { ctx =>
       ctx.request().pause()
-      apiHandler.handle(ctx)
+      apiHandler.handle(conf.defaultRequestBodyMaxSize, ctx)
     }
     router.exceptionHandler { ex => log.error("Unhandled exception", ex) }
     router

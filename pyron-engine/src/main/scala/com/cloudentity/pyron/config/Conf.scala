@@ -23,7 +23,7 @@ object Conf {
     docsEnabled: Option[Boolean],
     proxyHeaders: Option[ProxyHeaderConf],
     accessLog: Option[AccessLogGlobalConf],
-    defaultRequestBodyMaxSize: Option[Long],
+    defaultRequestBodyMaxSize: Option[Int],
     openApi: Option[OpenApiConf]
   )
 
