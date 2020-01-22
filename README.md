@@ -545,15 +545,15 @@ By default, Pyron sends target host in Host header to target service, set `prese
 |:---------------------|:-----------------------------------------------------------------|
 | requestBodyMaxSize   | max number of kilobytes transferred to target service (optional) |
 
-> NOTE
+> NOTE<br/>
 > If maximum body size is reached then Pyron responds to the client with `413` status code.
 
-> NOTE
+> NOTE<br/>
 > If the request body is using `chunked` Transfer-Encoding (content length is not known upfront) and `requestBody` is `stream`
 > then the body streaming to target service stops when `requestBodyMaxSize` kilobytes has been streamed.
 > Otherwise no data is sent to target service if `requestBodyMaxSize` limit would be reached.
 
-> NOTE
+> NOTE<br/>
 > Set DEFAULT_REQUEST_BODY_MAX_SIZE env variable with default `requestBodyMaxSize` for all routing rules.
 
 <a id="config-api-groups"></a>
