@@ -5,7 +5,7 @@
 - ResponseCtx.targetResponse (original target service response without any transformations)
 - plugins per api-group
 - MultiOidcClient support for oidc-server configs in map format
-- request body piping, buffering, dropping
+- request body streaming, buffering, dropping
 - request body max size limit
 
 ### Changed
@@ -17,6 +17,7 @@
 
 ### Fixed
 - multipart Content-Type handling
+- copying all header values per key
 
 ### Removed
 - CorrelationCtx

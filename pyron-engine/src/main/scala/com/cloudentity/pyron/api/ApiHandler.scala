@@ -1,15 +1,15 @@
 package com.cloudentity.pyron.api
 
 import com.cloudentity.pyron.api.Responses.Errors
-import com.cloudentity.pyron.api.body.{BodyBuffer, ContentLengthUtil, RequestBodyTooLargeException}
+import com.cloudentity.pyron.api.body.{BodyBuffer, ContentLengthUtil, RequestBodyTooLargeException, SizeLimitedBodyStream}
 import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
-import io.vertx.core.streams.Pipe
+import io.vertx.core.streams.{ReadStream, WriteStream}
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow.{FlowFailure, _}
 import com.cloudentity.pyron.domain.http._
-import com.cloudentity.pyron.domain.rule.{BufferBody, DropBody, PipeBody, RuleConf}
+import com.cloudentity.pyron.domain.rule.{BufferBody, DropBody, StreamBody, RuleConf}
 import com.cloudentity.pyron.plugin.PluginFunctions
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
 import com.cloudentity.pyron.rule.{ApiGroupMatcher, Rule, RuleMatcher, RulesStore}
@@ -22,7 +22,7 @@ import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.config.ConfigChange
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.{MultiMap, Future => VxFuture}
+import io.vertx.core.{AsyncResult, Handler, MultiMap, Future => VxFuture}
 import io.vertx.core.eventbus.ReplyException
 import io.vertx.ext.web.RoutingContext
 
@@ -35,7 +35,7 @@ import scala.collection.JavaConverters._
 
 trait ApiHandler {
   @VertxEndpoint
-  def handle(ctx: RoutingContext): VxFuture[Unit]
+  def handle(defaultRequestBodyMaxSize: Option[Int], ctx: RoutingContext): VxFuture[Unit]
 }
 
 class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGroupsChangeListener {
@@ -78,7 +78,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
         targetClient = newTargetClient
       }
 
-  def handle(ctx: RoutingContext): VxFuture[Unit] = {
+  def handle(defaultRequestBodyMaxSize: Option[Int], ctx: RoutingContext): VxFuture[Unit] = {
     val vertxRequest   = ctx.request()
     val vertxResponse  = ctx.response()
     val tracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
@@ -111,7 +111,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
           log.debug(tracingContext, s"Found ${ruleWithPathParams.rule} for, request='$requestSignature'")
 
           for {
-            initRequestCtx       <- toRequestCtx(ctx, tracingContext, proxyHeaders, rule.conf, apiGroup.matchCriteria.basePathResolved, pathParams)
+            initRequestCtx       <- toRequestCtx(defaultRequestBodyMaxSize, ctx, tracingContext, proxyHeaders, rule.conf, apiGroup.matchCriteria.basePathResolved, pathParams)
             finalRequestCtx      <- applyRequestPlugins(initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)), rule.requestPlugins)
 
             _                     = ApiRequestHandler.setAuthnCtx(ctx, finalRequestCtx.authnCtx)
@@ -168,7 +168,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       }
 
   def callTarget(tracing: TracingContext, ctx: RequestCtx, callOpts: Option[CallOpts]): Future[(ApiResponse, Boolean)] =
-    targetClient.call(tracing, ctx.request, ctx.bodyPipeOpt, callOpts).map {
+    targetClient.call(tracing, ctx.request, ctx.bodyStreamOpt, callOpts).map {
       case \/-(response) => (toApiResponse(response), false)
       case -\/(ex)       => (mapTargetClientException(tracing, ex), true)
     }
@@ -255,6 +255,8 @@ object ApiResponseHandler {
   def mapTargetClientException(tracing: TracingContext, ex: Throwable): ApiResponse =
     if (ex.getMessage().contains("timeout") && ex.getMessage().contains("exceeded")) {
       Errors.responseTimeout.toApiResponse()
+    } else if (ex.isInstanceOf[RequestBodyTooLargeException]) {
+      Errors.requestBodyTooLarge.toApiResponse()
     } else {
       log.error(tracing, s"Could not call target service", ex)
       Errors.targetUnreachable.toApiResponse()
@@ -328,22 +330,30 @@ object ApiResponseHandler {
 object HttpConversions {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  def toRequestCtx(ctx: RoutingContext, tracingCtx: TracingContext, proxyHeaders: ProxyHeaders, ruleConf: RuleConf, basePath: BasePath, pathParams: PathParams)(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
+  def toRequestCtx(defaultRequestBodyMaxSize: Option[Int], ctx: RoutingContext, tracingCtx: TracingContext, proxyHeaders: ProxyHeaders, ruleConf: RuleConf, basePath: BasePath, pathParams: PathParams)(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
     val req = ctx.request()
     val contentLengthOpt: Option[Int] = Try[Int](java.lang.Integer.valueOf(req.getHeader("Content-Length"))).toOption
+    val requestBodyMaxSize = ruleConf.requestBodyMaxSize.orElse(defaultRequestBodyMaxSize)
 
-    val bodyFut: Future[(Option[Pipe[Buffer]], Option[Buffer])] =
-      if (ContentLengthUtil.isBodyLimitExceeded(contentLengthOpt.getOrElse(-1), ruleConf.requestBodyMaxSize)) {
+    val bodyFut: Future[(Option[ReadStream[Buffer]], Option[Buffer])] =
+      if (ContentLengthUtil.isBodyLimitExceeded(contentLengthOpt.getOrElse(-1), requestBodyMaxSize)) {
         Future.failed(new RequestBodyTooLargeException())
       } else {
         ruleConf.requestBody.getOrElse(BufferBody) match {
-          case BufferBody => BodyBuffer.bufferBody(req, contentLengthOpt, ruleConf.requestBodyMaxSize)
-          case PipeBody   => Future.successful((Some(req.pipe()), None))
+          case BufferBody => BodyBuffer.bufferBody(req, contentLengthOpt, requestBodyMaxSize)
+          case StreamBody   =>
+            requestBodyMaxSize match {
+              case Some(maxSize) =>
+                Future.successful((Some(SizeLimitedBodyStream(ctx.request(), maxSize)), None))
+              case None =>
+                Future.successful((Some(req), None))
+            }
+
           case DropBody   => Future.successful((None, None))
         }
       }
 
-    bodyFut.map { case (bodyPipeOpt, bodyOpt) =>
+    bodyFut.map { case (bodyStreamOpt, bodyOpt) =>
       val original = toOriginalRequest(req, pathParams, bodyOpt)
       val targetRequest =
         TargetRequest(
@@ -362,7 +372,7 @@ object HttpConversions {
       RequestCtx(
         tracingCtx = tracingCtx,
         request = targetRequestWithDroppedBody,
-        bodyPipeOpt = bodyPipeOpt,
+        bodyStreamOpt = bodyStreamOpt,
         original = original,
         proxyHeaders = proxyHeaders,
         properties = Properties(RoutingCtxData.propertiesKey -> ctx),

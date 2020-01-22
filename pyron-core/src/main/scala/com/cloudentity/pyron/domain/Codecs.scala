@@ -4,7 +4,7 @@ import java.time.Duration
 
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
-import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, DropBody, ExtRuleConf, OpenApiRuleConf, PipeBody, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
+import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, DropBody, ExtRuleConf, OpenApiRuleConf, StreamBody, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.CursorOp.DownField
 import io.circe.Decoder.Result
@@ -150,13 +150,13 @@ object Codecs {
 
   implicit lazy val BodyHandlingEnc: Encoder[BodyHandling] = Encoder.encodeString.contramap {
     case BufferBody => "buffer"
-    case PipeBody   => "pipe"
+    case StreamBody => "stream"
     case DropBody   => "drop"
   }
 
   implicit lazy val BodyHandlingDec: Decoder[BodyHandling] = Decoder.decodeString.emap {
     case "buffer" => Right(BufferBody)
-    case "pipe"   => Right(PipeBody)
+    case "stream" => Right(StreamBody)
     case "drop"   => Right(DropBody)
     case x        => Left(s"Unsupported body handling: '$x'")
   }

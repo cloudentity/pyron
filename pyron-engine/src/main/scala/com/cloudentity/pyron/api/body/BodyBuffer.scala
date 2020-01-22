@@ -3,15 +3,15 @@ package com.cloudentity.pyron.api.body
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpServerRequest
 import io.vertx.core.impl.NoStackTraceThrowable
-import io.vertx.core.streams.Pipe
+import io.vertx.core.streams.ReadStream
 
 import scala.concurrent.{Future, Promise}
 
 class RequestBodyTooLargeException extends NoStackTraceThrowable("Request body too large")
 
 object BodyBuffer {
-  def bufferBody(req: HttpServerRequest, contentLengthOpt: Option[Int], maxSizeOpt: Option[Int]): Future[(Option[Pipe[Buffer]], Option[Buffer])] = {
-    val p = Promise[(Option[Pipe[Buffer]], Option[Buffer])]
+  def bufferBody(req: HttpServerRequest, contentLengthOpt: Option[Int], maxSizeOpt: Option[Int]): Future[(Option[ReadStream[Buffer]], Option[Buffer])] = {
+    val p = Promise[(Option[ReadStream[Buffer]], Option[Buffer])]
     val bodyBuf = new BodyBuffer(contentLengthOpt, maxSizeOpt.getOrElse(Int.MaxValue))
     req.handler { buf =>
       if (bodyBuf.isFull()) {

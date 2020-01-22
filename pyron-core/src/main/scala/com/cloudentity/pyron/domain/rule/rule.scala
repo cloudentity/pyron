@@ -8,7 +8,7 @@ case class ResponsePluginsConf(pre: List[ApiGroupPluginConf], endpoint: List[Api
 
 sealed trait BodyHandling
   case object BufferBody extends BodyHandling
-  case object PipeBody extends BodyHandling
+  case object StreamBody extends BodyHandling
   case object DropBody extends BodyHandling
 
 case class RuleConf(

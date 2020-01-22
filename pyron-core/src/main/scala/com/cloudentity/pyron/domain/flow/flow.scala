@@ -9,7 +9,7 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.json.JsonObject
 import io.vertx.core.http.HttpServerRequest
-import io.vertx.core.streams.Pipe
+import io.vertx.core.streams.ReadStream
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -193,7 +193,7 @@ sealed trait FlowFailure
 
 case class RequestCtx(
   request: TargetRequest,
-  bodyPipeOpt: Option[Pipe[Buffer]],
+  bodyStreamOpt: Option[ReadStream[Buffer]],
   original: OriginalRequest,
   properties: Properties = Properties(),
   tracingCtx: TracingContext,
