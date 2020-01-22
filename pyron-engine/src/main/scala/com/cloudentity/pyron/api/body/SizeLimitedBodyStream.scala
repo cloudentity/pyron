@@ -6,10 +6,7 @@ import io.vertx.core.streams.ReadStream
 
 object SizeLimitedBodyStream {
 
-  /**
-   * maxSize in kilobytes
-   */
-  def apply(from: ReadStream[Buffer], maxSize: Long): ReadStream[Buffer] = {
+  def apply(from: ReadStream[Buffer], maxSizeKBs: Long): ReadStream[Buffer] = {
     new ReadStream[Buffer] {
       var exHandler: Handler[Throwable] = null
       var size = 0
@@ -19,7 +16,7 @@ object SizeLimitedBodyStream {
         from.handler { buf =>
           if (!failed) { // still 'from' produces items
             size += buf.length()
-            if (size >> 10 > maxSize) { // size / 1024 > maxSize
+            if (size >> 10 > maxSizeKBs) { // size / 1024 > maxSize
               failed = true
               exHandler.handle(new RequestBodyTooLargeException)
             } else {

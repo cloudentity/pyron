@@ -33,7 +33,7 @@ object BodyBuffer {
   }
 }
 
-class BodyBuffer(contentLengthOpt: Option[Int], maxSize: Int) {
+class BodyBuffer(contentLengthOpt: Option[Int], maxSizeKBs: Int) {
   val DEFAULT_INITIAL_BODY_BUFFER_SIZE = 1024
   val MAX_PREALLOCATED_BODY_BUFFER_BYTES = 65535
 
@@ -48,7 +48,7 @@ class BodyBuffer(contentLengthOpt: Option[Int], maxSize: Int) {
   var full = false
 
   def canFit(buf: Buffer): Boolean =
-    (buf.length() + buffer.length()) >> 10 < maxSize
+    (buf.length() + buffer.length()) >> 10 < maxSizeKBs
 
   def append(buf: Buffer): Unit =
     buffer.appendBuffer(buf)
