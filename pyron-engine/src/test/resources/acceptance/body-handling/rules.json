@@ -20,6 +20,11 @@
           "pathPattern": "/upload/stream/limit",
           "requestBody": "stream",
           "requestBodyMaxSize": 1
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/upload/drop",
+          "requestBody": "drop"
         }
       ]
     }

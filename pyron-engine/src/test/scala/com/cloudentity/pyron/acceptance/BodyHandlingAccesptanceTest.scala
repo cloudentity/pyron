@@ -1,19 +1,11 @@
 package com.cloudentity.pyron.acceptance
 
-import java.io.{ByteArrayInputStream, File}
-import java.nio.charset.Charset
-
 import com.cloudentity.pyron.PyronAcceptanceTest
 import com.cloudentity.pyron.util.MockUtils
 import io.restassured.RestAssured.`given`
-import io.restassured.builder.RequestSpecBuilder
-import io.restassured.config.{ConnectionConfig, EncoderConfig, HttpClientConfig, MultiPartConfig, RestAssuredConfig}
-import io.restassured.http.ContentType
 import io.vertx.core.http.HttpClientOptions
 import io.vertx.ext.unit.TestContext
-import org.apache.http.client.HttpClient
-import org.apache.http.impl.client.DefaultHttpClient
-import org.junit.{After, Assert, Before, Test}
+import org.junit.{After, Before, Test}
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
@@ -151,5 +143,19 @@ class BodyHandlingAccesptanceTestextends extends PyronAcceptanceTest with MockUt
       ctx.fail(ex)
       async.complete()
     }.end(body1025Bytes)
+  }
+
+  @Test
+  def testDrop(): Unit = {
+    targetService
+      .when(request().withMethod("POST").withPath("/upload/drop").withBody(""))
+      .respond(response.withStatusCode(200))
+
+    given()
+      .body(body1024Bytes)
+      .when()
+      .post("/upload/drop")
+      .`then`()
+      .statusCode(200)
   }
 }
