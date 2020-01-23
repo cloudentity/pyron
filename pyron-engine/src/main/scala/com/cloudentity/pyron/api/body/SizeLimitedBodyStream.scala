@@ -1,12 +1,13 @@
 package com.cloudentity.pyron.api.body
 
+import com.cloudentity.pyron.domain.rule.Kilobytes
 import io.vertx.core.Handler
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.streams.ReadStream
 
 object SizeLimitedBodyStream {
 
-  def apply(from: ReadStream[Buffer], maxSizeKBs: Long): ReadStream[Buffer] = {
+  def apply(from: ReadStream[Buffer], maxSize: Kilobytes): ReadStream[Buffer] = {
     new ReadStream[Buffer] {
       var exHandler: Handler[Throwable] = null
       var size = 0
@@ -16,7 +17,7 @@ object SizeLimitedBodyStream {
         from.handler { buf =>
           if (!failed) { // still 'from' produces items
             size += buf.length()
-            if (size >> 10 > maxSizeKBs) { // size / 1024 > maxSize
+            if (size > maxSize.bytes) {
               failed = true
               exHandler.handle(new RequestBodyTooLargeException)
             } else {

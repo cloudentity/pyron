@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.api
 
 import com.cloudentity.pyron.api.Responses.Errors
-import com.cloudentity.pyron.api.body.{BodyBuffer, ContentLengthUtil, RequestBodyTooLargeException, SizeLimitedBodyStream}
+import com.cloudentity.pyron.api.body.{BodyBuffer, BodyLimit, RequestBodyTooLargeException, SizeLimitedBodyStream}
 import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
 import io.vertx.core.streams.{ReadStream, WriteStream}
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
@@ -9,7 +9,7 @@ import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow.{FlowFailure, _}
 import com.cloudentity.pyron.domain.http._
-import com.cloudentity.pyron.domain.rule.{BufferBody, DropBody, StreamBody, RuleConf}
+import com.cloudentity.pyron.domain.rule.{BufferBody, DropBody, Kilobytes, RuleConf, StreamBody}
 import com.cloudentity.pyron.plugin.PluginFunctions
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
 import com.cloudentity.pyron.rule.{ApiGroupMatcher, Rule, RuleMatcher, RulesStore}
@@ -35,7 +35,7 @@ import scala.collection.JavaConverters._
 
 trait ApiHandler {
   @VertxEndpoint
-  def handle(defaultRequestBodyMaxSize: Option[Int], ctx: RoutingContext): VxFuture[Unit]
+  def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit]
 }
 
 class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGroupsChangeListener {
@@ -78,7 +78,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
         targetClient = newTargetClient
       }
 
-  def handle(defaultRequestBodyMaxSize: Option[Int], ctx: RoutingContext): VxFuture[Unit] = {
+  def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit] = {
     val vertxRequest   = ctx.request()
     val vertxResponse  = ctx.response()
     val tracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
@@ -330,13 +330,13 @@ object ApiResponseHandler {
 object HttpConversions {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  def toRequestCtx(defaultRequestBodyMaxSize: Option[Int], ctx: RoutingContext, tracingCtx: TracingContext, proxyHeaders: ProxyHeaders, ruleConf: RuleConf, basePath: BasePath, pathParams: PathParams)(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
+  def toRequestCtx(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext, tracingCtx: TracingContext, proxyHeaders: ProxyHeaders, ruleConf: RuleConf, basePath: BasePath, pathParams: PathParams)(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
     val req = ctx.request()
-    val contentLengthOpt: Option[Int] = Try[Int](java.lang.Integer.valueOf(req.getHeader("Content-Length"))).toOption
+    val contentLengthOpt: Option[Long] = Try[Long](java.lang.Long.valueOf(req.getHeader("Content-Length"))).toOption
     val requestBodyMaxSize = ruleConf.requestBodyMaxSize.orElse(defaultRequestBodyMaxSize)
 
     val bodyFut: Future[(Option[ReadStream[Buffer]], Option[Buffer])] =
-      if (ContentLengthUtil.isBodyLimitExceeded(contentLengthOpt.getOrElse(-1), requestBodyMaxSize)) {
+      if (BodyLimit.isMaxSizeExceeded(contentLengthOpt.getOrElse(-1), requestBodyMaxSize)) {
         Future.failed(new RequestBodyTooLargeException())
       } else {
         ruleConf.requestBody.getOrElse(BufferBody) match {

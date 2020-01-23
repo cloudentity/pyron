@@ -5,7 +5,7 @@ import io.circe.parser._
 import com.cloudentity.pyron.domain._
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.CallOpts
-import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
+import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, ExtRuleConf, Kilobytes, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.vertx.core.http.HttpMethod
@@ -45,7 +45,7 @@ object RulesConfReader {
     responsePlugins: Option[List[PluginConf]],
     tags: Option[List[String]],
     requestBody: Option[BodyHandling],
-    requestBodyMaxSize: Option[Int],
+    requestBodyMaxSize: Option[Kilobytes],
     call: Option[CallOpts],
     ext: Option[ExtRuleConf]
   )
