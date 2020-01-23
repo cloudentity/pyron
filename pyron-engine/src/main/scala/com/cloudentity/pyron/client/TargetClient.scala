@@ -200,17 +200,10 @@ class TargetClient(tracing: TracingManager, fixedClient: HttpClient, clients: Ma
   def copyHeadersWithoutContentLength(from: Headers, to: RequestCtxBuilder): RequestCtxBuilder =
     copyHeaders(from.remove("Content-Length"), to)
 
-  def copyHeaders(from: Headers, to: RequestCtxBuilder): RequestCtxBuilder = {
-    val headers: Iterable[(String, String)] =
-      for {
-        (name, values) <- from.toMap
-        value          <- values.headOption
-      } yield (name, value)
-
-    headers.foldLeft(to) { case (builder, (name, value)) =>
-      builder.addHeader(name, value)
+  def copyHeaders(from: Headers, to: RequestCtxBuilder): RequestCtxBuilder =
+    from.toMap.foldLeft(to) { case (builder, (name, values)) =>
+      values.foldLeft(builder) { case (b, value) => b.addHeader(name, value) }
     }
-  }
 
   def close(): Future[Unit] = {
     fixedClient.close()

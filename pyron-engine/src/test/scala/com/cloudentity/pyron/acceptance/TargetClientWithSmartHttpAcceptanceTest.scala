@@ -161,6 +161,20 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
     requests.size mustBe(1)
   }
 
+  @Test
+  def targetClientUsingSmartHttpClientShouldProxyAllHeaderValues(): Unit = {
+    targetService
+      .when(request().withHeader("a", "1", "2", "3"))
+      .respond(response.withStatusCode(200))
+
+    given()
+      .header("a", "1", "2", "3")
+    .when()
+      .post("/discoverable-service/test")
+    .`then`()
+      .statusCode(200)
+  }
+
   def toMockHeaders(hs: Map[String, String]): List[Header] =
     hs.map(x => Header.header(x._1, x._2)).toList
 }
