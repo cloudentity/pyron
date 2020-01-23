@@ -3,13 +3,14 @@ package com.cloudentity.pyron.acceptance
 import com.cloudentity.pyron.PyronAcceptanceTest
 import io.restassured.RestAssured.given
 import org.hamcrest.core.{IsEqual, StringContains}
-import org.junit.{After, Before, Test}
+import org.junit.{After, Assert, Before, Test}
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 import org.mockserver.model.{Delay, Header}
 import org.scalatest.MustMatchers
+import io.restassured.http.{Header => RestHeader}
 
 import scala.collection.JavaConverters._
 
@@ -165,14 +166,13 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
   def targetClientUsingSmartHttpClientShouldProxyAllHeaderValues(): Unit = {
     targetService
       .when(request().withHeader("a", "1", "2", "3"))
-      .respond(response.withStatusCode(200))
+      .respond(response.withStatusCode(200).withHeader("b", "4", "5"))
 
-    given()
-      .header("a", "1", "2", "3")
-    .when()
-      .post("/discoverable-service/test")
-    .`then`()
-      .statusCode(200)
+    val httpRequest = io.restassured.RestAssured.given.header("a", "1", "2", "3")
+    val httpResponse = httpRequest.post("/discoverable-service/test")
+
+    Assert.assertEquals(List(new RestHeader("b", "4"), new RestHeader("b", "5")).asJava, httpResponse.headers().getList("b"))
+    Assert.assertEquals(200, httpResponse.statusCode())
   }
 
   def toMockHeaders(hs: Map[String, String]): List[Header] =
