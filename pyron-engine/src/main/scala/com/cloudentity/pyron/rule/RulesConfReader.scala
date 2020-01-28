@@ -5,7 +5,7 @@ import io.circe.parser._
 import com.cloudentity.pyron.domain._
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.CallOpts
-import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
+import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, ExtRuleConf, Kilobytes, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.vertx.core.http.HttpMethod
@@ -44,6 +44,8 @@ object RulesConfReader {
     requestPlugins: Option[List[PluginConf]],
     responsePlugins: Option[List[PluginConf]],
     tags: Option[List[String]],
+    requestBody: Option[BodyHandling],
+    requestBodyMaxSize: Option[Kilobytes],
     call: Option[CallOpts],
     ext: Option[ExtRuleConf]
   )
@@ -138,6 +140,8 @@ object RulesConfReader {
     val copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite)
     val preserveHostHeader = endpointConf.rule.preserveHostHeader.orElse(defaultConf.rule.preserveHostHeader)
     val tags = endpointConf.rule.tags.orElse(defaultConf.rule.tags)
+    val requestBody = endpointConf.rule.requestBody.orElse(defaultConf.rule.requestBody)
+    val requestBodyMaxSize = endpointConf.rule.requestBodyMaxSize.orElse(defaultConf.rule.requestBodyMaxSize)
     val call =
       endpointConf.rule.call.map( opts =>
         CallOpts(
@@ -159,7 +163,7 @@ object RulesConfReader {
           val service  = rf.service
           val ruleConf =
             RuleConf(endpointName, criteria, service, dropPrefix, endpointConf.rule.rewriteMethod, endpointConf.rule.rewritePath,
-              copyQueryOnRewrite, preserveHostHeader, tags.getOrElse(Nil), call, ext)
+              copyQueryOnRewrite, preserveHostHeader, tags.getOrElse(Nil), requestBody, requestBodyMaxSize, call, ext)
           RuleConfWithPlugins(ruleConf, requestPluginsConf, responsePluginConfs)
         }
 

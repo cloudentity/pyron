@@ -4,7 +4,7 @@ import java.time.Duration
 
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
-import com.cloudentity.pyron.domain.rule.{ExtRuleConf, OpenApiRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
+import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, DropBody, ExtRuleConf, Kilobytes, OpenApiRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins, StreamBody}
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.CursorOp.DownField
 import io.circe.Decoder.Result
@@ -148,8 +148,24 @@ object Codecs {
   implicit lazy val targetServiceRuleEnc: Encoder[TargetServiceRule] = deriveEncoder
   implicit lazy val targetServiceRuleDec: Decoder[TargetServiceRule] = deriveDecoder
 
+  implicit lazy val BodyHandlingEnc: Encoder[BodyHandling] = Encoder.encodeString.contramap {
+    case BufferBody => "buffer"
+    case StreamBody => "stream"
+    case DropBody   => "drop"
+  }
+
+  implicit lazy val BodyHandlingDec: Decoder[BodyHandling] = Decoder.decodeString.emap {
+    case "buffer" => Right(BufferBody)
+    case "stream" => Right(StreamBody)
+    case "drop"   => Right(DropBody)
+    case x        => Left(s"Unsupported body handling: '$x'")
+  }
+
   implicit lazy val CallOptsEnc: Encoder[CallOpts] = deriveEncoder
   implicit lazy val CallOptsDec: Decoder[CallOpts] = deriveDecoder
+
+  implicit lazy val KilobytesEnc: Encoder[Kilobytes] = Encoder.encodeInt.contramap(_.value)
+  implicit lazy val KilobytesDec: Decoder[Kilobytes] = Decoder.decodeInt.map(Kilobytes.apply)
 
   implicit lazy val openApiRuleConfEnc: Encoder[OpenApiRuleConf] = deriveEncoder
   implicit lazy val openApiRuleConfDec: Decoder[OpenApiRuleConf] = deriveDecoder

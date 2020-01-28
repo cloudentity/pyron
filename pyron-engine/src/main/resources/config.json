@@ -10,7 +10,8 @@
   ],
   "modules": "$env:?MODULES:array",
   "app": {
-    "alivePath": "$env:?ALIVE_PATH:string"
+    "alivePath": "$env:?ALIVE_PATH:string",
+    "defaultRequestBodyMaxSize": "$env:?DEFAULT_REQUEST_BODY_MAX_SIZE:int"
   },
   "registry:request-plugins": {
     "config": {

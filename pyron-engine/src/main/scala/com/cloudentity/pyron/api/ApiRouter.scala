@@ -15,7 +15,7 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.handler.{BodyHandler, StaticHandler}
+import io.vertx.ext.web.handler.StaticHandler
 import org.slf4j.LoggerFactory
 
 object ApiRouter extends FutureConversions {
@@ -27,7 +27,6 @@ object ApiRouter extends FutureConversions {
 
     router.route().handler(ProxyHeadersHandler.handle(conf.proxyHeaders))
     router.route().handler(AccessLogHandler.createHandler(vertx, tracing, conf.accessLog))
-    router.route.handler(BodyHandler.create().setMergeFormAttributes(false).handle)
     router.route(conf.alivePath.getOrElse("/alive")).handler(AliveHandler.handle)
 
     handleOpenApis(conf.openApi, tracing, vertx, router)
@@ -36,7 +35,10 @@ object ApiRouter extends FutureConversions {
       router.route("/docs/*").handler(StaticHandler.create())
     }
 
-    router.route("/*").handler(apiHandler.handle)
+    router.route("/*").handler { ctx =>
+      ctx.request().pause()
+      apiHandler.handle(conf.defaultRequestBodyMaxSize, ctx)
+    }
     router.exceptionHandler { ex => log.error("Unhandled exception", ex) }
     router
   }

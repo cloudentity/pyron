@@ -2,8 +2,10 @@ package com.cloudentity.pyron.config
 
 import io.circe._
 import parser._
+import com.cloudentity.pyron.domain.Codecs._
 import io.circe.generic.auto._
 import com.cloudentity.pyron.accesslog.AccessLogHandler.AccessLogGlobalConf
+import com.cloudentity.pyron.domain.rule.Kilobytes
 
 object Conf {
   val smartHttpClientsKey = "smart-http-target-clients"
@@ -23,6 +25,7 @@ object Conf {
     docsEnabled: Option[Boolean],
     proxyHeaders: Option[ProxyHeaderConf],
     accessLog: Option[AccessLogGlobalConf],
+    defaultRequestBodyMaxSize: Option[Kilobytes],
     openApi: Option[OpenApiConf]
   )
 

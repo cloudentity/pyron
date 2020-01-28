@@ -189,7 +189,9 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
   * [Rewrite method](#config-rewrite-method)
   * [Response timeout](#config-response-timeout)
   * [Retry](#config-retry)
-  * [Preserve Host header](#config-preserve-host--header)
+  * [Preserve Host header](#config-preserve-host-header)
+  * [Request body handling (buffer/stream/drop)](#config-request-body-handling)
+  * [Request body size limit](#config-request-body-limit)
 * [API groups](#config-api-groups)
 * [Service discovery](#config-service-discovery)
   * [Consul service discovery](#sd-consul)
@@ -484,6 +486,75 @@ Example: client's call `POST /user` is proxied to target `PUT /user`.
 | preserveHostHeader   | should send to target service Host header received from the client (default false) |
 
 By default, Pyron sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
+
+<a id="config-request-body-handling"></a>
+#### Request body handling (buffer/stream/drop)
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestBody": "buffer"
+        }
+      ]
+    }
+  ]
+}
+```
+
+| Attribute     | Description                                                             |
+|:--------------|:------------------------------------------------------------------------|
+| requestBody   | body handling strategy (`buffer`, `stream` or `drop`, default `buffer`) |
+
+* `buffer` - load entire body into memory, required by some plugins (e.g. `transform-request`)
+* `stream` - stream the body directly to target service (after applying request plugins)
+* `drop` - ignore the body, do not transfer it to target service (`Content-Length` header of target request is set to 0)
+
+<a id="config-request-body-limit"></a>
+#### Request body size limit
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestBodyMaxSize": 100
+        }
+      ]
+    }
+  ]
+}
+```
+
+| Attribute            | Description                                                      |
+|:---------------------|:-----------------------------------------------------------------|
+| requestBodyMaxSize   | max number of kilobytes transferred to target service (optional) |
+
+> NOTE<br/>
+> If maximum body size is reached then Pyron responds to the client with `413` status code.
+> <br/>
+> <br/>
+> If the request body is using `chunked` Transfer-Encoding (content length is not known upfront) and `requestBody` is `stream`
+> then the body streaming to target service stops when `requestBodyMaxSize` kilobytes has been streamed.
+> Otherwise no data is sent to target service if `requestBodyMaxSize` limit would be reached.
+> <br/>
+> <br/>
+> Set DEFAULT_REQUEST_BODY_MAX_SIZE env variable with default `requestBodyMaxSize` for all routing rules.
 
 <a id="config-api-groups"></a>
 ### API Groups

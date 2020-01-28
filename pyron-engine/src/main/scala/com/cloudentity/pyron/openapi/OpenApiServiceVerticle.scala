@@ -96,7 +96,7 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
       case StaticServiceId(host, port, ssl) => StaticService(host, port, ssl)
     }
 
-    targetClient.call(tracing, TargetRequest(HttpMethod.GET, service, uri, Headers(), None), None)
+    targetClient.call(tracing, TargetRequest(HttpMethod.GET, service, uri, Headers(), None), None, None)
       .toOperation
       .leftMap[OpenApiServiceError](ex => ClientError(ex))
       .flatMap { resp =>

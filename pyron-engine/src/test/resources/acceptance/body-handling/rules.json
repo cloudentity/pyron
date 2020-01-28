@@ -1,0 +1,32 @@
+{
+  "env": {
+    "HTTP_SERVER_MAX_CHUNK_SIZE": 1024
+  },
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/upload/buffer/limit",
+          "requestBody": "buffer",
+          "requestBodyMaxSize": 1
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/upload/stream/limit",
+          "requestBody": "stream",
+          "requestBodyMaxSize": 1
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/upload/drop",
+          "requestBody": "drop"
+        }
+      ]
+    }
+  ]
+}
