@@ -17,10 +17,6 @@
       <artifactId>vertx-web</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-core_2.12</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-bus</artifactId>
     </dependency>

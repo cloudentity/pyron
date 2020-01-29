@@ -38,6 +38,7 @@
 
     <!-- test -->
     <scala-test.version>3.1.0-RC1</scala-test.version>
+    <mock-server.version>5.1.1</mock-server.version>
 
     <!-- plugins -->
     <scala-maven-plugin.version>4.2.0</scala-maven-plugin.version>
@@ -331,7 +332,7 @@
       <dependency>
         <groupId>org.mock-server</groupId>
         <artifactId>mockserver-netty</artifactId>
-        <version>3.11</version>
+        <version>${mock-server.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>
