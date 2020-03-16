@@ -9,3 +9,11 @@ trait EntityProvider {
   @VertxEndpoint
   def getEntity(tracingCtx: TracingContext, ctx: AuthnCtx): Future[AuthnCtx]
 }
+
+/**
+ * Generic entity provider putting all data returned by authn method into authn context.
+ */
+class MethodCtxEntityProvider extends EntityProvider {
+  override def getEntity(tracingCtx: TracingContext, ctx: AuthnCtx): Future[AuthnCtx] =
+    Future.succeededFuture(ctx)
+}
