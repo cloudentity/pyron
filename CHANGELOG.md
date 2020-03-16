@@ -7,6 +7,7 @@
 - MultiOidcClient support for oidc-server configs in map format
 - request body streaming, buffering, dropping
 - request body max size limit
+- methodCtx entity provider in authn plugin
 
 ### Changed
 - RoutingCtx moved to flow Properties
