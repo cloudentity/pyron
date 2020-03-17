@@ -915,13 +915,19 @@ We have put Pyron Gateway under load to see how performant it is.
 
 ### Setup
 
-* The test was run on a machine with i7-8550U CPU @ 1.80GHz
+* The test was run on a machine with i7-8550U CPU @ 1.80GHz (4 processing cores)
 * `wrk` is used to generate load, a single test takes 30s and uses 10 threads
 * target service is mocked with server responding to 140k req/sec with ~20 bytes response body
 
 ### Proxying request with no plugins
 
 Pyron Gateway proxies requests to mocked target service without applying any plugins.
+
+With no target service delay and 10 connections:
+
+| Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
+|:-------------|:------------|:--------------|:------------|:------------|
+| 21796        | 577.79	µs   | 774.63 µs     | 700.00 µs   | 4.57ms      |
 
 With no target service delay and 30 connections:
 
