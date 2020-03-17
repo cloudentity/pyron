@@ -27,6 +27,8 @@ object AuthnPlugin {
   type AuthnMethodName = String
   type AuthnEntityType = String
 
+  val methodCtxEntityProviderName = "methodCtx"
+
   case class Authenticated(method: AuthnMethodName, ctx: AuthnCtx, modify: Modify)
 
   object Modify {
@@ -69,7 +71,7 @@ class AuthnPlugin() extends RequestPluginVerticle[AuthnPluginConf] with PluginOp
     cfg = decodeConfigUnsafe[AuthnPluginVerticleConf]
 
     authnProviders       = buildMethodClients(cfg)
-    authnEntityProviders = buildEntityClients(cfg)
+    authnEntityProviders = buildEntityClients(cfg) |> setMethodCtxEntityProviderForAllMethods(cfg)
     worker               = new AuthnPluginWorker(authnProviders, authnEntityProviders)
 
     deployProviders(cfg)
@@ -88,6 +90,12 @@ class AuthnPlugin() extends RequestPluginVerticle[AuthnPluginConf] with PluginOp
           methodName -> createClient(classOf[EntityProvider], verticleId)
         }.toMap
       }
+
+  private def setMethodCtxEntityProviderForAllMethods(cfg: AuthnPluginVerticleConf)
+                                                     (providers: Map[AuthnMethodName, Map[AuthnEntityType, EntityProvider]]) = {
+    val emptyMappingsForMissingMethods = (cfg.methodsMapping.keySet -- cfg.entitiesMapping.keySet).map(methodName => methodName -> Map[AuthnEntityType, EntityProvider]()).toMap
+    (providers ++ emptyMappingsForMissingMethods).mapValues(mapping => mapping.updated(methodCtxEntityProviderName, new MethodCtxEntityProvider()))
+  }
 
   private def deployProviders(cfg: AuthnPluginVerticleConf): Future[Unit] =
     for {
