@@ -1,5 +1,6 @@
 ## [Unreleased]
 ### Added
+- capability to generate and upload sbom plugin profiles
 - flow Properties to AccessLog object
 - AccessLog.gateway.failed optional flag (true if call/plugin exception occurred)
 - ResponseCtx.targetResponse (original target service response without any transformations)
