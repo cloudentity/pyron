@@ -24,6 +24,13 @@
 ### Removed
 - CorrelationCtx
 
+### Security
+- [CVE-2019-20330](https://nvd.nist.gov/vuln/detail/CVE-2019-20330) - Fixed by upgrading jackson-databind 2.9.10.1 -> 2.9.10.3
+- [CVE-2020-8840](https://nvd.nist.gov/vuln/detail/CVE-2020-8840) - Fixed by upgrading jackson-databind 2.9.10.1 -> 2.9.10.3
+- [CVE-2018-20200](https://nvd.nist.gov/vuln/detail/CVE-2018-20200) - Fixed by underlying vertx-tools libthrift 0.12.0 -> 0.13.0
+- [CVE-2019-0205](https://nvd.nist.gov/vuln/detail/CVE-2019-0205) - Fixed by underlying vertx-tools libthrift 0.12.0 -> 0.13.0
+- [CVE-2019-0210](https://nvd.nist.gov/vuln/detail/CVE-2019-0210) - Fixed by underlying vertx-tools libthrift 0.12.0 -> 0.13.0
+
 ## [1.0.0] - 2019-11-27
 ### Added
 - Initial version
