@@ -16,6 +16,7 @@
 - vertx-tools upgraded to 1.1.0
 - plugin logger names contain bus address prefix
 - 'authn' and 'cors' plugin modules adjusted for use in api-groups
+- rules 'default' attribute is optional
 
 ### Fixed
 - multipart Content-Type handling

@@ -16,7 +16,7 @@ object RulesConfReader {
   import Codecs._
 
   // list of ServiceRulesConf matches rules.json schema
-  case class ServiceRulesConf(default: RuleRawConf, request: Option[ServiceFlowsConf], response: Option[ServiceFlowsConf], endpoints: List[EndpointConf])
+  case class ServiceRulesConf(default: Option[RuleRawConf], request: Option[ServiceFlowsConf], response: Option[ServiceFlowsConf], endpoints: List[EndpointConf])
   case class ServiceConf(rule: RuleRawConf, request: Option[ServiceFlowsConf], response: Option[ServiceFlowsConf])
 
   case class ServiceFlowsConf(preFlow: Option[ServiceFlowConf], postFlow: Option[ServiceFlowConf])
@@ -49,6 +49,8 @@ object RulesConfReader {
     call: Option[CallOpts],
     ext: Option[ExtRuleConf]
   )
+
+  val emptyRuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
   sealed trait ReadRulesError
     case class RuleDecodingError(ex: Throwable) extends ReadRulesError
@@ -124,7 +126,7 @@ object RulesConfReader {
         (serviceConf, i)  <- serviceConfs.zipWithIndex
         (endpointConf, j) <- serviceConf.endpoints.zipWithIndex
       } yield {
-        composeRuleConf(addresses, ServiceConf(serviceConf.default, serviceConf.request, serviceConf.response), endpointConf)
+        composeRuleConf(addresses, ServiceConf(serviceConf.default.getOrElse(emptyRuleRawConf), serviceConf.request, serviceConf.response), endpointConf)
           .leftMap(errorMsgs => errorMsgs.map(errorMsg => s"Service $i, endpoint $j,${endpointConf.rule.endpointName.map(n => s" '$n'").getOrElse("")} $errorMsg"))
       }
 

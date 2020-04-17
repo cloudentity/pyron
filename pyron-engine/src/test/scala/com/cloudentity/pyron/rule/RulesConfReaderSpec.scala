@@ -13,7 +13,7 @@ import scalaz.{Failure, Success}
 
 @RunWith(classOf[JUnitRunner])
 class RulesConfReaderSpec extends WordSpec with MustMatchers {
-  val emptyRuleConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None ,None, None)
+  val emptyRuleConf = RulesConfReader.emptyRuleRawConf
   val emptyConf = ServiceConf(emptyRuleConf, None, None)
   val fullRuleConfWoPlugins = RuleRawConf(Some("endpointName"), Some(TargetHost("targetHost")), Some(80), None, None, None, Some(PathPattern("pathPattern")), None, None, None, None, Some(PathPrefix("pathPrefix")), Some(HttpMethod.GET), Some(true), None, None, None, None, None, None, None)
   val otherFullRuleConfWoPlugins = RuleRawConf(Some("endpointName2"), Some(TargetHost("targetHost2")), Some(802), None, None, None, Some(PathPattern("pathPattern2")), None, None, None, None, Some(PathPrefix("pathPrefix2")), Some(HttpMethod.POST), Some(false), None, None, None, None, None, None, None)
@@ -117,7 +117,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
 
   "RulesReader.composeRuleConfs" should {
     "should aggregate all missing fields" in {
-      val conf = ServiceRulesConf(emptyRuleConf, None, None, List(endpointConf(emptyRuleConf)))
+      val conf = ServiceRulesConf(Some(emptyRuleConf), None, None, List(endpointConf(emptyRuleConf)))
       RulesConfReader.composeRuleConfs(List(conf, conf), Map()) match {
         case Success(_) => fail
         case Failure(fs) =>
