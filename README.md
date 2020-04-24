@@ -24,6 +24,7 @@
   * [Request transformation](docs/plugins/transform-request.md)
   * [CORS](docs/plugins/cors.md)
   * [Brute-force protection](docs/plugins/bruteforce.md)
+  * [ACP authorizer](docs/plugins/acp-authz.md)
 * [Plugin development guide](docs/plugin-dev.md)
 * [How to](#how-to)
   * [Read routing rules from Consul](docs/howtos/config-store-consul.md)
@@ -895,6 +896,7 @@ Plugins extend request-response flow, e.g. can enforce authorization rules, modi
 * [Authentication](docs/plugins/authn.md)
 * [Request transformation](docs/plugins/transform-request.md)
 * [CORS](docs/plugins/cors.md)
+* [ACP authorizer](docs/plugins/acp-authz.md)
 
 Read about [plugins application](docs/plugins.md) in routing rules.
 
