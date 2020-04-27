@@ -2,6 +2,8 @@
 
 `acp-authz` plugin sends request data to ACP authorizer to validate policy configured in ACP.
 
+> Learn about [ACP](https://cloudentity.com/authorization-control/).
+
 Enable `acp-authz` plugin by adding `plugin/acp-authz` to `MODULES` environment variable.
 
 ```json
