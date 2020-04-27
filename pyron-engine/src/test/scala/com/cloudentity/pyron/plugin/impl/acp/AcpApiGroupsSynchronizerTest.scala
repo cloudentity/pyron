@@ -35,7 +35,7 @@ class AcpApiGroupsSynchronizerTest extends PyronAcceptanceTest {
   @Test
   def shouldSendToAuthorizerAtStartup(ctx: TestContext): Unit = {
     // given
-    val expectedBody = """{"api_groups":[{"id":"a.1","apis":[{"method":"GET","path":"/a/1/user/{userid}"}]}]}"""
+    val expectedBody = """{"api_groups":[{"id":"a.1","apis":[{"method":"GET","path":"/user/{userid}"}]}]}"""
 
     // then
     verify("PUT", "/apis", expectedBody).setHandler(ctx.asyncAssertSuccess())
@@ -76,7 +76,7 @@ class AcpApiGroupsSynchronizerTest extends PyronAcceptanceTest {
         )
       )
 
-    val expectedBody = """{"api_groups":[{"id":"a.1","apis":[{"method":"GET","path":"/a/1/payments"}]}]}"""
+    val expectedBody = """{"api_groups":[{"id":"a.1","apis":[{"method":"GET","path":"/payments"}]}]}"""
 
     // when
     ServiceClientFactory.make(vertx.eventBus(), classOf[ApiGroupsChangeListener]).apiGroupsChanged(Nil, groups)

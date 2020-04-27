@@ -1,6 +1,6 @@
 package com.cloudentity.pyron.plugin.impl.acp
 
-import com.cloudentity.pyron.apigroup.ApiGroupId
+import com.cloudentity.pyron.apigroup.ApiGroup
 import com.cloudentity.pyron.domain.flow.{PluginName, RequestCtx}
 import com.cloudentity.pyron.domain.http.ApiResponse
 import com.cloudentity.pyron.plugin.config.ValidateResponse
@@ -54,15 +54,16 @@ class AcpAuthzPlugin extends RequestPluginVerticle[Unit] {
       .build().toScala().map(client = _)
 
   override def apply(requestCtx: RequestCtx, conf: Unit): Future[RequestCtx] =
-    requestCtx.properties.get[ApiGroupId](ApiGroupId.propertiesKey) match {
+    requestCtx.properties.get[ApiGroup](ApiGroup.propertiesKey) match {
       case Some(group) =>
         val originalReq = requestCtx.original
+        val endpointPath = originalReq.path.value.drop(group.matchCriteria.basePath.map(_.value.length).getOrElse(0))
 
         val authzReq =
           AuthorizeRequest(
-            group.value,
+            group.id.value,
             originalReq.method.toString,
-            originalReq.path.value,
+            endpointPath,
             originalReq.headers.toMap,
             originalReq.queryParams.toMap,
             originalReq.pathParams.value

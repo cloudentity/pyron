@@ -46,7 +46,7 @@ class AcpAuthzPluginTest extends PyronAcceptanceTest {
       AuthorizeRequest(
         "a.1",
         "GET",
-        "/a/1/user/abc",
+        "/user/abc",
         Map(
           "Accept" -> List("*/*"),
           "Accept-Encoding" -> List("gzip,deflate"),

@@ -375,7 +375,7 @@ object HttpConversions {
         bodyStreamOpt = bodyStreamOpt,
         original = original,
         proxyHeaders = proxyHeaders,
-        properties = Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroupId.propertiesKey -> apiGroup.id),
+        properties = Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup),
         authnCtx = AuthnCtx(),
         aborted = None
       )

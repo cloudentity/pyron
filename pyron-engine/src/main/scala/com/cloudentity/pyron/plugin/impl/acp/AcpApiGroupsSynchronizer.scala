@@ -15,13 +15,18 @@ case class SetAcpApiGroup(apiGroups: List[AcpApiGroup])
 case class AcpApiGroup(id: String, apis: List[AcpApi])
 case class AcpApi(method: String, path: String)
 
+object SetAcpApiGroup {
+  def fromApiGroupConfs(confs: List[ApiGroupConf]): SetAcpApiGroup =
+    SetAcpApiGroup(confs.map(AcpApiGroup.apply).filter(_.apis.nonEmpty))
+}
+
 object AcpApiGroup {
   def apply(g: ApiGroupConf): AcpApiGroup =
     AcpApiGroup(
       g.id.value,
       g.rules
         .filter(_.requestPlugins.toList.exists(_.name == AcpAuthzPlugin.pluginName))
-        .map(r => AcpApi(r.rule.criteria.method.name(), g.matchCriteria.basePath.map(_.value).getOrElse("") + r.rule.criteria.path.originalPath))
+        .map(r => AcpApi(r.rule.criteria.method.name(), r.rule.criteria.path.originalPath))
     )
 }
 
@@ -47,7 +52,7 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
       }
 
   override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit = {
-    authorizer.put("/apis").endWithBody(SetAcpApiGroup(confs.map(AcpApiGroup.apply)).asJson.noSpaces).toScala()
+    authorizer.put("/apis").endWithBody(SetAcpApiGroup.fromApiGroupConfs(confs).asJson.noSpaces).toScala()
       .onComplete {
         case Success(resp) if resp.getHttp.statusCode == 204 =>
           // ok
