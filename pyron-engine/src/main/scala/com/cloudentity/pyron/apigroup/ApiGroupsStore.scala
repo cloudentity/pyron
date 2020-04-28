@@ -162,7 +162,8 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
 
             rulesStore.decodeRules(loggingTag(group), group.value.rules, defaultProxyRulesOpt, pluginIds).toScala()
               .map { case (rs, rsConfs) =>
-                ValidResult(group.path, (ApiGroup(group.value.matchCriteria, rs), ApiGroupConf(group.value.matchCriteria, rsConfs)))
+                val id = ApiGroupId(group.path.reverse.mkString("."))
+                ValidResult(group.path, (ApiGroup(id, group.value.matchCriteria, rs), ApiGroupConf(id, group.value.matchCriteria, rsConfs)))
               }
               .recover { case ex: Throwable =>
                 InvalidResult[(ApiGroup, ApiGroupConf)](group.path, ex.getMessage)

@@ -9,6 +9,8 @@
 - request body streaming, buffering, dropping
 - request body max size limit
 - methodCtx entity provider in authn plugin
+- acp-authz plugin
+- 'components' registry
 
 ### Changed
 - RoutingCtx moved to flow Properties
