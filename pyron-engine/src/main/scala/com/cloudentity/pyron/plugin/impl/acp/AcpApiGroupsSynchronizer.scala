@@ -56,6 +56,7 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
       .onComplete {
         case Success(resp) if resp.getHttp.statusCode == 204 =>
           // ok
+          log.debug(TracingContext.dummy(), "Successfully uploaded api-groups to ACP")
         case Success(resp) if resp.getHttp.statusCode != 204 =>
           log.error(TracingContext.dummy(), s"Failed to upload api-groups to ACP, code=${resp.getHttp.statusCode}, body=${resp.getBody}")
         case Failure(ex) =>
