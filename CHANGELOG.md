@@ -1,4 +1,9 @@
-## [1.0.0] - 2020-04-21
+## [Unreleased]
+### Added
+- acp-authz plugin
+- 'components' registry
+
+## [1.1.0] - 2020-04-21
 ### Added
 - capability to generate and upload sbom plugin profiles
 - flow Properties to AccessLog object
@@ -10,7 +15,6 @@
 - request body max size limit
 - methodCtx entity provider in authn plugin
 - acp-authz plugin
-- 'components' registry
 
 ### Changed
 - RoutingCtx moved to flow Properties
