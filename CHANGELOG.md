@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.0.0] - 2020-04-21
 ### Added
 - capability to generate and upload sbom plugin profiles
 - flow Properties to AccessLog object
