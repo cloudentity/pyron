@@ -69,7 +69,7 @@ class AcpAuthzPlugin extends RequestPluginVerticle[Unit] {
             originalReq.pathParams.value
           )
 
-        client.post("/enforce").endWithBody(authzReq.asJson.noSpaces).toScala()
+        client.post("/authorize").endWithBody(authzReq.asJson.noSpaces).toScala()
           .map(enforcementDecision(requestCtx))
       case None =>
         Future.failed(new Exception("apiGroup not found in request properties"))
