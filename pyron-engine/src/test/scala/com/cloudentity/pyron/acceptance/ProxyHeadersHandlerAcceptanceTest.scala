@@ -5,8 +5,11 @@ import com.cloudentity.pyron.api.ProxyHeadersHandler
 import com.cloudentity.pyron.api.ProxyHeadersHandler._
 import com.cloudentity.pyron.config.Conf.ProxyHeaderConf
 import com.cloudentity.pyron.domain.Codecs._
-import com.cloudentity.pyron.domain.flow.{ProxyHeaders, RequestCtx}
+import com.cloudentity.pyron.domain.flow.ProxyHeaders
+import com.cloudentity.pyron.domain.http.Headers
+import io.circe.Json
 import io.circe.parser._
+import io.circe.syntax._
 import io.restassured.RestAssured.given
 import io.vertx.core.MultiMap
 import org.hamcrest.{BaseMatcher, Description}
@@ -18,7 +21,7 @@ class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMa
 
   def headerMatcher(name: String, value: String) = new BaseMatcher[String] {
     override def matches(o: Any): Boolean =
-      decode[RequestCtx](o.toString).toTry.get.request.headers.get(name).contains(value)
+      decode[Map[String, Json]](o.toString).toOption.flatMap(_.get("request")).flatMap(_.asObject).flatMap(_.toMap.get("headers")).get.as[Headers].toOption.get.get(name).contains(value)
 
     override def describeTo(description: Description): Unit =
       description.appendText(s"Expected header name=$name, value=$value")

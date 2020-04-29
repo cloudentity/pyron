@@ -1,15 +1,15 @@
 package com.cloudentity.pyron.domain.flow
 
 import java.net.URL
-import java.util.UUID
 
 import io.circe.Json
 import com.cloudentity.pyron.domain.http.{ApiResponse, OriginalRequest, TargetRequest}
 import com.cloudentity.tools.vertx.tracing.TracingContext
+import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.json.JsonObject
 import io.vertx.core.http.HttpServerRequest
-import io.vertx.ext.web.RoutingContext
+import io.vertx.core.streams.ReadStream
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -112,9 +112,9 @@ sealed trait TargetServiceRule
   case object ProxyServiceRule extends TargetServiceRule
 
 trait PluginsConf {
-  def pre: List[PluginConf]
-  def endpoint: List[PluginConf]
-  def post: List[PluginConf]
+  def pre: List[ApiGroupPluginConf]
+  def endpoint: List[ApiGroupPluginConf]
+  def post: List[ApiGroupPluginConf]
 
   def toList = pre ::: endpoint ::: post
 }
@@ -186,8 +186,14 @@ object AccessLogItems {
   def apply(cs: (String, Json)*): AccessLogItems = AccessLogItems(cs.toMap)
 }
 
+sealed trait FlowFailure
+  case object RequestPluginFailure extends FlowFailure
+  case object ResponsePluginFailure extends FlowFailure
+  case object CallFailure extends FlowFailure
+
 case class RequestCtx(
   request: TargetRequest,
+  bodyStreamOpt: Option[ReadStream[Buffer]],
   original: OriginalRequest,
   properties: Properties = Properties(),
   tracingCtx: TracingContext,
@@ -196,7 +202,8 @@ case class RequestCtx(
   accessLog: AccessLogItems = AccessLogItems(),
   modifyResponse: List[ApiResponse => Future[ApiResponse]] = Nil,
 
-  aborted: Option[ApiResponse] = None
+  aborted: Option[ApiResponse] = None,
+  failed: Option[FlowFailure] = None
 ) {
   def modifyRequest(f: TargetRequest => TargetRequest): RequestCtx =
     this.copy(request = f(request))
@@ -233,17 +240,22 @@ case class RequestCtx(
 
   def isAborted(): Boolean =
     aborted.isDefined
+
+  def isFailed(): Boolean =
+    failed.isDefined
 }
 
 case class ResponseCtx(
+  targetResponse: Option[ApiResponse],
   response: ApiResponse,
   request: TargetRequest,
-  original: OriginalRequest,
+  originalRequest: OriginalRequest,
   tracingCtx: TracingContext,
   properties: Properties = Properties(),
   authnCtx: AuthnCtx = AuthnCtx(),
   accessLog: AccessLogItems = AccessLogItems(),
-  requestAborted: Boolean
+  requestAborted: Boolean,
+  failed: Option[FlowFailure] = None
 ) {
   def modifyResponse(f: ApiResponse => ApiResponse): ResponseCtx =
     this.copy(response = f(response))
@@ -259,42 +271,17 @@ case class ResponseCtx(
 
   def withAccessLog(name: String, value: Json): ResponseCtx =
     this.copy(accessLog = accessLog.updated(name, value))
+
+  def isFailed(): Boolean =
+    failed.isDefined
 }
 
 case class PluginName(value: String) extends AnyVal
+case class PluginAddressPrefix(value: String) extends AnyVal
 case class PluginConf(name: PluginName, conf: Json)
+case class ApiGroupPluginConf(name: PluginName, conf: Json, addressPrefixOpt: Option[PluginAddressPrefix])
 
 case class SmartHttpClientConf(value: JsonObject)
 case class FixedHttpClientConf(value: JsonObject)
-
-case class FlowId(value: String) extends AnyVal
-
-// deprecated
-case class CorrelationCtx(signature: String, flowId: FlowId, ids: Map[String, String]) {
-  def appendId(key: String, value: String): CorrelationCtx =
-    CorrelationCtx(
-      signature = s"${this.signature}  $value",
-      flowId,
-      ids = this.ids + (key -> value)
-    )
-
-  def appendIds(kvs: List[(String, String)]): CorrelationCtx =
-    CorrelationCtx(
-      signature = s"${this.signature} ${kvs.map(_._2).mkString(" ")}",
-      flowId,
-      ids = this.ids ++ kvs.toMap
-    )
-}
-
-// deprecated
-object CorrelationCtx {
-  def withFlowId(flowId: String): CorrelationCtx =
-    CorrelationCtx(flowId, FlowId(flowId), Map("API_GW_FLOW_ID" -> flowId))
-
-  def withFlowId(): CorrelationCtx =
-    withFlowId(UUID.randomUUID().toString)
-
-  val routingContextKey = "_correlationCtx"
-}
 
 case class ProxyHeaders(headers: Map[String, List[String]], trueClientIp: String)

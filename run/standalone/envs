@@ -6,6 +6,7 @@
 
 #ALIVE_PATH=/alive
 #LOG_LEVEL=DEBUG
+#DEFAULT_REQUEST_BODY_MAX_SIZE=1024
 
 ## access logs
 #ACCESS_LOG_AUTHN_CTX={"method":"authnMethod","user":"sub","uid":"email"}

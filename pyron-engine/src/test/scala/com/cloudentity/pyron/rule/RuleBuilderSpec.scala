@@ -7,7 +7,7 @@ import io.circe.{Decoder, Json}
 import com.cloudentity.pyron.VertxSpec
 import com.cloudentity.pyron.plugin.config._
 import com.cloudentity.pyron.domain._
-import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPrefix, PluginConf, PluginName, RequestCtx, ResponseCtx, StaticServiceRule, TargetHost}
+import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, RequestCtx, ResponseCtx, StaticServiceRule, TargetHost}
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import com.cloudentity.pyron.plugin.verticle.{RequestPluginVerticle, ResponsePluginVerticle}
 import com.cloudentity.pyron.rule.RuleBuilder.InvalidPluginConf
@@ -42,10 +42,10 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
     override def confDecoder: Decoder[ResponseConfig] = deriveDecoder
   }
 
-  def pluginConf(pluginName: PluginName) = PluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))))
+  def pluginConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))), None)
 
   "RuleBuilder.build" should {
-    val ruleConf = RuleConf(None, EndpointMatchCriteria(HttpMethod.GET, PathMatching("".r, Nil, PathPrefix(""), "")), StaticServiceRule(TargetHost(""), 9000, false), true, None, None, None, None, Nil, None, ExtRuleConf(None))
+    val ruleConf = RuleConf(None, EndpointMatchCriteria(HttpMethod.GET, PathMatching("".r, Nil, PathPrefix(""), "")), StaticServiceRule(TargetHost(""), 9000, false), true, None, None, None, None, Nil, None, None, None, ExtRuleConf(None))
     "build Rule without plugins" in {
       // given
       val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, Nil, Nil), ResponsePluginsConf(Nil, Nil, Nil))

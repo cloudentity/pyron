@@ -1,23 +1,35 @@
 package com.cloudentity.pyron.apigroup
 
 import io.circe.{CursorOp, Decoder, DecodingFailure, Json}
-import com.cloudentity.pyron.domain.flow.{BasePath, GroupMatchCriteria}
-
-case class ApiGroupLevelRaw(_rules: Option[Json], _group: Option[GroupMatchCriteria])
-case class ApiGroupLevel(rules: Option[Json], group: Option[GroupMatchCriteria], subs: List[ReadResult[ApiGroupLevel]])
-
+import com.cloudentity.pyron.domain.flow.{BasePath, GroupMatchCriteria, PluginName}
+import io.circe.generic.semiauto.deriveDecoder
 import scalaz._, Scalaz._
+
+case class ApiGroupLevelRaw(_rules: Option[Json], _group: Option[GroupMatchCriteria], _plugins: Option[ApiGroupLevelPlugins])
+case class ApiGroupLevelPlugins(plugins: List[ApiGroupPlugin])
+
+case class PluginId(value: String) extends AnyVal
+case class ApiGroupPlugin(plugin: PluginName, id: PluginId)
+
+case class ApiGroupLevel(rules: Option[Json], group: Option[GroupMatchCriteria], plugins: List[ApiGroupPlugin], subs: List[ReadResult[ApiGroupLevel]])
+case class ApiGroupConfUnresolved(matchCriteria: GroupMatchCriteria, rules: Json, plugins: List[ApiGroupPlugin])
 
 object ApiGroupReader {
 
   import com.cloudentity.pyron.domain.Codecs._
 
-  implicit val PartialApiGroupDecoder: Decoder[ApiGroupLevelRaw] = io.circe.generic.semiauto.deriveDecoder
+  implicit val PluginIdDecoder: Decoder[PluginId] = IdDec(PluginId.apply)
+  implicit val ApiGroupPluginDecoder: Decoder[ApiGroupPlugin] = deriveDecoder
+  implicit val ApiGroupPluginsDecoder: Decoder[ApiGroupLevelPlugins] =
+    Decoder.decodeJson
+      .emap(_.asArray.toRight("JSON array required"))
+      .map(plugins => plugins.toList.flatMap(_.as[ApiGroupPlugin].toOption)).map(x => ApiGroupLevelPlugins.apply(x))
+  implicit val PartialApiGroupDecoder: Decoder[ApiGroupLevelRaw] = deriveDecoder
 
   def readApiGroupLevels(jsonString: String): ReadResult[ApiGroupLevel] = {
     def decodeLevel(json: Json): Either[DecodingFailure, (ApiGroupLevelRaw, Map[String, Json])] = {
       json.as[ApiGroupLevelRaw].map { partial =>
-        val subGroups = json.asObject.map(_.toMap.keySet).getOrElse(Set()) -- Set("_rules", "_group")
+        val subGroups = json.asObject.map(_.toMap.keySet).getOrElse(Set()) -- Set("_rules", "_group", "_plugins")
         (partial, json.asObject.map(_.toMap.filterKeys(subGroups.contains)).getOrElse(Map()))
       }
     }
@@ -29,7 +41,7 @@ object ApiGroupReader {
             subLevels.toList.sortBy(_._1)
               .map { case (name, subLevel) => rec(name :: path)(subLevel) }
 
-          ApiGroupLevel(partial._rules, partial._group, decodeSubLevelsResult)
+          ApiGroupLevel(partial._rules, partial._group, partial._plugins.map(_.plugins).getOrElse(Nil), decodeSubLevelsResult)
         }.left.map(err => s"Invalid group level at '${path.reverse.mkString(".")}${CursorOp.opsToPath(err.history)}'")
 
       result.fold(InvalidResult(path, _), ValidResult(path, _))
@@ -41,8 +53,6 @@ object ApiGroupReader {
     }
   }
 
-  case class ApiGroupConfUnresolved(matchCriteria: GroupMatchCriteria, rules: Json)
-
   def buildApiGroupConfsUnresolved(root: ApiGroupLevel): List[ReadResult[ApiGroupConfUnresolved]] = {
     def rec(levelPath: List[String], level: ApiGroupLevel): List[ReadResult[ApiGroupConfUnresolved]] = {
       val nonEmptySubsOpt = level.subs.headOption.map(_ => level.subs)
@@ -52,7 +62,7 @@ object ApiGroupReader {
           List(InvalidResult(levelPath, "leaf node with rules can't have sub-levels"))
 
         case (Some(rules), None) =>
-          List(ValidResult(levelPath, ApiGroupConfUnresolved(level.group.getOrElse(GroupMatchCriteria.empty), rules)))
+          List(ValidResult(levelPath, ApiGroupConfUnresolved(level.group.getOrElse(GroupMatchCriteria.empty), rules, level.plugins)))
 
         case (None, None) =>
           Nil
@@ -95,7 +105,9 @@ object ApiGroupReader {
     val mergedSubGroupsWithoutMatchCriteria: List[ReadResult[ApiGroupConfUnresolved]] =
       if (rulesFromSubGroupsWithoutMatchCriteria.nonEmpty)
         mergeRules(rulesFromSubGroupsWithoutMatchCriteria) match {
-          case Right(mergedRules) => List(ValidResult(levelPath, ApiGroupConfUnresolved(GroupMatchCriteria.empty, mergedRules)))
+          case Right(mergedRules) =>
+            val plugins: List[ApiGroupPlugin] = subGroupsWithoutMatchCriteria.flatMap(_.value.plugins)
+            List(ValidResult(levelPath, ApiGroupConfUnresolved(GroupMatchCriteria.empty, mergedRules, plugins)))
           case Left(err)          => List(InvalidResult[ApiGroupConfUnresolved](levelPath, err))
         }
       else Nil
@@ -115,9 +127,12 @@ object ApiGroupReader {
       case (_, _) =>
         val criteria =
           GroupMatchCriteria(makeBasePath(parentBasePath, validSub.matchCriteria.basePath), domainsOpt)
-        ValidResult(subPath, ApiGroupConfUnresolved(criteria, validSub.rules))
+        ValidResult(subPath, ApiGroupConfUnresolved(criteria, validSub.rules, mergeApiGroupPlugins(level.plugins, validSub.plugins)))
     }
   }
+
+  private def mergeApiGroupPlugins(parent: List[ApiGroupPlugin], plugins: List[ApiGroupPlugin]): List[ApiGroupPlugin] =
+    (parent.map(p => p.plugin -> p).toMap ++ plugins.map(p => p.plugin -> p).toMap).values.toList
 
   /**
     * Merging list of JsonObjects or JsonArrays.

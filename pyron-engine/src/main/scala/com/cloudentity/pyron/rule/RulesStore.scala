@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.rule
 
 import com.cloudentity.pyron.domain.Codecs._
-import com.cloudentity.pyron.domain.flow.{PluginConf, PluginName}
+import com.cloudentity.pyron.domain.flow.{PluginConf, ApiGroupPluginConf, PluginAddressPrefix, PluginName}
 import com.cloudentity.pyron.domain.rule.{RuleConf, RuleConfWithPlugins}
 import com.cloudentity.pyron.plugin.{ExtendRules, PluginRulesExtendService, PluginService}
 import com.cloudentity.pyron.rule.RuleBuilder.InvalidPluginConf
@@ -20,10 +20,10 @@ import scala.concurrent.Future
 
 trait RulesStore {
   @VertxEndpoint
-  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json]): VxFuture[(List[Rule], List[RuleConfWithPlugins])]
+  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json], addresses: Map[PluginName, PluginAddressPrefix]): VxFuture[(List[Rule], List[RuleConfWithPlugins])]
 
   @VertxEndpoint
-  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json]): VxFuture[List[RuleConfWithPlugins]]
+  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json], addresses: Map[PluginName, PluginAddressPrefix]): VxFuture[List[RuleConfWithPlugins]]
 }
 
 case class RulesChanged(rules: List[Rule], confs: List[RuleConfWithPlugins])
@@ -36,18 +36,18 @@ case class RuleConfWithPluginNames(rule: RuleConf, requestPlugins: List[PluginNa
 class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
   val log = LoggerFactory.getLogger(this.getClass)
 
-  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json]): VxFuture[(List[Rule], List[RuleConfWithPlugins])] =
-    decodeRuleConfsWithPlugins(tag, rules, proxyRulesOpt).toScala.flatMap(confs => buildRules(confs).map((_, confs))).toJava
+  def decodeRules(tag: String, rules: Json, proxyRulesOpt: Option[Json], addresses: Map[PluginName, PluginAddressPrefix]): VxFuture[(List[Rule], List[RuleConfWithPlugins])] =
+    decodeRuleConfsWithPlugins(tag, rules, proxyRulesOpt, addresses).toScala.flatMap(confs => buildRules(confs).map((_, confs))).toJava
 
-  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json]): VxFuture[List[RuleConfWithPlugins]] = {
+  def decodeRuleConfsWithPlugins(tag: String, rules: Json, proxyRulesOpt: Option[Json], addresses: Map[PluginName, PluginAddressPrefix]): VxFuture[List[RuleConfWithPlugins]] = {
     for {
-      rules <- readRulesConf(rules, tag)
-      proxyRules <- proxyRulesOpt.map(readRulesConf(_, tag + "_proxy")).getOrElse(Future.successful(Nil))
+      rules <- readRulesConf(rules, tag, addresses)
+      proxyRules <- proxyRulesOpt.map(readRulesConf(_, tag + "_proxy", addresses)).getOrElse(Future.successful(Nil))
     } yield (rules ::: proxyRules)
     }.toJava
 
-  private def readRulesConf(rulesConf: Json, tag: String): Future[List[RuleConfWithPlugins]] =
-    RulesConfReader.read(rulesConf.toString) match {
+  private def readRulesConf(rulesConf: Json, tag: String, addresses: Map[PluginName, PluginAddressPrefix]): Future[List[RuleConfWithPlugins]] =
+    RulesConfReader.read(rulesConf.toString, addresses) match {
       case \/-(rules) =>
         logRulesConf(s"Rules (${tag}) configuration", rules)
         //log.info(s"Rules (${tag}) configuration:\n${rules.map(rule => s"   ${rule.asJson.pretty(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
@@ -78,11 +78,11 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
   private def checkPluginsReady(rules: List[RuleConfWithPlugins]): Future[Unit] = {
     val results: Future[Set[Either[PluginName, Unit]]] =
       Future.sequence {
-        val pluginNames: Set[PluginName] =
-          rules.flatMap(r => r.requestPlugins.toList.map(_.name) ::: r.responsePlugins.toList.map(_.name)).toSet
+        val pluginNames: Set[(PluginName, Option[PluginAddressPrefix])] =
+          rules.flatMap(r => r.requestPlugins.toList.map(p => (p.name, p.addressPrefixOpt)) ::: r.responsePlugins.toList.map(p => (p.name, p.addressPrefixOpt))).toSet
 
-        pluginNames.map { pluginName =>
-          createClient(classOf[PluginService], pluginName.value).isReady.toScala()
+        pluginNames.map { case (pluginName, pluginIdOpt) =>
+          createClient(classOf[PluginService], pluginIdOpt.map(_.value).getOrElse(pluginName.value)).isReady.toScala()
             .flatMap { ready =>
               if (ready) Future.successful(Right(()))
               else Future.successful(Left(pluginName))
@@ -107,8 +107,8 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
     }
   }
 
-  def getExtendRules(ruleConf: RuleConfWithPlugins)(pluginConf: PluginConf): Future[ExtendRules] = {
-    val client = createClient(classOf[PluginRulesExtendService], java.util.Optional.of(pluginConf.name.value))
+  def getExtendRules(ruleConf: RuleConfWithPlugins)(pluginConf: ApiGroupPluginConf): Future[ExtendRules] = {
+    val client = createClient(classOf[PluginRulesExtendService], java.util.Optional.of(pluginConf.addressPrefixOpt.map(_.value).getOrElse(pluginConf.name.value)))
     client.extendRules(ruleConf, pluginConf.conf).toScala()
   }
 

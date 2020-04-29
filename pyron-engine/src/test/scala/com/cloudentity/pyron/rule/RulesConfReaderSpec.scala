@@ -2,7 +2,7 @@ package com.cloudentity.pyron.rule
 
 import io.circe.Json
 import com.cloudentity.pyron.domain._
-import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPattern, PathPrefix, PluginConf, PluginName, ServiceClientName, StaticServiceRule, TargetHost}
+import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPattern, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, ServiceClientName, StaticServiceRule, TargetHost}
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf}
 import com.cloudentity.pyron.rule.RulesConfReader._
 import io.vertx.core.http.HttpMethod
@@ -13,10 +13,10 @@ import scalaz.{Failure, Success}
 
 @RunWith(classOf[JUnitRunner])
 class RulesConfReaderSpec extends WordSpec with MustMatchers {
-  val emptyRuleConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+  val emptyRuleConf = RulesConfReader.emptyRuleRawConf
   val emptyConf = ServiceConf(emptyRuleConf, None, None)
-  val fullRuleConfWoPlugins = RuleRawConf(Some("endpointName"), Some(TargetHost("targetHost")), Some(80), None, None, None, Some(PathPattern("pathPattern")), None, None, None, None, Some(PathPrefix("pathPrefix")), Some(HttpMethod.GET), Some(true), None, None, None, None, None)
-  val otherFullRuleConfWoPlugins = RuleRawConf(Some("endpointName2"), Some(TargetHost("targetHost2")), Some(802), None, None, None, Some(PathPattern("pathPattern2")), None, None, None, None, Some(PathPrefix("pathPrefix2")), Some(HttpMethod.POST), Some(false), None, None, None, None, None)
+  val fullRuleConfWoPlugins = RuleRawConf(Some("endpointName"), Some(TargetHost("targetHost")), Some(80), None, None, None, Some(PathPattern("pathPattern")), None, None, None, None, Some(PathPrefix("pathPrefix")), Some(HttpMethod.GET), Some(true), None, None, None, None, None, None, None)
+  val otherFullRuleConfWoPlugins = RuleRawConf(Some("endpointName2"), Some(TargetHost("targetHost2")), Some(802), None, None, None, Some(PathPattern("pathPattern2")), None, None, None, None, Some(PathPrefix("pathPrefix2")), Some(HttpMethod.POST), Some(false), None, None, None, None, None, None, None)
 
   def serviceConf(rule: RuleRawConf) = ServiceConf(rule, None, None)
   def endpointConf(rule: RuleRawConf) = EndpointConf(rule, None, None)
@@ -26,47 +26,47 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
 
     val targetError = "either 'targetHost' and 'targetPort' or 'targetService' or 'targetProxy' should be set"
     "return error when `targetHost` and `targetPort` and `targetService` and 'targetProxy' missing in default and endpoint conf" in {
-      composeRuleConf(emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetHost = None, targetPort = None, targetService = None, targetProxy = None))) match {
+      composeRuleConf(Map(), emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetHost = None, targetPort = None, targetService = None, targetProxy = None))) match {
         case Success(_)  => fail
         case Failure(fs) => fs.list.toList must be(List(targetError))
       }
     }
 
     "return error when `targetHost` or `targetPort` and `targetService` missing in default and endpoint conf" in {
-      composeRuleConf(emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetPort = None, targetService = None))) match {
+      composeRuleConf(Map(), emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetPort = None, targetService = None))) match {
         case Success(_)  => fail
         case Failure(fs) => fs.list.toList must be(List(targetError))
       }
 
-      composeRuleConf(emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetHost = None, targetService = None))) match {
+      composeRuleConf(Map(), emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetHost = None, targetService = None))) match {
         case Success(_)  => fail
         case Failure(fs) => fs.list.toList must be(List(targetError))
       }
     }
 
     "return error when `targetHost` and `targetPort` and `targetService` present in conf" in {
-      composeRuleConf(emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetService = Some(ServiceClientName("service-x"))))) match {
+      composeRuleConf(Map(), emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetService = Some(ServiceClientName("service-x"))))) match {
         case Success(_)  => fail
         case Failure(fs) => fs.list.toList must be(List(targetError))
       }
     }
 
     "return error when `targetHost` and `targetPort` and `targetProxy` present in conf" in {
-      composeRuleConf(emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetProxy = Some(true)))) match {
+      composeRuleConf(Map(), emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetProxy = Some(true)))) match {
         case Success(_)  => fail
         case Failure(fs) => fs.list.toList must be(List(targetError))
       }
     }
 
     "return error when `targetService` and `targetProxy` present in conf" in {
-      composeRuleConf(emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetService = Some(ServiceClientName("service-x")), targetProxy = Some(true)))) match {
+      composeRuleConf(Map(), emptyConf, endpointConf(fullRuleConfWoPlugins.copy(targetService = Some(ServiceClientName("service-x")), targetProxy = Some(true)))) match {
         case Success(_)  => fail
         case Failure(fs) => fs.list.toList must be(List(targetError))
       }
     }
 
     "return error when `pathPattern` missing in default and endpoint conf" in {
-      composeRuleConf(emptyConf, endpointConf(fullRuleConfWoPlugins.copy(pathPattern = None))) match {
+      composeRuleConf(Map(), emptyConf, endpointConf(fullRuleConfWoPlugins.copy(pathPattern = None))) match {
         case Success(_)  => fail
         case Failure(fs) => fs.list.toList must be(List("missing `pathPattern`"))
       }
@@ -84,6 +84,8 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
           copyQueryOnRewrite = fullRuleConfWoPlugins.copyQueryOnRewrite,
           preserveHostHeader = fullRuleConfWoPlugins.preserveHostHeader,
           tags               = fullRuleConfWoPlugins.tags.getOrElse(Nil),
+          requestBody        = fullRuleConfWoPlugins.requestBody,
+          requestBodyMaxSize = fullRuleConfWoPlugins.requestBodyMaxSize,
           call               = fullRuleConfWoPlugins.call,
           ext                = ExtRuleConf(None)
         ),
@@ -92,14 +94,14 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     )
 
     "return RuleConf with all values copied from default conf when endpoint conf empty" in {
-      composeRuleConf(serviceConf(fullRuleConfWoPlugins), endpointConf(emptyRuleConf)) match {
+      composeRuleConf(Map(), serviceConf(fullRuleConfWoPlugins), endpointConf(emptyRuleConf)) match {
         case Success(rule) => assertRulesEqual(rule.rule, fullConfRule.conf)
         case Failure(fs)   => fail(fs.toString)
       }
     }
 
     "return RuleConf with all values from endpoint conf when endpoint conf without missing values" in {
-      composeRuleConf(serviceConf(otherFullRuleConfWoPlugins), endpointConf(fullRuleConfWoPlugins)) match {
+      composeRuleConf(Map(), serviceConf(otherFullRuleConfWoPlugins), endpointConf(fullRuleConfWoPlugins)) match {
         case Success(rule) => assertRulesEqual(rule.rule, fullConfRule.conf)
         case Failure(fs)   => fail(fs.toString)
       }
@@ -115,8 +117,8 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
 
   "RulesReader.composeRuleConfs" should {
     "should aggregate all missing fields" in {
-      val conf = ServiceRulesConf(emptyRuleConf, None, None, List(endpointConf(emptyRuleConf)))
-      RulesConfReader.composeRuleConfs(List(conf, conf)) match {
+      val conf = ServiceRulesConf(Some(emptyRuleConf), None, None, List(endpointConf(emptyRuleConf)))
+      RulesConfReader.composeRuleConfs(List(conf, conf), Map()) match {
         case Success(_) => fail
         case Failure(fs) =>
           val service0MissingFields = fs.list.toList.filter(_.startsWith("Service 0"))
@@ -127,14 +129,14 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     }
   }
 
-  val preFlowRequestPluginConfs = List(PluginConf(PluginName("pre-req-plugin1"), Json.Null), PluginConf(PluginName("pre-req-plugin2"), Json.Null))
-  val postFlowRequestPluginConfs = List(PluginConf(PluginName("post-req-plugin1"), Json.Null), PluginConf(PluginName("post-req-plugin2"), Json.Null))
-  val preFlowResponsePluginConfs = List(PluginConf(PluginName("pre-resp-plugin1"), Json.Null), PluginConf(PluginName("pre-resp-plugin2"), Json.Null))
-  val postFlowResponsePluginConfs = List(PluginConf(PluginName("post-resp-plugin1"), Json.Null), PluginConf(PluginName("post-resp-plugin2"), Json.Null))
+  val preFlowRequestPluginConfs = List(ApiGroupPluginConf(PluginName("pre-req-plugin1"), Json.Null, None), ApiGroupPluginConf(PluginName("pre-req-plugin2"), Json.Null, None))
+  val postFlowRequestPluginConfs = List(ApiGroupPluginConf(PluginName("post-req-plugin1"), Json.Null, None), ApiGroupPluginConf(PluginName("post-req-plugin2"), Json.Null, None))
+  val preFlowResponsePluginConfs = List(ApiGroupPluginConf(PluginName("pre-resp-plugin1"), Json.Null, None), ApiGroupPluginConf(PluginName("pre-resp-plugin2"), Json.Null, None))
+  val postFlowResponsePluginConfs = List(ApiGroupPluginConf(PluginName("post-resp-plugin1"), Json.Null, None), ApiGroupPluginConf(PluginName("post-resp-plugin2"), Json.Null, None))
 
   val serviceConf  = ServiceConf(emptyRuleConf,
-    request  = Some(ServiceFlowsConf(preFlow = Some(ServiceFlowConf(preFlowRequestPluginConfs)),  postFlow = Some(ServiceFlowConf(postFlowRequestPluginConfs)))), 
-    response = Some(ServiceFlowsConf(preFlow = Some(ServiceFlowConf(preFlowResponsePluginConfs)), postFlow = Some(ServiceFlowConf(postFlowResponsePluginConfs))))
+    request  = Some(ServiceFlowsConf(preFlow = Some(ServiceFlowConf(preFlowRequestPluginConfs.map(p => PluginConf(p.name, p.conf)))),  postFlow = Some(ServiceFlowConf(postFlowRequestPluginConfs.map(p => PluginConf(p.name, p.conf)))))),
+    response = Some(ServiceFlowsConf(preFlow = Some(ServiceFlowConf(preFlowResponsePluginConfs.map(p => PluginConf(p.name, p.conf)))), postFlow = Some(ServiceFlowConf(postFlowResponsePluginConfs.map(p => PluginConf(p.name, p.conf))))))
   )
 
   "RulesReader.composeRequestPluginsConf" should {
@@ -144,7 +146,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
       val endpointConf = EndpointConf(emptyRuleConf, None, None)
 
       // when
-      val conf = composeRequestPluginsConf(serviceConf, endpointConf)
+      val conf = composeRequestPluginsConf(Map(), serviceConf, endpointConf)
 
       // then
       conf must be(RequestPluginsConf(preFlowRequestPluginConfs, Nil, postFlowRequestPluginConfs))
@@ -156,7 +158,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
       val endpointConf         = EndpointConf(emptyRuleConf, endpointRequestFlows, None)
 
       // when
-      val conf = composeRequestPluginsConf(serviceConf, endpointConf)
+      val conf = composeRequestPluginsConf(Map(), serviceConf, endpointConf)
 
       // then
       conf must be(RequestPluginsConf(Nil, Nil, postFlowRequestPluginConfs))
@@ -168,7 +170,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
       val endpointConf  = EndpointConf(emptyRuleConf, endpointRequestFlows, None)
 
       // when
-      val conf = composeRequestPluginsConf(serviceConf, endpointConf)
+      val conf = composeRequestPluginsConf(Map(), serviceConf, endpointConf)
 
       // then
       conf must be(RequestPluginsConf(preFlowRequestPluginConfs, Nil, Nil))
@@ -186,7 +188,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
       val endpointConf          = EndpointConf(emptyRuleConf, endpointRequestFlows, endpointResponseFlows)
 
       // when
-      val conf = composeRequestPluginsConf(serviceConf, endpointConf)
+      val conf = composeRequestPluginsConf(Map(), serviceConf, endpointConf)
 
       // then
       conf must be(
@@ -206,7 +208,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
       val endpointConf = EndpointConf(emptyRuleConf, None, None)
 
       // when
-      val conf = composeResponsePluginsConf(serviceConf, endpointConf)
+      val conf = composeResponsePluginsConf(Map(), serviceConf, endpointConf)
 
       // then
       conf must be(ResponsePluginsConf(preFlowResponsePluginConfs, Nil, postFlowResponsePluginConfs))
@@ -218,7 +220,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
       val endpointConf          = EndpointConf(emptyRuleConf, None, endpointResponseFlows)
 
       // when
-      val conf = composeResponsePluginsConf(serviceConf, endpointConf)
+      val conf = composeResponsePluginsConf(Map(), serviceConf, endpointConf)
 
       // then
       conf must be(ResponsePluginsConf(Nil, Nil, postFlowResponsePluginConfs))
@@ -230,7 +232,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
       val endpointConf          = EndpointConf(emptyRuleConf, None, endpointResponseFlows)
 
       // when
-      val conf = composeResponsePluginsConf(serviceConf, endpointConf)
+      val conf = composeResponsePluginsConf(Map(), serviceConf, endpointConf)
 
       // then
       conf must be(ResponsePluginsConf(preFlowResponsePluginConfs, Nil, Nil))
@@ -248,7 +250,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
       val endpointConf     = EndpointConf(emptyRuleConf, endpointRequestFlows, endpointResponseFlows)
 
       // when
-      val conf = composeResponsePluginsConf(serviceConf, endpointConf)
+      val conf = composeResponsePluginsConf(Map(), serviceConf, endpointConf)
 
       // then
       conf must be(

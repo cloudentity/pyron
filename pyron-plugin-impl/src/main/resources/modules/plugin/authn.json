@@ -1,0 +1,24 @@
+{
+  "registry:request-plugins": {
+    "plugin:{MODULE_ID-}authn": {
+      "main": "com.cloudentity.pyron.plugin.impl.authn.AuthnPlugin",
+      "prefix": "$env:?{MODULE_ID-}{PLUGIN_NAME}:string:authn"
+    }
+  },
+  "plugin:{MODULE_ID-}authn": {
+    "methodsMapping": {
+      "anonymous": "{MODULE_ID-}anonymousAuthnProvider"
+    },
+    "entitiesMapping": {
+    },
+    "authnMethodProvidersConfigKey": "{MODULE_ID-}authn-method-providers",
+    "authnEntityProvidersConfigKey": "{MODULE_ID-}authn-entity-providers"
+  },
+  "registry:{MODULE_ID-}authn-method-providers": {
+    "{MODULE_ID-}anonymousAuthnProvider": {
+      "main": "com.cloudentity.pyron.plugin.impl.authn.methods.AnonymousAuthnProvider"
+    }
+  },
+  "registry:{MODULE_ID-}authn-entity-providers": {
+  }
+}

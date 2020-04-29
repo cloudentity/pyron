@@ -1,0 +1,47 @@
+{
+  "plugin:{MODULE_ID-}authn": {
+    "methodsMapping": {
+      "oauth2-introspect": "{MODULE_ID-}oauthIntrospectJWTAuthnProvider"
+    },
+    "entitiesMapping": {
+      "oauth2-introspect": {
+        "jwt": "{MODULE_ID-}jwtContentProvider"
+      }
+    }
+  },
+  "registry:{MODULE_ID-}authn-method-providers": {
+    "{MODULE_ID-}oauthIntrospectJWTAuthnProvider": {
+      "main": "com.cloudentity.pyron.plugin.impl.authn.methods.OAuthTokenIntrospectionAuthnProvider",
+      "verticleConfig": {
+        "endpointPath": "$env:PLUGIN_AUTHN_OAUTH2_INTROSPECT__INTROSPECT_ENDPOINT:string",
+        "clientId": "$env:PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_ID:string",
+        "clientSecret": "$env:PLUGIN_AUTHN_OAUTH2_INTROSPECT__CLIENT_SECRET:string",
+        "token": {
+          "header": "$env:PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER:string:Authorization",
+          "regex": "$env:?PLUGIN_AUTHN_OAUTH2_INTROSPECT__TOKEN_HEADER_REGEX:string"
+        },
+        "extraFormParameters": "$env:?PLUGIN_AUTHN_OAUTH2_INTROSPECT__EXTRA_FORM_PARAMS:object",
+        "httpClient": {
+          "serviceLocation": {
+            "host": "$env:PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_HOST:string",
+            "port": "$env:PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_PORT:int",
+            "ssl": "$env:PLUGIN_AUTHN_OAUTH2_INTROSPECT__SERVER_SSL:boolean:false"
+          },
+          "http": {
+            "_nullify": true,
+            "maxPoolSize": "$env:?PLUGIN_AUTHN_OAUTH2_INTROSPECT__MAX_POOL_SIZE:int",
+            "trustAll": "$env:?PLUGIN_AUTHN_OAUTH2_INTROSPECT__TRUST_ALL:boolean",
+            "pemTrustOptions": {
+              "_nullify": true,
+              "certPaths": "$env:?PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_PATHS:array",
+              "certValues": "$env:?PLUGIN_AUTHN_OAUTH2_INTROSPECT__PEM_TRUST_OPTIONS__CERT_VALUES:array"
+            }
+          }
+        }
+      }
+    }
+  },
+  "registry:{MODULE_ID-}authn-entity-providers": {
+    "{MODULE_ID-}jwtContentProvider": { "main": "com.cloudentity.pyron.plugin.impl.authn.entities.JWTContentProvider" }
+  }
+}

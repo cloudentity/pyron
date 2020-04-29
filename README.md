@@ -23,6 +23,7 @@
     * OAuth 2 with opaque token introspection
   * [Request transformation](docs/plugins/transform-request.md)
   * [CORS](docs/plugins/cors.md)
+  * [Brute-force protection](docs/plugins/bruteforce.md)
 * [Plugin development guide](docs/plugin-dev.md)
 * [How to](#how-to)
   * [Read routing rules from Consul](docs/howtos/config-store-consul.md)
@@ -188,7 +189,9 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
   * [Rewrite method](#config-rewrite-method)
   * [Response timeout](#config-response-timeout)
   * [Retry](#config-retry)
-  * [Preserve Host header](#config-preserve-host--header)
+  * [Preserve Host header](#config-preserve-host-header)
+  * [Request body handling (buffer/stream/drop)](#config-request-body-handling)
+  * [Request body size limit](#config-request-body-limit)
 * [API groups](#config-api-groups)
 * [Service discovery](#config-service-discovery)
   * [Consul service discovery](#sd-consul)
@@ -483,6 +486,75 @@ Example: client's call `POST /user` is proxied to target `PUT /user`.
 | preserveHostHeader   | should send to target service Host header received from the client (default false) |
 
 By default, Pyron sends target host in Host header to target service, set `preserveHostHeader` to true to send Host header sent by the client instead.
+
+<a id="config-request-body-handling"></a>
+#### Request body handling (buffer/stream/drop)
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestBody": "buffer"
+        }
+      ]
+    }
+  ]
+}
+```
+
+| Attribute     | Description                                                             |
+|:--------------|:------------------------------------------------------------------------|
+| requestBody   | body handling strategy (`buffer`, `stream` or `drop`, default `buffer`) |
+
+* `buffer` - load entire body into memory, required by some plugins (e.g. `transform-request`)
+* `stream` - stream the body directly to target service (after applying request plugins)
+* `drop` - ignore the body, do not transfer it to target service (`Content-Length` header of target request is set to 0)
+
+<a id="config-request-body-limit"></a>
+#### Request body size limit
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/user",
+          "requestBodyMaxSize": 100
+        }
+      ]
+    }
+  ]
+}
+```
+
+| Attribute            | Description                                                      |
+|:---------------------|:-----------------------------------------------------------------|
+| requestBodyMaxSize   | max number of kilobytes transferred to target service (optional) |
+
+> NOTE<br/>
+> If maximum body size is reached then Pyron responds to the client with `413` status code.
+> <br/>
+> <br/>
+> If the request body is using `chunked` Transfer-Encoding (content length is not known upfront) and `requestBody` is `stream`
+> then the body streaming to target service stops when `requestBodyMaxSize` kilobytes has been streamed.
+> Otherwise no data is sent to target service if `requestBodyMaxSize` limit would be reached.
+> <br/>
+> <br/>
+> Set DEFAULT_REQUEST_BODY_MAX_SIZE env variable with default `requestBodyMaxSize` for all routing rules.
 
 <a id="config-api-groups"></a>
 ### API Groups
@@ -780,7 +852,9 @@ Add `tracing/jaeger` to `MODULES` environment variable, i.e. `MODULES=["tracing/
 | gateway.method        | method of matching rule                                                                                   |
 | gateway.path          | path pattern of matching rule                                                                             |
 | gateway.pathPrefix    | path prefix of matching rule                                                                              |
-| gateway.aborted       | true if Pyron aborted the call without proxying to target service; false otherwise                         |
+| gateway.aborted       | true if Pyron aborted the call without proxying to target service; false otherwise                        |
+| gateway.interrupted   | true if the call was interrupted by the client; false otherwise                                           |
+| gateway.failed        | true if an exception occurred on target call or plugin application; not set otherwise                     |
 | gateway.targetService | target service of matching rule                                                                           |
 | request.headers       | request headers                                                                                           |
 | timeMs                | time from receiving the request body till writing full response body                                      |
@@ -822,7 +896,7 @@ Plugins extend request-response flow, e.g. can enforce authorization rules, modi
 * [Request transformation](docs/plugins/transform-request.md)
 * [CORS](docs/plugins/cors.md)
 
-Read about [plugins configuration](docs/plugins.md) in routing rules.
+Read about [plugins application](docs/plugins.md) in routing rules.
 
 <a id="how-to"></a>
 ### How to
@@ -841,13 +915,19 @@ We have put Pyron Gateway under load to see how performant it is.
 
 ### Setup
 
-* The test was run on a machine with i7-8550U CPU @ 1.80GHz
+* The test was run on a machine with i7-8550U CPU @ 1.80GHz (4 processing cores)
 * `wrk` is used to generate load, a single test takes 30s and uses 10 threads
 * target service is mocked with server responding to 140k req/sec with ~20 bytes response body
 
 ### Proxying request with no plugins
 
 Pyron Gateway proxies requests to mocked target service without applying any plugins.
+
+With no target service delay and 10 connections:
+
+| Requests/sec | Latency avg | Latency Stdev | Latency p90 | Latency p99 |
+|:-------------|:------------|:--------------|:------------|:------------|
+| 21796        | 577.79	µs   | 774.63 µs     | 700.00 µs   | 4.57ms      |
 
 With no target service delay and 30 connections:
 

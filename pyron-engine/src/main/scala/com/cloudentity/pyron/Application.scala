@@ -1,6 +1,6 @@
 package com.cloudentity.pyron
 
-import com.cloudentity.pyron.api.{ApiHandlerVerticle, ApiServer, RoutingCtxVerticle}
+import com.cloudentity.pyron.api.{ApiHandlerVerticle, ApiServer}
 import com.cloudentity.pyron.apigroup.ApiGroupsStoreVerticle
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.config.Conf.AppConf
@@ -38,7 +38,6 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       _       <- deployRegistries()
       _       <- deployVerticle(new RulesStoreVerticle)
       _       <- deployVerticle(new ApiGroupsStoreVerticle)
-      _       <- deployVerticle(new RoutingCtxVerticle)
       _       <- deployRegistryIfConfigured("open-api")
     } yield ()
     }.toJava()

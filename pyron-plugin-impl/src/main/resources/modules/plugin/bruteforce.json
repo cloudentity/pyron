@@ -1,0 +1,16 @@
+{
+  "registry:request-plugins": {
+    "bruteForce": {
+      "main": "com.cloudentity.pyron.plugin.impl.bruteforce.BruteForcePlugin",
+      "verticleConfig": {
+        "cacheTimeoutMs": "$env:?PLUGIN_BRUTE_FORCE__CACHE_TIMEOUT:int",
+        "leaseDurationMs": "$env:?PLUGIN_BRUTE_FORCE__CACHE_LOCK_LEASE_DURATION:int"
+      }
+    }
+  },
+  "registry:system": {
+    "bruteForceCache": {
+      "main": "com.cloudentity.pyron.plugin.impl.bruteforce.cache.InMemoryBruteForceCacheVerticle"
+    }
+  }
+}

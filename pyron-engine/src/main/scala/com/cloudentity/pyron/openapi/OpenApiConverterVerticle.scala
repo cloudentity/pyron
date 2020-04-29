@@ -2,7 +2,7 @@ package com.cloudentity.pyron.openapi
 
 import java.util.Optional
 
-import com.cloudentity.pyron.domain.flow.PluginConf
+import com.cloudentity.pyron.domain.flow.{PluginConf, ApiGroupPluginConf}
 import com.cloudentity.pyron.domain.openapi.{ConverterConf, OpenApiRule, ServiceId}
 import com.cloudentity.pyron.plugin.openapi._
 import com.cloudentity.pyron.plugin.openapi._
@@ -129,7 +129,7 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
     }
   }
 
-  def applyPlugin(ctx: TracingContext, pluginConf: PluginConf, rule: OpenApiRule, swagger: Swagger): VxFuture[Swagger] = {
+  def applyPlugin(ctx: TracingContext, pluginConf: ApiGroupPluginConf, rule: OpenApiRule, swagger: Swagger): VxFuture[Swagger] = {
     val client = getOpenApiPluginClient(pluginConf)
     client.convertOpenApi(ctx, ConvertOpenApiRequest(swagger, rule, pluginConf))
       .compose {
@@ -139,8 +139,8 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
       }
   }
 
-  def getOpenApiPluginClient(plugin: PluginConf): ConvertOpenApiService = {
-    createClient(classOf[ConvertOpenApiService], Optional.of(plugin.name.value))
+  def getOpenApiPluginClient(plugin: ApiGroupPluginConf): ConvertOpenApiService = {
+    createClient(classOf[ConvertOpenApiService], Optional.of(plugin.addressPrefixOpt.map(_.value).getOrElse(plugin.name.value)))
   }
 
   def filterExposedApis(ctx: TracingContext, swagger: Swagger, rules: List[OpenApiRule]): VxFuture[Swagger] = {

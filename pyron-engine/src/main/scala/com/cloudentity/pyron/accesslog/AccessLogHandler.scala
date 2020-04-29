@@ -2,7 +2,6 @@ package com.cloudentity.pyron.accesslog
 
 import java.time.{Instant, ZoneId}
 
-import io.circe.syntax._
 import io.circe.{Json, JsonObject}
 import com.cloudentity.pyron.accesslog.AccessLogHandler.RequestLog
 import com.cloudentity.pyron.accesslog.AccessLogHelper.{AccessLogConf, LogAllFields, LogWhitelistedFields, MaskFieldsConf}
@@ -16,7 +15,7 @@ import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingManager}
 import io.vertx.core.http.{HttpMethod, HttpServerRequest, HttpVersion}
 import io.vertx.core.{Handler, Vertx}
 import com.cloudentity.pyron.api.ApiHandler.FlowState
-import com.cloudentity.pyron.domain.flow.{AccessLogItems, AuthnCtx, DiscoverableServiceRule, ProxyServiceRule, ServiceClientName, StaticServiceRule, TargetHost}
+import com.cloudentity.pyron.domain.flow.{AccessLogItems, AuthnCtx, DiscoverableServiceRule, Properties, ProxyServiceRule, ServiceClientName, StaticServiceRule, TargetHost}
 import io.vertx.core.net.SocketAddress
 import io.vertx.ext.web.RoutingContext
 
@@ -86,7 +85,6 @@ object AccessLogHandler extends AccessLogHelper {
         isoDate,
         getTrueClientIp(ctx),
         getClientAddress(req.remoteAddress()),
-        getCorrelationIds(ctx),
         tracingContextMap,
 
         HttpParams(
@@ -99,7 +97,8 @@ object AccessLogHandler extends AccessLogHelper {
         getRequestLog(req, conf),
         System.currentTimeMillis() - timestamp,
         extraAccessLog,
-        gatewayLog
+        gatewayLog,
+        flowState.properties
       )
 
       accessLogPersister.persist(tracingContext, log)
@@ -148,29 +147,12 @@ object AccessLogHandler extends AccessLogHelper {
       pathPrefix    = flowState.rule.map(_.conf.criteria.path.prefix.value),
       aborted       = flowState.aborted.getOrElse(true),
       interrupted   = interrupted,
+      failed        = flowState.failure.map(_ => true),
       targetService = targetServiceNameOpt,
       targetHost    = targetHostOpt,
       targetPort    = targetPortOpt
     )
   }
-
-  def getCorrelationIds(ctx: RoutingContext): Option[CorrelationIds] = {
-    RoutingCtxData.getCorrelationSignature(ctx).split(" ").toList match {
-      case localId :: ids => Some(CorrelationIds(localId, ids))
-      case Nil            => None
-    }
-  }
-
-  def getCorrelationIdsJson(ctx: RoutingContext): Json =
-    RoutingCtxData.getCorrelationSignature(ctx).split(" ").toList match {
-      case localId :: ids =>
-        val items = ("local" -> localId.asJson) :: ids.zipWithIndex.map { case (id, num) =>
-          s"external$num" -> id.asJson
-        }
-
-        Json.obj(items:_*)
-      case Nil => Json.obj()
-    }
 
   def getClientAddress(inetSocketAddress: SocketAddress): Option[String] =
     Option(inetSocketAddress.host())
@@ -230,25 +212,30 @@ object AccessLogHandler extends AccessLogHelper {
     }
 }
 
-case class GatewayLog(method: Option[HttpMethod], path: Option[String], pathPrefix: Option[String], aborted: Boolean, interrupted: Boolean, targetService: Option[ServiceClientName], targetHost: Option[TargetHost], targetPort: Option[Int])
+case class GatewayLog(
+  method: Option[HttpMethod],
+  path: Option[String],
+  pathPrefix: Option[String],
+  aborted: Boolean,
+  interrupted: Boolean,
+  failed: Option[Boolean],
+  targetService: Option[ServiceClientName],
+  targetHost: Option[TargetHost],
+  targetPort: Option[Int]
+)
 
 case class AccessLog(
   timestamp: Instant,
   trueClientIp: Option[String],
   remoteClient: Option[String],
-  correlationIds: Option[CorrelationIds],
   tracing: Map[String, String],
   http: HttpParams,
   authnCtx: JsonObject,
   request: Option[RequestLog],
   timeMs: Long,
   extraItems: AccessLogItems,
-  gateway: GatewayLog
-)
-
-case class CorrelationIds(
-  local: String,
-  external: List[String]
+  gateway: GatewayLog,
+  properties: Properties
 )
 
 case class HttpParams(

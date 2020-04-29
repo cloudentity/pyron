@@ -2,7 +2,7 @@ package com.cloudentity.pyron.rule
 
 import com.cloudentity.pyron.plugin.config._
 import com.cloudentity.pyron.domain._
-import com.cloudentity.pyron.domain.flow.{PluginConf, RequestCtx, ResponseCtx}
+import com.cloudentity.pyron.domain.flow.{PluginConf, ApiGroupPluginConf, PluginName, RequestCtx, ResponseCtx}
 import com.cloudentity.pyron.domain.rule.RuleConfWithPlugins
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
 import com.cloudentity.pyron.plugin.bus.{request, response}
@@ -20,7 +20,7 @@ import scalaz.Scalaz._
 import scalaz._
 
 object RuleBuilder {
-  case class InvalidPluginConf(conf: PluginConf, errorMsg: String)
+  case class InvalidPluginConf(conf: ApiGroupPluginConf, errorMsg: String)
 
   /**
     * Validates plugins configuration for all rules and aggregates errors if any.
@@ -39,33 +39,33 @@ object RuleBuilder {
       buildResponseFunctions(bus, tracing, conf.requestPlugins.toList.reverse ::: conf.responsePlugins.toList)
     )
 
-  def buildRequestFunctions(bus: EventBus, tracing: TracingManager, confs: List[PluginConf])(implicit ec: VertxExecutionContext): List[RequestPlugin] =
+  def buildRequestFunctions(bus: EventBus, tracing: TracingManager, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): List[RequestPlugin] =
     confs.map { conf =>
 
-      val client = ServiceClientFactory.makeWithTracing(bus, tracing, classOf[RequestPluginService], java.util.Optional.of(conf.name.value))
+      val client = ServiceClientFactory.makeWithTracing(bus, tracing, classOf[RequestPluginService], java.util.Optional.of(conf.addressPrefixOpt.map(_.value).getOrElse(conf.name.value)))
       (ctx: RequestCtx) =>
         Futures.toScala(client.applyPlugin(ctx.tracingCtx, request.ApplyRequest(ctx, conf))).flatMap {
           case request.Continue(nextCtx) => Future.successful(nextCtx)
-          case request.ApplyError(ex)    => Future.failed(new Exception("Request plugin apply error: " + ex.getMessage, ex))
+          case request.ApplyError(ex)    => Future.failed(ex)
         }
     }
 
-  def buildResponseFunctions(bus: EventBus, tracing: TracingManager, confs: List[PluginConf])(implicit ec: VertxExecutionContext): List[ResponsePlugin] =
+  def buildResponseFunctions(bus: EventBus, tracing: TracingManager, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): List[ResponsePlugin] =
     confs.map { conf =>
 
-      val client = ServiceClientFactory.makeWithTracing(bus, tracing, classOf[ResponsePluginService], java.util.Optional.of(conf.name.value))
+      val client = ServiceClientFactory.makeWithTracing(bus, tracing, classOf[ResponsePluginService], java.util.Optional.of(conf.addressPrefixOpt.map(_.value).getOrElse(conf.name.value)))
       (ctx: ResponseCtx) =>
         Futures.toScala(client.applyPlugin(ctx.tracingCtx, response.ApplyRequest(ctx, conf))).flatMap {
           case response.Continue(apiResponse) => Future.successful(apiResponse)
-          case response.ApplyError(ex)        => Future.failed(new Exception("Request plugin apply error: " + ex.getMessage, ex))
+          case response.ApplyError(ex)        => Future.failed(ex)
         }
     }
 
-  def validatePluginConfigs(bus: EventBus, confs: List[PluginConf])(implicit ec: VertxExecutionContext): Future[ValidationNel[InvalidPluginConf, Unit]] = {
+  def validatePluginConfigs(bus: EventBus, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): Future[ValidationNel[InvalidPluginConf, Unit]] = {
     val validationsFut: Future[List[Validation[NonEmptyList[InvalidPluginConf], Unit]]] =
       Future.sequence {
         confs.map { conf =>
-          val client = ServiceClientFactory.make(bus, classOf[ValidatePluginService], java.util.Optional.of(conf.name.value))
+          val client = ServiceClientFactory.make(bus, classOf[ValidatePluginService], java.util.Optional.of(conf.addressPrefixOpt.map(_.value).getOrElse(conf.name.value)))
 
           Futures.toScala(client.validateConfig(ValidateRequest(conf)))
             .map[ValidationNel[InvalidPluginConf, Unit]] {
