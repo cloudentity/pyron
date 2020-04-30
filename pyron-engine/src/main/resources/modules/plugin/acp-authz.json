@@ -15,6 +15,7 @@
   "registry:components": {
     "acp-synchronizer": {
       "main": "com.cloudentity.pyron.plugin.impl.acp.AcpApiGroupsSynchronizer",
+      "enabled": "$env:PLUGIN_ACP_AUTHZ__SYNC_ENABLED:boolean:true",
       "verticleConfig": {
         "setApisPath": "/apis",
         "retryDelay": "$env:PLUGIN_ACP_AUTHZ__RETRY_DELAY:int:3000",
