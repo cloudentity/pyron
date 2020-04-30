@@ -11,13 +11,13 @@ import io.circe.syntax._
 import com.cloudentity.pyron.domain.Codecs._
 import AcpApiGroupsSynchronizer.{VerticleConfig, _}
 import com.cloudentity.pyron.util.ConfigDecoder
+import io.vertx.core.impl.NoStackTraceThrowable
 import io.vertx.core.json.JsonObject
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
-trait ApiGroupsSyncRetry {
-  @VertxEndpoint def syncWithRetry(newestGroups: Option[List[ApiGroupConf]])
+trait ApiGroupsUploadWithRetry {
+  @VertxEndpoint def uploadApiGroupsWithRetry(newestGroups: Option[List[ApiGroupConf]])
 }
 
 object AcpApiGroupsSynchronizer {
@@ -48,13 +48,13 @@ object AcpApiGroupsSynchronizer {
   implicit val SetAcpApiGroupEncoder: Encoder[SetAcpApiGroup] = setGroup => Map("api_groups" -> setGroup.apiGroups.asJson).asJson
 }
 
-class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChangeListener with ApiGroupsSyncRetry with ConfigDecoder {
+class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChangeListener with ApiGroupsUploadWithRetry with ConfigDecoder {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(getClass)
   var authorizer: SmartHttpClient = _
   var verticleConfig: VerticleConfig = _
 
   var groupsToRetry: Option[List[ApiGroupConf]] = None
-  lazy val self = createClient(classOf[ApiGroupsSyncRetry])
+  lazy val self = createClient(classOf[ApiGroupsUploadWithRetry])
 
   override def initServiceAsyncS(): Future[Unit] = {
     verticleConfig = decodeConfigUnsafe[VerticleConfig]
@@ -62,7 +62,8 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
     SmartHttp.clientBuilder(vertx, verticleConfig.authorizerClient)
       .build().toScala()
       .map(authorizer = _)
-      .flatMap(_ => getApiGroups().map(Option.apply).map(syncWithRetry))
+      .flatMap(_ => getApiGroups())
+      .flatMap(uploadApiGroups)
   }
 
   private def getApiGroups(): Future[List[ApiGroupConf]] =
@@ -75,30 +76,34 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
 
   override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit = {
     groupsToRetry = None
-    syncWithRetry(Some(confs))
+    uploadApiGroupsWithRetry(Some(confs))
   }
 
-  override def syncWithRetry(newestGroups: Option[List[ApiGroupConf]]): Unit =
+  override def uploadApiGroupsWithRetry(newestGroups: Option[List[ApiGroupConf]]): Unit =
     newestGroups.orElse(groupsToRetry) match {
       case Some(groups) =>
-        authorizer.put(verticleConfig.setApisPath).endWithBody(SetAcpApiGroup.fromApiGroupConfs(groups).asJson.noSpaces).toScala()
-          .onComplete {
-            case Success(resp) if resp.getHttp.statusCode == 204 =>
-              // ok
-              groupsToRetry = None
-              log.debug(TracingContext.dummy(), "Successfully uploaded api-groups to ACP")
-            case Success(resp) if resp.getHttp.statusCode != 204 =>
-              log.error(TracingContext.dummy(), s"Failed to upload api-groups to ACP, retrying, code=${resp.getHttp.statusCode}, body=${resp.getBody}")
-
-              groupsToRetry = Some(groups)
-              vertx.setTimer(verticleConfig.retryDelay, _ => self.syncWithRetry(None))
-            case Failure(ex) =>
-              log.error(TracingContext.dummy(), "Failed to upload api-groups to ACP, retrying", ex)
-
-              groupsToRetry = Some(groups)
-              vertx.setTimer(verticleConfig.retryDelay, _ => self.syncWithRetry(None))
-          }
+        uploadApiGroups(groups).failed.foreach { ex: Throwable =>
+          log.error(TracingContext.dummy(), "Failed to upload api-groups, retrying", ex)
+          groupsToRetry = Some(groups)
+          vertx.setTimer(verticleConfig.retryDelay, _ => self.uploadApiGroupsWithRetry(None))
+        }
       case None =>
-        log.info(TracingContext.dummy(), "Skipping api-groups upload retry, already uploaded newer data")
+        log.info(TracingContext.dummy(), "Skipping api-groups upload retry, already tried to upload newer data")
     }
+
+  private def uploadApiGroups(groups: List[ApiGroupConf]): Future[Unit] =
+    authorizer.put(verticleConfig.setApisPath).endWithBody(SetAcpApiGroup.fromApiGroupConfs(groups).asJson.noSpaces).toScala()
+      .flatMap { resp =>
+        if (resp.getHttp.statusCode == 204) {
+          log.debug(TracingContext.dummy(), "Successfully uploaded api-groups to ACP")
+          Future.successful(())
+        } else {
+          val msg = s"Failed to upload api-groups to ACP, code=${resp.getHttp.statusCode}, body=${resp.getBody}"
+          Future.failed(new NoStackTraceThrowable(msg))
+        }
+      }.recoverWith {
+        case ex: Throwable =>
+          val errMsg = "Failed to upload api-groups to ACP"
+          Future.failed(new Exception(errMsg, ex))
+      }
 }

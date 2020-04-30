@@ -1,19 +1,40 @@
 package com.cloudentity.pyron.plugin.impl.acp
 
 import com.cloudentity.pyron.PyronAcceptanceTest
-import org.junit.{After, Before, Test}
+import org.junit.{After, AfterClass, Before, BeforeClass, Test}
 import org.mockserver.integration.ClientAndServer
 import io.restassured.RestAssured.given
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 import io.circe.syntax._
 import org.mockserver.model.{Body, HttpRequest, JsonBody}
+import AcpApiGroupsSynchronizerTest._
+
+object AcpAuthzPluginTest {
+  var authorizer: ClientAndServer = null
+
+  @BeforeClass
+  def setup(): Unit = {
+    authorizer = ClientAndServer.startClientAndServer(7777)
+    mockSetApis(204)
+  }
+
+  @AfterClass
+  def finish(): Unit = {
+    authorizer.stop()
+  }
+
+  private def mockSetApis(code: Int): Unit = {
+    authorizer
+      .when(request().withPath("/apis"))
+      .respond(response.withStatusCode(code))
+  }
+}
 
 class AcpAuthzPluginTest extends PyronAcceptanceTest {
   override val getMetaConfPath = "src/test/resources/modules/plugin/acp-authz/meta-config.json"
 
   var targetService: ClientAndServer = null
-  var authorizer: ClientAndServer = null
 
   @Before
   def before(): Unit = {
@@ -58,7 +79,7 @@ class AcpAuthzPluginTest extends PyronAcceptanceTest {
         Map("userid" -> "abc")
       )
 
-    authorizer.verify(new HttpRequest().withBody(JsonBody.json(expected.asJson.noSpaces)))
+    authorizer.verify(new HttpRequest().withBody(JsonBody.json(expected.asJson.noSpaces).asInstanceOf[Body[_]]))
   }
 
   @Test
