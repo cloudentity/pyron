@@ -1,6 +1,8 @@
 package com.cloudentity.pyron.plugin.impl.acp
 
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
+import com.cloudentity.tools.vertx.bus.VertxEndpoint
+import com.cloudentity.tools.vertx.http.builder.SmartHttpResponse
 import com.cloudentity.tools.vertx.http.{SmartHttp, SmartHttpClient}
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
@@ -30,10 +32,16 @@ object AcpApiGroup {
     )
 }
 
-class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChangeListener {
+trait SyncRetry {
+  @VertxEndpoint def uploadWithRetry(newestGroups: Option[List[ApiGroupConf]])
+}
+
+class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChangeListener with SyncRetry {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(getClass)
   var authorizer: SmartHttpClient = _
-  var apiGroups: ApiGroupsStore = _
+
+  var groupsToRetry: Option[List[ApiGroupConf]] = None
+  lazy val self = createClient(classOf[SyncRetry])
 
   implicit val AcpApiEncoder = deriveEncoder[AcpApi]
   implicit val AcpApiGroupEncoder = deriveEncoder[AcpApiGroup]
@@ -44,7 +52,8 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
       .build().toScala()
       .map(authorizer = _)
       .map { _ =>
-        createClient(classOf[ApiGroupsStore]).getGroupConfs().toScala.map(apiGroupsChanged(Nil, _))
+        val store = createClient(classOf[ApiGroupsStore])
+        store.getGroupConfs().toScala.map(apiGroupsChanged(Nil, _))
           .recover {
             case ex: Throwable =>
               log.error(TracingContext.dummy(), "Could not get api groups", ex)
@@ -52,15 +61,28 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
       }
 
   override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit = {
-    authorizer.put("/apis").endWithBody(SetAcpApiGroup.fromApiGroupConfs(confs).asJson.noSpaces).toScala()
-      .onComplete {
-        case Success(resp) if resp.getHttp.statusCode == 204 =>
-          // ok
-          log.debug(TracingContext.dummy(), "Successfully uploaded api-groups to ACP")
-        case Success(resp) if resp.getHttp.statusCode != 204 =>
-          log.error(TracingContext.dummy(), s"Failed to upload api-groups to ACP, code=${resp.getHttp.statusCode}, body=${resp.getBody}")
-        case Failure(ex) =>
-          log.error(TracingContext.dummy(), "Failed to upload api-groups to ACP", ex)
-      }
+    groupsToRetry = None
+    uploadWithRetry(Some(confs))
   }
+
+  override def uploadWithRetry(newestGroups: Option[List[ApiGroupConf]]): Unit =
+    newestGroups.orElse(groupsToRetry) match {
+      case Some(groups) =>
+        authorizer.put("/apis").endWithBody(SetAcpApiGroup.fromApiGroupConfs(groups).asJson.noSpaces).toScala()
+          .onComplete {
+            case Success(resp) if resp.getHttp.statusCode == 204 =>
+              // ok
+              log.debug(TracingContext.dummy(), "Successfully uploaded api-groups to ACP")
+            case Success(resp) if resp.getHttp.statusCode != 204 =>
+              log.error(TracingContext.dummy(), s"Failed to upload api-groups to ACP, retrying, code=${resp.getHttp.statusCode}, body=${resp.getBody}")
+
+              groupsToRetry = Some(groups)
+              vertx.setTimer(3000, _ => self.uploadWithRetry(None))
+            case Failure(ex) =>
+              log.error(TracingContext.dummy(), "Failed to upload api-groups to ACP, retrying", ex)
+
+              groupsToRetry = Some(groups)
+              vertx.setTimer(3000, _ => self.uploadWithRetry(None))
+          }
+    }
 }
