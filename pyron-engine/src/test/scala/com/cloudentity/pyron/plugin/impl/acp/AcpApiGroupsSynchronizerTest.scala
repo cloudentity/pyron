@@ -11,6 +11,7 @@ import org.junit.{After, Before, Test}
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
+import org.mockserver.verify.VerificationTimes
 
 class AcpApiGroupsSynchronizerTest extends PyronAcceptanceTest {
   override val getMetaConfPath = "src/test/resources/modules/plugin/acp-authz/meta-config.json"
@@ -20,10 +21,6 @@ class AcpApiGroupsSynchronizerTest extends PyronAcceptanceTest {
   @Before
   override def setUp(ctx: TestContext): Unit = {
     authorizer = ClientAndServer.startClientAndServer(7777)
-    authorizer
-      .when(request().withPath("/apis"))
-      .respond(response.withStatusCode(204))
-
     super.setUp(ctx)
   }
 
@@ -32,18 +29,34 @@ class AcpApiGroupsSynchronizerTest extends PyronAcceptanceTest {
     authorizer.stop()
   }
 
-  @Test
-  def shouldSendToAuthorizerAtStartup(ctx: TestContext): Unit = {
+  private def mockSetApis(code: Int): Unit = {
+    authorizer
+      .when(request().withPath("/apis"))
+      .respond(response.withStatusCode(code))
+  }
+
+  private def _shouldSendToAuthorizerAtStartup(ctx: TestContext, mockCodes: List[Int]): Unit = {
     // given
+    mockCodes.foreach(mockSetApis)
     val expectedBody = """{"api_groups":[{"id":"a.1","apis":[{"method":"GET","path":"/user/{userid}"}]}]}"""
 
     // then
-    verify("PUT", "/apis", expectedBody).setHandler(ctx.asyncAssertSuccess())
+    verify("PUT", "/apis", expectedBody, mockCodes.size).setHandler(ctx.asyncAssertSuccess())
   }
 
   @Test
-  def shouldSendToAuthorizerOnApiGroupUpdate(ctx: TestContext): Unit = {
+  def shouldSendToAuthorizerAtStartup(ctx: TestContext): Unit = {
+    _shouldSendToAuthorizerAtStartup(ctx, List(204))
+  }
+
+  @Test
+  def shouldSendToAuthorizerAtStartupWithRetry(ctx: TestContext): Unit = {
+    _shouldSendToAuthorizerAtStartup(ctx, List(500, 204))
+  }
+
+  def _shouldSendToAuthorizerOnApiGroupUpdate(ctx: TestContext, mockCodes: List[Int]): Unit = {
     // given
+    mockSetApis(204)
     val rules = """[
                   |  {
                   |    "endpoints": [
@@ -82,16 +95,26 @@ class AcpApiGroupsSynchronizerTest extends PyronAcceptanceTest {
     ServiceClientFactory.make(vertx.eventBus(), classOf[ApiGroupsChangeListener]).apiGroupsChanged(Nil, groups)
 
     // then
-    verify("PUT", "/apis", expectedBody).setHandler(ctx.asyncAssertSuccess())
+    verify("PUT", "/apis", expectedBody, 1).setHandler(ctx.asyncAssertSuccess())
   }
 
-  def verify(method: String, path: String, expectedBody: String): Future[Unit] = {
+  @Test
+  def shouldSendToAuthorizerOnApiGroupUpdate(ctx: TestContext): Unit = {
+    _shouldSendToAuthorizerOnApiGroupUpdate(ctx, List(204))
+  }
+
+  @Test
+  def shouldSendToAuthorizerOnApiGroupUpdateWithRetry(ctx: TestContext): Unit = {
+    _shouldSendToAuthorizerOnApiGroupUpdate(ctx, List(500, 204))
+  }
+
+  def verify(method: String, path: String, expectedBody: String, times: Int): Future[Unit] = {
     val promise = Promise.promise[Unit]()
     def rec(p: Promise[Unit], t: Int, ex: Option[Throwable]): Unit = {
       if (t > 0 ) {
         vertx.setTimer(50, _ => {
           try {
-            authorizer.verify(request().withMethod(method).withPath(path).withBody(expectedBody))
+            authorizer.verify(request().withMethod(method).withPath(path).withBody(expectedBody), VerificationTimes.atLeast(times))
             promise.complete(())
           } catch {
             case ex: Throwable =>
