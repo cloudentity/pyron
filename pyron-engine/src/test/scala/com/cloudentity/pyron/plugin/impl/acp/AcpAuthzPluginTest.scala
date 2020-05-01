@@ -1,33 +1,27 @@
 package com.cloudentity.pyron.plugin.impl.acp
 
 import com.cloudentity.pyron.PyronAcceptanceTest
-import org.junit.{After, AfterClass, Before, BeforeClass, Test}
+import com.cloudentity.pyron.plugin.impl.acp.AcpAuthzPluginTest.authorizer
+import org.junit.{After, Before, BeforeClass, Test}
 import org.mockserver.integration.ClientAndServer
 import io.restassured.RestAssured.given
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 import io.circe.syntax._
 import org.mockserver.model.{Body, HttpRequest, JsonBody}
-import AcpApiGroupsSynchronizerTest._
+import io.vertx.ext.unit.TestContext
 
 object AcpAuthzPluginTest {
   var authorizer: ClientAndServer = null
 
-  @BeforeClass
+  //@BeforeClass
   def setup(): Unit = {
     authorizer = ClientAndServer.startClientAndServer(7777)
     mockSetApis(204)
   }
 
-  @AfterClass
-  def finish(): Unit = {
-    authorizer.stop()
-  }
-
   private def mockSetApis(code: Int): Unit = {
-    authorizer
-      .when(request().withPath("/apis"))
-      .respond(response.withStatusCode(code))
+
   }
 }
 
@@ -35,15 +29,22 @@ class AcpAuthzPluginTest extends PyronAcceptanceTest {
   override val getMetaConfPath = "src/test/resources/modules/plugin/acp-authz/meta-config.json"
 
   var targetService: ClientAndServer = null
+  var authorizer: ClientAndServer = null
 
   @Before
-  def before(): Unit = {
+  override def setUp(ctx: TestContext): Unit = {
     targetService = ClientAndServer.startClientAndServer(7760)
     authorizer = ClientAndServer.startClientAndServer(7777)
 
     targetService
       .when(request().withMethod("GET").withPath("/user/abc"))
       .respond(response.withStatusCode(200))
+
+    authorizer
+      .when(request().withPath("/apis"))
+      .respond(response.withStatusCode(204))
+
+    super.setUp(ctx)
   }
 
   @After
@@ -55,7 +56,7 @@ class AcpAuthzPluginTest extends PyronAcceptanceTest {
   @Test
   def shouldSendApiGroupIdAndAPIsToAuthorizer(): Unit = {
     authorizer
-      .when(request())
+      .when(request().withPath("/authorize"))
       .respond(response.withStatusCode(200))
 
     given
@@ -85,7 +86,7 @@ class AcpAuthzPluginTest extends PyronAcceptanceTest {
   @Test
   def shouldAbortRequestWhenNon200FromAuthorizer(): Unit = {
     authorizer
-      .when(request())
+      .when(request().withPath("/authorize"))
       .respond(response.withStatusCode(403))
 
     given
@@ -98,7 +99,7 @@ class AcpAuthzPluginTest extends PyronAcceptanceTest {
   @Test
   def shouldPassRequestWhen200FromAuthorizer(): Unit = {
     authorizer
-      .when(request())
+      .when(request().withPath("/authorize"))
       .respond(response.withStatusCode(200))
 
     given

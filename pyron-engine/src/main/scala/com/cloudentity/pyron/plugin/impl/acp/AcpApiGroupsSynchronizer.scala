@@ -53,6 +53,12 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
   var authorizer: SmartHttpClient = _
   var verticleConfig: VerticleConfig = _
 
+  /**
+   * `groupsToRetry` holds reference to api-groups that should be re-uploaded on failure.
+   * It is set whenever api-groups change event is received.
+   * This way if there is an upload retry then the newest api-groups are sent.
+   * Note: it may happen that the same api-groups are resent more than once (e.g. at 2 api-groups change one after another).
+   */
   var groupsToRetry: Option[List[ApiGroupConf]] = None
   lazy val self = createClient(classOf[ApiGroupsUploadWithRetry])
 
@@ -75,7 +81,7 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
       }
 
   override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit = {
-    groupsToRetry = None
+    groupsToRetry = Some(confs)
     uploadApiGroupsWithRetry(Some(confs))
   }
 
@@ -84,7 +90,6 @@ class AcpApiGroupsSynchronizer extends ScalaServiceVerticle with ApiGroupsChange
       case Some(groups) =>
         uploadApiGroups(groups).failed.foreach { ex: Throwable =>
           log.error(TracingContext.dummy(), "Failed to upload api-groups, retrying", ex)
-          groupsToRetry = Some(groups)
           vertx.setTimer(verticleConfig.retryDelay, _ => self.uploadApiGroupsWithRetry(None))
         }
       case None =>
