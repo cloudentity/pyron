@@ -3,12 +3,10 @@
     "acp-authz": {
       "main": "com.cloudentity.pyron.plugin.impl.acp.AcpAuthzPlugin",
       "verticleConfig": {
-        "authorizer": {
-          "client": {
-            "serviceLocation": "$ref:acp-authz-location",
-            "http": {
-              "maxPoolSize": "$env:PLUGIN_ACP_AUTHZ__MAX_POOL_SIZE:int:20"
-            }
+        "authorizerClient": {
+          "serviceLocation": "$ref:acp-authz-location",
+          "http": {
+            "maxPoolSize": "$env:PLUGIN_ACP_AUTHZ__MAX_POOL_SIZE:int:20"
           }
         }
       }
@@ -17,13 +15,14 @@
   "registry:components": {
     "acp-synchronizer": {
       "main": "com.cloudentity.pyron.plugin.impl.acp.AcpApiGroupsSynchronizer",
+      "enabled": "$env:PLUGIN_ACP_AUTHZ__SYNC_ENABLED:boolean:true",
       "verticleConfig": {
-        "authorizer": {
-          "client": {
-            "serviceLocation": "$ref:acp-authz-location",
-            "http": {
-              "maxPoolSize": "1"
-            }
+        "setApisPath": "/apis",
+        "retryDelay": "$env:PLUGIN_ACP_AUTHZ__RETRY_DELAY:int:3000",
+        "authorizerClient": {
+          "serviceLocation": "$ref:acp-authz-location",
+          "http": {
+            "maxPoolSize": "1"
           }
         }
       }

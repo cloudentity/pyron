@@ -50,7 +50,7 @@ class AcpAuthzPlugin extends RequestPluginVerticle[Unit] {
   val unauthorized = ApiResponse(403, Buffer.buffer(), Headers.empty())
 
   override def initServiceAsyncS(): Future[Unit] =
-    SmartHttp.clientBuilder(vertx, getConfig.getJsonObject("authorizer").getJsonObject("client"))
+    SmartHttp.clientBuilder(vertx, getConfig.getJsonObject("authorizerClient"))
       .build().toScala().map(client = _)
 
   override def apply(requestCtx: RequestCtx, conf: Unit): Future[RequestCtx] =
