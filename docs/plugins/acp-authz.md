@@ -30,6 +30,11 @@ Enable `acp-authz` plugin by adding `plugin/acp-authz` to `MODULES` environment 
 }
 ```
 
+> NOTE<br/>
+> Pyron sends API groups to ACP to allow configuration of authorization policies.<br/>
+> If you don't define rules in an API group (as in example above) then Pyron puts rules into `default` API group.<br/>
+> Learn more about [API Groups configuration](../api-groups.md).
+
 Configure access to ACP authorizer using environment variables:
 
 | Env variable                    | Description                              |
