@@ -12,6 +12,17 @@ import org.junit.Test
 class ApiGroupsStoreVerticleSpec extends VertxUnitTest {
 
   @Test
+  def shouldLoadDeprecateRulesAsDefaultApiGroup(ctx: TestContext): Unit = {
+    deployAndGetRules("src/test/resources/rules-store/config-rules.json")
+      .compose { (groups: List[ApiGroup]) =>
+        ctx.assertEquals(groups.size, 1)
+        ctx.assertEquals(groups.head.id, ApiGroupId("default"))
+
+        VxFuture.succeededFuture(())
+      }.setHandler(ctx.asyncAssertSuccess())
+  }
+
+  @Test
   def shouldLoadSingleRuleWithoutPlugins(ctx: TestContext): Unit = {
     deployAndGetRules("src/test/resources/rules-store/config-single-wo-plugins.json")
       .compose { (groups: List[ApiGroup]) =>

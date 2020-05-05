@@ -130,15 +130,19 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
       case (Some(rules), None) =>
         // fallback for deprecated Rules configuration
         val rulesValue = Try(new JsonArray(rules.noSpaces)).orElse(Try(new JsonObject(rules.noSpaces))).toOption.getOrElse(null)
-        buildApiGroups(new JsonObject().put("_rules", rulesValue), defaultProxyRulesOpt, true)
+
+        val defaultGroupMatchingCriteria = new JsonObject().put("basePath", "")
+        val defaultApiGroup = new JsonObject().put("_group", defaultGroupMatchingCriteria).put("_rules", rulesValue)
+
+        buildApiGroups(new JsonObject().put("default", defaultApiGroup), defaultProxyRulesOpt)
       case (None, Some(apiGroups)) =>
-        buildApiGroups(apiGroups, defaultProxyRulesOpt, false)
+        buildApiGroups(apiGroups, defaultProxyRulesOpt)
       case (Some(_), Some(_)) =>
         Future.failed(new Exception("Both API Groups and Rules can't be defined. Move Rules to Api Groups."))
     }
   }
 
-  private def buildApiGroups(apiGroupsConf: JsonObject, defaultProxyRulesOpt: Option[Json], deprecatedRules: Boolean): Future[(List[ApiGroup], List[ApiGroupConf])] =
+  private def buildApiGroups(apiGroupsConf: JsonObject, defaultProxyRulesOpt: Option[Json]): Future[(List[ApiGroup], List[ApiGroupConf])] =
     ApiGroupReader.readApiGroupLevels(apiGroupsConf.toString) match {
       case ValidResult(_, groupLevel) =>
         val unresolvedGroupResults: List[ReadResult[ApiGroupConfUnresolved]] =
