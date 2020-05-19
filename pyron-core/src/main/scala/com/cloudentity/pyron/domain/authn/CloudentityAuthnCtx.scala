@@ -59,6 +59,10 @@ case class CloudentityAuthnCtx(private val ctx: Map[String, Json]) {
   def withAuthnMethod(value: String) = CloudentityAuthnCtx(ctx = ctx + (AUTHN_METHOD -> Json.fromString(value)))
   def withoutAuthnMethod = CloudentityAuthnCtx(ctx = ctx - AUTHN_METHOD)
 
+  def authnId: Option[String] = ctx.get(AUTHN_ID).flatMap(_.asString)
+  def withAuthnId(value: String) = CloudentityAuthnCtx(ctx = ctx + (AUTHN_ID -> Json.fromString(value)))
+  def withoutAuthnId = CloudentityAuthnCtx(ctx = ctx - AUTHN_ID)
+
   def custom(name: String): Option[Json] = ctx.get(name)
   def withCustom(name: String, value: Json) = CloudentityAuthnCtx(ctx = ctx + (name -> value))
   def withoutCustom(name: String) = CloudentityAuthnCtx(ctx = ctx - name)
@@ -79,8 +83,9 @@ object CloudentityAuthnCtx {
   val CUSTOMER_ID = "customerId"
   val TOKEN = "token"
   val AUTHN_METHOD = "authnMethod"
+  val AUTHN_ID = "authnId"
 
-  val cloudentityFields = List(USER, USER_UUID, REALM, SESSION, DEVICE, DEVICE_UUID, APPLICATION, APPLICATION_UUID, OAUTH_CLIENT_ID, CUSTOMER_ID, TOKEN, AUTHN_METHOD)
+  val cloudentityFields = List(USER, USER_UUID, REALM, SESSION, DEVICE, DEVICE_UUID, APPLICATION, APPLICATION_UUID, OAUTH_CLIENT_ID, CUSTOMER_ID, TOKEN, AUTHN_METHOD, AUTHN_ID)
   def build(ctx: Map[String, Json]) = CloudentityAuthnCtx(ctx)
 
   def apply() = new CloudentityAuthnCtx(Map())
@@ -97,6 +102,7 @@ object CloudentityAuthnCtx {
             customerId: Option[String] = None,
             token: Option[String] = None,
             authnMethod: Option[String] = None,
+            authnId: Option[String] = None,
             custom: Option[Map[String, Json]] = None): CloudentityAuthnCtx =
     new CloudentityAuthnCtx(
       List(
@@ -111,7 +117,8 @@ object CloudentityAuthnCtx {
         oAuthClientId.map(Json.fromString).map(OAUTH_CLIENT_ID -> _),
         customerId.map(Json.fromString).map(CUSTOMER_ID -> _),
         token.map(Json.fromString).map(TOKEN -> _),
-        authnMethod.map(Json.fromString).map(AUTHN_METHOD -> _)
+        authnMethod.map(Json.fromString).map(AUTHN_METHOD -> _),
+        authnId.map(Json.fromString).map(AUTHN_ID -> _)
       ).flatten.toMap ++ custom.getOrElse(Map())
     )
 }
