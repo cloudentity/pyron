@@ -1,4 +1,5 @@
 CURRENT_VERSION	?= $(shell ./bin/get_version.sh)
+TAG             ?= $(shell ./bin/get_tag.sh)
 
 NO_COLOR         = \x1b[0m
 OK_COLOR         = \x1b[32;01m
@@ -12,4 +13,4 @@ standalone:
 
 docker: standalone
 	@echo -e "$(OK_COLOR) > building docker $(NO_COLOR)"
-	docker build -t cloudentity/pyron pyron-app --build-arg version=$(CURRENT_VERSION)
+	docker build -t cloudentity/pyron:$(TAG) pyron-app --build-arg version=$(CURRENT_VERSION)
