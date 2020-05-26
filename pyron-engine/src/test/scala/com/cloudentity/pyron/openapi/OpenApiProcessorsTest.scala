@@ -61,7 +61,7 @@ class OpenApiProcessorsTest extends VertxUnitTest {
       }.compose { (swagger: Swagger) =>
         assertion(swagger)
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
   }
 }
 

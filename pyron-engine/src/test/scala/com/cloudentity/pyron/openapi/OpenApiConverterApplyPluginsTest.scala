@@ -50,7 +50,7 @@ class OpenApiConverterApplyPluginsTest extends ScalaVertxUnitTest with OpenApiTe
         ctx.assertEquals("/test", res.getBasePath)
         VxFuture.succeededFuture(())
       })
-      .setHandler(ctx.asyncAssertSuccess())
+      .onComplete(ctx.asyncAssertSuccess())
 
     ctx.assertTrue(true)
   }

@@ -50,7 +50,7 @@ class MultiOidcClientTest extends VertxUnitTest {
         ctx.async().complete()
         Future.succeededFuture[Void]()
       }}
-      .setHandler(ctx.asyncAssertSuccess())
+      .onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -67,7 +67,7 @@ class MultiOidcClientTest extends VertxUnitTest {
         ctx.async().complete()
         Future.succeededFuture[Void]()
       }}
-      .setHandler(ctx.asyncAssertSuccess())
+      .onComplete(ctx.asyncAssertSuccess())
   }
 
   def assertKeySetEquals(result: \/[OidcClientError, JWKSet], ctx: TestContext, expectedSize: Int): Future[Void] = {

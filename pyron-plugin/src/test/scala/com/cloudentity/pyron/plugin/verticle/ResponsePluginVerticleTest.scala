@@ -56,7 +56,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
           case x => fail(x.toString)
         }
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
     }
 
   @Test
@@ -79,7 +79,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
             case x => fail(x.toString)
           }
           VxFuture.succeededFuture(())
-        }.setHandler(ctx.asyncAssertSuccess())
+        }.onComplete(ctx.asyncAssertSuccess())
     }
 
   @Test
@@ -104,7 +104,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
           }
 
           VxFuture.succeededFuture(())
-        }.setHandler(ctx.asyncAssertSuccess())
+        }.onComplete(ctx.asyncAssertSuccess())
     }
 
   @Test
@@ -127,7 +127,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
           }
 
           VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
     }
 
   @Test
@@ -148,7 +148,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
           }
 
           VxFuture.succeededFuture(())
-        }.setHandler(ctx.asyncAssertSuccess())
+        }.onComplete(ctx.asyncAssertSuccess())
     }
 
   @Test
@@ -172,7 +172,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
           }
 
           VxFuture.succeededFuture(())
-        }.setHandler(ctx.asyncAssertSuccess())
+        }.onComplete(ctx.asyncAssertSuccess())
     }
 
   @Test
@@ -195,7 +195,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
             case x => fail(x.toString)
           }
           VxFuture.succeededFuture(())
-        }.setHandler(ctx.asyncAssertSuccess())
+        }.onComplete(ctx.asyncAssertSuccess())
     }
 
   @Test
@@ -223,6 +223,6 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
           }
 
           VxFuture.succeededFuture(())
-        }.setHandler(ctx.asyncAssertSuccess())
+        }.onComplete(ctx.asyncAssertSuccess())
     }
 }

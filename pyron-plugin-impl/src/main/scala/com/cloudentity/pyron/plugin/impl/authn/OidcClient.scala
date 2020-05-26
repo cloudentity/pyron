@@ -49,7 +49,7 @@ class HttpOidcClient extends ScalaServiceVerticle with OidcClient with ConfigDec
     httpClient = vertx.createHttpClient(httpClientOptions)
     vertx.setPeriodic(oidcServiceConf.jwkReload, _ => {
       log.debug("Periodical jwk keys reload")
-      fetchKeys().setHandler(result =>
+      fetchKeys().onComplete(result =>
         if (result.succeeded()) {
           result.result() match {
             case \/-(set) =>

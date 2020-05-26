@@ -89,7 +89,7 @@ class AcpApiGroupsSynchronizerTest extends PyronAcceptanceTest {
     ServiceClientFactory.make(vertx.eventBus(), classOf[ApiGroupsChangeListener]).apiGroupsChanged(Nil, groups)
 
     // then
-    verify("PUT", "/apis", expectedBody, 1).setHandler(ctx.asyncAssertSuccess())
+    verify("PUT", "/apis", expectedBody, 1).onComplete(ctx.asyncAssertSuccess())
   }
 
   def verify(method: String, path: String, expectedBody: String, times: Int): Future[Unit] = {
