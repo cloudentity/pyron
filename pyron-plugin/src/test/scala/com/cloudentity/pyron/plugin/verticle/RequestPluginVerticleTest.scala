@@ -58,7 +58,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         case x => fail(x.toString)
       }
       VxFuture.succeededFuture(())
-    }.setHandler(ctx.asyncAssertSuccess())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -81,7 +81,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         case x => fail(x.toString)
       }
       VxFuture.succeededFuture(())
-    }.setHandler(ctx.asyncAssertSuccess())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -106,7 +106,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       }
 
       VxFuture.succeededFuture(())
-    }.setHandler(ctx.asyncAssertSuccess())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -129,7 +129,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       }
 
       VxFuture.succeededFuture(())
-    }.setHandler(ctx.asyncAssertSuccess())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -150,7 +150,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       }
 
       VxFuture.succeededFuture(())
-    }.setHandler(ctx.asyncAssertSuccess())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -174,7 +174,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       }
 
       VxFuture.succeededFuture(())
-    }.setHandler(ctx.asyncAssertSuccess())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -197,7 +197,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         case x => fail(x.toString)
       }
       VxFuture.succeededFuture(())
-    }.setHandler(ctx.asyncAssertSuccess())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -225,7 +225,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         }
 
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
   }
 
   val openApiRule = OpenApiRule(HttpMethod.GET, DiscoverableServiceId(ServiceClientName("service")), GroupMatchCriteria.empty, PathPattern("/x"), PathPrefix(""), false, None, None, Nil, Nil, None)
@@ -247,7 +247,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         }
 
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -269,7 +269,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         }
 
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -291,6 +291,6 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         }
 
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
   }
 }

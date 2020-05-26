@@ -45,7 +45,7 @@ class HttpOidcClientTest extends VertxUnitTest {
         ctx.async().complete()
         Future.succeededFuture[Void]()
       }}
-      .setHandler(ctx.asyncAssertSuccess())
+      .onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -67,7 +67,7 @@ class HttpOidcClientTest extends VertxUnitTest {
         ctx.async().complete()
         Future.succeededFuture[Void]()
       }}
-      .setHandler(ctx.asyncAssertSuccess())
+      .onComplete(ctx.asyncAssertSuccess())
   }
 
   def assertKeySetEquals(result: \/[OidcClientError, JWKSet], ctx: TestContext, expectedSize: Int): Future[Void] = {
