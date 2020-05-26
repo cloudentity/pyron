@@ -41,16 +41,7 @@
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-json</artifactId>
     </dependency>
-    <!-- vertx -->
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-    </dependency>
     <!-- utils -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.scalaz</groupId>
       <artifactId>scalaz-core_2.12</artifactId>
