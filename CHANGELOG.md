@@ -4,6 +4,10 @@
 - 'components' registry
 - authnId to Cloudentity AuthnCtx
 
+### Changed
+- upgraded vertx to 3.9.1
+- upgraded vertx-tools to 1.2.0
+
 ## [1.1.0] - 2020-04-21
 ### Added
 - capability to generate and upload sbom plugin profiles
