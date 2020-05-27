@@ -24,6 +24,7 @@
   * [Request transformation](docs/plugins/transform-request.md)
   * [CORS](docs/plugins/cors.md)
   * [Brute-force protection](docs/plugins/bruteforce.md)
+  * [Rate limiting](docs/plugins/rate-limit.md)
   * [ACP authorizer](docs/plugins/acp-authz.md)
 * [Plugin development guide](docs/plugin-dev.md)
 * [How to](#how-to)
@@ -896,6 +897,8 @@ Plugins extend request-response flow, e.g. can enforce authorization rules, modi
 * [Authentication](docs/plugins/authn.md)
 * [Request transformation](docs/plugins/transform-request.md)
 * [CORS](docs/plugins/cors.md)
+* [Brute-force protection](docs/plugins/bruteforce.md)
+* [Rate limiting](docs/plugins/rate-limit.md)
 * [ACP authorizer](docs/plugins/acp-authz.md)
 
 Read about [plugins application](docs/plugins.md) in routing rules.
