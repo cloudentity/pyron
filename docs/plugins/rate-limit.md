@@ -140,7 +140,7 @@ Use `headers` to configure the API key header name as identifier.
 Use `headers` to configure the true client IP as identifier.
 
 > NOTE<br/>
-> Pyron reads client IP and puts it into proxy headers ([see details](../#config-proxy-headers)).
+> Pyron reads client IP and puts it into proxy headers ([see details](../../#config-proxy-headers)).
 
 ```json
 {
