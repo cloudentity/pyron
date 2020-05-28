@@ -4,7 +4,7 @@ import com.cloudentity.pyron.api.Responses.Errors
 import com.cloudentity.pyron.api.body.{BodyBuffer, BodyLimit, RequestBodyTooLargeException, SizeLimitedBodyStream}
 import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
 import io.vertx.core.streams.{ReadStream, WriteStream}
-import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
+import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupId, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow.{FlowFailure, _}
@@ -111,7 +111,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
           log.debug(tracingContext, s"Found ${ruleWithPathParams.rule} for, request='$requestSignature'")
 
           for {
-            initRequestCtx       <- toRequestCtx(defaultRequestBodyMaxSize, ctx, tracingContext, proxyHeaders, rule.conf, apiGroup.matchCriteria.basePathResolved, pathParams)
+            initRequestCtx       <- toRequestCtx(defaultRequestBodyMaxSize, ctx, tracingContext, proxyHeaders, rule.conf, apiGroup, pathParams)
             finalRequestCtx      <- applyRequestPlugins(initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)), rule.requestPlugins)
 
             _                     = ApiRequestHandler.setAuthnCtx(ctx, finalRequestCtx.authnCtx)
@@ -330,7 +330,7 @@ object ApiResponseHandler {
 object HttpConversions {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  def toRequestCtx(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext, tracingCtx: TracingContext, proxyHeaders: ProxyHeaders, ruleConf: RuleConf, basePath: BasePath, pathParams: PathParams)(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
+  def toRequestCtx(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext, tracingCtx: TracingContext, proxyHeaders: ProxyHeaders, ruleConf: RuleConf, apiGroup: ApiGroup, pathParams: PathParams)(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
     val req = ctx.request()
     val contentLengthOpt: Option[Long] = Try[Long](java.lang.Long.valueOf(req.getHeader("Content-Length"))).toOption
     val requestBodyMaxSize = ruleConf.requestBodyMaxSize.orElse(defaultRequestBodyMaxSize)
@@ -359,7 +359,7 @@ object HttpConversions {
         TargetRequest(
           method  = ruleConf.rewriteMethod.map(_.value).getOrElse(original.method),
           service = TargetService(ruleConf.target, req),
-          uri     = chooseRelativeUri(tracingCtx, basePath, ruleConf, original),
+          uri     = chooseRelativeUri(tracingCtx, apiGroup.matchCriteria.basePathResolved, ruleConf, original),
           headers = removeHeadersAsProxy(ruleConf, original.headers),
           bodyOpt = bodyOpt
         )
@@ -375,7 +375,7 @@ object HttpConversions {
         bodyStreamOpt = bodyStreamOpt,
         original = original,
         proxyHeaders = proxyHeaders,
-        properties = Properties(RoutingCtxData.propertiesKey -> ctx),
+        properties = Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup),
         authnCtx = AuthnCtx(),
         aborted = None
       )

@@ -1,0 +1,33 @@
+{
+  "env": {
+    "MODULES": ["plugin/acp-authz"],
+    "PLUGIN_ACP_AUTHZ__HOST": "localhost",
+    "PLUGIN_ACP_AUTHZ__PORT": "7777",
+    "PLUGIN_ACP_AUTHZ__SSL": "false",
+    "PLUGIN_ACP_AUTHZ__RETRY_DELAY": "10"
+  },
+  "apiGroups": {
+    "a": {
+      "1": {
+        "_group": {
+          "basePath": "/a/1"
+        },
+        "_rules": [
+          {
+            "endpoints": [
+              {
+                "targetHost": "localhost",
+                "targetPort": 7760,
+                "method": "GET",
+                "pathPattern": "/user/{userid}",
+                "requestPlugins": [
+                  { "name": "acp-authz" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

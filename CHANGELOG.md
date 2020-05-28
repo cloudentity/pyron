@@ -1,3 +1,10 @@
+## [1.2.0] - 2020-05-20
+### Added
+- acp-authz plugin
+- 'components' registry
+- authnId to Cloudentity AuthnCtx
+- add get_tag script
+
 ## [1.1.0] - 2020-04-21
 ### Added
 - capability to generate and upload sbom plugin profiles
@@ -9,6 +16,7 @@
 - request body streaming, buffering, dropping
 - request body max size limit
 - methodCtx entity provider in authn plugin
+- acp-authz plugin
 
 ### Changed
 - RoutingCtx moved to flow Properties

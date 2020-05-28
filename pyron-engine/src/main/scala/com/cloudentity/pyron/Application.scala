@@ -39,6 +39,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       _       <- deployVerticle(new RulesStoreVerticle)
       _       <- deployVerticle(new ApiGroupsStoreVerticle)
       _       <- deployRegistryIfConfigured("open-api")
+      _       <- deployRegistryIfConfigured("components")
     } yield ()
     }.toJava()
 
