@@ -1,8 +1,9 @@
-## [Unreleased]
+## [1.2.0] - 2020-05-20
 ### Added
 - acp-authz plugin
 - 'components' registry
 - authnId to Cloudentity AuthnCtx
+- add get_tag script
 
 ### Changed
 - upgraded vertx to 3.9.1
