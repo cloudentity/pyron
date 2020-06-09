@@ -4,6 +4,7 @@
 ## [1.3.0] - 2020-06-09
 ### Changed
 - upgraded vertx-tools to 1.2.0
+- upgraded vertx to 3.9.1
 
 ## [1.2.0] - 2020-05-20
 ### Added
@@ -11,9 +12,6 @@
 - 'components' registry
 - authnId to Cloudentity AuthnCtx
 - add get_tag script
-
-### Changed
-- upgraded vertx to 3.9.1
 
 ## [1.1.0] - 2020-04-21
 ### Added
