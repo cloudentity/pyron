@@ -19,7 +19,7 @@ class ApiGroupsStoreVerticleSpec extends VertxUnitTest {
         ctx.assertEquals(groups.head.id, ApiGroupId("default"))
 
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -31,7 +31,7 @@ class ApiGroupsStoreVerticleSpec extends VertxUnitTest {
         ctx.assertEquals(rules.head.requestPlugins.size, 0)
 
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -43,7 +43,7 @@ class ApiGroupsStoreVerticleSpec extends VertxUnitTest {
         ctx.assertEquals(rules.flatMap(_.conf.endpointName), List("prepended", "original", "appended"))
 
         VxFuture.succeededFuture(())
-      }.setHandler(ctx.asyncAssertSuccess())
+      }.onComplete(ctx.asyncAssertSuccess())
   }
 
   def deployAndGetRules(configPath: String): VxFuture[List[ApiGroup]] =

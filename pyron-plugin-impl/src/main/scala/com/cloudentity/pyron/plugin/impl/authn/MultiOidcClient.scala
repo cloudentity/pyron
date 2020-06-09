@@ -60,7 +60,7 @@ class MultiOidcClient extends ScalaServiceVerticle with OidcClient with ConfigDe
 
     vertx.setPeriodic(conf.jwkReload, _ => {
       log.debug("Periodical jwk keys reload")
-      fetchAll().toJava().setHandler(result =>
+      fetchAll().toJava().onComplete(result =>
         keys = Some(result.result())
       )
     })

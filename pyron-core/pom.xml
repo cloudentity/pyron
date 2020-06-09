@@ -5,17 +5,13 @@
   <parent>
     <groupId>com.cloudentity.pyron</groupId>
     <artifactId>pyron-root</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>pyron-core</artifactId>
 
   <dependencies>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-    </dependency>
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
       <artifactId>vertx-bus</artifactId>
