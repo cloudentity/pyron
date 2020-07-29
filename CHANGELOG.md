@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.3.1] - 2020-07-29
 ### Fixed
 - acp-authz plugin can be deployed as api-group plugin
 
