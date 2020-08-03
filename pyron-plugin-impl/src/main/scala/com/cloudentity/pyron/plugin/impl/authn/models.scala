@@ -15,7 +15,8 @@ case class AuthnPluginConf(
   entities: Option[List[AuthnEntityType]],
   optionalEntities: Option[List[AuthnEntityType]],
   tokenHeader: Option[String],
-  ctxKey: Option[String]
+  ctxKey: Option[String],
+  properties: Option[Map[String,String]] = None
 )
 
 object OAuthAccessToken {

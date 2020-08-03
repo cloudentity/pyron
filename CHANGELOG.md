@@ -1,4 +1,7 @@
 ## [Unreleased]
+### Added
+- custom properties for authn plugin
+
 ### Fixed
 - acp-authz plugin can be deployed as api-group plugin
 

@@ -133,7 +133,7 @@ class AuthnPluginWorker(
   def apply(requestCtx: RequestCtx, conf: AuthnPluginConf): Future[RequestCtx] = {
     val program: Future[AuthnPluginError \/ (AuthnCtx, Modify)] = {
       for {
-        authenticated    <- authenticate(requestCtx, conf.methods, AuthnMethodConf(conf.tokenHeader)) |> eitherT
+        authenticated    <- authenticate(requestCtx, conf.methods, AuthnMethodConf(conf.tokenHeader, conf.properties)) |> eitherT
         entityProviders   = authnEntityProviders.getOrElse(authenticated.method, Map())
         entities         <- getEntities(requestCtx.tracingCtx, entityProviders, authenticated.ctx, conf) |> eitherT
       } yield {
