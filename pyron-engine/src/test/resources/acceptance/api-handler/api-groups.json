@@ -22,6 +22,20 @@
               "pathPattern": "/should-match-base-path"
             }
           ]
+        },
+        {
+          "default": {
+            "targetHost": "localhost",
+            "targetPort": 7760,
+            "pathPrefix": "/prefix",
+            "dropPrefix": false
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "pathPattern": "/should-drop-base-path"
+            }
+          ]
         }
       ]
     },
