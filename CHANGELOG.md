@@ -4,6 +4,7 @@
 ### Fixed
 - acp-authz plugin can be deployed as api-group plugin
 - sd-provider/consul and sd-provider/static modules deployment race condition
+- drop base-path when not dropping path-prefix
 
 ## [1.3.0] - 2020-06-09
 ### Changed

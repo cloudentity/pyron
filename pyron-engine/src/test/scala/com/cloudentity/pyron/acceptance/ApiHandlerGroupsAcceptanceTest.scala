@@ -30,6 +30,17 @@ class ApiHandlerGroupsAcceptanceTest extends ApiHandlerRulesAcceptanceTest {
   }
 
   @Test
+  def shouldDropBasePathWhenNotDroppingPathPrefix(ctx: TestContext): Unit = {
+    mockOnPath(targetService)("/prefix/should-drop-base-path", resp().withStatusCode(200))
+
+    given()
+      .when()
+    .get("/base-path/prefix/should-drop-base-path")
+      .`then`()
+      .statusCode(200)
+  }
+
+  @Test
   def shouldMatchDomainWhenHostWithoutPort(ctx: TestContext): Unit = {
     mockOnPath(targetService)("/should-match-domain-when-host-without-port", resp().withStatusCode(200))
 

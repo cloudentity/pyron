@@ -404,7 +404,7 @@ object HttpConversions {
 
         val targetPath =
           if (ruleConf.dropPathPrefix) relativeOriginalPath.drop(ruleConf.criteria.path.prefix.value.length)
-          else original.path.value
+          else relativeOriginalPath
         FixedRelativeUri(UriPath(targetPath), original.queryParams, original.pathParams)
     }
   }
