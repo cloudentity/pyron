@@ -8,7 +8,10 @@ case class AuthnPluginVerticleConf(
   openApi: Option[AuthnApiOpenApiConf]
 )
 
-case class AuthnMethodConf(tokenHeader: Option[String])
+case class AuthnMethodConf(
+  tokenHeader: Option[String],
+  properties: Option[Map[String,String]]
+)
 
 case class AuthnApiOpenApiConf(
   oauthUrls: Option[OpenApiOauthUrlsConf],

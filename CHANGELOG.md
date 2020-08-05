@@ -1,4 +1,6 @@
 ## [Unreleased]
+### Added
+- custom properties for authn plugin
 ### Changed
 - upgraded vertx-tools to 1.3.0
 ### Fixed
