@@ -19,7 +19,8 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
     entities = None,
     optionalEntities = None,
     tokenHeader = None,
-    ctxKey = None
+    ctxKey = None,
+    properties = None
   )
 
   val oauthConf = OpenApiOauthUrlsConf(

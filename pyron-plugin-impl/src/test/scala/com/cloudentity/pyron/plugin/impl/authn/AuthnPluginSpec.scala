@@ -54,7 +54,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("other-authn-method", "authn-method"), None, None, None, None)
+      val conf = AuthnPluginConf(List("other-authn-method", "authn-method"), None, None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -74,7 +74,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("failing-authn-method", "authn-method"), None, None, None, None)
+      val conf = AuthnPluginConf(List("failing-authn-method", "authn-method"), None, None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -92,7 +92,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("authn-method"), None, None, None, None)
+      val conf = AuthnPluginConf(List("authn-method"), None, None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -110,7 +110,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("authn-method"), None, None, None, None)
+      val conf = AuthnPluginConf(List("authn-method"), None, None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -129,7 +129,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("authn-method-fail", "authn-method-success"), None, None, None, None)
+      val conf = AuthnPluginConf(List("authn-method-fail", "authn-method-success"), None, None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -154,7 +154,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, None)
+      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -181,7 +181,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, None)
+      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -208,7 +208,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, Some("ctx-key"))
+      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, Some("ctx-key"), None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -235,7 +235,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), Some(List("optionalEp")), None, None)
+      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), Some(List("optionalEp")), None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -264,7 +264,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("authn-method-code", "authn-method-header"), None, None, None, None)
+      val conf = AuthnPluginConf(List("authn-method-code", "authn-method-header"), None, None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -289,7 +289,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("authn-method-failing", "authn-method-success"), None, None, None, None)
+      val conf = AuthnPluginConf(List("authn-method-failing", "authn-method-success"), None, None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -310,7 +310,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("authn-method-success"), None, None, None, None)
+      val conf = AuthnPluginConf(List("authn-method-success"), None, None, None, None, None)
 
       // when
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
@@ -336,7 +336,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, None)
+      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, None, None)
 
       // when
       val result: ValidateResponse = worker.validate(conf)
@@ -359,7 +359,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List(), Some(List("user")), None, None, None)
+      val conf = AuthnPluginConf(List(), Some(List("user")), None, None, None, None)
 
       // when
       val result: ValidateResponse = worker.validate(conf)
@@ -375,7 +375,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, Map())
-      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, None)
+      val conf = AuthnPluginConf(List("authn-method"), Some(List("user")), None, None, None, None)
 
       // when
       val result: ValidateResponse = worker.validate(conf)
@@ -398,7 +398,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List("authn-method", "missing-authn-method"), Some(List("user")), None, None, None)
+      val conf = AuthnPluginConf(List("authn-method", "missing-authn-method"), Some(List("user")), None, None, None, None)
 
       // when
       val result: ValidateResponse = worker.validate(conf)
@@ -421,7 +421,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List("authn-method"), Some(List("user", "other-entity")), None, None, None)
+      val conf = AuthnPluginConf(List("authn-method"), Some(List("user", "other-entity")), None, None, None, None)
 
       // when
       val result: ValidateResponse = worker.validate(conf)
@@ -448,7 +448,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
         )
 
       val worker = new AuthnPluginWorker(authnProviders, entityProviders)
-      val conf = AuthnPluginConf(List("authn-method", "other-authn-method"), Some(List("user", "other-entity")), None, None, None)
+      val conf = AuthnPluginConf(List("authn-method", "other-authn-method"), Some(List("user", "other-entity")), None, None, None, None)
 
       // when
       val result: ValidateResponse = worker.validate(conf)

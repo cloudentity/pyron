@@ -10,7 +10,7 @@ case class AuthnPluginVerticleConf(
 
 case class AuthnMethodConf(
   tokenHeader: Option[String],
-  properties: Option[Map[String,String]] = None
+  properties: Option[Map[String,String]]
 )
 
 case class AuthnApiOpenApiConf(
