@@ -4,9 +4,13 @@
 ### Changed
 - upgraded vertx-tools to 1.3.0
 ### Fixed
-- acp-authz plugin can be deployed as api-group plugin
 - sd-provider/consul and sd-provider/static modules deployment race condition
 - drop base-path when not dropping path-prefix
+
+## [1.3.1] - 2020-07-29
+
+### Fixed
+- acp-authz plugin can be deployed as api-group plugin
 
 ## [1.3.0] - 2020-06-09
 ### Changed
