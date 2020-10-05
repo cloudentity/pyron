@@ -696,8 +696,8 @@ Add `sd-registrar/consul` to `MODULES` environment variable, i.e. `MODULES=["sd-
 | REGISTER_SD_HOST                 | host of Pyron node                                              |
 | REGISTER_SD_PORT                 | port of Pyron node                                              |
 | REGISTER_SD_SSL                  | ssl of Pyron node (default false)                               |
-| REGISTER_SD_HEALTHCHECK_HOST     | host of Pyron health-check (default SELF_SD_SERVICE_NAME)       |
-| REGISTER_SD_HEALTHCHECK_PORT     | port of Pyron health-check (default SELF_SD_HEALTHCHECK_PORT)   |
+| REGISTER_SD_HEALTHCHECK_HOST     | host of Pyron health-check (default REGISTER_SD_HOST)           |
+| REGISTER_SD_HEALTHCHECK_PORT     | port of Pyron health-check (default REGISTER_SD_PORT)           |
 | REGISTER_SD_HEALTHCHECK_PATH     | path of Pyron health-check (default /alive)                     |
 | REGISTER_SD_HEALTHCHECK_INTERVAL | health-check interval (default 3s)                             |
 | REGISTER_SD_DEREGISTER_AFTER     | node de-register period when health-check fails (default 600s) |
