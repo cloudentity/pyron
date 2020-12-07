@@ -1,3 +1,9 @@
+## [1.4.0] - 2020-12-01
+### Added
+- License
+### Changed
+- upgraded curl version
+
 ## [1.3.2] - 2020-08-14
 ### Added
 - custom properties for authn plugin
