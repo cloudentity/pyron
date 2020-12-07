@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.4.0] - 2020-12-01
 ### Added
 - License
 ### Changed
