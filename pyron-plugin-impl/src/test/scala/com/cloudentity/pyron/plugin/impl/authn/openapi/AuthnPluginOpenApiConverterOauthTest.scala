@@ -23,12 +23,12 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
     properties = None
   )
 
-  val oauthConf = OpenApiOauthUrlsConf(
+  val oauthConf: OpenApiOauthUrlsConf = OpenApiOauthUrlsConf(
     authorizationUrl = OauthUrl("localhost", "/oauth/authorize", 80, ssl = false),
     tokenUrl = OauthUrl("localhost", "/oauth/token", 80, ssl = false)
   )
 
-  val pluginConf = AuthnApiOpenApiConf(
+  val pluginConf: AuthnApiOpenApiConf = AuthnApiOpenApiConf(
     Some(oauthConf), Map("authorizationCodeOAuth" -> Oauth2SecurityDefinitionConf(List(ImplicitFlow)))
   )
 
@@ -36,15 +36,13 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
 
     "append oauth to security definitions" in {
       val resp = convertWithSingleGetEndpoint(baseEndpointConf, pluginConf)
-      resp securityDefinitionsAssert { _.contains("oauth2_implicit") should be(true) }
+      resp securityDefinitionsAssert { _.contains("oauth2_implicit") shouldBe true }
     }
 
     "set proper flows in oauth security definitions" in {
       val resp = convertWithSingleGetEndpoint(baseEndpointConf, pluginConf)
       inside(resp.getSecurityDefinitions.get("oauth2_implicit")) {
-        case Some(oauthDef: OAuth2Definition) => {
-          oauthDef.getFlow should be ("implicit")
-        }
+        case Some(oauthDef: OAuth2Definition) => oauthDef.getFlow shouldBe "implicit"
         case _ => fail("Expected Oauth2Definition object")
       }
     }
@@ -56,16 +54,16 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
           Map("authorizationCodeOAuth" -> Oauth2SecurityDefinitionConf(List(ImplicitFlow, AuthorizationCodeFlow)))
         )
       )
-      resp securityDefinitionsAssert { _.contains("oauth2_implicit") should be(true) }
-      resp securityDefinitionsAssert { _.contains("oauth2_authorizationCode") should be(true) }
+      resp securityDefinitionsAssert { _.contains("oauth2_implicit") shouldBe true }
+      resp securityDefinitionsAssert { _.contains("oauth2_authorizationCode") shouldBe true }
 
       inside(resp.getSecurityDefinitions.get("oauth2_implicit")) {
-        case Some(oauthDef: OAuth2Definition) => oauthDef.getFlow should be ("implicit")
+        case Some(oauthDef: OAuth2Definition) => oauthDef.getFlow shouldBe "implicit"
         case _ => fail("Expected Oauth2Definition object")
       }
 
       inside(resp.getSecurityDefinitions.get("oauth2_authorizationCode")) {
-        case Some(oauthDef: OAuth2Definition) => oauthDef.getFlow should be ("accessCode")
+        case Some(oauthDef: OAuth2Definition) => oauthDef.getFlow shouldBe "accessCode"
         case _ => fail("Expected Oauth2Definition object")
       }
     }
@@ -81,9 +79,9 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
           )
         )
       )
-      resp securityDefinitionsAssert { _.contains("oauth2_implicit") should be(true) }
-      resp securityDefinitionsAssert { _.contains("oauth2_authorizationCode") should be(true) }
-      resp securityDefinitionsAssert { _.size should be(2) }
+      resp securityDefinitionsAssert { _.contains("oauth2_implicit") shouldBe true }
+      resp securityDefinitionsAssert { _.contains("oauth2_authorizationCode") shouldBe true }
+      resp securityDefinitionsAssert { _.size shouldBe 2 }
     }
 
     "add only one security definition when the same configuration is used on two endpoints" in {
@@ -99,7 +97,7 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
         pluginConf
       )
 
-      responses.last securityDefinitionsAssert { _.size should be (1) }
+      responses.last securityDefinitionsAssert { _.size shouldBe 1 }
     }
 
     "add multiple oauth definitions and security schemes when two endpoints with two different methods are used" in {
@@ -125,12 +123,12 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
         altPluginConf
       )
 
-      responses.last securityDefinitionsAssert { _.size should be (2) }
+      responses.last securityDefinitionsAssert { _.size shouldBe 2 }
     }
 
     "not add anything to security definitions when there are no configured methods, despite mappings being defined" in {
       val resp = convertWithSingleGetEndpoint(baseEndpointConf.copy(methods = List()), pluginConf)
-      resp securityDefinitionsAssert { _ should be(null) }
+      resp securityDefinitionsAssert { _ shouldBe null }
     }
 
     "add security scheme to endpoint definition" in {
@@ -140,8 +138,7 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
 
       val op = resp.getOperationByRule(params._2)
       val sec = op.getSecurity.asScala
-      sec should not be empty
-      sec.filter(_.containsKey("oauth2_implicit")) should not be empty
+      sec.exists(_.containsKey("oauth2_implicit")) shouldBe true
     }
 
     "add multiple security scheme to endpoint definition" in {
@@ -152,8 +149,8 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
       val resp = convertWithParams(params)
 
       val sec = resp.getOperationByRule(params._2).getSecurity.asScala
-      sec.filter(_.containsKey("oauth2_implicit")) should not be empty
-      sec.filter(_.containsKey("oauth2_authorizationCode")) should not be empty
+      sec.exists(_.containsKey("oauth2_implicit")) shouldBe true
+      sec.exists(_.containsKey("oauth2_authorizationCode")) shouldBe true
     }
 
     "set urls for implicit flow" in {
@@ -182,8 +179,8 @@ class AuthnPluginOpenApiConverterOauthTest extends WordSpec with Matchers with A
 
       inside(resp.getSecurityDefinitions.get(s"oauth2_${flow.name}")) {
         case Some(oauthDef: OAuth2Definition) =>
-          oauthDef.getAuthorizationUrl should be (authorizationUrl)
-          oauthDef.getTokenUrl should be (tokenUrl)
+          oauthDef.getAuthorizationUrl shouldBe authorizationUrl
+          oauthDef.getTokenUrl shouldBe tokenUrl
         case _ => fail("Expected Oauth2Definition object")
       }
     }
