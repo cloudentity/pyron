@@ -4,7 +4,7 @@ LABEL maintainer="Cloudentity <contact@cloudentity.com>"
 ARG version
 
 ENV SU_EXEC_VERSION=0.2-r0 \
-	CURL_VERSION=7.64.0-r4
+	CURL_VERSION=7.64.0-r5
 
 ENV GC_LOG_FILE_COUNT=1 \
 	GC_LOG_FILE_SIZE=50M \
