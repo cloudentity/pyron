@@ -6,15 +6,14 @@ import io.circe.generic.semiauto._
 import io.circe.{Decoder, Json}
 import com.cloudentity.pyron.VertxSpec
 import com.cloudentity.pyron.plugin.config._
-import com.cloudentity.pyron.domain._
-import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, RequestCtx, ResponseCtx, StaticServiceRule, TargetHost}
+import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPrefix, ApiGroupPluginConf, PluginName, RequestCtx, ResponseCtx, StaticServiceRule, TargetHost}
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import com.cloudentity.pyron.plugin.verticle.{RequestPluginVerticle, ResponsePluginVerticle}
 import com.cloudentity.pyron.rule.RuleBuilder.InvalidPluginConf
 import com.cloudentity.tools.vertx.tracing.internals.JaegerTracing
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 
 import scala.concurrent.duration._

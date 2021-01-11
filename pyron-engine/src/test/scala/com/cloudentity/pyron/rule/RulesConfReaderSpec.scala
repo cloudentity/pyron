@@ -1,13 +1,12 @@
 package com.cloudentity.pyron.rule
 
 import io.circe.Json
-import com.cloudentity.pyron.domain._
 import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPattern, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, ServiceClientName, StaticServiceRule, TargetHost}
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf}
 import com.cloudentity.pyron.rule.RulesConfReader._
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 import scalaz.{Failure, Success}
 

@@ -2,7 +2,7 @@ package com.cloudentity.pyron.rule
 
 import com.cloudentity.pyron.domain.flow.{PathMatching, PathPattern}
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 
 @RunWith(classOf[JUnitRunner])

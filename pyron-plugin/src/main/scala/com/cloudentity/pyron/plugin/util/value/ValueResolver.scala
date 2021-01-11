@@ -4,6 +4,7 @@ import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx}
 import io.circe.Json
 import io.vertx.core.json.{JsonArray, JsonObject}
 
+import scala.annotation.tailrec
 import scala.util.Try
 
 
@@ -44,6 +45,7 @@ trait ValueResolver {
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header).map(_.foldLeft(new JsonArray())(_.add(_))).map(ArrayJsonValue) // returning JsonArray with all header values
     }
 
+  @tailrec
   private def extractBodyAttribute(body: JsonObject, path: Path): Option[JsonValue] =
     path.value match {
       case key :: Nil =>

@@ -39,11 +39,11 @@ object TransformerConf {
   }
 
   private def jsonBodyReferenceExists(conf: TransformerConfRaw): Boolean =
-    List[Option[TransformOps]](conf.body, conf.pathParams, conf.headers).flatten.find {
-      case BodyOps(set, _)   => jsonBodyReferenceExists(set)
+    List[Option[TransformOps]](conf.body, conf.pathParams, conf.headers).flatten.exists {
+      case BodyOps(set, _) => jsonBodyReferenceExists(set)
       case PathParamOps(set) => jsonBodyReferenceExists(set)
-      case HeaderOps(set)    => jsonBodyReferenceExists(set)
-    }.isDefined
+      case HeaderOps(set) => jsonBodyReferenceExists(set)
+    }
 
   private def jsonBodyReferenceExists(refs: Option[Map[_, ValueOrRef]]): Boolean =
     refs.map(_.values).toList.flatten.exists(_.isInstanceOf[BodyRef])

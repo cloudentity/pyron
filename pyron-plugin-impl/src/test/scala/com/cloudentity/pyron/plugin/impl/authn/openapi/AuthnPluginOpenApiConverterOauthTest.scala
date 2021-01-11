@@ -1,12 +1,12 @@
-package com.cloudentity.edge.plugin.impl.authn.openapi
+package com.cloudentity.pyron.plugin.impl.authn.openapi
 
 import com.cloudentity.pyron.plugin.impl.authn._
 import com.cloudentity.pyron.plugin.impl.authn.openapi.test.AuthnPluginOpenApiTestTools.SimpleTestEndpoint
-import com.cloudentity.pyron.plugin.impl.authn.openapi.test.{AuthnPluginOpenApiTestTools, OpenApiTestUtils}
+import com.cloudentity.pyron.plugin.impl.authn.openapi.test.AuthnPluginOpenApiTestTools
 import io.swagger.models.auth.OAuth2Definition
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{Inside, Matchers, WordSpec}
 
 import scala.collection.JavaConverters._

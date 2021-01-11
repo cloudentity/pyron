@@ -1,14 +1,12 @@
-package com.cloudentity.pyron.plugin.impl.transformer
+package com.cloudentity.pyron.plugin.util.value
 
 import com.cloudentity.pyron.domain.flow.{AuthnCtx, PathParams, RequestCtx}
-import com.cloudentity.pyron.plugin.util.value._
 import com.cloudentity.pyron.test.TestRequestResponseCtx
 import com.cloudentity.tools.vertx.http.Headers
 import io.circe.Json
-import io.vertx.core.buffer.Buffer
 import io.vertx.core.json.{JsonArray, JsonObject}
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 
 @RunWith(classOf[JUnitRunner])

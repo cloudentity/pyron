@@ -11,7 +11,7 @@ import org.scalatest.MustMatchers
 import scala.collection.JavaConverters._
 
 class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with MustMatchers {
-  override def getMetaConfPath(): String = "src/test/resources/plugins/transformer/meta-config.json"
+  override def getMetaConfPath: String = "src/test/resources/plugins/transformer/meta-config.json"
 
   var targetService: ClientAndServer = _
 
@@ -104,7 +104,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName == "H").map(_.getValues.get(0)) must be (Some("value"))
+      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) must be (Some("value"))
     }
   }
 
@@ -117,7 +117,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName == "H").map(_.getValues.get(0)) must be (Some("value"))
+      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) must be (Some("value"))
     }
   }
 
@@ -131,12 +131,12 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName == "H").map(_.getValues.get(0)) must be (Some("value"))
+      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) must be (Some("value"))
     }
   }
 
   def assertTargetRequest(f: HttpRequest => Unit): Unit = {
-    targetService.retrieveRecordedRequests(null).size must be(1)
+    targetService.retrieveRecordedRequests(null).length must be(1)
     f(targetService.retrieveRecordedRequests(null)(0))
   }
 }

@@ -12,9 +12,10 @@ import com.cloudentity.pyron.plugin.verticle.RequestPluginVerticle
 import io.swagger.models.Swagger
 import io.swagger.models.parameters.{Parameter, PathParameter}
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.json.{JsonArray, JsonObject}
-import io.vertx.core.logging.LoggerFactory
+import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.{Logger, LoggerFactory}
 
+import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
@@ -81,10 +82,11 @@ trait TransformJsonBody {
 
   // NOTE: this method mutates jsonBody
   def setJsonBody(set: Map[Path, Option[JsonValue]])(body: JsonObject): JsonObject = {
+    @tailrec
     def mutateBodyAttribute(body: JsonObject, bodyPath: List[String], resolvedValue: Option[JsonValue]): Unit =
       bodyPath match {
         case key :: Nil =>
-          body.put(key, resolvedValue.map(_.rawValue).getOrElse(null))
+          body.put(key, resolvedValue.map(_.rawValue).orNull)
 
         case key :: tail =>
           val leaf =
@@ -148,7 +150,7 @@ trait TransformHeaders {
 }
 
 object TransformRequestOpenApiConverter extends OpenApiPluginUtils {
-  val log = LoggerFactory.getLogger(this.getClass)
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def convertOpenApi(swagger: Swagger, rule: OpenApiRule, conf: TransformerConf): ConvertOpenApiResponse = {
     convertPathParams(conf.pathParams)(rule)(swagger)

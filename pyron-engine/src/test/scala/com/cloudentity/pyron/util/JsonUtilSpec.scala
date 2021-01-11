@@ -4,11 +4,11 @@ import io.circe.Json
 import io.circe.testing.ArbitraryInstances
 import org.junit.runner.RunWith
 import org.scalatest.{MustMatchers, WordSpec}
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @RunWith(classOf[JUnitRunner])
-class JsonUtilSpec extends WordSpec with MustMatchers with ArbitraryInstances with GeneratorDrivenPropertyChecks {
+class JsonUtilSpec extends WordSpec with MustMatchers with ArbitraryInstances with ScalaCheckDrivenPropertyChecks {
   "JsonUtil.deepMerge" should {
     "preserve argument order" in forAll { (js: List[Json]) =>
       val fields = js.zipWithIndex.map {
