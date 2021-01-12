@@ -53,7 +53,9 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
     ResolvedPathParamOps(pathParamOps.set.map(_.map { case (path, valueOrRef) => path -> ValueResolver.resolveString(ctx, jsonBodyOpt, valueOrRef)}))
 
   def resolveHeaderOps(ctx: RequestCtx, headerOps: HeaderOps, jsonBodyOpt: Option[JsonObject]): ResolvedHeaderOps =
-    ResolvedHeaderOps(headerOps.set.map(_.map { case (path, valueOrRef) => path -> ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, valueOrRef)}))
+    ResolvedHeaderOps(headerOps.set.map(_.map {
+      case (path, valueOrRef) => path -> ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, valueOrRef)
+    }))
 
   override def validate(conf: TransformerConf): ValidateResponse = ValidateOk
 

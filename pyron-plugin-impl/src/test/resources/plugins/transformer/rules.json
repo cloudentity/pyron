@@ -133,6 +133,34 @@
               }
             }
           ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-from-body",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "DSKey": {
+                      "findAt": "scp",
+                      "prefix": "env."
+                    },
+                    "X-SCP-Payment": {
+                      "findAt": "scp",
+                      "prefix": "payment."
+                    },
+                    "X-SCP-Transfer": {
+                      "findAt": "scp",
+                      "prefix": "transfer."
+                    }
+                  }
+                }
+              }
+            }
+          ]
         }
       ]
     }

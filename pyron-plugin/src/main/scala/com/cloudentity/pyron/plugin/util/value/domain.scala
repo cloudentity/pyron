@@ -1,9 +1,10 @@
 package com.cloudentity.pyron.plugin.util.value
 
-import io.circe.{Decoder, Json, KeyDecoder}
+import io.circe.{Decoder, DecodingFailure, Json, KeyDecoder}
 import io.vertx.core.json.{JsonArray, JsonObject}
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 // references
 sealed trait ValueOrRef
@@ -18,37 +19,37 @@ sealed trait HeaderRefType
   case object AllHeaderRefType extends HeaderRefType
 
 object ValueOrRef {
-  implicit val ValueOrRefDecoder: Decoder[ValueOrRef] = Decoder.decodeJson.emap { json =>
-    json.asString match {
-      case Some(string) =>
-        if (string.startsWith("$"))
-          string.substring(1).split("\\.").toList match {
-            case refType :: path =>
-              refType match {
-                case "body" =>
-                  Right(BodyRef(Path(path)))
-                case "authn" =>
-                  Right(AuthnRef(Path(path)))
-                case "pathParams" =>
-                  Right(PathParamRef(path.mkString(".")))
-                case "headers" =>
-                  Right {
-                    path match {
-                      case header :: "*" :: Nil =>
-                        HeaderRef(header, AllHeaderRefType)
-                      case path =>
-                        HeaderRef(path.mkString("."), FirstHeaderRefType)
-                    }
-                  }
-                case x =>
-                  Left(s"invalid reference type: $x")
-              }
 
-            case Nil =>
-              Left("reference cannot be empty")
-          }
-        else Right(Value(json))
-      case None => Right(Value(json))
+  implicit val ValueOrRefDecoder: Decoder[ValueOrRef] = Decoder.decodeJson.emap { json =>
+    json.asString.filter(_.startsWith("$")).map {
+      decodeReference
+    } getOrElse Right(Value(json))
+  }
+
+  private def decodeReference(string: String): Either[String, ValueOrRef] = {
+    string.substring(1).split("\\.").toList match {
+      case refType :: path =>
+        refType match {
+          case "body" =>
+            Right(BodyRef(Path(path)))
+          case "authn" =>
+            Right(AuthnRef(Path(path)))
+          case "pathParams" =>
+            Right(PathParamRef(path.mkString(".")))
+          case "headers" =>
+            Right {
+              path match {
+                case header :: "*" :: Nil =>
+                  HeaderRef(header, AllHeaderRefType)
+                case path =>
+                  HeaderRef(path.mkString("."), FirstHeaderRefType)
+              }
+            }
+          case x =>
+            Left(s"invalid reference type: $x")
+        }
+      case Nil =>
+        Left("reference cannot be empty")
     }
   }
 }

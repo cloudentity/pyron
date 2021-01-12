@@ -31,7 +31,7 @@ trait OpenApiTestUtils extends OpenApiConverterUtils {
   def multiPath(): Path = {
     val path = new Path()
     path.setGet(new Operation().operationId("getOperation").description("get desc").response(200, new Response().description("ok")))
-    path.setPost(new Operation().operationId("postOperation").description("get desc").response(200, new Response().description("ok")))
+    path.setPost(new Operation().operationId("postOperation").description("post desc").response(200, new Response().description("ok")))
     path.setPut(new Operation().operationId("putOperation").description("put desc").response(200, new Response().description("ok")))
     path
   }

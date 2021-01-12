@@ -35,7 +35,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getPath must be ("/fixed-path-param/fixed-param")
+      req.getPath mustBe "/fixed-path-param/fixed-param"
     }
   }
 
@@ -49,7 +49,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getPath must be ("/path-param-from-header/123")
+      req.getPath mustBe "/path-param-from-header/123"
     }
   }
 
@@ -63,7 +63,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getBodyAsString must be ("""{"attr":"value"}""")
+      req.getBodyAsString mustBe """{"attr":"value"}"""
     }
   }
 
@@ -77,7 +77,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getBodyAsString must be ("""{"attr":"value"}""")
+      req.getBodyAsString mustBe """{"attr":"value"}"""
     }
   }
 
@@ -91,7 +91,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getBodyAsRawBytes.length must be (0)
+      req.getBodyAsRawBytes.length mustBe 0
     }
   }
 
@@ -104,7 +104,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) must be (Some("value"))
+      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) mustBe Some("value")
     }
   }
 
@@ -117,7 +117,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) must be (Some("value"))
+      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) mustBe Some("value")
     }
   }
 
@@ -131,12 +131,43 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) must be (Some("value"))
+      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) mustBe Some("value")
     }
   }
 
+  @Test
+  def shouldSetDynHeaderFromBody(): Unit = {
+    val rand = scala.util.Random
+    val paymentId = rand.nextInt.abs
+    val transferId = rand.nextInt.abs
+    val envId = rand.nextInt.abs
+
+    given()
+      .body(s"""{"scp":["env.$envId","payment.$paymentId","transfer.$transferId"],"groups":"admin"}""")
+      .when()
+      .get("/dyn-header-from-body")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getHeaders.asScala.toList.find(_.getName.toString == "X-SCP-Payment")
+        .map(_.getValues.get(0)) mustBe Some(s"$paymentId")
+    }
+
+    assertTargetRequest { req =>
+      req.getHeaders.asScala.toList.find(_.getName.toString == "X-SCP-Transfer")
+        .map(_.getValues.get(0)) mustBe Some(s"$transferId")
+    }
+
+    assertTargetRequest { req =>
+      req.getHeaders.asScala.toList.find(_.getName.toString == "DSKey")
+        .map(_.getValues.get(0)) mustBe Some(s"$envId")
+    }
+
+  }
+
   def assertTargetRequest(f: HttpRequest => Unit): Unit = {
-    targetService.retrieveRecordedRequests(null).length must be(1)
+    targetService.retrieveRecordedRequests(null).length mustBe 1
     f(targetService.retrieveRecordedRequests(null)(0))
   }
 }

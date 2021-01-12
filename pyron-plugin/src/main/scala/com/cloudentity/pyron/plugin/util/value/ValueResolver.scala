@@ -27,7 +27,7 @@ trait ValueResolver {
 
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
     valueOrRef match {
-      case Value(value)                          => circeJsonToJsonValue(value).asListOfStrings
+      case Value(value)                          => circeJsonToJsonValue(value, bodyOpt)
       case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asListOfStrings)
       case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(List(_))
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
@@ -87,6 +87,19 @@ trait ValueResolver {
         }
       case Nil => None
     }
+
+  private def circeJsonToJsonValue(json: Json, bodyOpt: Option[JsonObject]): Option[List[String]] = {
+    import scala.collection.JavaConverters._
+    val value = for {
+      body <- bodyOpt
+      prefixOpt <- json.hcursor.downField("prefix").focus
+      prefix <- prefixOpt.asString
+      pathOpt <- json.hcursor.downField("findAt").focus
+      path <- pathOpt.asString
+      found <- body.getJsonArray(path).getList.asScala.toList.find(_.toString.contains(prefix))
+    } yield found.toString.substring(prefix.length)
+    value.map(List(_))
+  }
 
   private def circeJsonToJsonValue(json: Json) =
     json.fold[JsonValue](
