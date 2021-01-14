@@ -30,7 +30,7 @@ object PathParams {
 case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
 
 object PathMatching {
-  val namePlaceholderPattern = """\{\w+[^/]\}"""
+  val namePlaceholderPattern = """\{(\w+[^/])\}"""
   val namePlaceholderRegex = namePlaceholderPattern.r
 
   def build(pathPrefix: PathPrefix, pathPattern: PathPattern): PathMatching =
@@ -45,15 +45,14 @@ object PathMatching {
     pathPrefix.value + pathPattern.value
 
   def createPatternRegex(rawPattern: String): Regex = {
-    val regex = namePlaceholderRegex.findAllIn(rawPattern).toList.foldLeft(rawPattern) { case (acc, mtch) =>
-      val name = mtch.drop(1).dropRight(1)
-      acc.replaceFirst(namePlaceholderPattern, s"(?<$name>[^/]+)")
-    }
+    val regex = namePlaceholderRegex.replaceAllIn(rawPattern, m => s"(?<${m.group(1)}>[^/]+)")
     s"^$regex$$".r
   }
 
-  def extractPathParamNames(pattern: PathPattern): List[PathParamName] =
-    namePlaceholderRegex.findAllIn(pattern.value).toList.map(_.drop(1).dropRight(1)).map(PathParamName)
+  def extractPathParamNames(pattern: PathPattern): List[PathParamName] = {
+    namePlaceholderRegex.findAllMatchIn(pattern.value).map(m => PathParamName(m.group(1))).toList
+  }
+
 }
 
 case class BasePath(value: String) extends AnyVal

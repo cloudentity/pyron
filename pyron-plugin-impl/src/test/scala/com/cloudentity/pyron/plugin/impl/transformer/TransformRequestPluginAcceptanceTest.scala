@@ -5,7 +5,7 @@ import io.restassured.RestAssured.given
 import org.junit.{After, Before, Test}
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
-import org.mockserver.model.{HttpRequest, HttpResponse}
+import org.mockserver.model.{HttpRequest, HttpResponse, NottableString}
 import org.scalatest.MustMatchers
 
 import scala.collection.JavaConverters._
@@ -14,6 +14,12 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   override def getMetaConfPath: String = "src/test/resources/plugins/transformer/meta-config.json"
 
   var targetService: ClientAndServer = _
+
+  def getHeaderOnlyValue(req: HttpRequest, headerName: String): Option[NottableString] =
+    req.getHeaders.asScala.toList.find(_.getName.toString == headerName).map { v =>
+      assert(v.getValues.size() == 1)
+      v.getValues.get(0)
+    }
 
   @Before
   def before(): Unit = {
@@ -103,10 +109,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     .`then`()
       .statusCode(200)
 
-    assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) mustBe Some("value")
-      // None was not equal to Some("value")
-    }
+    assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
   }
 
   @Test
@@ -117,9 +120,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     .`then`()
       .statusCode(200)
 
-    assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) mustBe Some("value")
-    }
+    assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
   }
 
   @Test
@@ -131,10 +132,9 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     .`then`()
       .statusCode(200)
 
-    assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) mustBe Some("value")
-    }
+    assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
   }
+
 
   @Test
   def shouldSetDynHeaderFromBody(): Unit = {
@@ -150,21 +150,9 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .`then`()
       .statusCode(200)
 
-    assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "X-SCP-Payment")
-        .map(_.getValues.get(0)) mustBe Some(s"$paymentId")
-    }
-
-    assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "X-SCP-Transfer")
-        .map(_.getValues.get(0)) mustBe Some(s"$transferId")
-    }
-
-    assertTargetRequest { req =>
-      req.getHeaders.asScala.toList.find(_.getName.toString == "DSKey")
-        .map(_.getValues.get(0)) mustBe Some(s"$envId")
-    }
-
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Payment") mustBe Some(s"$paymentId") }
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Transfer") mustBe Some(s"$transferId") }
+    assertTargetRequest { req => getHeaderOnlyValue(req, "DSKey") mustBe Some(s"$envId") }
   }
 
   def assertTargetRequest(f: HttpRequest => Unit): Unit = {
