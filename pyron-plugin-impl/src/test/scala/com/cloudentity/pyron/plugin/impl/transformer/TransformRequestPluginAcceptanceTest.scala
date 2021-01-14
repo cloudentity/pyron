@@ -105,6 +105,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
 
     assertTargetRequest { req =>
       req.getHeaders.asScala.toList.find(_.getName.toString == "H").map(_.getValues.get(0)) mustBe Some("value")
+      // None was not equal to Some("value")
     }
   }
 

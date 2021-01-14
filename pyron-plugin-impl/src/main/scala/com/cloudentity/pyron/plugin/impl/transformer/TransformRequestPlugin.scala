@@ -1,14 +1,14 @@
 package com.cloudentity.pyron.plugin.impl.transformer
 
-import io.circe.Decoder
-import com.cloudentity.pyron.plugin.config._
 import com.cloudentity.pyron.domain.flow.{PathParams, PluginName, RequestCtx}
 import com.cloudentity.pyron.domain.http.Headers
 import com.cloudentity.pyron.domain.openapi.OpenApiRule
 import com.cloudentity.pyron.openapi.OpenApiPluginUtils
+import com.cloudentity.pyron.plugin.config._
 import com.cloudentity.pyron.plugin.openapi._
 import com.cloudentity.pyron.plugin.util.value._
 import com.cloudentity.pyron.plugin.verticle.RequestPluginVerticle
+import io.circe.Decoder
 import io.swagger.models.Swagger
 import io.swagger.models.parameters.{Parameter, PathParameter}
 import io.vertx.core.buffer.Buffer
@@ -16,8 +16,8 @@ import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.concurrent.Future
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
@@ -47,15 +47,13 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
   }
 
   def resolveBodyOps(ctx: RequestCtx, bodyOps: BodyOps, jsonBodyOpt: Option[JsonObject]): ResolvedBodyOps =
-    ResolvedBodyOps(bodyOps.set.map(_.map { case (path, valueOrRef) => path -> ValueResolver.resolveJson(ctx, jsonBodyOpt, valueOrRef)}), bodyOps.drop)
+    ResolvedBodyOps(bodyOps.set.map(_.mapValues(ValueResolver.resolveJson(ctx, jsonBodyOpt, _))), bodyOps.drop)
 
   def resolvePathParamOps(ctx: RequestCtx, pathParamOps: PathParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedPathParamOps =
-    ResolvedPathParamOps(pathParamOps.set.map(_.map { case (path, valueOrRef) => path -> ValueResolver.resolveString(ctx, jsonBodyOpt, valueOrRef)}))
+    ResolvedPathParamOps(pathParamOps.set.map(_.mapValues(ValueResolver.resolveString(ctx, jsonBodyOpt, _))))
 
   def resolveHeaderOps(ctx: RequestCtx, headerOps: HeaderOps, jsonBodyOpt: Option[JsonObject]): ResolvedHeaderOps =
-    ResolvedHeaderOps(headerOps.set.map(_.map {
-      case (path, valueOrRef) => path -> ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, valueOrRef)
-    }))
+    ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, _))))
 
   override def validate(conf: TransformerConf): ValidateResponse = ValidateOk
 

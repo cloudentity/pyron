@@ -1,22 +1,22 @@
 package com.cloudentity.pyron.plugin.util.value
 
-import io.circe.{Decoder, DecodingFailure, Json, KeyDecoder}
+import io.circe.{Decoder, Json, KeyDecoder}
 import io.vertx.core.json.{JsonArray, JsonObject}
 
 import scala.collection.JavaConverters._
-import scala.util.Try
 
 // references
 sealed trait ValueOrRef
-  case class Value(value: Json) extends ValueOrRef
-  case class BodyRef(path: Path) extends ValueOrRef
-  case class PathParamRef(param: String) extends ValueOrRef
-  case class AuthnRef(path: Path) extends ValueOrRef
-  case class HeaderRef(header: String, typ: HeaderRefType) extends ValueOrRef
+case class Value(value: Json) extends ValueOrRef
+sealed trait RefType extends ValueOrRef
+case class BodyRef(path: Path) extends RefType
+case class PathParamRef(param: String) extends RefType
+case class AuthnRef(path: Path) extends RefType
+case class HeaderRef(header: String, typ: HeaderRefType) extends RefType
 
 sealed trait HeaderRefType
-  case object FirstHeaderRefType extends HeaderRefType
-  case object AllHeaderRefType extends HeaderRefType
+case object FirstHeaderRefType extends HeaderRefType
+case object AllHeaderRefType extends HeaderRefType
 
 object ValueOrRef {
 
@@ -26,8 +26,9 @@ object ValueOrRef {
     } getOrElse Right(Value(json))
   }
 
-  private def decodeReference(string: String): Either[String, ValueOrRef] = {
-    string.substring(1).split("\\.").toList match {
+  private def decodeReference(string: String): Either[String, RefType] = {
+    // FIX: check corner cases when splitting
+    string.substring(1).split('.').toList match {
       case refType :: path =>
         refType match {
           case "body" =>
@@ -56,11 +57,10 @@ object ValueOrRef {
 
 case class Path(value: List[String])
 object Path {
-  implicit val PathDecoder: KeyDecoder[Path] = key => Some(Path(key.split("\\.").toList))
+  implicit val PathDecoder: KeyDecoder[Path] = key => Some(Path(key.split('.').toList))
 
   def apply(xs: String*): Path = Path(xs.toList)
 }
-
 
 sealed trait JsonValue { // for the sake of performance we use vertx Json for body manipulation
   def asString: Option[String] =

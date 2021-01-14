@@ -145,16 +145,16 @@
                 "headers": {
                   "set": {
                     "DSKey": {
-                      "findAt": "scp",
-                      "prefix": "env."
+                      "path": "$body.scp",
+                      "pattern": "env."
                     },
                     "X-SCP-Payment": {
-                      "findAt": "scp",
-                      "prefix": "payment."
+                      "path": "$body.scp",
+                      "pattern": "payment."
                     },
                     "X-SCP-Transfer": {
-                      "findAt": "scp",
-                      "prefix": "transfer."
+                      "path": "$body.scp",
+                      "pattern": "transfer."
                     }
                   }
                 }

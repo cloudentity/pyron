@@ -4,6 +4,7 @@ import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx}
 import io.circe.Json
 import io.vertx.core.json.{JsonArray, JsonObject}
 
+import java.util.{List => JavaList, Map => JavaMap}
 import scala.annotation.tailrec
 import scala.util.Try
 
@@ -27,7 +28,9 @@ trait ValueResolver {
 
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
     valueOrRef match {
-      case Value(value)                          => circeJsonToJsonValue(value, bodyOpt)
+      case Value(value)                          =>
+        if (value.asObject.nonEmpty) circeJsonDynString(req, bodyOpt, value).map(List(_))
+        else circeJsonToJsonValue(value).asListOfStrings
       case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asListOfStrings)
       case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(List(_))
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
@@ -46,62 +49,65 @@ trait ValueResolver {
     }
 
   @tailrec
-  private def extractBodyAttribute(body: JsonObject, path: Path): Option[JsonValue] =
+  private def extractBodyAttribute(body: JsonObject, path: Path): Option[JsonValue] = {
     path.value match {
-      case key :: Nil =>
-        val value = body.getValue(key)
-
-        if (value == null)                                Some(NullJsonValue)
-        else if (value.isInstanceOf[JsonObject])          Some(ObjectJsonValue(value.asInstanceOf[JsonObject]))
-        else if (value.isInstanceOf[java.util.Map[_, _]]) Some(ObjectJsonValue(new JsonObject(value.asInstanceOf[java.util.Map[String, Object]])))
-        else if (value.isInstanceOf[JsonArray])           Some(ArrayJsonValue(value.asInstanceOf[JsonArray]))
-        else if (value.isInstanceOf[java.util.List[_]])   Some(ArrayJsonValue(new JsonArray(value.asInstanceOf[java.util.List[_]])))
-        else if (value.isInstanceOf[String])              Some(StringJsonValue(value.asInstanceOf[String]))
-        else if (value.isInstanceOf[Number])              Some(NumberJsonValue(value.asInstanceOf[Number]))
-        else if (value.isInstanceOf[Boolean])             Some(BooleanJsonValue(value.asInstanceOf[Boolean]))
-        else                                              None
-
-      case key :: tail =>
-        val value = body.getValue(key)
-
-        if (value == null) None
-        else if (value.isInstanceOf[JsonObject]) extractBodyAttribute(value.asInstanceOf[JsonObject], Path(tail))
-        else if (value.isInstanceOf[java.util.Map[_, _]]) extractBodyAttribute(new io.vertx.core.json.JsonObject(value.asInstanceOf[java.util.Map[String, Object]]), Path(tail))
-        else None
       case Nil => None
-    }
-
-
-  import io.circe.syntax._
-  private def extractAuthnCtxAttribute(authn: AuthnCtx, path: Path): Option[JsonValue] =
-    path.value match {
-      case key :: Nil =>
-        authn.get(key).map(circeJsonToJsonValue)
-
+      case key :: Nil => extractLeafBodyAttribute(body, key)
       case key :: tail =>
-        authn.get(key) match {
-          case Some(json) =>
-            json.asObject.flatMap(obj => extractAuthnCtxAttribute(AuthnCtx(obj.toMap), Path(tail)))
-          case None =>
-            None
+        val value = body.getValue(key)
+        if (value == null) {
+          None
+        } else value match {
+          case v: JsonObject => extractBodyAttribute(v, Path(tail))
+          case v: JavaMap[_, _] => extractBodyAttribute(new JsonObject(v.asInstanceOf[JavaMap[String, Object]]), Path(tail))
+          case _ => None
         }
-      case Nil => None
     }
-
-  private def circeJsonToJsonValue(json: Json, bodyOpt: Option[JsonObject]): Option[List[String]] = {
-    import scala.collection.JavaConverters._
-    val value = for {
-      body <- bodyOpt
-      prefixOpt <- json.hcursor.downField("prefix").focus
-      prefix <- prefixOpt.asString
-      pathOpt <- json.hcursor.downField("findAt").focus
-      path <- pathOpt.asString
-      found <- body.getJsonArray(path).getList.asScala.toList.find(_.toString.contains(prefix))
-    } yield found.toString.substring(prefix.length)
-    value.map(List(_))
   }
 
-  private def circeJsonToJsonValue(json: Json) =
+  private def extractLeafBodyAttribute(body: JsonObject, key: String): Option[JsonValue] = {
+    val value = body.getValue(key)
+    if (value == null) {
+      Some(NullJsonValue)
+    } else if (value == true || value == false) {
+      Some(BooleanJsonValue(value.asInstanceOf[Boolean]))
+    } else value match {
+      case v: String => Some(StringJsonValue(v))
+      case v: Number => Some(NumberJsonValue(v))
+      case v: JsonObject => Some(ObjectJsonValue(v))
+      case v: JsonArray => Some(ArrayJsonValue(v))
+      case v: JavaList[_] => Some(ArrayJsonValue(new JsonArray(v)))
+      case v: JavaMap[_, _] => Some(ObjectJsonValue(new JsonObject(v.asInstanceOf[JavaMap[String, Object]])))
+      case _ => None
+    }
+  }
+
+  private def extractAuthnCtxAttribute(authn: AuthnCtx, path: Path): Option[JsonValue] =
+    path.value match {
+      case Nil => None
+      case key :: Nil =>
+        authn.get(key).map(circeJsonToJsonValue)
+      case key :: tail => for {
+        value <- authn.get(key)
+        obj <- value.asObject
+        attr <- extractAuthnCtxAttribute(AuthnCtx(obj.toMap), Path(tail))
+      } yield attr
+    }
+
+  private def circeJsonDynString(req: RequestCtx, bodyOpt: Option[JsonObject], json: Json): Option[String] = {
+    for {
+      patternOpt <- json.hcursor.downField("pattern").focus
+      patternStr <- patternOpt.asString
+      pathOpt <- json.hcursor.downField("path").focus
+      valOrRef <- pathOpt.as[ValueOrRef].toOption
+      jsonValue <- resolveJson(req, bodyOpt, valOrRef)
+      candidates <- jsonValue.asListOfStrings
+      found <- candidates.find(_.startsWith(patternStr))
+    } yield found.substring(patternStr.length)
+  }
+
+  private def circeJsonToJsonValue(json: Json): JsonValue = {
+    import io.circe.syntax._
     json.fold[JsonValue](
       NullJsonValue,
       bool   => BooleanJsonValue(bool),
@@ -110,4 +116,6 @@ trait ValueResolver {
       array  => ArrayJsonValue(new JsonArray(array.asJson.noSpaces)),
       obj    => ObjectJsonValue(new JsonObject(obj.asJson.noSpaces))
     )
+  }
+
 }
