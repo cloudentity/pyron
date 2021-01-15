@@ -144,6 +144,11 @@
                 "body": {},
                 "headers": {
                   "set": {
+                    "X-Scope": {
+                      "path": "$body.groups",
+                      "pattern": "admin",
+                      "output": "elevated"
+                    },
                     "DSKey": {
                       "path": "$body.scp",
                       "pattern": "env.{num}",

@@ -158,6 +158,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .`then`()
       .statusCode(200)
 
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Scope") mustBe Some("elevated") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Payment") mustBe Some(s"$paymentId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Transfer") mustBe Some(s"$transferId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "DSKey") mustBe Some(s"$envId") }
