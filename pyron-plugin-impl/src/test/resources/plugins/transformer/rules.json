@@ -149,6 +149,11 @@
                       "pattern": "admin",
                       "output": "elevated"
                     },
+                    "X-Client": {
+                      "path": "$body.scp",
+                      "pattern": "customer-{{{id}}}_swift_{swift}",
+                      "output": "{swift}.{id}"
+                    },
                     "DSKey": {
                       "path": "$body.scp",
                       "pattern": "env.({num})",

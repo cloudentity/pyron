@@ -7,6 +7,7 @@ import io.vertx.core.json.{JsonArray, JsonObject}
 import java.util.{List => JavaList, Map => JavaMap}
 import scala.annotation.tailrec
 import scala.util.Try
+import scala.util.matching.Regex
 
 
 object ValueResolver extends ValueResolver
@@ -29,7 +30,7 @@ trait ValueResolver {
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
     valueOrRef match {
       case Value(value)                          =>
-        if (value.asObject.nonEmpty) circeJsonDynString(req, bodyOpt, value).map(List(_))
+        if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value).map(List(_))
         else circeJsonToJsonValue(value).asListOfStrings
       case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asListOfStrings)
       case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(List(_))
@@ -94,35 +95,6 @@ trait ValueResolver {
       } yield attr
     }
 
-  private def circeJsonDynString(req: RequestCtx, bodyOpt: Option[JsonObject], json: Json): Option[String] = {
-    for {
-      patternOpt <- json.hcursor.downField("pattern").focus
-      patternStr <- patternOpt.asString
-      outputOpt <- json.hcursor.downField("output").focus
-      outputStr <- outputOpt.asString
-      pathOpt <- json.hcursor.downField("path").focus
-      valOrRef <- pathOpt.as[ValueOrRef].toOption
-
-      regexGroupNames = """\{(\w+)}""".r.findAllMatchIn(patternStr).map(_.group(1))
-      regexWithParams = safeRegexWithParams(patternStr)
-
-      jsonValue <- resolveJson(req, bodyOpt, valOrRef)
-      candidates <- jsonValue.asListOfStrings
-      found <- candidates.find(v => v.matches(regexWithParams))
-      matched <- regexWithParams.r.findFirstMatchIn(found)
-      keyvals = regexGroupNames.toList.zip(matched.subgroups)
-    } yield keyvals.foldLeft(outputStr) {
-      case (output, (key, value)) => output.replaceAllLiterally(s"{$key}", value)
-    }
-  }
-
-  private def safeRegexWithParams(pattern: String): String = {
-    val paramRestoreRegex = """\\\{(\w+)\\}""".r
-    val sanitizerRegex = """([.*+?^${}()|\[\]\\])""".r
-    val regexSanitized = sanitizerRegex.replaceAllIn(pattern, v => """\\\""" + v.group(1))
-    paramRestoreRegex.replaceAllIn(s"^$regexSanitized$$", m => s"(?<${m.group(1)}>.+)")
-  }
-
   private def circeJsonToJsonValue(json: Json): JsonValue = {
     import io.circe.syntax._
     json.fold[JsonValue](
@@ -135,4 +107,65 @@ trait ValueResolver {
     )
   }
 
+  private def circeJsonDynamicString(req: RequestCtx, bodyOpt: Option[JsonObject], json: Json): Option[String] = {
+    for {
+      patternOpt <- json.hcursor.downField("pattern").focus
+      patternStr <- patternOpt.asString
+      outputOpt <- json.hcursor.downField("output").focus
+      outputStr <- outputOpt.asString
+      pathOpt <- json.hcursor.downField("path").focus
+      valOrRef <- pathOpt.as[ValueOrRef].toOption
+
+      (safePattern, paramNames) = makeSafePatternAndParamList(patternStr)
+
+      jsonValue <- resolveJson(req, bodyOpt, valOrRef)
+      candidates <- jsonValue.asListOfStrings
+      matched <- candidates.view.map(safePattern.findFirstMatchIn).collectFirst { case Some(found) => found }
+      keyvals = paramNames.zip(matched.subgroups)
+    } yield keyvals.foldLeft(outputStr) {
+      case (output, (key, value)) => output.replaceAllLiterally(s"{$key}", value)
+    }
+  }
+
+  private def makeSafePatternAndParamList(pattern: String): (Regex, List[String]) = {
+    val (paramNames, paramSlices) = findParamSlices(pattern)
+    val safePattern = ("" :: paramNames).zip(makeNonParamSlices(pattern, paramSlices))
+      .map { case (paramName: String, followingSlice: String) =>
+        if (paramName.nonEmpty) s"(?<$paramName>.+)" + followingSlice else followingSlice
+      }.mkString
+    (safePattern.r, paramNames)
+  }
+
+  private def findParamSlices(pattern: String): (List[String], List[(Int, Int)]) = {
+    if (pattern.contains("{{")) {
+      // We allow {{ and }} to match literal { and }, which makes finding params harder
+      """((?:\G|[^{])(?:\{\{)*)\{(\w+)}""".r.findAllMatchIn(pattern)
+        .map(m => m.group(2) -> (m.start + m.group(1).length, m.end)).toList.unzip
+    } else {
+      // Patterns without {{ and }} are likely much more common and simpler matcher will do
+      """\{(\w+)}""".r.findAllMatchIn(pattern)
+        .map(m => m.group(1) -> (m.start, m.end)).toList.unzip
+    }
+  }
+
+  private def makeNonParamSlices(pattern: String, paramSlices: List[(Int, Int)]): List[String] = {
+    val nonParamSlices: List[Int] = pattern.length :: paramSlices
+      .foldLeft(List(0)) { case (acc, (start, end)) => end :: start :: acc }
+    nonParamSlices.sliding(2, 2).foldLeft(List[String]()) {
+      (acc, slice) => {
+        val (start, end) = (slice.tail.head, slice.head)
+        escapeSymbols(normalizeParens(pattern.slice(start, end))) :: acc
+      }
+    }
+  }
+
+  private def escapeSymbols(normalizedParensSlice: String) = {
+    val escapeSymbolsRegex = """([.*+?^$()|{\[\\])""".r
+    escapeSymbolsRegex.replaceAllIn(normalizedParensSlice, v => """\\\""" + v.group(1))
+  }
+
+  private def normalizeParens(nonParamSlice: String) = {
+    val normalizeParensRegex = """([{}])(?<dualParen>\1?)""".r
+    normalizeParensRegex.replaceAllIn(nonParamSlice, _.group("dualParen"))
+  }
 }

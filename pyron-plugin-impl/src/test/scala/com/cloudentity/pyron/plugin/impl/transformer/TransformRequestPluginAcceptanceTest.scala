@@ -141,6 +141,8 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     val rand = scala.util.Random
     val paymentId = rand.nextInt.abs
     val transferId = rand.nextInt.abs
+    val customerId = rand.nextInt.abs
+    val swiftId = rand.nextInt.abs
     val envId = rand.nextInt.abs
 
     given()
@@ -148,6 +150,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
         s"""{
            |"scp": [
            |  "env.($envId)",
+           |  "customer-{$customerId}_swift_$swiftId",
            |  "payment.[$paymentId]",
            |  "transfer.$transferId"
            |],
@@ -159,6 +162,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-Scope") mustBe Some("elevated") }
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Client") mustBe Some(s"$swiftId.$customerId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Payment") mustBe Some(s"$paymentId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Transfer") mustBe Some(s"$transferId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "DSKey") mustBe Some(s"$envId") }
