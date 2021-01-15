@@ -1,6 +1,6 @@
 package com.cloudentity.pyron.plugin.util.value
 
-import com.cloudentity.pyron.domain.flow.{AuthnCtx, PathMatching, RequestCtx}
+import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx}
 import io.circe.Json
 import io.vertx.core.json.{JsonArray, JsonObject}
 
@@ -95,9 +95,7 @@ trait ValueResolver {
     }
 
   private def circeJsonDynString(req: RequestCtx, bodyOpt: Option[JsonObject], json: Json): Option[String] = {
-    val paramRegex = "\\{(\\w+)\\}".r
     for {
-      // FIX: maybe memoize steps below which only depend on config and not on req
       patternOpt <- json.hcursor.downField("pattern").focus
       patternStr <- patternOpt.asString
       outputOpt <- json.hcursor.downField("output").focus
@@ -105,17 +103,24 @@ trait ValueResolver {
       pathOpt <- json.hcursor.downField("path").focus
       valOrRef <- pathOpt.as[ValueOrRef].toOption
 
-      regexGroupNames = paramRegex.findAllMatchIn(patternStr).map(_.group(1))
-      regexWithGroups = paramRegex.replaceAllIn(s"^$patternStr$$", m => s"(?<${m.group(1)}>.+)")
+      regexGroupNames = """\{(\w+)}""".r.findAllMatchIn(patternStr).map(_.group(1))
+      regexWithParams = safeRegexWithParams(patternStr)
 
       jsonValue <- resolveJson(req, bodyOpt, valOrRef)
       candidates <- jsonValue.asListOfStrings
-      found <- candidates.find(v => v.matches(regexWithGroups))
-      matched <- regexWithGroups.r.findFirstMatchIn(found)
+      found <- candidates.find(v => v.matches(regexWithParams))
+      matched <- regexWithParams.r.findFirstMatchIn(found)
       keyvals = regexGroupNames.toList.zip(matched.subgroups)
     } yield keyvals.foldLeft(outputStr) {
       case (output, (key, value)) => output.replaceAllLiterally(s"{$key}", value)
     }
+  }
+
+  private def safeRegexWithParams(pattern: String): String = {
+    val paramRestoreRegex = """\\\{(\w+)\\}""".r
+    val sanitizerRegex = """([.*+?^${}()|\[\]\\])""".r
+    val regexSanitized = sanitizerRegex.replaceAllIn(pattern, v => """\\\""" + v.group(1))
+    paramRestoreRegex.replaceAllIn(s"^$regexSanitized$$", m => s"(?<${m.group(1)}>.+)")
   }
 
   private def circeJsonToJsonValue(json: Json): JsonValue = {

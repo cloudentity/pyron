@@ -151,12 +151,12 @@
                     },
                     "DSKey": {
                       "path": "$body.scp",
-                      "pattern": "env.{num}",
+                      "pattern": "env.({num})",
                       "output": "{num}"
                     },
                     "X-SCP-Payment": {
                       "path": "$body.scp",
-                      "pattern": "payment_{id}",
+                      "pattern": "payment.[{id}]",
                       "output": "{id}"
                     },
                     "X-SCP-Transfer": {

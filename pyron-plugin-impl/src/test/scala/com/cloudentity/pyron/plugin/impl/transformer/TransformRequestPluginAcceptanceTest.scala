@@ -147,8 +147,8 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .body(
         s"""{
            |"scp": [
-           |  "env.$envId",
-           |  "payment_$paymentId",
+           |  "env.($envId)",
+           |  "payment.[$paymentId]",
            |  "transfer.$transferId"
            |],
            |"groups": "admin"

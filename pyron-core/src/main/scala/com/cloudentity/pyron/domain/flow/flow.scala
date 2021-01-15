@@ -92,7 +92,7 @@ object TargetService {
     DiscoverableService(serviceName)
 
   private def readStaticService(req: HttpServerRequest): StaticService = {
-    lazy val ssl = req.isSSL
+    val ssl = req.isSSL
     if (Option(req.host()).isDefined) {
       Option(req.host()).get.split(':').toList match {
         case h :: Nil => StaticService(TargetHost(h), 80, ssl)
