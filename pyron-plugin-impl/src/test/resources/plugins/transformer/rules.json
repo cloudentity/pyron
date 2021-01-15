@@ -146,15 +146,18 @@
                   "set": {
                     "DSKey": {
                       "path": "$body.scp",
-                      "pattern": "env."
+                      "pattern": "env.{num}",
+                      "output": "{num}"
                     },
                     "X-SCP-Payment": {
                       "path": "$body.scp",
-                      "pattern": "payment."
+                      "pattern": "payment_{id}",
+                      "output": "{id}"
                     },
                     "X-SCP-Transfer": {
                       "path": "$body.scp",
-                      "pattern": "transfer."
+                      "pattern": "transfer.{id}",
+                      "output": "{id}"
                     }
                   }
                 }

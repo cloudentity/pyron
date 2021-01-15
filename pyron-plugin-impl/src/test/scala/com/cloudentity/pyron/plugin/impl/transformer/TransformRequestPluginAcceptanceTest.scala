@@ -144,7 +144,15 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     val envId = rand.nextInt.abs
 
     given()
-      .body(s"""{"scp":["env.$envId","payment.$paymentId","transfer.$transferId"],"groups":"admin"}""")
+      .body(
+        s"""{
+           |"scp": [
+           |  "env.$envId",
+           |  "payment_$paymentId",
+           |  "transfer.$transferId"
+           |],
+           |"groups": "admin"
+           |}""".stripMargin)
       .when()
       .get("/dyn-header-from-body")
       .`then`()

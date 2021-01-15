@@ -92,16 +92,19 @@ object TargetService {
     DiscoverableService(serviceName)
 
   private def readStaticService(req: HttpServerRequest): StaticService = {
+    lazy val ssl = req.isSSL
     if (Option(req.host()).isDefined) {
-      Option(req.host()).get.split(":").toList match {
-        case h :: Nil =>      StaticService(TargetHost(h), 80, req.isSSL())
-        case h :: p :: Nil => StaticService(TargetHost(h), Integer.parseInt(p), req.isSSL())
-        case _ =>             StaticService(TargetHost("malformed-host-header"), 80, req.isSSL())
+      Option(req.host()).get.split(':').toList match {
+        case h :: Nil => StaticService(TargetHost(h), 80, ssl)
+        case h :: p :: Nil => StaticService(TargetHost(h), Integer.parseInt(p), ssl)
+        case _ => StaticService(TargetHost("malformed-host-header"), 80, ssl)
       }
-    } else Try(new URL(req.absoluteURI()))
-      .map { url => StaticService(TargetHost(url.getHost), if (url.getPort != -1) url.getPort else 80, req.isSSL()) }
+    } else Try(new URL(req.absoluteURI())).map(url => {
+      val port = if (url.getPort == -1) 80 else url.getPort
+      StaticService(TargetHost(url.getHost), port, ssl)
+    })
       // it should never fail since you can't create HttpServerRequest with invalid URI
-      .toOption.getOrElse(StaticService(TargetHost("malformed-url"), 80, req.isSSL()))
+      .toOption.getOrElse(StaticService(TargetHost("malformed-url"), 80, ssl))
   }
 }
 
