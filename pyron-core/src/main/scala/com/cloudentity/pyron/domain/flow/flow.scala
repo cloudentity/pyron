@@ -30,8 +30,8 @@ object PathParams {
 case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
 
 object PathMatching {
-  val namePlaceholderPattern = """\{(\w+[^/])\}"""
-  val namePlaceholderRegex = namePlaceholderPattern.r
+  val paramNamePlaceholderPattern = """\{(\w+[^/])\}"""
+  val paramNamePlaceholderRegex = paramNamePlaceholderPattern.r
 
   def build(pathPrefix: PathPrefix, pathPattern: PathPattern): PathMatching =
     PathMatching(
@@ -45,12 +45,13 @@ object PathMatching {
     pathPrefix.value + pathPattern.value
 
   def createPatternRegex(rawPattern: String): Regex = {
-    val regex = namePlaceholderRegex.replaceAllIn(rawPattern, m => s"(?<${m.group(1)}>[^/]+)")
+    // capture group 1 contains param name without surrounding parens
+    val regex = paramNamePlaceholderRegex.replaceAllIn(rawPattern, m => s"(?<${m.group(1)}>[^/]+)")
     s"^$regex$$".r
   }
 
   def extractPathParamNames(pattern: PathPattern): List[PathParamName] = {
-    namePlaceholderRegex.findAllMatchIn(pattern.value).map(m => PathParamName(m.group(1))).toList
+    paramNamePlaceholderRegex.findAllMatchIn(pattern.value).map(m => PathParamName(m.group(1))).toList
   }
 
 }
@@ -95,9 +96,9 @@ object TargetService {
     val ssl = req.isSSL
     if (Option(req.host()).isDefined) {
       Option(req.host()).get.split(':').toList match {
-        case h :: Nil => StaticService(TargetHost(h), 80, ssl)
+        case h :: Nil =>      StaticService(TargetHost(h), 80, ssl)
         case h :: p :: Nil => StaticService(TargetHost(h), Integer.parseInt(p), ssl)
-        case _ => StaticService(TargetHost("malformed-host-header"), 80, ssl)
+        case _ =>             StaticService(TargetHost("malformed-host-header"), 80, ssl)
       }
     } else Try(new URL(req.absoluteURI())).map(url => {
       val port = if (url.getPort == -1) 80 else url.getPort

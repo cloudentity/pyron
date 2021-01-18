@@ -139,10 +139,13 @@ trait ValueResolver {
   private def findParamSlices(pattern: String): (List[String], List[(Int, Int)]) = {
     if (pattern.contains("{{")) {
       // We allow {{ and }} to match literal { and }, which makes finding params harder
+      // capture group 1 contains possible occurrences of {{ before opening paren { of param definition
+      // capture group 2 contains param name without surrounding parens
       """((?:\G|[^{])(?:\{\{)*)\{(\w+)}""".r.findAllMatchIn(pattern)
         .map(m => m.group(2) -> (m.start + m.group(1).length, m.end)).toList.unzip
     } else {
       // Patterns without {{ and }} are likely much more common and simpler matcher will do
+      // capture group 1 contains param name without surrounding parens
       """\{(\w+)}""".r.findAllMatchIn(pattern)
         .map(m => m.group(1) -> (m.start, m.end)).toList.unzip
     }
@@ -159,12 +162,14 @@ trait ValueResolver {
     }
   }
 
-  private def escapeSymbols(normalizedParensSlice: String) = {
-    val escapeSymbolsRegex = """([.*+?^$()|{\[\\])""".r
-    escapeSymbolsRegex.replaceAllIn(normalizedParensSlice, v => """\\\""" + v.group(1))
+  private def escapeSymbols(normalizedParensSlice: String): String = {
+    val escapeSymbolsRegex = """[.*+?^$()|{\[\\]""".r
+    escapeSymbolsRegex.replaceAllIn(normalizedParensSlice, v => """\\\""" + v)
   }
 
-  private def normalizeParens(nonParamSlice: String) = {
+  private def normalizeParens(nonParamSlice: String): String = {
+    // this match will un-double all {{ and drop, single/odd { parens which are invalid
+    // since they could only precede param names, and nonParamSlice contains no params
     val normalizeParensRegex = """([{}])(?<dualParen>\1?)""".r
     normalizeParensRegex.replaceAllIn(nonParamSlice, _.group("dualParen"))
   }
