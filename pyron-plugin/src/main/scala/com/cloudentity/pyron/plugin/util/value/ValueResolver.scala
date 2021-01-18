@@ -168,7 +168,7 @@ trait ValueResolver {
   }
 
   private def normalizeParens(nonParamSlice: String): String = {
-    // this match will un-double all {{ and drop, single/odd { parens which are invalid
+    // this match will un-double all {{ and drop single/odd { parens which are invalid
     // since they could only precede param names, and nonParamSlice contains no params
     val normalizeParensRegex = """([{}])(?<dualParen>\1?)""".r
     normalizeParensRegex.replaceAllIn(nonParamSlice, _.group("dualParen"))

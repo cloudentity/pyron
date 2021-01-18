@@ -143,7 +143,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
 
     given()
       .body(
-        s"""{"scp": ["unrelated-value-123", "transaction.$transactionId/swift.$swiftId"],"groups": "admin"}""".stripMargin)
+        s"""{"scp": ["unrelated-value-123", "transaction.$transactionId/swift.$swiftId"],"groups": "admin"}""")
       .when()
       .get("/dyn-header-can-find-multiple-params-and-reorder-them-in-output")
       .`then`()
@@ -159,7 +159,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
 
     given()
       .body(
-        s"""{"scp": ["unrelated-value-123", "(payment).is$$ok[$paymentId]?"],"groups": "admin"}""".stripMargin)
+        s"""{"scp": ["unrelated-value-123", "(payment).is$$ok[$paymentId]?"],"groups": "admin"}""")
       .when()
       .get("/dyn-header-matches-regex-special-chars-as-literals")
       .`then`()
@@ -175,7 +175,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
 
     given()
       .body(
-        s"""{"scp": ["unrelated-value-123", "customer-{$customerId}"],"groups": "admin"}""".stripMargin)
+        s"""{"scp": ["unrelated-value-123", "customer-{$customerId}"],"groups": "admin"}""")
       .when()
       .get("/dyn-header-can-match-curly-braces-when-doubled")
       .`then`()
@@ -185,13 +185,27 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
-  def shouldSetDynHeaderFromBodyAndAllowFixedMappingWhenPointedToNonArrayValue(): Unit = {
+  def shouldSetDynHeaderFromBodyAndAllowDynMappingWhenPointedToNonArrayValue(): Unit = {
     val rand = scala.util.Random
-    val customerId = rand.nextInt.abs
+    val envId = rand.nextInt.abs
 
     given()
       .body(
-        s"""{"scp": ["unrelated-value-123", "stuff"],"groups": "admin"}""".stripMargin)
+        s"""{"scp": ["unrelated-value-123", "stuff"],"env": "env.$envId"}""")
+      .when()
+      .get("/dyn-header-can-use-dyn-mapping-for-non-array-values")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Env") mustBe Some(s"$envId") }
+  }
+
+  @Test
+  def shouldSetDynHeaderFromBodyAndAllowFixedMappingWhenPointedToNonArrayValue(): Unit = {
+
+    given()
+      .body(
+        s"""{"scp": ["unrelated-value-123", "stuff"],"groups": "admin"}""")
       .when()
       .get("/dyn-header-can-use-fixed-mapping-for-non-array-values")
       .`then`()

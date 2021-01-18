@@ -220,6 +220,27 @@
         },
         {
           "method": "GET",
+          "pathPattern": "/dyn-header-can-use-dyn-mapping-for-non-array-values",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Env": {
+                      "path": "$body.env",
+                      "pattern": "env.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "pathPattern": "/dyn-header-from-body-multiple-transformations",
           "requestPlugins": [
             {
