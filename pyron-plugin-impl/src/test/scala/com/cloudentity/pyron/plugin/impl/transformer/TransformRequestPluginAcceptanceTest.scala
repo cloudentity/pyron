@@ -135,9 +135,73 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
   }
 
+  @Test
+  def shouldSetDynHeaderFromBodyAndFindMultipleParamsInPatternAndReorderThemInOutput(): Unit = {
+    val rand = scala.util.Random
+    val transactionId = rand.nextInt.abs
+    val swiftId = rand.nextInt.abs
+
+    given()
+      .body(
+        s"""{"scp": ["unrelated-value-123", "transaction.$transactionId/swift.$swiftId"],"groups": "admin"}""".stripMargin)
+      .when()
+      .get("/dyn-header-can-find-multiple-params-and-reorder-them-in-output")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Transaction") mustBe Some(s"$swiftId.$transactionId") }
+  }
 
   @Test
-  def shouldSetDynHeaderFromBody(): Unit = {
+  def shouldSetDynHeaderFromBodyAndMatchRegexSpecialCharsLikeDotOrParensAsLiterals(): Unit = {
+    val rand = scala.util.Random
+    val paymentId = rand.nextInt.abs
+
+    given()
+      .body(
+        s"""{"scp": ["unrelated-value-123", "(payment).is$$ok[$paymentId]?"],"groups": "admin"}""".stripMargin)
+      .when()
+      .get("/dyn-header-matches-regex-special-chars-as-literals")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Payment") mustBe Some(s"$paymentId") }
+  }
+
+  @Test
+  def shouldSetDynHeaderFromBodyAndMatchLiteralCurlyBracesWhenPatternHasDoubledCurlyBraces(): Unit = {
+    val rand = scala.util.Random
+    val customerId = rand.nextInt.abs
+
+    given()
+      .body(
+        s"""{"scp": ["unrelated-value-123", "customer-{$customerId}"],"groups": "admin"}""".stripMargin)
+      .when()
+      .get("/dyn-header-can-match-curly-braces-when-doubled")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Client") mustBe Some(s"$customerId") }
+  }
+
+  @Test
+  def shouldSetDynHeaderFromBodyAndAllowFixedMappingWhenPointedToNonArrayValue(): Unit = {
+    val rand = scala.util.Random
+    val customerId = rand.nextInt.abs
+
+    given()
+      .body(
+        s"""{"scp": ["unrelated-value-123", "stuff"],"groups": "admin"}""".stripMargin)
+      .when()
+      .get("/dyn-header-can-use-fixed-mapping-for-non-array-values")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-DSKey") mustBe Some("elevated") }
+  }
+
+  @Test
+  def shouldSetDynHeaderFromBodyAndApplyMultipleTransformationsAtOnce(): Unit = {
     val rand = scala.util.Random
     val paymentId = rand.nextInt.abs
     val transferId = rand.nextInt.abs
@@ -157,7 +221,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
            |"groups": "admin"
            |}""".stripMargin)
       .when()
-      .get("/dyn-header-from-body")
+      .get("/dyn-header-from-body-multiple-transformations")
       .`then`()
       .statusCode(200)
 

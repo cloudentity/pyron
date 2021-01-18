@@ -136,7 +136,91 @@
         },
         {
           "method": "GET",
-          "pathPattern": "/dyn-header-from-body",
+          "pathPattern": "/dyn-header-can-find-multiple-params-and-reorder-them-in-output",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{transactionId}/swift.{swiftId}",
+                      "output": "{swiftId}.{transactionId}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-matches-regex-special-chars-as-literals",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "(payment).is$ok[{id}]?",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-match-curly-braces-when-doubled",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Client": {
+                      "path": "$body.scp",
+                      "pattern": "customer-{{{id}}}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-use-fixed-mapping-for-non-array-values",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-DSKey": {
+                      "path": "$body.groups",
+                      "pattern": "admin",
+                      "output": "elevated"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-from-body-multiple-transformations",
           "requestPlugins": [
             {
               "name": "transform-request",
