@@ -136,7 +136,7 @@
         },
         {
           "method": "GET",
-          "pathPattern": "/dyn-header-can-find-multiple-params-and-reorder-them-in-output",
+          "pathPattern": "/dyn-header-can-find-multiple-params-in-pattern-and-reorder-them-in-input",
           "requestPlugins": [
             {
               "name": "transform-request",
@@ -157,7 +157,59 @@
         },
         {
           "method": "GET",
-          "pathPattern": "/dyn-header-matches-regex-special-chars-as-literals",
+          "pathPattern": "/dyn-header-requires-pattern-matching-on-entire-value",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{id}",
+                      "output": "{id}"
+                    },
+                    "X-Env": {
+                      "path": "$body.scp",
+                      "pattern": "env.{id}.suffix",
+                      "output": "{id}"
+                    },
+                    "X-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "payment.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-will-get-first-value-for-take-all-pattern",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Value": {
+                      "path": "$body.scp",
+                      "pattern": "{wholeThing}",
+                      "output": "{wholeThing}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-match-regex-special-chars-literally",
           "requestPlugins": [
             {
               "name": "transform-request",
@@ -178,7 +230,7 @@
         },
         {
           "method": "GET",
-          "pathPattern": "/dyn-header-can-match-curly-braces-when-doubled",
+          "pathPattern": "/dyn-header-can-match-literal-curly-braces",
           "requestPlugins": [
             {
               "name": "transform-request",
@@ -241,7 +293,7 @@
         },
         {
           "method": "GET",
-          "pathPattern": "/dyn-header-from-body-multiple-transformations",
+          "pathPattern": "/dyn-header-with-multiple-transformations",
           "requestPlugins": [
             {
               "name": "transform-request",

@@ -129,10 +129,10 @@ trait ValueResolver {
 
   private def makeSafePatternAndParamList(pattern: String): (Regex, List[String]) = {
     val (paramNames, paramSlices) = findParamSlices(pattern)
-    val safePattern = ("" :: paramNames).zip(makeNonParamSlices(pattern, paramSlices))
+    val safePattern = "^" + ("" :: paramNames).zip(makeNonParamSlices(pattern, paramSlices))
       .map { case (paramName: String, followingSlice: String) =>
         if (paramName.nonEmpty) s"(?<$paramName>.+)" + followingSlice else followingSlice
-      }.mkString
+      }.mkString + "$"
     (safePattern.r, paramNames)
   }
 

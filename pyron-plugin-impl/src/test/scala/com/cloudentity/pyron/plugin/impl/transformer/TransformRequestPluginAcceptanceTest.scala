@@ -136,7 +136,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
-  def shouldSetDynHeaderFromBodyAndFindMultipleParamsInPatternAndReorderThemInOutput(): Unit = {
+  def shouldSetHeaderFromDynamicScopeAndFindMultipleParamsInPatternAndReorderThemInOutput(): Unit = {
     val rand = scala.util.Random
     val transactionId = rand.nextInt.abs
     val swiftId = rand.nextInt.abs
@@ -145,7 +145,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .body(
         s"""{"scp": ["unrelated-value-123", "transaction.$transactionId/swift.$swiftId"],"groups": "admin"}""")
       .when()
-      .get("/dyn-header-can-find-multiple-params-and-reorder-them-in-output")
+      .get("/dyn-header-can-find-multiple-params-in-pattern-and-reorder-them-in-input")
       .`then`()
       .statusCode(200)
 
@@ -153,7 +153,47 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
-  def shouldSetDynHeaderFromBodyAndMatchRegexSpecialCharsLikeDotOrParensAsLiterals(): Unit = {
+  def shouldSetHeaderWhenPatternMatchesEntireValueButNotWhenItMatchesPartOfAWiderValue(): Unit = {
+    val rand = scala.util.Random
+    val paymentId = rand.nextInt.abs
+    val transactionId = rand.nextInt.abs
+    val envIdNoSuffix = rand.nextInt.abs
+    val envIdSuffixed = rand.nextInt.abs
+
+    given()
+      .body(
+        s"""{"scp": [
+           |"unrelated-value-123",
+           |"transaction.$transactionId",
+           |"env.$envIdNoSuffix",
+           |"env.$envIdSuffixed.suffix",
+           |"non-payment.$paymentId"
+           |],"groups": "admin"}""".stripMargin)
+      .when()
+      .get("/dyn-header-requires-pattern-matching-on-entire-value")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Transaction") mustBe Some(s"$transactionId") }
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Payment") mustBe None }
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Env") mustBe Some(s"$envIdSuffixed") }
+  }
+
+  @Test
+  def shouldSetHeaderFromDynamicScopeAndMatchAnyFirstValueForTakeAllPattern(): Unit = {
+    given()
+      .body(
+        s"""{"scp": ["first-value", "another-value"],"groups": "admin"}""")
+      .when()
+      .get("/dyn-header-will-get-first-value-for-take-all-pattern")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Value") mustBe Some("first-value") }
+  }
+
+  @Test
+  def shouldSetHeaderFromDynamicScopeAndMatchRegexSpecialCharsLikeDotOrParensLiterally(): Unit = {
     val rand = scala.util.Random
     val paymentId = rand.nextInt.abs
 
@@ -161,7 +201,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .body(
         s"""{"scp": ["unrelated-value-123", "(payment).is$$ok[$paymentId]?"],"groups": "admin"}""")
       .when()
-      .get("/dyn-header-matches-regex-special-chars-as-literals")
+      .get("/dyn-header-can-match-regex-special-chars-literally")
       .`then`()
       .statusCode(200)
 
@@ -169,7 +209,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
-  def shouldSetDynHeaderFromBodyAndMatchLiteralCurlyBracesWhenPatternHasDoubledCurlyBraces(): Unit = {
+  def shouldSetHeaderFromDynamicScopeAndMatchLiteralCurlyBracesFromPatternWithDoubledCurlyBraces(): Unit = {
     val rand = scala.util.Random
     val customerId = rand.nextInt.abs
 
@@ -177,7 +217,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .body(
         s"""{"scp": ["unrelated-value-123", "customer-{$customerId}"],"groups": "admin"}""")
       .when()
-      .get("/dyn-header-can-match-curly-braces-when-doubled")
+      .get("/dyn-header-can-match-literal-curly-braces")
       .`then`()
       .statusCode(200)
 
@@ -185,7 +225,21 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
-  def shouldSetDynHeaderFromBodyAndAllowDynMappingWhenPointedToNonArrayValue(): Unit = {
+  def shouldSetHeaderFromDynamicScopeAndAllowFixedMappingWhenPointedToNonArrayValue(): Unit = {
+
+    given()
+      .body(
+        s"""{"scp": ["unrelated-value-123", "stuff"],"groups": "admin"}""")
+      .when()
+      .get("/dyn-header-can-use-fixed-mapping-for-non-array-values")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "X-DSKey") mustBe Some("elevated") }
+  }
+
+  @Test
+  def shouldSetHeaderFromDynamicScopeAndAllowDynamicMappingWhenPointedToNonArrayValue(): Unit = {
     val rand = scala.util.Random
     val envId = rand.nextInt.abs
 
@@ -201,21 +255,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
-  def shouldSetDynHeaderFromBodyAndAllowFixedMappingWhenPointedToNonArrayValue(): Unit = {
-
-    given()
-      .body(
-        s"""{"scp": ["unrelated-value-123", "stuff"],"groups": "admin"}""")
-      .when()
-      .get("/dyn-header-can-use-fixed-mapping-for-non-array-values")
-      .`then`()
-      .statusCode(200)
-
-    assertTargetRequest { req => getHeaderOnlyValue(req, "X-DSKey") mustBe Some("elevated") }
-  }
-
-  @Test
-  def shouldSetDynHeaderFromBodyAndApplyMultipleTransformationsAtOnce(): Unit = {
+  def shouldSetHeaderFromDynamicScopeAndApplyMultipleTransformationsAtOnce(): Unit = {
     val rand = scala.util.Random
     val paymentId = rand.nextInt.abs
     val transferId = rand.nextInt.abs
@@ -235,7 +275,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
            |"groups": "admin"
            |}""".stripMargin)
       .when()
-      .get("/dyn-header-from-body-multiple-transformations")
+      .get("/dyn-header-with-multiple-transformations")
       .`then`()
       .statusCode(200)
 
