@@ -59,7 +59,6 @@ Plugin rule configuration has following form:
     "{subject}": {
         "{operation}": {
           "{attribute-identifier}": "{attribute-value-or-reference}"
-        }
       }
     }
   }
@@ -235,6 +234,109 @@ Set header from authentication context:
   }
 }
 ```
+
+#### Set headers from dynamic scope:
+
+You can set header to some value retrieved by matching a pattern against an array of values.
+For first value which matches, parts of it can be captured into parameters and used to build output value of the header.
+Curly braces are used to define parameters within the pattern, all other characters must match exactly and literally. 
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "headers": {
+      "set": {
+        "X-Transaction": {
+          "path": "$authn.scp",
+          "pattern": "transaction-{id}",
+          "output": "{id}"
+        }
+      }
+    }
+  }
+}
+```
+In above example, we retrieve first value prefixed with `transaction-` from contents of `scp` array defined in authentication context.
+We use value of `{id}` which contains whatever follows the prefix, to define the output.
+The value of `X-Transaction` header will be set to the value of the output. If authentication context contains:
+```json
+{
+  "scp": [
+    "payment-XYZ", "transaction-123", "unrelated-value"
+  ],
+  "other_fields": "other_values ..."
+}
+```
+then the pattern will search through values inside `scp`, successfully match on second value, put contents captured from `{id}` into `output` and set `X-Transaction` to `"123"`
+
+
+We can use multiple parameters and reorder them freely to build the output value for the header.
+Given config:
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "headers": {
+      "set": {
+        "X-Transaction": {
+          "path": "$authn.scp",
+          "pattern": "transaction-{transactionId}-swift-{swiftId}",
+          "output": "TX-{swiftId}_{transactionId}"
+        }
+      }
+    }
+  }
+}
+```
+with input from authentication context similar to:
+```json
+{
+  "scp": [
+    "payment-XYZ", "transaction-123-swift-AXZ", "unrelated-value"
+  ],
+  "other_fields": "other_values ..."
+}
+```
+`X-Transaction` header will be set to `"TX-AXZ_123"`
+
+If the `scp` field was not an array, but for example a string, then string value of `scp` would be used, as long as it matched the pattern.
+So with same mapping, using the input below we would still end up with : `X-Transaction` header of `"TX-AXZ:123"`
+```json
+{
+  "scp": "transaction-123-swift-AXZ",
+  "other_fields": "other_values ..."
+}
+```
+In general, first value which is end-to-end matched by the pattern (if any) is used to compute the output.
+If there is no match, the header will not be set.
+Other values such as `$body` can be referenced just fine instead of `$authn`.
+Curly braces themselves can still be used to match literal curly braces within value, by doubling them, so {{ and }} will match { and }.
+
+If we define exact match without params, we can map to some fixed value. Given:
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "headers": {
+      "set": {
+        "X-Access": {
+          "path": "$authn.group",
+          "pattern": "admin",
+          "output": "privileged"
+        }
+      }
+    }
+  }
+}
+```
+with input from authentication context similar to:
+```json
+{
+  "group": "admin",
+  "other_fields": "other_values ..."
+}
+```
+`X-Access` header will be set to `"privileged"`.
 
 <a id="path-params"></a>
 #### Path parameters
