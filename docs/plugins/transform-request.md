@@ -235,11 +235,20 @@ Set header from authentication context:
 }
 ```
 
-#### Set headers from dynamic scope:
+##### Setting headers using pattern matching
 
-You can set header to some value retrieved by matching a pattern against an array of values.
-For first value which matches, parts of it can be captured into parameters and used to build output value of the header.
-Curly braces are used to define parameters within the pattern, all other characters must match exactly and literally. 
+You can set header to a value retrieved by matching a pattern against strings.
+Usually we would set `"path"` field to reference some array of strings, which are our candidates for the match.
+First string which matches the pattern will be used to capture parts of the match into parameters.
+If there is no match, the header will not be set.
+
+To define parameters within the pattern, we surround the identifier with curly braces, all other characters must match exactly and literally.
+Parameter name should consist of upper and lower case letters and numbers. Once captured, parameters can be used to fill out parts of the output pattern.
+As a result header will be set to the value of output with parameters applied.
+This functionality can be used to define dynamic scopes.
+
+Let's consider a simple configuration:
+
 ```json
 {
   "name": "transform-request",
@@ -256,18 +265,19 @@ Curly braces are used to define parameters within the pattern, all other charact
   }
 }
 ```
-In above example, we retrieve first value prefixed with `transaction-` from contents of `scp` array defined in authentication context.
+In above example, we want to retrieve first value prefixed with `transaction-` from contents of `scp` array defined in authentication context.
+Another value, `"transaction-xyz"` is ignored, since the match was already found on the previous element.
 We use value of `{id}` which contains whatever follows the prefix, to define the output.
-The value of `X-Transaction` header will be set to the value of the output. If authentication context contains:
+The value of `X-Transaction` header will be set to the computed value of the output, with parameters applied. If authentication context contains:
 ```json
 {
   "scp": [
-    "payment-XYZ", "transaction-123", "unrelated-value"
+    "payment-XYZ", "transaction-123", "transaction-xyz", "unrelated-value"
   ],
   "other_fields": "other_values ..."
 }
 ```
-then the pattern will search through values inside `scp`, successfully match on second value, put contents captured from `{id}` into `output` and set `X-Transaction` to `"123"`
+then the pattern will search through values inside `scp`, it will successfully match on the second value, apply value captured by `{id}` on the `output` and set `X-Transaction` to `"123"`
 
 
 We can use multiple parameters and reorder them freely to build the output value for the header.
@@ -307,8 +317,6 @@ So with same mapping, using the input below we would still end up with : `X-Tran
   "other_fields": "other_values ..."
 }
 ```
-In general, first value which is end-to-end matched by the pattern (if any) is used to compute the output.
-If there is no match, the header will not be set.
 Other values such as `$body` can be referenced just fine instead of `$authn`.
 Curly braces themselves can still be used to match literal curly braces within value, by doubling them, so {{ and }} will match { and }.
 
