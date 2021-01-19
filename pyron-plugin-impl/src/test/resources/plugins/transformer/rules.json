@@ -133,6 +133,204 @@
               }
             }
           ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-find-multiple-params-in-pattern-and-reorder-them-in-input",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{transactionId}/swift.{swiftId}",
+                      "output": "{swiftId}.{transactionId}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-requires-pattern-matching-on-entire-value",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{id}",
+                      "output": "{id}"
+                    },
+                    "X-Env": {
+                      "path": "$body.scp",
+                      "pattern": "env.{id}.suffix",
+                      "output": "{id}"
+                    },
+                    "X-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "payment.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-will-get-first-value-for-take-all-pattern",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Value": {
+                      "path": "$body.scp",
+                      "pattern": "{wholeThing}",
+                      "output": "{wholeThing}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-match-regex-special-chars-literally",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "(payment).is$ok[{id}]?",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-match-literal-curly-braces",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Client": {
+                      "path": "$body.scp",
+                      "pattern": "customer-{{{id}}}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-use-fixed-mapping-for-non-array-values",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-DSKey": {
+                      "path": "$body.groups",
+                      "pattern": "admin",
+                      "output": "elevated"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-use-dyn-mapping-for-non-array-values",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Env": {
+                      "path": "$body.env",
+                      "pattern": "env.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-with-multiple-transformations",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Scope": {
+                      "path": "$body.groups",
+                      "pattern": "admin",
+                      "output": "elevated"
+                    },
+                    "X-Client": {
+                      "path": "$body.scp",
+                      "pattern": "customer-{{{id}}}_swift_{swift}",
+                      "output": "{swift}.{id}"
+                    },
+                    "DSKey": {
+                      "path": "$body.scp",
+                      "pattern": "env.({num})",
+                      "output": "{num}"
+                    },
+                    "X-SCP-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "payment.[{id}]",
+                      "output": "{id}"
+                    },
+                    "X-SCP-Transfer": {
+                      "path": "$body.scp",
+                      "pattern": "transfer.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
         }
       ]
     }

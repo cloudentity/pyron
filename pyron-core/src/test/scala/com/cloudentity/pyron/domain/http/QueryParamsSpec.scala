@@ -3,7 +3,7 @@ package com.cloudentity.pyron.domain.http
 import scala.util.Success
 import org.junit.runner.RunWith
 import org.scalatest.{MustMatchers, WordSpec}
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class QueryParamsSpec extends WordSpec with MustMatchers {

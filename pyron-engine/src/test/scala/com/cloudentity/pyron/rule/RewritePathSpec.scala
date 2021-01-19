@@ -7,7 +7,7 @@ import com.cloudentity.tools.vertx.http.Headers
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
 import org.scalatest._
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class RewritePathSpec extends FlatSpec {

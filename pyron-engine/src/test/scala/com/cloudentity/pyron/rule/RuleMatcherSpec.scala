@@ -4,12 +4,12 @@ import com.cloudentity.pyron.domain.flow.{BasePath, EndpointMatchCriteria, PathM
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @RunWith(classOf[JUnitRunner])
-class RuleMatcherSpec extends WordSpec with MustMatchers with GeneratorDrivenPropertyChecks {
+class RuleMatcherSpec extends WordSpec with MustMatchers with ScalaCheckDrivenPropertyChecks {
 
   import RuleMatcher._
 

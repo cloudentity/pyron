@@ -7,7 +7,7 @@ import com.cloudentity.tools.vertx.http.Headers
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.json.{JsonArray, JsonObject}
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 
 @RunWith(classOf[JUnitRunner])
@@ -142,7 +142,7 @@ class TransformRequestPluginTest extends WordSpec with MustMatchers with TestReq
     }
   }
 
-  "TransformPathParams.set" should {
+  "TransformHeaders.set" should {
     val setHeaders = TransformHeaders.setHeaders _
 
     "set value for non-existing header" in {

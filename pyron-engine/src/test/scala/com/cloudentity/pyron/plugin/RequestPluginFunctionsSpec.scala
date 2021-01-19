@@ -1,6 +1,5 @@
 package com.cloudentity.pyron.plugin
 
-import com.cloudentity.pyron.api.Responses
 import com.cloudentity.pyron.test.TestRequestResponseCtx
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
@@ -9,7 +8,7 @@ import com.cloudentity.tools.vertx.http.Headers
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global

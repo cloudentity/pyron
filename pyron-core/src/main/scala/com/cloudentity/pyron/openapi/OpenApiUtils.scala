@@ -55,8 +55,9 @@ trait OpenApiConverterUtils {
   }
 
   def pathMatches(testPath: String, regexPath: String): Boolean = {
-    val normalizedTargetServicePath = testPath.replaceAll("\\{|\\}", "")
-    PathMatcher.makeMatch(normalizedTargetServicePath, PathMatching.build(PathPrefix(""), PathPattern(regexPath))).isDefined
+    val normalizedTargetServicePath = testPath.replaceAll("[{}]", "")
+    val pathMatching = PathMatching.build(PathPrefix(""), PathPattern(regexPath))
+    PathMatcher.makeMatch(normalizedTargetServicePath, pathMatching).isDefined
   }
 
   def toSwaggerMethod(method: io.vertx.core.http.HttpMethod): io.swagger.models.HttpMethod = {

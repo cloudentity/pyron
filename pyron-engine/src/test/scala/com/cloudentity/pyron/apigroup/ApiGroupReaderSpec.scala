@@ -4,7 +4,7 @@ import io.circe.Json
 import com.cloudentity.pyron.domain.flow.{BasePath, DomainPattern, GroupMatchCriteria, PluginName}
 import org.junit.runner.RunWith
 import org.scalatest.{MustMatchers, WordSpec}
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class ApiGroupReaderSpec extends WordSpec with MustMatchers {

@@ -3,7 +3,7 @@ package com.cloudentity.pyron.client
 import com.cloudentity.pyron.domain.flow.{ServiceClientName, SmartHttpClientConf}
 import io.vertx.core.json.JsonObject
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 import scalaz.\/-
 

@@ -13,7 +13,7 @@ import io.circe.{Json, JsonObject}
 import io.vertx.core.{Future, Vertx}
 import io.vertx.core.buffer.Buffer
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 
 import scala.concurrent.Await

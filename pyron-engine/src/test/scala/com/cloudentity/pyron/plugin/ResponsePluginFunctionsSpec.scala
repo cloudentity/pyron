@@ -8,7 +8,7 @@ import com.cloudentity.pyron.plugin.PluginFunctions.ResponsePlugin
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global

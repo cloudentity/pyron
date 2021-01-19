@@ -1,16 +1,14 @@
 package com.cloudentity.pyron.openapi
 
 import com.cloudentity.pyron.VertxSpec
-import com.cloudentity.pyron.domain._
 import com.cloudentity.pyron.domain.flow.{GroupMatchCriteria, PathPattern, PathPrefix, RewriteMethod, RewritePath}
 import com.cloudentity.pyron.domain.openapi.{BasePath, ConverterConf, Host, OpenApiDefaultsConf, OpenApiRule}
-import com.cloudentity.pyron.domain.rule.{ExtRuleConf, OpenApiRuleConf}
 import com.cloudentity.pyron.util.{FutureUtils, OpenApiTestUtils}
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.swagger.models.Scheme
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{MustMatchers, WordSpec}
 
 import scala.collection.JavaConverters._

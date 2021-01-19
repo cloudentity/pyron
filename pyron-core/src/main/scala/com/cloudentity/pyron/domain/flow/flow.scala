@@ -30,8 +30,8 @@ object PathParams {
 case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
 
 object PathMatching {
-  val namePlaceholderPattern = """\{\w+[^/]\}"""
-  val namePlaceholderRegex = namePlaceholderPattern.r
+  val paramNamePlaceholderPattern = """\{(\w+[^/])\}"""
+  val paramNamePlaceholderRegex = paramNamePlaceholderPattern.r
 
   def build(pathPrefix: PathPrefix, pathPattern: PathPattern): PathMatching =
     PathMatching(
@@ -45,15 +45,15 @@ object PathMatching {
     pathPrefix.value + pathPattern.value
 
   def createPatternRegex(rawPattern: String): Regex = {
-    val regex = namePlaceholderRegex.findAllIn(rawPattern).toList.foldLeft(rawPattern) { case (acc, mtch) =>
-      val name = mtch.drop(1).dropRight(1)
-      acc.replaceFirst(namePlaceholderPattern, s"(?<$name>[^/]+)")
-    }
+    // capture group 1 contains param name without surrounding parens
+    val regex = paramNamePlaceholderRegex.replaceAllIn(rawPattern, m => s"(?<${m.group(1)}>[^/]+)")
     s"^$regex$$".r
   }
 
-  def extractPathParamNames(pattern: PathPattern): List[PathParamName] =
-    namePlaceholderRegex.findAllIn(pattern.value).toList.map(_.drop(1).dropRight(1)).map(PathParamName)
+  def extractPathParamNames(pattern: PathPattern): List[PathParamName] = {
+    paramNamePlaceholderRegex.findAllMatchIn(pattern.value).map(m => PathParamName(m.group(1))).toList
+  }
+
 }
 
 case class BasePath(value: String) extends AnyVal
@@ -93,16 +93,19 @@ object TargetService {
     DiscoverableService(serviceName)
 
   private def readStaticService(req: HttpServerRequest): StaticService = {
+    val ssl = req.isSSL
     if (Option(req.host()).isDefined) {
-      Option(req.host()).get.split(":").toList match {
-        case h :: Nil =>      StaticService(TargetHost(h), 80, req.isSSL())
-        case h :: p :: Nil => StaticService(TargetHost(h), Integer.parseInt(p), req.isSSL())
-        case _ =>             StaticService(TargetHost("malformed-host-header"), 80, req.isSSL())
+      Option(req.host()).get.split(':').toList match {
+        case h :: Nil =>      StaticService(TargetHost(h), 80, ssl)
+        case h :: p :: Nil => StaticService(TargetHost(h), Integer.parseInt(p), ssl)
+        case _ =>             StaticService(TargetHost("malformed-host-header"), 80, ssl)
       }
-    } else Try(new URL(req.absoluteURI()))
-      .map { url => StaticService(TargetHost(url.getHost), if (url.getPort != -1) url.getPort else 80, req.isSSL()) }
+    } else Try(new URL(req.absoluteURI())).map(url => {
+      val port = if (url.getPort == -1) 80 else url.getPort
+      StaticService(TargetHost(url.getHost), port, ssl)
+    })
       // it should never fail since you can't create HttpServerRequest with invalid URI
-      .toOption.getOrElse(StaticService(TargetHost("malformed-url"), 80, req.isSSL()))
+      .toOption.getOrElse(StaticService(TargetHost("malformed-url"), 80, ssl))
   }
 }
 
