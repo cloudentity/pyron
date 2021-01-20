@@ -1,3 +1,7 @@
+# UNRELEASED
+### Added
+- pattern matching support in request-transform plugin to enable dynamic scopes
+
 ## [1.4.0] - 2020-12-01
 ### Added
 - License
