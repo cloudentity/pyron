@@ -5,7 +5,7 @@ import io.restassured.RestAssured.given
 import org.junit.{After, Before, Test}
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
-import org.mockserver.model.{HttpRequest, HttpResponse, NottableString}
+import org.mockserver.model.{HttpRequest, HttpResponse}
 import org.scalatest.MustMatchers
 
 import scala.collection.JavaConverters._
@@ -15,11 +15,16 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
 
   var targetService: ClientAndServer = _
 
-  def getHeaderOnlyValue(req: HttpRequest, headerName: String): Option[NottableString] =
-    req.getHeaders.asScala.toList.find(_.getName.toString == headerName).map { v =>
-      assert(v.getValues.size() == 1)
-      v.getValues.get(0)
+  def getHeaderValues(req: HttpRequest, headerName: String): Option[List[String]] =
+    req.getHeaders.asScala.toList.find(_.getName.toString == headerName)
+      .map(v => v.getValues.asScala.toList.map(_.toString))
+
+  def getHeaderOnlyValue(req: HttpRequest, headerName: String): Option[String] = {
+    getHeaderValues(req, headerName).map { values =>
+      assert(values.size == 1)
+      values.head
     }
+  }
 
   @Before
   def before(): Unit = {
@@ -180,16 +185,20 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
-  def shouldSetHeaderFromDynamicScopeAndMatchAnyFirstValueForTakeAllPattern(): Unit = {
+  def shouldSetHeaderFromDynamicScopeUsingAllOfTheValuesWhichMatchThePattern(): Unit = {
+    val rand = scala.util.Random
+    val envOneId = rand.nextInt.abs
+    val envTwoId = rand.nextInt.abs
+
     given()
       .body(
-        s"""{"scp": ["first-value", "another-value"],"groups": "admin"}""")
+        s"""{"scp": ["unrelated-value", "env.$envOneId", "another-value", "env.$envTwoId"],"groups": "admin"}""")
       .when()
-      .get("/dyn-header-will-get-first-value-for-take-all-pattern")
+      .get("/dyn-header-will-obtain-all-the-values-matching-the-pattern")
       .`then`()
       .statusCode(200)
 
-    assertTargetRequest { req => getHeaderOnlyValue(req, "X-Value") mustBe Some("first-value") }
+    assertTargetRequest { req => getHeaderValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
   }
 
   @Test
@@ -257,18 +266,20 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   @Test
   def shouldSetHeaderFromDynamicScopeAndApplyMultipleTransformationsAtOnce(): Unit = {
     val rand = scala.util.Random
-    val paymentId = rand.nextInt.abs
-    val transferId = rand.nextInt.abs
+    val envOneId = rand.nextInt.abs
     val customerId = rand.nextInt.abs
     val swiftId = rand.nextInt.abs
-    val envId = rand.nextInt.abs
+    val envTwoId = rand.nextInt.abs
+    val paymentId = rand.nextInt.abs
+    val transferId = rand.nextInt.abs
 
     given()
       .body(
         s"""{
            |"scp": [
-           |  "env.($envId)",
+           |  "env.($envOneId)",
            |  "customer-{$customerId}_swift_$swiftId",
+           |  "env.($envTwoId)",
            |  "payment.[$paymentId]",
            |  "transfer.$transferId"
            |],
@@ -283,7 +294,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-Client") mustBe Some(s"$swiftId.$customerId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Payment") mustBe Some(s"$paymentId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Transfer") mustBe Some(s"$transferId") }
-    assertTargetRequest { req => getHeaderOnlyValue(req, "DSKey") mustBe Some(s"$envId") }
+    assertTargetRequest { req => getHeaderValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
   }
 
   def assertTargetRequest(f: HttpRequest => Unit): Unit = {

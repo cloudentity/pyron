@@ -188,7 +188,7 @@
         },
         {
           "method": "GET",
-          "pathPattern": "/dyn-header-will-get-first-value-for-take-all-pattern",
+          "pathPattern": "/dyn-header-will-obtain-all-the-values-matching-the-pattern",
           "requestPlugins": [
             {
               "name": "transform-request",
@@ -196,10 +196,10 @@
                 "body": {},
                 "headers": {
                   "set": {
-                    "X-Value": {
+                    "X-Env": {
                       "path": "$body.scp",
-                      "pattern": "{wholeThing}",
-                      "output": "{wholeThing}"
+                      "pattern": "env.{envId}",
+                      "output": "{envId}"
                     }
                   }
                 }
@@ -311,7 +311,7 @@
                       "pattern": "customer-{{{id}}}_swift_{swift}",
                       "output": "{swift}.{id}"
                     },
-                    "DSKey": {
+                    "X-Env": {
                       "path": "$body.scp",
                       "pattern": "env.({num})",
                       "output": "{num}"

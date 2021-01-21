@@ -30,7 +30,7 @@ trait ValueResolver {
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
     valueOrRef match {
       case Value(value)                          =>
-        if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value).map(List(_))
+        if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value)
         else circeJsonToJsonValue(value).asListOfStrings
       case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asListOfStrings)
       case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(List(_))
@@ -107,7 +107,7 @@ trait ValueResolver {
     )
   }
 
-  private def circeJsonDynamicString(req: RequestCtx, bodyOpt: Option[JsonObject], json: Json): Option[String] = {
+  private def circeJsonDynamicString(req: RequestCtx, bodyOpt: Option[JsonObject], json: Json): Option[List[String]] = {
     for {
       patternOpt <- json.hcursor.downField("pattern").focus
       patternStr <- patternOpt.asString
@@ -115,16 +115,13 @@ trait ValueResolver {
       outputStr <- outputOpt.asString
       pathOpt <- json.hcursor.downField("path").focus
       valOrRef <- pathOpt.as[ValueOrRef].toOption
-
       (safePattern, paramNames) = makeSafePatternAndParamList(patternStr)
-
       jsonValue <- resolveJson(req, bodyOpt, valOrRef)
       candidates <- jsonValue.asListOfStrings
-      matched <- candidates.view.map(safePattern.findFirstMatchIn).collectFirst { case Some(found) => found }
-      keyvals = paramNames.zip(matched.subgroups)
-    } yield keyvals.foldLeft(outputStr) {
-      case (output, (key, value)) => output.replaceAllLiterally(s"{$key}", value)
-    }
+    } yield candidates.flatMap(safePattern.findFirstMatchIn)
+        .map(matched => paramNames.foldLeft(outputStr)((output, param) =>
+          output.replace(s"{$param}", matched.group(param))
+        ))
   }
 
   private def makeSafePatternAndParamList(pattern: String): (Regex, List[String]) = {
