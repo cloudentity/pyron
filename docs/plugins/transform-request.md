@@ -237,15 +237,22 @@ Set header from authentication context:
 
 ##### Setting headers using pattern matching
 
-You can set header to a value retrieved by matching a pattern against strings.
-Usually we would set `"path"` field to reference some array of strings, which are our candidates for the match.
-First string which matches the pattern end-to-end will be used to capture parts of the match into parameters.
-If there is no match, the header will not be set.
+You can set header to a value retrieved by applying a pattern against strings values.
 
-To define parameters within the pattern, we surround the identifier with curly braces, all other characters must match exactly and literally.
-Parameter name should consist of upper and lower case letters and numbers.
-Once captured, parameters can be used to fill out parts of the output.
-As a result header will be set to the value of output with parameters applied.
+Usually we would set `"path"` field to reference some array of strings, which are our candidates for matching the `"pattern"`.
+All strings which match the pattern end-to-end will be used to calculate values for the header.
+
+Each time we find a value matching the pattern, parts of the match will be captured into parameters defined on the pattern.
+Once captured, parameter values replace corresponding placeholders of the  `"output"`, to calculate value for the header.
+
+The header is set only if at least one matching value is found.
+When one value matches the pattern, single header value will be calculated and set.
+When multiple values match, a list of values will be calculated and header will be set to contain the list.
+
+To define parameters within the pattern, we surround param identifier with curly braces, all other characters must match exactly and literally.
+Placeholders for injecting captured parameter values on the output field are defined in the same way.
+Parameter names should consist of upper and lower case letters and numbers.
+
 This functionality can be used to define dynamic scopes.
 
 Let's consider a simple configuration:
@@ -266,22 +273,32 @@ Let's consider a simple configuration:
   }
 }
 ```
-In above example, we want to retrieve first value starting with `transaction-` from contents of `scp` array defined in authentication context.
+In above example we want to retrieve value starting with `transaction-` from contents of `scp` array defined in authentication context.
 We use value of `id` parameter, captured by `{id}` in our pattern and then referenced as `{id}` in the output.
-Here `id` will contain whatever follows the `transaction-` prefix.
-The value of `X-Transaction` header will be set to the computed value of the output, with parameters applied.
+Here `id` will capture whatever follows the `transaction-` prefix.
+The value of `X-Transaction` header will be set to the calculated value of the output, with parameters applied.
+
 If authentication context contains:
 ```json
 {
   "scp": [
-    "payment-XYZ", "transaction-123", "transaction-xyz", "unrelated-value"
+    "payment-XYZ", "transaction-123", "unrelated-value"
   ],
   "other_fields": "other_values ..."
 }
 ```
-then the pattern will search through values inside `scp`, it will successfully match on the second value, apply value captured by `{id}` on the `output` and set `X-Transaction` to `"123"`
-Another value, `"transaction-xyz"` is ignored, since the match was already found on the previous element.
+then the pattern will search through values inside `scp`, it will successfully match on the second value, apply param captured by `{id}` on the `output` and set `X-Transaction` to `"123"`
 
+If authentication context contains two values matching the pattern:
+```json
+{
+  "scp": [
+    "payment-XYZ", "transaction-123", "transaction-456", "unrelated-value"
+  ],
+  "other_fields": "other_values ..."
+}
+```
+set `X-Transaction` to `"123,456"`
 
 We can use multiple parameters and reorder them freely to build the output value for the header.
 Given config:
@@ -312,8 +329,9 @@ with input from authentication context similar to:
 ```
 `X-Transaction` header will be set to `"TX-AXZ_123"`
 
-If the `scp` field was not an array, but for example a string, then string value of `scp` would be used, as long as it matched the pattern.
-With the same config, using the input below we would still end up with : `X-Transaction` header of `"TX-AXZ:123"`
+If the `scp` field is not an array, then string representation of the value is used, as long as it matches the pattern.
+Non-array value is therefore treated the same way as a single-item list.
+With the same config, using the input below, where `"scp"` is a string, we still get a match, and `X-Transaction` header is set to `"TX-AXZ:123"`
 ```json
 {
   "scp": "transaction-123-swift-AXZ",
