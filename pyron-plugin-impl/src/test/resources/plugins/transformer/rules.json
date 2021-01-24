@@ -251,6 +251,27 @@
         },
         {
           "method": "GET",
+          "pathPattern": "/dyn-header-can-use-pattern-parameters-with-defined-size",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Account": {
+                      "path": "$body.scp",
+                      "pattern": "account-{countryCode_0_3}{a_4}-{b_4}-{c_4}-{d_4}",
+                      "output": "{countryCode}:{a}{b}{c}{d}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "pathPattern": "/dyn-header-can-use-fixed-mapping-for-non-array-values",
           "requestPlugins": [
             {

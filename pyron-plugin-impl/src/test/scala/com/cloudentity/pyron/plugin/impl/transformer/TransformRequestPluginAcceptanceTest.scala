@@ -15,12 +15,12 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
 
   var targetService: ClientAndServer = _
 
-  def getHeaderValues(req: HttpRequest, headerName: String) =
+  def getHeaderAllValues(req: HttpRequest, headerName: String) =
     req.getHeaders.asScala.toList.find(_.getName.toString == headerName)
       .map(v => v.getValues.asScala.toList.map(_.toString))
 
   def getHeaderOnlyValue(req: HttpRequest, headerName: String) = {
-    getHeaderValues(req, headerName).map { values =>
+    getHeaderAllValues(req, headerName).map { values =>
       assert(values.size == 1)
       values.head
     }
@@ -198,7 +198,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .`then`()
       .statusCode(200)
 
-    assertTargetRequest { req => getHeaderValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
+    assertTargetRequest { req => getHeaderAllValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
   }
 
   @Test
@@ -231,6 +231,28 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-Client") mustBe Some(s"$customerId") }
+  }
+
+  @Test
+  def shouldSetHeaderFromDynamicScopeAndAllowDefiningPatternParametersWhichSpecifySizeOfStringToBeCaptured(): Unit = {
+
+    given()
+      .body(
+        s"""{"scp": [
+           |"account-X12-34-56-78",
+           |"account-USA1234-3456-5678-7890",
+           |"stuff",
+           |"account-UK7890-5678-3456-1234",
+           |"account-3456-1234-7890-5678"
+           |],"groups": "admin"}""".stripMargin)
+      .when()
+      .get("/dyn-header-can-use-pattern-parameters-with-defined-size")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderAllValues(req, "X-Account") mustBe Some(
+      List("USA:1234345656787890", "UK:7890567834561234", ":3456123478905678"))
+    }
   }
 
   @Test
@@ -294,7 +316,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-Client") mustBe Some(s"$swiftId.$customerId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Payment") mustBe Some(s"$paymentId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Transfer") mustBe Some(s"$transferId") }
-    assertTargetRequest { req => getHeaderValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
+    assertTargetRequest { req => getHeaderAllValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
   }
 
   def assertTargetRequest(f: HttpRequest => Unit): Unit = {
