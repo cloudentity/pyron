@@ -1,6 +1,10 @@
 ## [Unreleased]
+### Added
+- support for dynamic port registration in Consul
+
 ### Changed
-- Update version of vertx-tools dependency
+- Update version of vertx-tools dependency to 1.5.0
+- Deploying 1 instance of ApiServer instead of 2*CPUs - improves performance + allows using dynamic port
 
 ### Security
 - [CVE-2019-17640](https://nvd.nist.gov/vuln/detail/CVE-2019-17640) - Fixed by upgrading vertx to 3.9.5 (transitive via vertx tools)
