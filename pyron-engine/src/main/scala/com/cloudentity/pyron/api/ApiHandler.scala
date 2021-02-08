@@ -156,16 +156,16 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   }
 
   def applyRequestPlugins(requestCtx: RequestCtx, plugins: List[RequestPlugin]): Future[RequestCtx] =
-    PluginFunctions.applyRequestPlugins(requestCtx, plugins) { case ex =>
-        log.error(requestCtx.tracingCtx, s"Could not apply request plugin", ex)
-        exceptionToApiResponse(ex)
-      }
+    PluginFunctions.applyRequestPlugins(requestCtx, plugins) { ex =>
+      log.error(requestCtx.tracingCtx, s"Could not apply request plugin", ex)
+      exceptionToApiResponse(ex)
+    }
 
   def applyResponsePlugins(responseCtx: ResponseCtx, plugins: List[ResponsePlugin]): Future[ResponseCtx] =
-    PluginFunctions.applyResponsePlugins(responseCtx, plugins) { case ex =>
-        log.error(responseCtx.tracingCtx, s"Could not apply response plugin", ex)
-        exceptionToApiResponse(ex)
-      }
+    PluginFunctions.applyResponsePlugins(responseCtx, plugins) { ex =>
+      log.error(responseCtx.tracingCtx, s"Could not apply response plugin", ex)
+      exceptionToApiResponse(ex)
+    }
 
   def callTarget(tracing: TracingContext, ctx: RequestCtx, callOpts: Option[CallOpts]): Future[(ApiResponse, Boolean)] =
     targetClient.call(tracing, ctx.request, ctx.bodyStreamOpt, callOpts).map {
@@ -253,7 +253,7 @@ object ApiResponseHandler {
   import Responses._
 
   def mapTargetClientException(tracing: TracingContext, ex: Throwable): ApiResponse =
-    if (ex.getMessage().contains("timeout") && ex.getMessage().contains("exceeded")) {
+    if (ex.getMessage.contains("timeout") && ex.getMessage.contains("exceeded")) {
       Errors.responseTimeout.toApiResponse()
     } else if (ex.isInstanceOf[RequestBodyTooLargeException]) {
       Errors.requestBodyTooLarge.toApiResponse()
@@ -312,7 +312,7 @@ object ApiResponseHandler {
 
   def exceptionToApiResponse(ex: Throwable): ApiResponse = {
     def isEvenBusTimeout(ex: Throwable) =
-      ex.isInstanceOf[ReplyException] && ex.getMessage().contains("Timed out")
+      ex.isInstanceOf[ReplyException] && ex.getMessage.contains("Timed out")
 
     def isBodyRequestTooLarge(ex: Throwable) =
       ex.isInstanceOf[RequestBodyTooLargeException]
@@ -365,7 +365,7 @@ object HttpConversions {
         )
 
       val targetRequestWithDroppedBody =
-        if (ruleConf.requestBody.filter(_ == DropBody).isDefined)
+        if (ruleConf.requestBody.contains(DropBody))
           targetRequest.modifyHeaders(_.set("Content-Length", "0"))
         else targetRequest
 
@@ -382,15 +382,21 @@ object HttpConversions {
     }
   }
 
-  def toOriginalRequest(req: HttpServerRequest, pathParams: PathParams, bodyOpt: Option[Buffer]): OriginalRequest =
+  def toOriginalRequest(req: HttpServerRequest, pathParams: PathParams, bodyOpt: Option[Buffer]): OriginalRequest = {
     OriginalRequest(
-      method      = req.method(),
-      path        = UriPath(Option(req.path()).getOrElse("")),
+      method = req.method(),
+      path = UriPath(Option(req.path()).getOrElse("")),
+      scheme = req.scheme(),
+      host = req.host(),
+      localHost = req.localAddress().host(),
+      remoteHost = req.remoteAddress().host(),
+      pathParams = pathParams,
       queryParams = toQueryParams(req.params()),
-      headers     = toHeaders(req.headers()),
-      bodyOpt     = bodyOpt,
-      pathParams  = pathParams
+      headers = toHeaders(req.headers()),
+      cookies = req.cookieMap().asScala.toMap.mapValues(cookie => cookie.getValue),
+      bodyOpt = bodyOpt
     )
+  }
 
   def chooseRelativeUri(ctx: TracingContext, basePath: BasePath, ruleConf: RuleConf, original: OriginalRequest): RelativeUri = {
     ruleConf.rewritePath match {

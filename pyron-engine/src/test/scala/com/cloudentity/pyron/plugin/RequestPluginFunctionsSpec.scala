@@ -17,16 +17,22 @@ import scala.concurrent.{Await, Future}
 
 @RunWith(classOf[JUnitRunner])
 class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestRequestResponseCtx {
+
   val host: TargetHost = TargetHost("host")
   val uri: RelativeUri = RelativeUri.of("uri").get
 
   val original: OriginalRequest = OriginalRequest(
     method = HttpMethod.GET,
     path = UriPath(uri.path),
+    scheme = "http",
+    host = "host",
+    localHost = "localHost",
+    remoteHost = "remoteHost",
+    pathParams = PathParams.empty,
     queryParams = QueryParams.empty,
     headers = Headers(),
-    bodyOpt = None,
-    pathParams = PathParams.empty
+    cookies = Map(),
+    bodyOpt = None
   )
   val requestGet: TargetRequest = TargetRequest(
     method = HttpMethod.GET,

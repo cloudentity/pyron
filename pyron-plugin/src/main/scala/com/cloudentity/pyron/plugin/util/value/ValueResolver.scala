@@ -12,14 +12,27 @@ import scala.util.matching.Regex
 
 object ValueResolver extends ValueResolver
 trait ValueResolver {
+
   def resolveString(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[String] =
     valueOrRef match {
-      case Value(value)        => value.asString
-      case BodyRef(path)       => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asString)
-      case PathParamRef(param) => req.request.uri.pathParams.value.get(param)
-      case AuthnRef(path)      => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
-      case HeaderRef(header, _) => req.request.headers.get(header) // always take first header value
+      case Value(value)                   => value.asString
+      case HostRef                        => Option(req.original.host).filter(_.nonEmpty)
+      case HostNameRef                    => hostName(req)
+      case HostPortRef                    => Option(req.original.host).flatMap(_.split(':').lastOption).filter(_.nonEmpty)
+      case SchemeRef                      => Option(req.original.scheme).filter(_.nonEmpty)
+      case LocalHostRef                   => Option(req.original.localHost).filter(_.nonEmpty)
+      case RemoteHostRef                  => Option(req.original.remoteHost).filter(_.nonEmpty)
+      case CookieRef(cookie)              => req.original.cookies.get(cookie)
+      case BodyRef(path)                  => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asString)
+      case PathParamRef(param)            => req.request.uri.pathParams.value.get(param)
+      case AuthnRef(path)                 => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
+      case HeaderRef(header, _)           => req.request.headers.get(header) // always take first header value
+      case _                              => None
     }
+
+  private def hostName(req: RequestCtx): Option[String] =
+    Option(req.original.host).flatMap(_.split(':').headOption).filter(_.nonEmpty)
+
 
   def resolveString(req: RequestCtx, valueOrRef: ValueOrRef): Option[String] =
     valueOrRef match {
@@ -32,21 +45,27 @@ trait ValueResolver {
       case Value(value)                          =>
         if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value)
         else circeJsonToJsonValue(value).asListOfStrings
+      case CookieRef(cookie)                     => req.original.cookies.get(cookie).map(List(_))
       case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asListOfStrings)
       case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(List(_))
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(List(_))
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header)
+      case _                                     => None
     }
 
   def resolveJson(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[JsonValue] =
     valueOrRef match {
       case Value(value)                          => Some(circeJsonToJsonValue(value))
+      case HostRef                               => Some(req.original.host).filter(_.nonEmpty).map(StringJsonValue)
+      case RemoteHostRef                         => Some(req.original.remoteHost).filter(_.nonEmpty).map(StringJsonValue)
+      case LocalHostRef                          => Some(req.original.localHost).filter(_.nonEmpty).map(StringJsonValue)
       case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path))
       case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(StringJsonValue)
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path)
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(StringJsonValue) // returning String with first header value
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header).map(_.foldLeft(new JsonArray())(_.add(_))).map(ArrayJsonValue) // returning JsonArray with all header values
+      case _                                     => None
     }
 
   @tailrec

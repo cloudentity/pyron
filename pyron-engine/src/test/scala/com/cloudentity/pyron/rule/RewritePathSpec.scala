@@ -15,10 +15,15 @@ class RewritePathSpec extends FlatSpec {
   val originalDefault: OriginalRequest = OriginalRequest(
     method = HttpMethod.GET,
     path = UriPath("/path"),
+    scheme = "http",
+    host = "host",
+    localHost = "localHost",
+    remoteHost = "remoteHost",
+    pathParams = PathParams.empty,
     queryParams = QueryParams.empty,
     headers = Headers(),
-    bodyOpt = None,
-    pathParams = PathParams.empty
+    cookies = Map(),
+    bodyOpt = None
   )
 
   it should "rewrite path without params" in {

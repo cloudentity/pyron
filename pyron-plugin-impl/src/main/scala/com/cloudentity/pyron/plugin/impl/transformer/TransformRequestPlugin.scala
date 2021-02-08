@@ -176,6 +176,7 @@ object TransformRequestOpenApiConverter extends OpenApiPluginUtils {
                 case BodyRef(_)      => // TODO implement
                 case PathParamRef(_) => // TODO implement
                 case HeaderRef(_, _) => // TODO implement
+                case _               => // TODO implement
               }
             }
           case None =>

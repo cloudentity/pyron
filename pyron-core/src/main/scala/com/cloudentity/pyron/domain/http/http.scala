@@ -18,7 +18,8 @@ case class TargetRequest(
   headers: Headers,
   bodyOpt: Option[Buffer]
 ) {
-  def modifyHeaders(f: Headers => Headers) = this.copy(headers = f(headers))
+
+  def modifyHeaders(f: Headers => Headers): TargetRequest = this.copy(headers = f(headers))
 
   def withBearerAuth(token: String): TargetRequest = this.copy(
     headers = this.headers.set(HttpHeaders.AUTHORIZATION.toString, s"Bearer $token")
@@ -85,7 +86,19 @@ object ApiResponse {
     ApiResponse(statusCode, body, headers)
 }
 
-case class OriginalRequest(method: HttpMethod, path: UriPath, queryParams: QueryParams, headers: Headers, bodyOpt: Option[Buffer], pathParams: PathParams)
+case class OriginalRequest(
+                            method: HttpMethod,
+                            path: UriPath,
+                            scheme: String,
+                            host: String,
+                            localHost: String,
+                            remoteHost: String,
+                            pathParams: PathParams,
+                            queryParams: QueryParams,
+                            headers: Headers,
+                            cookies: Map[String, String],
+                            bodyOpt: Option[Buffer]
+                          )
 
 object RelativeUri {
   def of(uriString: String): Try[RelativeUri] =
@@ -203,10 +216,10 @@ case class QueryParams (private val params: Map[String, List[String]]) {
     values.foldLeft(this) { case (ps, (key, values)) => ps.addValues(key, values) }
 
   def contains(name: String): Boolean =
-    get(name).isDefined
+    get(name).nonEmpty
 
   def contains(name: String, value: String): Boolean =
-    getValues(name).getOrElse(Nil).contains(value)
+    getValues(name).exists(_.contains(value))
 
   def exists(p: ((String, List[String])) => Boolean): Boolean =
     params.exists(p)
