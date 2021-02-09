@@ -1,3 +1,10 @@
+## [1.6.0] - 2021-02-04
+### Changed
+- Update version of vertx-tools dependency
+
+### Security
+- [CVE-2019-17640](https://nvd.nist.gov/vuln/detail/CVE-2019-17640) - Fixed by upgrading vertx to 3.9.5 (transitive via vertx tools)
+
 ## [1.5.0] - 2020-01-20
 ### Added
 - pattern matching support in request-transform plugin to enable dynamic scopes
