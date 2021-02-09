@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.6.0] - 2021-02-04
 ### Changed
 - Update version of vertx-tools dependency
 
