@@ -35,38 +35,34 @@ object ValueOrRef {
     } getOrElse Right(Value(json))
   }
 
-  private def decodeReference(string: String): Either[String, RefType] = {
-    // FIX: check corner cases when splitting
-    string.substring(1).split('.').toList match {
-      case refType :: path => refType match {
-        case "cookies" => decodeCookieRef(path)
-        case "host" => Right(HostRef)
-        case "hostName" if path.isEmpty => Right(HostNameRef)
-        case "hostPort" => Right(HostPortRef)
-        case "scheme" => Right(SchemeRef)
-        case "localHost" => Right(LocalHostRef)
-        case "remoteHost" => Right(RemoteHostRef)
-        case "body" => Right(BodyRef(Path(path)))
-        case "authn" => Right(AuthnRef(Path(path)))
-        case "pathParams" => Right(PathParamRef(path.mkString(".")))
-        case "queryParams" => decodeQueryParamRef(path)
-        case "headers" => decodeHeadersRef(path)
-        case x => Left(s"invalid reference type: $x")
-      }
-      case Nil => Left("reference cannot be empty")
-    }
+  private def decodeReference(string: String): Either[String, RefType] = string.drop(1).split('.').toList match {
+    case Nil => Left("reference cannot be empty")
+    case refType :: path => decodeRefWithPath(refType, path)
+      .orElse(if (path.isEmpty) decodeRefWithNoPath(refType) else None)
+      .map(Right(_)).getOrElse(Left(s"invalid reference: $string"))
   }
 
-  private def decodeQueryParamRef(path: List[String]): Either[String, QueryParamRef] = path match {
-    case queryParamName :: Nil => Right(QueryParamRef(queryParamName))
-    case _ => Left(s"invalid query param name: $path")
-  }
-  private def decodeCookieRef(path: List[String]): Either[String, CookieRef] = path match {
-    case cookieName :: Nil => Right(CookieRef(cookieName))
-    case _ => Left(s"invalid cookie name: $path")
+  private def decodeRefWithNoPath(refType: String): Option[RefType] = refType match {
+    case "scheme" => Some(SchemeRef)
+    case "host" => Some(HostRef)
+    case "hostName" => Some(HostNameRef)
+    case "hostPort" => Some(HostPortRef)
+    case "localHost" => Some(LocalHostRef)
+    case "remoteHost" => Some(RemoteHostRef)
+    case _ => None
   }
 
-  private def decodeHeadersRef(path: List[String]): Either[Nothing, HeaderRef] = Right {
+  private def decodeRefWithPath(refType: String, path: List[String]): Option[RefType] = refType match {
+    case "authn" => Some(AuthnRef(Path(path)))
+    case "body" => Some(BodyRef(Path(path)))
+    case "cookies" => Some(CookieRef(path.mkString(".")))
+    case "headers" => decodeHeadersRef(path)
+    case "pathParams" => Some(PathParamRef(path.mkString(".")))
+    case "queryParams" => Some(QueryParamRef(path.mkString(".")))
+    case _ => None
+  }
+
+  private def decodeHeadersRef(path: List[String]): Option[HeaderRef] = Some {
     path match {
       case header :: "*" :: Nil =>
         HeaderRef(header, AllHeaderRefType)
