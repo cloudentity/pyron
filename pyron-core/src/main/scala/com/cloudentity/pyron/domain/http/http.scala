@@ -1,14 +1,14 @@
 package com.cloudentity.pyron.domain.http
 
 import java.net.{URI, URLEncoder}
-import java.nio.charset.Charset
-
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
+import com.cloudentity.pyron.domain.http.PathOperations.rewritePathWithParams
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpHeaders, HttpMethod}
 import org.apache.http.client.utils.URLEncodedUtils
-import scala.collection.JavaConverters._
 
+import java.nio.charset.Charset.defaultCharset
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 case class TargetRequest(
@@ -65,6 +65,9 @@ case class TargetRequest(
 
   def modifyPathParams(f: PathParams => PathParams): TargetRequest =
     this.copy(uri = uri.modifyPathParams(f))
+
+  def modifyQueryParams(f: QueryParams => QueryParams): TargetRequest =
+    this.copy(uri = uri.modifyQuery(f))
 }
 
 case class ApiResponse(statusCode: Int, body: Buffer, headers: Headers) {
@@ -128,42 +131,41 @@ sealed trait RelativeUri {
       case FixedRelativeUri(path, _, _) =>
         path.value
       case RewritableRelativeUri(path, _, pathParams) =>
-        PathOperations.rewritePathWithParams(path.value, pathParams)
+        rewritePathWithParams(path.value, pathParams)
     }
   }
 
   lazy val value: String = {
-    val queryString = query.toString
+    val queryString = if (query.toString.nonEmpty) "?" + query.toString else ""
     this match {
-      case FixedRelativeUri(path, _, _) =>
-        s"${path.value}${if (queryString.nonEmpty) "?" + queryString else "" }"
-      case RewritableRelativeUri(path, _, pathParams) =>
-        PathOperations.rewritePathWithParams(path.value, pathParams) + s"${if (queryString.nonEmpty) "?" + queryString else "" }"
+      case FixedRelativeUri(path, _, _) => path.value + queryString
+      case RewritableRelativeUri(path, _, pathParams) => rewritePathWithParams(path.value, pathParams) + queryString
     }
   }
 
-  def modifyQuery(f: QueryParams => QueryParams) =
+  def modifyQuery(f: QueryParams => QueryParams): RelativeUri =
     updateQuery(f(query))
 
-  def modifyPathParams(f: PathParams => PathParams) =
+  def modifyPathParams(f: PathParams => PathParams): RelativeUri =
     updatePathParams(f(pathParams))
 }
 
 case class FixedRelativeUri(_path: UriPath, query: QueryParams, pathParams: PathParams) extends RelativeUri {
-  def updateQuery(queryParams: QueryParams) = this.copy(query = queryParams)
-  def updatePathParams(pathParams: PathParams) = this.copy(pathParams = pathParams)
+  def updateQuery(queryParams: QueryParams): FixedRelativeUri = this.copy(query = queryParams)
+  def updatePathParams(pathParams: PathParams): FixedRelativeUri = this.copy(pathParams = pathParams)
 }
 
 case class RewritableRelativeUri(_path: RewritePath, query: QueryParams, pathParams: PathParams) extends RelativeUri {
-  def updateQuery(queryParams: QueryParams) = this.copy(query = queryParams)
-  def updatePathParams(pathParams: PathParams) = this.copy(pathParams = pathParams)
+  def updateQuery(queryParams: QueryParams): RewritableRelativeUri = this.copy(query = queryParams)
+  def updatePathParams(pathParams: PathParams): RewritableRelativeUri = this.copy(pathParams = pathParams)
 }
 
 case class QueryParams (private val params: Map[String, List[String]]) {
   def toMap: Map[String, List[String]] = params
+  def nonEmpty: Boolean = params.nonEmpty
 
   override def toString: String =
-    toMap.flatMap { case (name, values) =>
+    params.flatMap { case (name, values) =>
       if (values.nonEmpty)
         values.map(value => s"${encode(name)}=${encode(value)}")
       else List(encode(name))
@@ -231,31 +233,27 @@ object QueryParams {
   def fromString(query: String): Try[QueryParams] =
     Try {
       import scala.collection.JavaConverters._
-      val params: Map[String, List[String]] = URLEncodedUtils.parse(query, Charset.defaultCharset()).asScala.toList
-        .map(pair => (pair.getName, pair.getValue))
-        .groupBy(_._1)
-        .mapValues(_.map(_._2))
-        .mapValues(_.flatMap(Option(_))) // removing nulls
-
-      /* Given "y" query URLEncodedUtils.parse will return entry ('y', null).
-       * In order to avoid nulls in our code we apply `_.flatMap(Option(_))` to list of values.
-       *
+      /* Given 'y' query exists, but has no value assigned, URLEncodedUtils.parse returns ('y', null).
+       * If there are non-null values for the param, we set 'params' to a list of non-null values.
+       * If there are no non-null values, but the param exists, we set it to an empty list.
        * Examples:
-       *   QueryParams.of("y") == QueryParams(Map("y" -> List()))
-       *   QueryParams.of("y&y=1") == QueryParams(Map("y" -> List("1"))) // note we are dropping empty 'y', but it's also how URLEncodedUtils.parse works
+       *   QueryParams.fromString("y") == QueryParams(Map("y" -> List()))
+       *   // Non-null value exists for 'y', so we drop empty 'y', same as how URLEncodedUtils.parse works
+       *   QueryParams.fromString("y&y=1") == QueryParams(Map("y" -> List("1")))
        */
-
+      val params: Map[String, List[String]] = URLEncodedUtils.parse(query, defaultCharset()).asScala.toList
+        .groupBy(_.getName).mapValues(_.map(_.getValue).filter(_ != null))
       new QueryParams(params)
     }
 
   def of(ps: Map[String, String]): QueryParams =
-    new QueryParams(Map(ps.mapValues(List(_)).toList:_*))
+    QueryParams(ps.mapValues(List(_)))
 
   def of(ps: (String, String)*): QueryParams =
-    apply(ps.groupBy(_._1).mapValues(_.map(_._2).toList).toList:_*)
+    QueryParams(ps.groupBy(_._1).mapValues(_.map(_._2).toList))
 
   def apply(ps: (String, List[String])*): QueryParams =
-    new QueryParams(Map[String, List[String]](ps:_*))
+    QueryParams(Map(ps:_*))
 }
 
 case class UriPath(value: String) extends AnyVal
@@ -270,4 +268,10 @@ object PathOperations {
     }
 }
 
-case class CallOpts(responseTimeout: Option[Int], retries: Option[Int], failureHttpCodes: Option[List[Int]], retryFailedResponse: Option[Boolean], retryOnException: Option[Boolean])
+case class CallOpts(
+                     responseTimeout: Option[Int],
+                     retries: Option[Int],
+                     failureHttpCodes: Option[List[Int]],
+                     retryFailedResponse: Option[Boolean],
+                     retryOnException: Option[Boolean]
+                   )

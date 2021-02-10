@@ -21,17 +21,16 @@ case class RewritePath(value: String) extends AnyVal
 case class RewriteMethod(value: HttpMethod) extends AnyVal
 
 case class PathParamName(value: String) extends AnyVal
-
 case class PathParams(value: Map[String, String]) extends AnyVal
 object PathParams {
-  def empty = PathParams(Map())
+  def empty: PathParams = PathParams(Map())
 }
 
 case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
 
 object PathMatching {
   val paramNamePlaceholderPattern = """\{(\w+[^/])\}"""
-  val paramNamePlaceholderRegex = paramNamePlaceholderPattern.r
+  val paramNamePlaceholderRegex: Regex = paramNamePlaceholderPattern.r
 
   def build(pathPrefix: PathPrefix, pathPattern: PathPattern): PathMatching =
     PathMatching(
@@ -67,7 +66,7 @@ case class GroupMatchCriteria(basePath: Option[BasePath], domains: Option[List[D
 }
 
 object GroupMatchCriteria {
-  val empty = GroupMatchCriteria(None, None)
+  val empty: GroupMatchCriteria = GroupMatchCriteria(None, None)
 }
 
 case class EndpointMatchCriteria(method: HttpMethod, path: PathMatching)
@@ -119,7 +118,7 @@ trait PluginsConf {
   def endpoint: List[ApiGroupPluginConf]
   def post: List[ApiGroupPluginConf]
 
-  def toList = pre ::: endpoint ::: post
+  def toList: List[ApiGroupPluginConf] = pre ::: endpoint ::: post
 }
 
 object Properties {
@@ -137,24 +136,24 @@ case class Properties(private val ps: Map[String, Any]) {
 }
 
 case class AuthnCtx(value: Map[String, Json]) extends AnyVal {
-  def apply(v: Map[String, Json]) = AuthnCtx(v)
+  def apply(v: Map[String, Json]): AuthnCtx = AuthnCtx(v)
 
-  def modify(f: Map[String, Json] => Map[String, Json]) =
+  def modify(f: Map[String, Json] => Map[String, Json]): AuthnCtx =
     apply(f(value))
 
   def get(name: String): Option[Json] =
     value.get(name)
 
-  def updated(name: String, json: Json) =
+  def updated(name: String, json: Json): AuthnCtx =
     apply(value.updated(name, json))
 
-  def remove(name: String) =
+  def remove(name: String): AuthnCtx =
     apply(value - name)
 
-  def merge(other: AuthnCtx) =
+  def merge(other: AuthnCtx): AuthnCtx =
     apply(value ++ other.value)
 
-  def mergeMap(other: Map[String, Json]) =
+  def mergeMap(other: Map[String, Json]): AuthnCtx =
     apply(value ++ other)
 }
 
@@ -164,24 +163,24 @@ object AuthnCtx {
 }
 
 case class AccessLogItems(value: Map[String, Json]) extends AnyVal {
-  def apply(v: Map[String, Json]) = AccessLogItems(v)
+  def apply(v: Map[String, Json]): AccessLogItems = AccessLogItems(v)
 
-  def modify(f: Map[String, Json] => Map[String, Json]) =
+  def modify(f: Map[String, Json] => Map[String, Json]): AccessLogItems =
     apply(f(value))
 
   def get(name: String): Option[Json] =
     value.get(name)
 
-  def updated(name: String, json: Json) =
+  def updated(name: String, json: Json): AccessLogItems =
     apply(value.updated(name, json))
 
-  def remove(name: String) =
+  def remove(name: String): AccessLogItems =
     apply(value - name)
 
-  def merge(other: AccessLogItems) =
+  def merge(other: AccessLogItems): AccessLogItems =
     apply(value ++ other.value)
 
-  def mergeMap(other: Map[String, Json]) =
+  def mergeMap(other: Map[String, Json]): AccessLogItems =
     apply(value ++ other)
 }
 
@@ -204,7 +203,6 @@ case class RequestCtx(
   authnCtx: AuthnCtx = AuthnCtx(),
   accessLog: AccessLogItems = AccessLogItems(),
   modifyResponse: List[ApiResponse => Future[ApiResponse]] = Nil,
-
   aborted: Option[ApiResponse] = None,
   failed: Option[FlowFailure] = None
 ) {
@@ -232,10 +230,10 @@ case class RequestCtx(
   def modifyResponse(response: ApiResponse)(implicit ec: ExecutionContext): Future[ApiResponse] =
     modifyResponse.foldLeft(Future.successful(response)) { case (fut, mod) => fut.flatMap(mod) }
 
-  def withModifyResponse(f: ApiResponse => ApiResponse) =
+  def withModifyResponse(f: ApiResponse => ApiResponse): RequestCtx =
     withModifyResponseAsync(f.andThen(Future.successful))
 
-   def withModifyResponseAsync(f: ApiResponse => Future[ApiResponse]) =
+  def withModifyResponseAsync(f: ApiResponse => Future[ApiResponse]): RequestCtx =
     this.copy(modifyResponse = f :: modifyResponse)
 
   def abort(response: ApiResponse): RequestCtx =

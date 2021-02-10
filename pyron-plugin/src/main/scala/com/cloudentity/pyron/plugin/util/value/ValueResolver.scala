@@ -6,6 +6,7 @@ import io.vertx.core.json.{JsonArray, JsonObject}
 
 import java.util.{List => JavaList, Map => JavaMap}
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -25,6 +26,7 @@ trait ValueResolver {
       case CookieRef(cookie)              => req.original.cookies.get(cookie)
       case BodyRef(path)                  => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asString)
       case PathParamRef(param)            => req.request.uri.pathParams.value.get(param)
+      case QueryParamRef(param)           => req.request.uri.query.get(param)
       case AuthnRef(path)                 => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
       case HeaderRef(header, _)           => req.request.headers.get(header) // always take first header value
       case _                              => None
@@ -48,6 +50,7 @@ trait ValueResolver {
       case CookieRef(cookie)                     => req.original.cookies.get(cookie).map(List(_))
       case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asListOfStrings)
       case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(List(_))
+      case QueryParamRef(param)                  => req.request.uri.query.getValues(param)
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(List(_))
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header)
@@ -62,9 +65,12 @@ trait ValueResolver {
       case LocalHostRef                          => Some(req.original.localHost).filter(_.nonEmpty).map(StringJsonValue)
       case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path))
       case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(StringJsonValue)
+      case QueryParamRef(param)                  => req.request.uri.query.getValues(param) // array of all query param values
+                                                      .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path)
-      case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(StringJsonValue) // returning String with first header value
-      case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header).map(_.foldLeft(new JsonArray())(_.add(_))).map(ArrayJsonValue) // returning JsonArray with all header values
+      case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(StringJsonValue) // first header value
+      case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header) // array of all header values
+                                                      .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
       case _                                     => None
     }
 

@@ -3,8 +3,8 @@ package com.cloudentity.pyron.api
 import com.cloudentity.pyron.api.Responses.Errors
 import com.cloudentity.pyron.api.body.{BodyBuffer, BodyLimit, RequestBodyTooLargeException, SizeLimitedBodyStream}
 import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
-import io.vertx.core.streams.{ReadStream, WriteStream}
-import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupId, ApiGroupsChangeListener, ApiGroupsStore}
+import io.vertx.core.streams.ReadStream
+import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow.{FlowFailure, _}
@@ -22,14 +22,14 @@ import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.config.ConfigChange
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.{AsyncResult, Handler, MultiMap, Future => VxFuture}
+import io.vertx.core.{MultiMap, Future => VxFuture}
 import io.vertx.core.eventbus.ReplyException
 import io.vertx.ext.web.RoutingContext
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import scalaz.{-\/, \/, \/-}
+import scalaz.{-\/, \/-}
 
 import scala.collection.JavaConverters._
 
