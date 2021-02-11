@@ -18,61 +18,87 @@ trait ValueResolver {
     valueOrRef match {
       case Value(value)                   => value.asString
       case HostRef                        => Option(req.original.host).filter(_.nonEmpty)
-      case HostNameRef                    => hostName(req)
-      case HostPortRef                    => Option(req.original.host).flatMap(_.split(':').lastOption).filter(_.nonEmpty)
-      case SchemeRef                      => Option(req.original.scheme).filter(_.nonEmpty)
-      case LocalHostRef                   => Option(req.original.localHost).filter(_.nonEmpty)
-      case RemoteHostRef                  => Option(req.original.remoteHost).filter(_.nonEmpty)
-      case CookieRef(cookie)              => req.original.cookies.get(cookie)
-      case BodyRef(path)                  => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asString)
-      case PathParamRef(param)            => req.request.uri.pathParams.value.get(param)
-      case QueryParamRef(param)           => req.request.uri.query.get(param)
+      case HostNameRef                    => resolveHostName(req)
+      case HostPortRef                    => resolveHostPort(req)
+      case SchemeRef                      => resolveScheme(req)
+      case LocalHostRef                   => resolveLocalHost(req)
+      case RemoteHostRef                  => resolveRemoteHost(req)
+      case CookieRef(cookie)              => resolveCookie(req, cookie)
+      case BodyRef(path)                  => resolveBody(bodyOpt, path).flatMap(_.asString)
+      case PathParamRef(param)            => resolvePathParam(req, param)
+      case QueryParamRef(param)           => req.request.uri.query.get(param) // take first param value
+      case HeaderRef(header, _)           => req.request.headers.get(header) // take first header value
       case AuthnRef(path)                 => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
-      case HeaderRef(header, _)           => req.request.headers.get(header) // always take first header value
       case _                              => None
     }
 
-  private def hostName(req: RequestCtx): Option[String] =
-    Option(req.original.host).flatMap(_.split(':').headOption).filter(_.nonEmpty)
-
-
-  def resolveString(req: RequestCtx, valueOrRef: ValueOrRef): Option[String] =
-    valueOrRef match {
-      case BodyRef(_) => resolveString(req, req.request.bodyOpt.flatMap(buf => Try(buf.toJsonObject).toOption), valueOrRef)
-      case x          => resolveString(req, None, x)
-    }
+  def resolveString(req: RequestCtx, valueOrRef: ValueOrRef): Option[String] = valueOrRef match {
+    case BodyRef(_) => resolveString(req, req.request.bodyOpt.flatMap(buf => Try(buf.toJsonObject).toOption), valueOrRef)
+    case x          => resolveString(req, None, x)
+  }
 
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
-    valueOrRef match {
+    (valueOrRef: @unchecked) match {
       case Value(value)                          =>
         if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value)
         else circeJsonToJsonValue(value).asListOfStrings
-      case CookieRef(cookie)                     => req.original.cookies.get(cookie).map(List(_))
-      case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asListOfStrings)
-      case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(List(_))
+      case HostRef                               => resolveHost(req).map(List(_))
+      case HostNameRef                           => resolveHostName(req).map(List(_))
+      case HostPortRef                           => resolveHostPort(req).map(List(_))
+      case SchemeRef                             => resolveScheme(req).map(List(_))
+      case LocalHostRef                          => resolveLocalHost(req).map(List(_))
+      case RemoteHostRef                         => resolveRemoteHost(req).map(List(_))
+      case CookieRef(cookie)                     => resolveCookie(req, cookie).map(List(_))
+      case BodyRef(path)                         => resolveBody(bodyOpt, path).flatMap(_.asListOfStrings)
+      case PathParamRef(param)                   => resolvePathParam(req, param).map(List(_))
       case QueryParamRef(param)                  => req.request.uri.query.getValues(param)
-      case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(List(_))
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header)
-      case _                                     => None
+      case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
     }
 
   def resolveJson(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[JsonValue] =
-    valueOrRef match {
+    (valueOrRef: @unchecked) match {
       case Value(value)                          => Some(circeJsonToJsonValue(value))
       case HostRef                               => Some(req.original.host).filter(_.nonEmpty).map(StringJsonValue)
       case RemoteHostRef                         => Some(req.original.remoteHost).filter(_.nonEmpty).map(StringJsonValue)
       case LocalHostRef                          => Some(req.original.localHost).filter(_.nonEmpty).map(StringJsonValue)
-      case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path))
-      case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(StringJsonValue)
+      case BodyRef(path)                         => resolveBody(bodyOpt, path)
+      case PathParamRef(param)                   => resolvePathParam(req, param).map(StringJsonValue)
       case QueryParamRef(param)                  => req.request.uri.query.getValues(param) // array of all query param values
                                                       .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path)
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(StringJsonValue) // first header value
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header) // array of all header values
                                                       .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
-      case _                                     => None
     }
+
+  private def resolveHost(req: RequestCtx): Option[String] =
+    Option(req.original.host).filter(_.nonEmpty)
+
+  private def resolveHostName(req: RequestCtx): Option[String] =
+    Option(req.original.host).flatMap(_.split(':').headOption).filter(_.nonEmpty)
+
+  private def resolveHostPort(req: RequestCtx): Option[String] =
+    Option(req.original.host).flatMap(_.split(':').lastOption).filter(_.nonEmpty)
+
+  private def resolveScheme(req: RequestCtx): Option[String] =
+    Option(req.original.scheme).filter(_.nonEmpty)
+
+  private def resolveLocalHost(req: RequestCtx): Option[String] =
+    Option(req.original.localHost).filter(_.nonEmpty)
+
+  private def resolveRemoteHost(req: RequestCtx): Option[String] =
+    Option(req.original.remoteHost).filter(_.nonEmpty)
+
+  private def resolveCookie(req: RequestCtx, cookie: String): Option[String] =
+    req.original.cookies.get(cookie)
+
+  private def resolveBody(bodyOpt: Option[JsonObject], path: Path): Option[JsonValue] =
+    bodyOpt.flatMap(extractBodyAttribute(_, path))
+
+  private def resolvePathParam(req: RequestCtx, param: String): Option[String] =
+    req.request.uri.pathParams.value.get(param)
 
   @tailrec
   private def extractBodyAttribute(body: JsonObject, path: Path): Option[JsonValue] = {
