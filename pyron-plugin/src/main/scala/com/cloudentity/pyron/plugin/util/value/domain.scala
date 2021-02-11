@@ -23,7 +23,7 @@ case object LocalHostRef extends RefType
 case object RemoteHostRef extends RefType
 case class CookieRef(cookie: String) extends RefType
 
-sealed trait HeaderRefType extends RefType
+sealed trait HeaderRefType
 case object FirstHeaderRefType extends HeaderRefType
 case object AllHeaderRefType extends HeaderRefType
 

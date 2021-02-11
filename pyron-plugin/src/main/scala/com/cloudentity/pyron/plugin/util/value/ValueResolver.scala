@@ -1,6 +1,7 @@
 package com.cloudentity.pyron.plugin.util.value
 
 import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx}
+import com.cloudentity.pyron.plugin.util.value.PatternUtil.safePatternAndParams
 import io.circe.Json
 import io.vertx.core.json.{JsonArray, JsonObject}
 
@@ -8,28 +9,26 @@ import java.util.{List => JavaList, Map => JavaMap}
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.Try
-import scala.util.matching.Regex
-
 
 object ValueResolver extends ValueResolver
 trait ValueResolver {
 
   def resolveString(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[String] =
-    valueOrRef match {
-      case Value(value)                   => value.asString
-      case HostRef                        => Option(req.original.host).filter(_.nonEmpty)
-      case HostNameRef                    => resolveHostName(req)
-      case HostPortRef                    => resolveHostPort(req)
-      case SchemeRef                      => resolveScheme(req)
-      case LocalHostRef                   => resolveLocalHost(req)
-      case RemoteHostRef                  => resolveRemoteHost(req)
-      case CookieRef(cookie)              => resolveCookie(req, cookie)
-      case BodyRef(path)                  => resolveBody(bodyOpt, path).flatMap(_.asString)
-      case PathParamRef(param)            => resolvePathParam(req, param)
-      case QueryParamRef(param)           => req.request.uri.query.get(param) // take first param value
-      case HeaderRef(header, _)           => req.request.headers.get(header) // take first header value
-      case AuthnRef(path)                 => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
-      case _                              => None
+    (valueOrRef: @unchecked) match { // no default case, fail fast
+      case Value(value) => value.asString
+      case HostRef => Option(req.original.host).filter(_.nonEmpty)
+      case HostNameRef => resolveHostName(req)
+      case HostPortRef => resolveHostPort(req)
+      case SchemeRef => resolveScheme(req)
+      case LocalHostRef => resolveLocalHost(req)
+      case RemoteHostRef => resolveRemoteHost(req)
+      case CookieRef(cookie) => resolveCookie(req, cookie)
+      case BodyRef(path) => resolveBody(bodyOpt, path).flatMap(_.asString)
+      case PathParamRef(param) => resolvePathParam(req, param)
+      case QueryParamRef(param) => req.request.uri.query.get(param) // take first param value
+      case HeaderRef(header, AllHeaderRefType) => req.request.headers.get(header) // take first header value
+      case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header) // take first header value
+      case AuthnRef(path) => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
     }
 
   def resolveString(req: RequestCtx, valueOrRef: ValueOrRef): Option[String] = valueOrRef match {
@@ -38,7 +37,7 @@ trait ValueResolver {
   }
 
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
-    (valueOrRef: @unchecked) match {
+    (valueOrRef: @unchecked) match { // no default case, fail fast
       case Value(value)                          =>
         if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value)
         else circeJsonToJsonValue(value).asListOfStrings
@@ -58,7 +57,7 @@ trait ValueResolver {
     }
 
   def resolveJson(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[JsonValue] =
-    (valueOrRef: @unchecked) match {
+    (valueOrRef: @unchecked) match { // no default case, fail fast
       case Value(value)                          => Some(circeJsonToJsonValue(value))
       case HostRef                               => Some(req.original.host).filter(_.nonEmpty).map(StringJsonValue)
       case RemoteHostRef                         => Some(req.original.remoteHost).filter(_.nonEmpty).map(StringJsonValue)
@@ -175,65 +174,4 @@ trait ValueResolver {
       }))
   }
 
-  def safePatternAndParams(pattern: String): (Regex, List[String]) = {
-    @tailrec
-    def loop(sliceItAt: List[Int], isParamName: Boolean, slicesAcc: List[String], paramsAcc: List[String]): (Regex, List[String]) =
-      sliceItAt match {
-        case end :: start :: tail =>
-          val (slices, params) = if (isParamName) {
-            val paramDef = pattern.slice(start, end)
-            val (paramName, paramMatch) = getParamMatch(paramDef)
-            (paramMatch :: slicesAcc, paramName :: paramsAcc)
-          } else {
-            val otherThanParamName = pattern.slice(start, end)
-            (escapeSymbols(normalizeParens(otherThanParamName)) :: slicesAcc, paramsAcc)
-          }
-          // 0-th and each even slice is non-param
-          loop(start :: tail, !isParamName, slices, params)
-        case _ => (("^" + slicesAcc.mkString + "$").r, paramsAcc)
-      }
-
-    loop(getSliceItAt(pattern), isParamName = false, slicesAcc = Nil, paramsAcc = Nil)
-  }
-
-  private def getSliceItAt(pattern: String): List[Int] = {
-    // Find indexes delimiting non-param and param-def slices of the pattern
-    val paramDef = """\{([a-zA-Z][a-zA-Z0-9]*(:?_[0-9]+){0,2}?)}"""
-    val re = if (pattern.contains("{{")) {
-      // We allow {{ and }} to match literal { and }, which makes finding params harder
-      ("""(?:\G|[^{])(?:\{\{)*""" + paramDef).r
-    } else {
-      // Patterns without {{ and }} are likely much more common and simpler matcher will do
-      paramDef.r
-    }
-    pattern.length :: re.findAllMatchIn(pattern)
-      // Param def is captured into group(1)
-      .foldLeft(List(0)) { case (acc, m) =>
-        val openingCurlyBraceAt = m.end - m.group(1).length - 1
-        val closingCurlyBraceAt = m.end - 1
-        closingCurlyBraceAt :: openingCurlyBraceAt :: acc
-      }
-  }
-
-  private def getParamMatch(paramDef: String): (String, String) = {
-    paramDef.split('_').toList match {
-      case paramName :: Nil => (paramName, s"(?<$paramName>.+)")
-      case paramName :: matchSize :: Nil => (paramName, s"(?<$paramName>.{$matchSize})")
-      case paramName :: minSize :: maxSize :: Nil =>
-        assert(minSize < maxSize, s"Minimum must be smaller than maximum capture size but was: ($minSize, $maxSize)")
-        (paramName, s"(?<$paramName>.{$minSize,$maxSize})")
-      case _ => throw new Exception(s"Malformed param definition: [$paramDef]")
-    }
-  }
-
-  private def escapeSymbols(normalizedParensSlice: String): String = {
-    val escapeSymbolsRegex = """[.*+?^$()|{\[\\]""".r
-    escapeSymbolsRegex.replaceAllIn(normalizedParensSlice, v => """\\\""" + v)
-  }
-
-  private def normalizeParens(nonParamSlice: String): String = {
-    // this match will un-double all {{ and drop single/odd { parens
-    val normalizeParensRegex = """([{}])(?<dualParen>\1?)""".r
-    normalizeParensRegex.replaceAllIn(nonParamSlice, _.group("dualParen"))
-  }
 }
