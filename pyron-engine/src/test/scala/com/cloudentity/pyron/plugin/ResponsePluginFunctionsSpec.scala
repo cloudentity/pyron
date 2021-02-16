@@ -19,12 +19,12 @@ import scala.concurrent.{Await, Future}
 class ResponsePluginFunctionsSpec extends WordSpec with MustMatchers with TestRequestResponseCtx {
 
   val original: OriginalRequest = OriginalRequest(
-    HttpMethod.GET,
-    UriPath("uri"),
-    QueryParams.empty,
-    Headers(),
-    None,
-    PathParams.empty
+    method = HttpMethod.GET,
+    path = UriPath("uri"),
+    queryParams = QueryParams.empty,
+    headers = Headers(),
+    bodyOpt = None,
+    pathParams = PathParams.empty
   )
   val request: TargetRequest = TargetRequest(
     method = HttpMethod.GET,

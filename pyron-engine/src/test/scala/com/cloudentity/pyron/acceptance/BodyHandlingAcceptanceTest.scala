@@ -35,16 +35,16 @@ class BodyHandlingAcceptanceTest extends PyronAcceptanceTest with MockUtils {
 
     given()
       .body(body1024Bytes)
-    .when()
+      .when()
       .post("/upload/buffer/limit")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     given()
       .body(body1025Bytes)
-    .when()
+      .when()
       .post("/upload/buffer/limit")
-    .`then`()
+      .`then`()
       .statusCode(413)
   }
 
@@ -56,16 +56,16 @@ class BodyHandlingAcceptanceTest extends PyronAcceptanceTest with MockUtils {
 
     given()
       .body(body1024Bytes)
-    .when()
+      .when()
       .post("/upload/stream/limit")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     given()
       .body(body1025Bytes)
-    .when()
+      .when()
       .post("/upload/stream/limit")
-    .`then`()
+      .`then`()
       .statusCode(413)
   }
 
@@ -83,9 +83,9 @@ class BodyHandlingAcceptanceTest extends PyronAcceptanceTest with MockUtils {
         ctx.assertEquals(200, resp.statusCode())
         async.complete()
       }.exceptionHandler{ ex =>
-        ctx.fail(ex)
-        async.complete()
-      }.end(body1024Bytes)
+      ctx.fail(ex)
+      async.complete()
+    }.end(body1024Bytes)
   }
 
   @Test

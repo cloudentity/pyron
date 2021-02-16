@@ -21,10 +21,10 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
                    |}""".stripMargin
 
       val group = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
         ValidResult(
           Nil,
-          ApiGroupLevel(None, Some(group), Nil, Nil)
+          ApiGroupLevel(rules = None, group = Some(group), plugins = Nil, subs = Nil)
         )
       }
     }
@@ -41,10 +41,10 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
                    |}""".stripMargin
 
       val group = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
         ValidResult(
           Nil,
-          ApiGroupLevel(Some(Json.obj()), Some(group), Nil, Nil)
+          ApiGroupLevel(rules = Some(Json.obj()), group = Some(group), plugins = Nil, subs = Nil)
         )
       }
     }
@@ -62,14 +62,14 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
                    |}""".stripMargin
 
       val group = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
         ValidResult(
-          Nil,
-          ApiGroupLevel(
-            None,
-            None,
-            Nil,
-            List(
+          path = Nil,
+          value = ApiGroupLevel(
+            rules = None,
+            group = None,
+            plugins = Nil,
+            subs = List(
               ValidResult(
                 List("service-a"),
                 ApiGroupLevel(None, Some(group), Nil, Nil)
@@ -99,17 +99,17 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
                    |}""".stripMargin
 
       val group = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
         ValidResult(
-          Nil,
-          ApiGroupLevel(
-            None,
-            None,
-            Nil,
-            List(
+          path = Nil,
+          value = ApiGroupLevel(
+            rules = None,
+            group = None,
+            plugins = Nil,
+            subs = List(
               ValidResult(
-                List("service-a"),
-                ApiGroupLevel(None, Some(group), List(ApiGroupPlugin(PluginName("authn"), PluginId("service-a"))), Nil)
+                path = List("service-a"),
+                value = ApiGroupLevel(None, Some(group), List(ApiGroupPlugin(PluginName("authn"), PluginId("service-a"))), Nil)
               )
             )
           )
@@ -131,16 +131,17 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
                    |}""".stripMargin
 
       val group = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
-        ValidResult(Nil,
-          ApiGroupLevel(
-            None,
-            None,
-            Nil,
-            List(
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
+        ValidResult(
+          path = Nil,
+          value = ApiGroupLevel(
+            rules = None,
+            group = None,
+            plugins = Nil,
+            subs = List(
               ValidResult(
-                List("service-a"),
-                ApiGroupLevel(Some(Json.obj()), Some(group), Nil, Nil)
+                path = List("service-a"),
+                value = ApiGroupLevel(Some(Json.obj()), Some(group), Nil, Nil)
               )
             )
           )
@@ -163,24 +164,24 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
                    |}""".stripMargin
 
       val group = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
         ValidResult(
-          Nil,
-          ApiGroupLevel(
-            None,
-            None,
-            Nil,
-            List(
+          path = Nil,
+          value = ApiGroupLevel(
+            rules = None,
+            group = None,
+            plugins = Nil,
+            subs = List(
               ValidResult(
-                List("level-a"),
-                ApiGroupLevel(
-                  None,
-                  None,
-                  Nil,
-                  List(
+                path = List("level-a"),
+                value = ApiGroupLevel(
+                  rules = None,
+                  group = None,
+                  plugins = Nil,
+                  subs = List(
                     ValidResult(
-                      List("service-a", "level-a"),
-                      ApiGroupLevel(None, Some(group), Nil, Nil)
+                      path = List("service-a", "level-a"),
+                      value = ApiGroupLevel(None, Some(group), Nil, Nil)
                     )
                   )
                 )
@@ -202,25 +203,24 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
                    |  }
                    |}""".stripMargin
 
-      val group = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
         ValidResult(
-          Nil,
-          ApiGroupLevel(
-            None,
-            None,
-            Nil,
-            List(
+          path = Nil,
+          value = ApiGroupLevel(
+            rules = None,
+            group = None,
+            plugins = Nil,
+            subs = List(
               ValidResult(
-                List("level-a"),
-                ApiGroupLevel(
-                  None,
-                  None,
-                  Nil,
-                  List(
+                path = List("level-a"),
+                value = ApiGroupLevel(
+                  rules = None,
+                  group = None,
+                  plugins = Nil,
+                  subs = List(
                     InvalidResult(
-                      List("service-a", "level-a"),
-                      "Invalid group level at 'level-a.service-a._group.basePath'"
+                      path = List("service-a", "level-a"),
+                      msg = "Invalid group level at 'level-a.service-a._group.basePath'"
                     )
                   )
                 )
@@ -253,24 +253,24 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
 
       val group1 = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
       val group2 = GroupMatchCriteria(Some(BasePath("/y")), Some(List(DomainPattern("2.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
         ValidResult(
-          Nil,
-          ApiGroupLevel(
-            None,
-            None,
-            Nil,
-            List(
+          path = Nil,
+          value = ApiGroupLevel(
+            rules = None,
+            group = None,
+            plugins = Nil,
+            subs = List(
               ValidResult(
-                List("level-a"),
-                ApiGroupLevel(
-                  None,
-                  Some(group1),
-                  Nil,
-                  List(
+                path = List("level-a"),
+                value = ApiGroupLevel(
+                  rules = None,
+                  group = Some(group1),
+                  plugins = Nil,
+                  subs = List(
                     ValidResult(
-                      List("service-a", "level-a"),
-                      ApiGroupLevel(None, Some(group2), Nil, Nil)
+                      path = List("service-a", "level-a"),
+                      value = ApiGroupLevel(None, Some(group2), Nil, Nil)
                     )
                   )
                 )
@@ -305,28 +305,28 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
 
       val group1 = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
       val group2 = GroupMatchCriteria(Some(BasePath("/y")), Some(List(DomainPattern("2.com"))))
-      ApiGroupReader.readApiGroupLevels(json) must be {
+      ApiGroupReader.readApiGroupLevels(json) mustBe {
         ValidResult(
-          Nil,
-          ApiGroupLevel(
-            None,
-            None,
-            Nil,
-            List(
+          path = Nil,
+          value = ApiGroupLevel(
+            rules = None,
+            group = None,
+            plugins = Nil,
+            subs = List(
               ValidResult(
-                List("level-a"),
-                ApiGroupLevel(
-                  None,
-                  None,
-                  Nil,
-                  List(
+                path = List("level-a"),
+                value = ApiGroupLevel(
+                  rules = None,
+                  group = None,
+                  plugins = Nil,
+                  subs = List(
                     ValidResult(
-                      List("service-a", "level-a"),
-                      ApiGroupLevel(None, Some(group1), Nil, Nil)
+                      path = List("service-a", "level-a"),
+                      value = ApiGroupLevel(None, Some(group1), Nil, Nil)
                     ),
                     ValidResult(
-                      List("service-b", "level-a"),
-                      ApiGroupLevel(None, Some(group2), Nil, Nil)
+                      path = List("service-b", "level-a"),
+                      value = ApiGroupLevel(None, Some(group2), Nil, Nil)
                     )
                   )
                 )
@@ -374,28 +374,38 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
 
     val group1 = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
     val group2 = GroupMatchCriteria(Some(BasePath("/y")), Some(List(DomainPattern("2.com"))))
-    ApiGroupReader.readApiGroupLevels(json) must be {
+    ApiGroupReader.readApiGroupLevels(json) mustBe {
       ValidResult(
-        Nil,
-        ApiGroupLevel(
-          None,
-          None,
-          Nil,
-          List(
+        path = Nil,
+        value = ApiGroupLevel(
+          rules = None,
+          group = None,
+          plugins = Nil,
+          subs = List(
             ValidResult(
-              List("level-a"),
-              ApiGroupLevel(
-                None,
-                None,
-                Nil,
-                List(
+              path = List("level-a"),
+              value = ApiGroupLevel(
+                rules = None,
+                group = None,
+                plugins = Nil,
+                subs = List(
                   ValidResult(
-                    List("service-a", "level-a"),
-                    ApiGroupLevel(None, Some(group1), List(ApiGroupPlugin(PluginName("authn"), PluginId("level-a-service-a"))), Nil)
+                    path = List("service-a", "level-a"),
+                    value = ApiGroupLevel(
+                      rules = None,
+                      group = Some(group1),
+                      plugins = List(ApiGroupPlugin(PluginName("authn"), PluginId("level-a-service-a"))),
+                      subs = Nil
+                    )
                   ),
                   ValidResult(
-                    List("service-b", "level-a"),
-                    ApiGroupLevel(None, Some(group2), List(ApiGroupPlugin(PluginName("authn"), PluginId("level-a-service-b"))), Nil)
+                    path = List("service-b", "level-a"),
+                    value = ApiGroupLevel(
+                      rules = None,
+                      group = Some(group2),
+                      plugins = List(ApiGroupPlugin(PluginName("authn"), PluginId("level-a-service-b"))),
+                      subs = Nil
+                    )
                   )
                 )
               )
@@ -410,61 +420,65 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
     "build 0-level" in {
       val criteria = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
 
-      val level =
-        ApiGroupLevel(
-          Some(Json.arr()),
-          Some(criteria),
-          Nil,
-          Nil
-        )
+      val level = ApiGroupLevel(
+        rules = Some(Json.arr()),
+        group = Some(criteria),
+        plugins = Nil,
+        subs = Nil
+      )
 
-      val group = ApiGroupConfUnresolved(criteria, Json.arr(), Nil)
+      val group = ApiGroupConfUnresolved(matchCriteria = criteria, rules = Json.arr(), plugins = Nil)
 
-      ApiGroupReader.buildApiGroupConfsUnresolved(level)must be (List(ValidResult(Nil, group)))
+      ApiGroupReader.buildApiGroupConfsUnresolved(level) mustBe List(ValidResult(path = Nil, value = group))
     }
 
     "build 1-level with inherited basePath" in {
       val group0 = GroupMatchCriteria(Some(BasePath("/x")), None)
       val group1 = GroupMatchCriteria(Some(BasePath("/y")), None)
 
-      val level =
-        ApiGroupLevel(
-          None,
-          Some(group0),
-          Nil,
-          List(
-            ValidResult(
-              List("y"),
-              ApiGroupLevel(Some(Json.arr()), Some(group1), Nil, Nil)
-            )
+      val level = ApiGroupLevel(
+        rules = None,
+        group = Some(group0),
+        plugins = Nil,
+        subs = List(
+          ValidResult(
+            path = List("y"),
+            value = ApiGroupLevel(Some(Json.arr()), Some(group1), Nil, Nil)
           )
         )
+      )
 
       val group = ApiGroupConfUnresolved(GroupMatchCriteria(Some(BasePath("/x/y")), None), Json.arr(), Nil)
 
-      ApiGroupReader.buildApiGroupConfsUnresolved(level) must be (List(ValidResult(List("y"), group)))
+      ApiGroupReader.buildApiGroupConfsUnresolved(level) mustBe List(ValidResult(List("y"), group))
     }
 
     "build 1-level with inherited domains" in {
       val group0 = GroupMatchCriteria(None, Some(List(DomainPattern("*.com"))))
       val group1 = GroupMatchCriteria(Some(BasePath("/x")), None)
 
-      val level =
-        ApiGroupLevel(
-          None,
-          Some(group0),
-          Nil,
-          List(
-            ValidResult(
-              List("y"),
-              ApiGroupLevel(Some(Json.arr()), Some(group1), Nil, Nil)
-            )
+      val level = ApiGroupLevel(
+        rules = None,
+        group = Some(group0),
+        plugins = Nil,
+        subs = List(
+          ValidResult(
+            path = List("y"),
+            value = ApiGroupLevel(Some(Json.arr()), Some(group1), Nil, Nil)
           )
         )
+      )
 
-      val group = ApiGroupConfUnresolved(GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("*.com")))), Json.arr(), Nil)
+      val group = ApiGroupConfUnresolved(
+        matchCriteria = GroupMatchCriteria(
+          basePath = Some(BasePath("/x")),
+          domains = Some(List(DomainPattern("*.com")))
+        ),
+        rules = Json.arr(),
+        plugins = Nil
+      )
 
-      ApiGroupReader.buildApiGroupConfsUnresolved(level) must be (List(ValidResult(List("y"), group)))
+      ApiGroupReader.buildApiGroupConfsUnresolved(level) mustBe List(ValidResult(List("y"), group))
     }
 
     "build 1-level with aggregated sub-level failures" in {
@@ -473,104 +487,126 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
       val group1b = GroupMatchCriteria(Some(BasePath("/w")), None)
       val group1c = GroupMatchCriteria(Some(BasePath("/w1")), None)
 
-      val level =
-        ApiGroupLevel(
-          None,
-          Some(group0),
-          Nil,
-          List(
-            ValidResult(
-              List("y"),
-              ApiGroupLevel(Some(Json.arr(Json.fromString("rules-y"))), Some(group1a), Nil, Nil)
-            ),
-            ValidResult(
-              List("z"),
-              ApiGroupLevel(Some(Json.arr(Json.fromString("rules-z"))), Some(group1a), Nil, Nil)
-            ),
-            ValidResult(
-              List("w"),
-              ApiGroupLevel(
-                None,
-                Some(group1b),
-                Nil,
-                List(
-                  InvalidResult(List("w", "w0"), "invalid"),
-                  ValidResult(List("w", "w1"), ApiGroupLevel(Some(Json.arr(Json.fromString("rules-w1"))), Some(group1c), Nil, Nil))
+      val level = ApiGroupLevel(
+        rules = None,
+        group = Some(group0),
+        plugins = Nil,
+        subs = List(
+          ValidResult(
+            path = List("y"),
+            value = ApiGroupLevel(Some(Json.arr(Json.fromString("rules-y"))), Some(group1a), Nil, Nil)
+          ),
+          ValidResult(
+            path = List("z"),
+            value = ApiGroupLevel(Some(Json.arr(Json.fromString("rules-z"))), Some(group1a), Nil, Nil)
+          ),
+          ValidResult(
+            path = List("w"),
+            value = ApiGroupLevel(
+              rules = None,
+              group = Some(group1b),
+              plugins = Nil,
+              subs = List(
+                InvalidResult(path = List("w", "w0"), msg = "invalid"),
+                ValidResult(
+                  path = List("w", "w1"),
+                  value = ApiGroupLevel(
+                    rules = Some(Json.arr(Json.fromString("rules-w1"))),
+                    group = Some(group1c),
+                    plugins = Nil,
+                    subs = Nil
+                  )
                 )
               )
             )
           )
         )
+      )
 
-      val groupA = ApiGroupConfUnresolved(GroupMatchCriteria(Some(BasePath("/x")), None), Json.arr(Json.fromString("rules-y"), Json.fromString("rules-z")), Nil)
-      val groupC = ApiGroupConfUnresolved(GroupMatchCriteria(Some(BasePath("/x/w/w1")), None), Json.arr(Json.fromString("rules-w1")), Nil)
+      val groupA = ApiGroupConfUnresolved(
+        matchCriteria = GroupMatchCriteria(Some(BasePath("/x")), None),
+        rules = Json.arr(Json.fromString("rules-y"), Json.fromString("rules-z")),
+        plugins = Nil
+      )
+      val groupC = ApiGroupConfUnresolved(
+        matchCriteria = GroupMatchCriteria(Some(BasePath("/x/w/w1")), None),
+        rules = Json.arr(Json.fromString("rules-w1")),
+        plugins = Nil
+      )
 
-      ApiGroupReader.buildApiGroupConfsUnresolved(level) must be(List(ValidResult(List(), groupA), ValidResult(List("w", "w1"), groupC), InvalidResult(List("w", "w0"), "invalid")))
+      ApiGroupReader.buildApiGroupConfsUnresolved(level) mustBe List(
+        ValidResult(List(), groupA),
+        ValidResult(List("w", "w1"), groupC),
+        InvalidResult(List("w", "w0"), "invalid")
+      )
     }
 
     "fail to build 1-level with overwritten domains" in {
       val group0 = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("*.com"))))
       val group1 = GroupMatchCriteria(None, Some(List(DomainPattern("y.com"))))
 
-      val level =
-        ApiGroupLevel(
-          None,
-          Some(group0),
-          Nil,
-          List(
-            ValidResult(
-              List("y"),
-              ApiGroupLevel(Some(Json.arr()), Some(group1), Nil, Nil)
-            )
+      val level = ApiGroupLevel(
+        rules = None,
+        group = Some(group0),
+        plugins = Nil,
+        subs = List(
+          ValidResult(
+            path = List("y"),
+            value = ApiGroupLevel(Some(Json.arr()), Some(group1), Nil, Nil)
           )
         )
+      )
 
-      ApiGroupReader.buildApiGroupConfsUnresolved(level) must be (List(InvalidResult(List("y"), "leaf node with domains set can't inherit them from parent")))
+      ApiGroupReader.buildApiGroupConfsUnresolved(level) mustBe List(
+        InvalidResult(List("y"), "leaf node with domains set can't inherit them from parent")
+      )
     }
 
     "fail to build 0-level with both rules and sub-levels set" in {
       val criteria = GroupMatchCriteria(Some(BasePath("/x")), Some(List(DomainPattern("1.com"))))
 
-      val level =
-        ApiGroupLevel(
-          Some(Json.arr()),
-          Some(criteria),
-          Nil,
-          List(
-            ValidResult(
-              List("y"),
-              ApiGroupLevel(Some(Json.arr()), None, Nil, Nil)
-            )
+      val level = ApiGroupLevel(
+        rules = Some(Json.arr()),
+        group = Some(criteria),
+        plugins = Nil,
+        subs = List(
+          ValidResult(
+            path = List("y"),
+            value = ApiGroupLevel(Some(Json.arr()), None, Nil, Nil)
           )
         )
+      )
 
-      ApiGroupReader.buildApiGroupConfsUnresolved(level)must be (List(InvalidResult(Nil, "leaf node with rules can't have sub-levels")))
+      ApiGroupReader.buildApiGroupConfsUnresolved(level) mustBe List(InvalidResult(Nil, "leaf node with rules can't have sub-levels"))
     }
 
     "build 1-level with merged rules" in {
       val group0 = GroupMatchCriteria(Some(BasePath("/x")), None)
       val group1 = GroupMatchCriteria(None, None)
 
-      val level =
-        ApiGroupLevel(
-          None,
-          Some(group0),
-          Nil,
-          List(
-            ValidResult(
-              List("y"),
-              ApiGroupLevel(Some(Json.arr(Json.fromString("rules-y"))), Some(group1), Nil, Nil)
-            ),
-            ValidResult(
-              List("z"),
-              ApiGroupLevel(Some(Json.arr(Json.fromString("rules-z"))), Some(group1), Nil, Nil)
-            )
+      val level = ApiGroupLevel(
+        rules = None,
+        group = Some(group0),
+        plugins = Nil,
+        subs = List(
+          ValidResult(
+            path = List("y"),
+            value = ApiGroupLevel(Some(Json.arr(Json.fromString("rules-y"))), Some(group1), Nil, Nil)
+          ),
+          ValidResult(
+            path = List("z"),
+            value = ApiGroupLevel(Some(Json.arr(Json.fromString("rules-z"))), Some(group1), Nil, Nil)
           )
         )
+      )
 
-      val group = ApiGroupConfUnresolved(GroupMatchCriteria(Some(BasePath("/x")), None), Json.arr(Json.fromString("rules-y"), Json.fromString("rules-z")), Nil)
+      val group = ApiGroupConfUnresolved(
+        matchCriteria = GroupMatchCriteria(Some(BasePath("/x")), None),
+        rules = Json.arr(Json.fromString("rules-y"), Json.fromString("rules-z")),
+        plugins = Nil
+      )
 
-      ApiGroupReader.buildApiGroupConfsUnresolved(level) must be(List(ValidResult(List(), group)))
+      ApiGroupReader.buildApiGroupConfsUnresolved(level) mustBe List(ValidResult(List(), group))
     }
 
     "build 1-level with/wo merged rules" in {
@@ -578,31 +614,38 @@ class ApiGroupReaderSpec extends WordSpec with MustMatchers {
       val group1a = GroupMatchCriteria(None, None)
       val group1b = GroupMatchCriteria(Some(BasePath("/w")), None)
 
-      val level =
-        ApiGroupLevel(
-          None,
-          Some(group0),
-          Nil,
-          List(
-            ValidResult(
-              List("y"),
-              ApiGroupLevel(Some(Json.arr(Json.fromString("rules-y"))), Some(group1a), Nil, Nil)
-            ),
-            ValidResult(
-              List("z"),
-              ApiGroupLevel(Some(Json.arr(Json.fromString("rules-z"))), Some(group1a), Nil, Nil)
-            ),
-            ValidResult(
-              List("w"),
-              ApiGroupLevel(Some(Json.arr(Json.fromString("rules-w"))), Some(group1b), Nil, Nil)
-            )
+      val level = ApiGroupLevel(
+        rules = None,
+        group = Some(group0),
+        plugins = Nil,
+        subs = List(
+          ValidResult(
+            path = List("y"),
+            value = ApiGroupLevel(Some(Json.arr(Json.fromString("rules-y"))), Some(group1a), Nil, Nil)
+          ),
+          ValidResult(
+            path = List("z"),
+            value = ApiGroupLevel(Some(Json.arr(Json.fromString("rules-z"))), Some(group1a), Nil, Nil)
+          ),
+          ValidResult(
+            path = List("w"),
+            value = ApiGroupLevel(Some(Json.arr(Json.fromString("rules-w"))), Some(group1b), Nil, Nil)
           )
         )
+      )
 
-      val groupA = ApiGroupConfUnresolved(GroupMatchCriteria(Some(BasePath("/x")), None), Json.arr(Json.fromString("rules-y"), Json.fromString("rules-z")), Nil)
-      val groupB = ApiGroupConfUnresolved(GroupMatchCriteria(Some(BasePath("/x/w")), None), Json.arr(Json.fromString("rules-w")), Nil)
+      val groupA = ApiGroupConfUnresolved(
+        matchCriteria = GroupMatchCriteria(Some(BasePath("/x")), None),
+        rules = Json.arr(Json.fromString("rules-y"), Json.fromString("rules-z")),
+        plugins = Nil
+      )
+      val groupB = ApiGroupConfUnresolved(
+        matchCriteria = GroupMatchCriteria(Some(BasePath("/x/w")), None),
+        rules = Json.arr(Json.fromString("rules-w")),
+        plugins = Nil
+      )
 
-      ApiGroupReader.buildApiGroupConfsUnresolved(level) must be(List(ValidResult(List(), groupA), ValidResult(List("w"), groupB)))
+      ApiGroupReader.buildApiGroupConfsUnresolved(level) mustBe List(ValidResult(List(), groupA), ValidResult(List("w"), groupB))
     }
   }
 }

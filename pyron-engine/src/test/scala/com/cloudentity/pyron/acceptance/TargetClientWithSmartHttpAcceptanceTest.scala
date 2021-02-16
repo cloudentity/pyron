@@ -161,7 +161,11 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
     val httpRequest = io.restassured.RestAssured.given.header("a", "1", "2", "3")
     val httpResponse = httpRequest.post("/discoverable-service/test")
 
-    Assert.assertEquals(List(new RestHeader("b", "4"), new RestHeader("b", "5")).asJava, httpResponse.headers().getList("b"))
+    Assert.assertEquals(List(
+      new RestHeader("b", "4"),
+      new RestHeader("b", "5")).asJava,
+      httpResponse.headers().getList("b")
+    )
     Assert.assertEquals(200, httpResponse.statusCode())
   }
 

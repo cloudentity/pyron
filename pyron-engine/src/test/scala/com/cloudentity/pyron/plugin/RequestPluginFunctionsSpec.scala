@@ -21,19 +21,19 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
   val uri: RelativeUri = RelativeUri.of("uri").get
 
   val original: OriginalRequest = OriginalRequest(
-    HttpMethod.GET,
-    UriPath(uri.path),
-    QueryParams.empty,
-    Headers(),
-    None,
-    PathParams.empty
+    method = HttpMethod.GET,
+    path = UriPath(uri.path),
+    queryParams = QueryParams.empty,
+    headers = Headers(),
+    bodyOpt = None,
+    pathParams = PathParams.empty
   )
   val requestGet: TargetRequest = TargetRequest(
-    HttpMethod.GET,
-    StaticService(host = host, port = 100, ssl = false),
-    uri,
-    Headers(),
-    None
+    method = HttpMethod.GET,
+    service = StaticService(host = host, port = 100, ssl = false),
+    uri = uri,
+    headers = Headers(),
+    bodyOpt = None
   )
   val requestPost: TargetRequest = TargetRequest(
     method = HttpMethod.POST,

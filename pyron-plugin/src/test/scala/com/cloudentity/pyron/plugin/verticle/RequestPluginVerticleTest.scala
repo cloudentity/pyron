@@ -4,14 +4,14 @@ import java.util.{Optional, UUID}
 
 import io.circe.generic.semiauto._
 import io.circe.{Decoder, Json}
-import com.cloudentity.pyron.domain.flow.{GroupMatchCriteria, PathPattern, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, RequestCtx, ServiceClientName}
+import com.cloudentity.pyron.domain.flow.{GroupMatchCriteria, PathPattern, PathPrefix, ApiGroupPluginConf, PluginName, RequestCtx, ServiceClientName}
 import com.cloudentity.pyron.domain.openapi.{DiscoverableServiceId, OpenApiRule}
 import com.cloudentity.pyron.plugin.RequestPluginService
 import com.cloudentity.pyron.plugin.bus.request._
 import com.cloudentity.pyron.plugin.config.{ValidateError, ValidateOk, ValidateRequest, ValidateResponse}
 import com.cloudentity.pyron.plugin.openapi.{ConvertOpenApiError, ConvertOpenApiRequest, ConvertOpenApiResponse, ConvertedOpenApi}
 import com.cloudentity.pyron.test.TestRequestResponseCtx
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.test.ScalaVertxUnitTest
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import com.cloudentity.tools.vertx.verticles.VertxDeploy
@@ -27,17 +27,21 @@ import io.vertx.ext.unit.TestContext
 class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers with TestRequestResponseCtx {
   case class DummyConfig(x: String, y: String)
   class DummyPlugin extends RequestPluginVerticle[DummyConfig] with RequestPluginService {
-    val _name = UUID.randomUUID().toString
+    val _name: String = UUID.randomUUID().toString
     override def name: PluginName = PluginName(_name)
-    override def apply(ctx: RequestCtx, conf: DummyConfig): Future[RequestCtx] = ???
-    override def validate(c: DummyConfig): ValidateResponse = ???
+    override def apply(ctx: RequestCtx, conf: DummyConfig): Future[RequestCtx] = throw new NotImplementedError()
+    override def validate(c: DummyConfig): ValidateResponse = throw new NotImplementedError()
     override def confDecoder: Decoder[DummyConfig] = deriveDecoder
   }
 
-  def dummyConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))), None)
+  def dummyConf(pluginName: PluginName): ApiGroupPluginConf = ApiGroupPluginConf(
+    name = pluginName,
+    conf = Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))),
+    addressPrefixOpt = None
+  )
 
   private def createClient(plugin: DummyPlugin) = {
-    ServiceClientFactory.make(vertx.eventBus(), classOf[RequestPluginService], Optional.of(plugin.name.value))
+    VertxEndpointClient.make(vertx, classOf[RequestPluginService], Optional.of(plugin.name.value))
   }
 
   @Test
@@ -98,13 +102,11 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         // when
         pluginClient.validateConfig(ValidateRequest(conf))
       }.compose { response =>
-
       // then
       response match {
         case ValidateOk => // ok
         case x => fail(x.toString)
       }
-
       VxFuture.succeededFuture(())
     }.onComplete(ctx.asyncAssertSuccess())
   }
@@ -127,7 +129,6 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         case ApplyError(_) => // ok
         case x => fail(x.toString)
       }
-
       VxFuture.succeededFuture(())
     }.onComplete(ctx.asyncAssertSuccess())
   }
@@ -148,7 +149,6 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         case ApplyError(_) => // ok
         case x => fail(x.toString)
       }
-
       VxFuture.succeededFuture(())
     }.onComplete(ctx.asyncAssertSuccess())
   }
@@ -172,7 +172,6 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
         case ApplyError(_) => // ok
         case x => fail(x.toString)
       }
-
       VxFuture.succeededFuture(())
     }.onComplete(ctx.asyncAssertSuccess())
   }
@@ -193,7 +192,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       }.compose { response =>
       // then
       response match {
-        case Continue(request) => // ok
+        case Continue(_) => // ok
         case x => fail(x.toString)
       }
       VxFuture.succeededFuture(())
@@ -206,7 +205,7 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     var decodes = 0
     val plugin = new DummyPlugin with RequestPluginService {
       override def apply(ctx: RequestCtx, conf: DummyConfig): Future[RequestCtx] = Future.successful(ctx)
-      override def decodeRuleConf(rawConf: Json) = {
+      override def decodeRuleConf(rawConf: Json): Either[Throwable, DummyConfig] = {
         decodes += 1
         super.decodeRuleConf(rawConf)
       }
@@ -220,15 +219,26 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
       .compose { response =>
         // then
         response match {
-          case Continue(request) => decodes must be(1)
+          case Continue(_) => decodes mustBe 1
           case x => fail(x.toString)
         }
-
         VxFuture.succeededFuture(())
       }.onComplete(ctx.asyncAssertSuccess())
   }
 
-  val openApiRule = OpenApiRule(HttpMethod.GET, DiscoverableServiceId(ServiceClientName("service")), GroupMatchCriteria.empty, PathPattern("/x"), PathPrefix(""), false, None, None, Nil, Nil, None)
+  val openApiRule: OpenApiRule = OpenApiRule(
+    method = HttpMethod.GET,
+    serviceId = DiscoverableServiceId(ServiceClientName("service")),
+    group = GroupMatchCriteria.empty,
+    pathPattern = PathPattern("/x"),
+    pathPrefix = PathPrefix(""),
+    dropPathPrefix = false,
+    rewriteMethod = None,
+    rewritePath = None,
+    plugins = Nil,
+    tags = Nil,
+    operationId = None
+  )
 
   @Test
   def requestPluginVerticleConvertOpenApiShouldReturnConvertOpenApiErrorWhenConfigDecodingError(ctx: TestContext): Unit = {
@@ -237,39 +247,47 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     val pluginClient = createClient(plugin)
     val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil), None)
 
-    VertxDeploy.deploy(vertx, plugin)
-      .compose { _ => pluginClient.convertOpenApi(TracingContext.dummy(), ConvertOpenApiRequest(new Swagger(), openApiRule, conf)) }
-      .compose { response =>
-        // then
-        response match {
-          case ConvertOpenApiError(_) => // ok
-          case x => fail(x.toString)
-        }
-
-        VxFuture.succeededFuture(())
-      }.onComplete(ctx.asyncAssertSuccess())
+    VertxDeploy.deploy(vertx, plugin).compose { _ =>
+      pluginClient.convertOpenApi(
+        TracingContext.dummy(),
+        ConvertOpenApiRequest(new Swagger(), openApiRule, conf))
+    }.compose { response =>
+      // then
+      response match {
+        case ConvertOpenApiError(_) => // ok
+        case x => fail(x.toString)
+      }
+      VxFuture.succeededFuture(())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
   def requestPluginVerticleConvertOpenApiShouldReturnConvertOpenApiErrorWhenExceptionThrown(ctx: TestContext): Unit = {
     // given
     val plugin = new DummyPlugin with RequestPluginService {
-      override def convertOpenApi(openApi: Swagger, rule: OpenApiRule, c: DummyConfig): ConvertOpenApiResponse = throw new Exception("error")
+      override def convertOpenApi(openApi: Swagger, rule: OpenApiRule, c: DummyConfig): ConvertOpenApiResponse =
+        throw new Exception("error")
     }
     val pluginClient = createClient(plugin)
     val conf = dummyConf(plugin.name)
 
-    VertxDeploy.deploy(vertx, plugin)
-      .compose { _ => pluginClient.convertOpenApi(TracingContext.dummy(), ConvertOpenApiRequest(new Swagger(), openApiRule, ApiGroupPluginConf(conf.name, conf.conf, None))) }
-      .compose { response =>
-        // then
-        response match {
-          case ConvertOpenApiError("error") => // ok
-          case x => fail(x.toString)
-        }
-
-        VxFuture.succeededFuture(())
-      }.onComplete(ctx.asyncAssertSuccess())
+    VertxDeploy.deploy(vertx, plugin).compose { _ =>
+      pluginClient.convertOpenApi(
+        TracingContext.dummy(),
+        ConvertOpenApiRequest(
+          new Swagger(),
+          openApiRule,
+          ApiGroupPluginConf(conf.name, conf.conf, None)
+        )
+      )
+    }.compose { response =>
+      // then
+      response match {
+        case ConvertOpenApiError("error") => // ok
+        case x => fail(x.toString)
+      }
+      VxFuture.succeededFuture(())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 
   @Test
@@ -281,16 +299,18 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     val pluginClient = createClient(plugin)
     val conf = dummyConf(plugin.name)
 
-    VertxDeploy.deploy(vertx, plugin)
-      .compose { _ => pluginClient.convertOpenApi(TracingContext.dummy(), ConvertOpenApiRequest(new Swagger(), openApiRule, ApiGroupPluginConf(conf.name, conf.conf, None))) }
-      .compose { response =>
-        // then
-        response match {
-          case ConvertedOpenApi(s) => s.getBasePath must be("/base-path")
-          case x => fail(x.toString)
-        }
-
-        VxFuture.succeededFuture(())
-      }.onComplete(ctx.asyncAssertSuccess())
+    VertxDeploy.deploy(vertx, plugin).compose { _ =>
+      pluginClient.convertOpenApi(
+        TracingContext.dummy(),
+        ConvertOpenApiRequest(new Swagger(), openApiRule, ApiGroupPluginConf(conf.name, conf.conf, None))
+      )
+    }.compose { response =>
+      // then
+      response match {
+        case ConvertedOpenApi(s) => s.getBasePath mustBe "/base-path"
+        case x => fail(x.toString)
+      }
+      VxFuture.succeededFuture(())
+    }.onComplete(ctx.asyncAssertSuccess())
   }
 }

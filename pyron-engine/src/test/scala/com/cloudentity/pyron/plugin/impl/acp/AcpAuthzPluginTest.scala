@@ -16,7 +16,10 @@ object AcpAuthzPluginTest {
   //@BeforeClass
   def setup(): Unit = {
     authorizer = ClientAndServer.startClientAndServer(7777)
+    mockSetApis(204)
   }
+  
+  private def mockSetApis(code: Int): Unit = { }
 }
 
 class AcpAuthzPluginTest extends PyronAcceptanceTest {

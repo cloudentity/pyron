@@ -25,36 +25,64 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
 
   case class RequestConfig(x: String, y: String)
   class RequestPlugin extends RequestPluginVerticle[RequestConfig] {
-    val _name = UUID.randomUUID().toString
+    val _name: String = UUID.randomUUID().toString
     override def name: PluginName = PluginName(_name)
-    override def apply(ctx: RequestCtx, conf: RequestConfig): Future[RequestCtx] = ???
-    override def validate(c: RequestConfig): ValidateResponse = ???
+    override def apply(ctx: RequestCtx, conf: RequestConfig): Future[RequestCtx] = throw new NotImplementedError()
+    override def validate(c: RequestConfig): ValidateResponse = throw new NotImplementedError()
     override def confDecoder: Decoder[RequestConfig] = deriveDecoder
   }
 
   case class ResponseConfig(x: String, y: String)
   class ResponsePlugin extends ResponsePluginVerticle[ResponseConfig] {
-    val _name = UUID.randomUUID().toString
+    val _name: String = UUID.randomUUID().toString
     override def name: PluginName = PluginName(_name)
-    override def apply(ctx: ResponseCtx, conf: ResponseConfig): Future[ResponseCtx] = ???
-    override def validate(c: ResponseConfig): ValidateResponse = ???
+    override def apply(ctx: ResponseCtx, conf: ResponseConfig): Future[ResponseCtx] = throw new NotImplementedError()
+    override def validate(c: ResponseConfig): ValidateResponse = throw new NotImplementedError()
     override def confDecoder: Decoder[ResponseConfig] = deriveDecoder
   }
 
-  def pluginConf(pluginName: PluginName) = ApiGroupPluginConf(pluginName, Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))), None)
+  def pluginConf(pluginName: PluginName): ApiGroupPluginConf = ApiGroupPluginConf(
+    name = pluginName,
+    conf = Json.fromFields(List(
+      "x" -> Json.fromString("x"),
+      "y" -> Json.fromString("y")
+    )),
+    addressPrefixOpt = None
+  )
 
   "RuleBuilder.build" should {
-    val ruleConf = RuleConf(None, EndpointMatchCriteria(HttpMethod.GET, PathMatching("".r, Nil, PathPrefix(""), "")), StaticServiceRule(TargetHost(""), 9000, false), true, None, None, None, None, Nil, None, None, None, ExtRuleConf(None))
+    val ruleConf = RuleConf(
+      endpointName = None,
+      criteria = EndpointMatchCriteria(
+        HttpMethod.GET,
+        PathMatching("".r, Nil, PathPrefix(""), "")
+      ),
+      target = StaticServiceRule(TargetHost(""), 9000, ssl = false),
+      dropPathPrefix = true,
+      rewriteMethod = None,
+      rewritePath = None,
+      copyQueryOnRewrite = None,
+      preserveHostHeader = None,
+      tags = Nil,
+      requestBody = None,
+      requestBodyMaxSize = None,
+      call = None,
+      ext = ExtRuleConf(None)
+    )
     "build Rule without plugins" in {
       // given
-      val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, Nil, Nil), ResponsePluginsConf(Nil, Nil, Nil))
+      val withPlugins = RuleConfWithPlugins(
+        ruleConf,
+        RequestPluginsConf(pre = Nil, endpoint = Nil, post = Nil),
+        ResponsePluginsConf(pre = Nil, endpoint = Nil, post = Nil)
+      )
 
       // when
       val result: ValidationNel[InvalidPluginConf, Rule] =
         Await.result(RuleBuilder.build(vertx, JaegerTracing.noTracing, withPlugins), 3 seconds)
 
       // then
-      result must be(Success(Rule(ruleConf, Nil, Nil)))
+      result mustBe Success(Rule(ruleConf, Nil, Nil))
     }
 
     "build Rule with valid request and response plugins" in {
@@ -73,8 +101,8 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       val reqConf = pluginConf(reqPlugin.name)
       val respConf = pluginConf(respPlugin.name)
       val withPlugins = RuleConfWithPlugins(ruleConf,
-        RequestPluginsConf(List(reqConf), List(reqConf), List(reqConf)),
-        ResponsePluginsConf(List(respConf), List(respConf), List(respConf))
+        RequestPluginsConf(pre = List(reqConf), endpoint = List(reqConf), post = List(reqConf)),
+        ResponsePluginsConf(pre = List(respConf), endpoint = List(respConf), post = List(respConf))
       )
 
       // when
@@ -84,8 +112,8 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       // then
       result match {
         case Success(rule) =>
-          rule.requestPlugins.size must be(3)
-          rule.responsePlugins.size must be(6)
+          rule.requestPlugins.size mustBe 3
+          rule.responsePlugins.size mustBe 6
         case x => fail(x.toString)
       }
     }
@@ -105,7 +133,11 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
 
       val reqConf = pluginConf(reqPlugin.name)
       val respConf = pluginConf(respPlugin.name)
-      val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, List(reqConf), Nil), ResponsePluginsConf(Nil, List(respConf), Nil))
+      val withPlugins = RuleConfWithPlugins(
+        ruleConf,
+        RequestPluginsConf(pre = Nil, endpoint = List(reqConf), post = Nil),
+        ResponsePluginsConf(pre = Nil, endpoint = List(respConf), post = Nil)
+      )
 
       // when
       val result: ValidationNel[InvalidPluginConf, Rule] =
@@ -114,7 +146,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       // then
       result match {
         case Success(rule)   => fail(rule.toString)
-        case Failure(errors) => errors must be(NonEmptyList(InvalidPluginConf(respConf, "errorResp")))
+        case Failure(errors) => errors mustBe NonEmptyList(InvalidPluginConf(respConf, "errorResp"))
       }
     }
 
@@ -127,7 +159,11 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       deployVerticle(respPlugin)
 
       val respConf = pluginConf(respPlugin.name)
-      val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, Nil, Nil), ResponsePluginsConf(List(respConf), Nil, Nil))
+      val withPlugins = RuleConfWithPlugins(
+        ruleConf,
+        RequestPluginsConf(pre = Nil, endpoint = Nil, post = Nil),
+        ResponsePluginsConf(pre = List(respConf), endpoint = Nil, post = Nil)
+      )
 
       // when
       val result: ValidationNel[InvalidPluginConf, Rule] =
@@ -136,7 +172,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       // then
       result match {
         case Success(rule)   => fail(rule.toString)
-        case Failure(errors) => errors must be(NonEmptyList(InvalidPluginConf(respConf, "errorResp")))
+        case Failure(errors) => errors mustBe NonEmptyList(InvalidPluginConf(respConf, "errorResp"))
       }
     }
 
@@ -149,7 +185,11 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       deployVerticle(respPlugin)
 
       val respConf = pluginConf(respPlugin.name)
-      val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, Nil, Nil), ResponsePluginsConf(Nil, Nil, List(respConf)))
+      val withPlugins = RuleConfWithPlugins(
+        ruleConf,
+        RequestPluginsConf(pre = Nil, endpoint = Nil, post = Nil),
+        ResponsePluginsConf(pre = Nil, endpoint = Nil, post = List(respConf))
+      )
 
       // when
       val result: ValidationNel[InvalidPluginConf, Rule] =
@@ -158,7 +198,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       // then
       result match {
         case Success(rule)   => fail(rule.toString)
-        case Failure(errors) => errors must be(NonEmptyList(InvalidPluginConf(respConf, "errorResp")))
+        case Failure(errors) => errors mustBe NonEmptyList(InvalidPluginConf(respConf, "errorResp"))
       }
     }
 
@@ -179,7 +219,11 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
 
       val reqConf = pluginConf(reqPlugin.name)
       val respConf = pluginConf(respPlugin.name)
-      val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, List(reqConf), Nil), ResponsePluginsConf(Nil, List(respConf), Nil))
+      val withPlugins = RuleConfWithPlugins(
+        ruleConf,
+        RequestPluginsConf(pre = Nil, endpoint = List(reqConf), post = Nil),
+        ResponsePluginsConf(pre = Nil, endpoint = List(respConf), post = Nil)
+      )
 
       // when
       val result: ValidationNel[InvalidPluginConf, Rule] =
@@ -188,7 +232,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       // then
       result match {
         case Success(rule)   => fail(rule.toString)
-        case Failure(errors) => errors must be(NonEmptyList(InvalidPluginConf(reqConf, "errorReq")))
+        case Failure(errors) => errors mustBe NonEmptyList(InvalidPluginConf(reqConf, "errorReq"))
       }
     }
 
@@ -202,7 +246,11 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       deployVerticle(reqPlugin)
 
       val reqConf = pluginConf(reqPlugin.name)
-      val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(List(reqConf), Nil, Nil), ResponsePluginsConf(Nil, Nil, Nil))
+      val withPlugins = RuleConfWithPlugins(
+        ruleConf,
+        RequestPluginsConf(pre = List(reqConf), endpoint = Nil, post = Nil),
+        ResponsePluginsConf(pre = Nil, endpoint = Nil, post = Nil)
+      )
 
       // when
       val result: ValidationNel[InvalidPluginConf, Rule] =
@@ -211,7 +259,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       // then
       result match {
         case Success(rule)   => fail(rule.toString)
-        case Failure(errors) => errors must be(NonEmptyList(InvalidPluginConf(reqConf, "errorReq")))
+        case Failure(errors) => errors mustBe NonEmptyList(InvalidPluginConf(reqConf, "errorReq"))
       }
     }
 
@@ -225,7 +273,11 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       deployVerticle(reqPlugin)
 
       val reqConf = pluginConf(reqPlugin.name)
-      val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, Nil, List(reqConf)), ResponsePluginsConf(Nil, Nil, Nil))
+      val withPlugins = RuleConfWithPlugins(
+        ruleConf,
+        RequestPluginsConf(pre = Nil, endpoint = Nil, post = List(reqConf)),
+        ResponsePluginsConf(pre = Nil, endpoint = Nil, post = Nil)
+      )
 
       // when
       val result: ValidationNel[InvalidPluginConf, Rule] =
@@ -234,7 +286,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       // then
       result match {
         case Success(rule)   => fail(rule.toString)
-        case Failure(errors) => errors must be(NonEmptyList(InvalidPluginConf(reqConf, "errorReq")))
+        case Failure(errors) => errors mustBe NonEmptyList(InvalidPluginConf(reqConf, "errorReq"))
       }
     }
 
@@ -253,7 +305,11 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
 
       val reqConf = pluginConf(reqPlugin.name)
       val respConf = pluginConf(respPlugin.name)
-      val withPlugins = RuleConfWithPlugins(ruleConf, RequestPluginsConf(Nil, List(reqConf), Nil), ResponsePluginsConf(Nil, List(respConf), Nil))
+      val withPlugins = RuleConfWithPlugins(
+        ruleConf,
+        RequestPluginsConf(pre = Nil, endpoint = List(reqConf), post = Nil),
+        ResponsePluginsConf(pre = Nil, endpoint = List(respConf), post = Nil)
+      )
 
       // when
       val result: ValidationNel[InvalidPluginConf, Rule] =
@@ -263,7 +319,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       result match {
         case Success(rule) => fail(rule.toString)
         case Failure(errors) =>
-          errors.size must be(2)
+          errors.size mustBe 2
           errors.list.toList must contain(InvalidPluginConf(reqConf, "errorReq"))
           errors.list.toList must contain(InvalidPluginConf(respConf, "errorResp"))
       }
