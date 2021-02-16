@@ -17,9 +17,9 @@ import org.mockserver.model.HttpResponse.response
 import scala.concurrent.Future
 
 class ModifyResponseAcceptanceTest extends PyronAcceptanceTest with MockUtils {
-  override def getMetaConfPath(): String = "src/test/resources/acceptance/modify-response/meta-config-test.json"
+  override def getMetaConfPath: String = "src/test/resources/acceptance/modify-response/meta-config-test.json"
 
-    var targetService: ClientAndServer = null
+    var targetService: ClientAndServer = _
 
     @Before
   def before(): Unit = {

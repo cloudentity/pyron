@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 
 trait VertxSpec extends FutureConversions {
   lazy val vertx: Vertx = Vertx.vertx()
-  implicit lazy val ec = VertxExecutionContext(this.vertx.getOrCreateContext())
+  implicit lazy val ec: VertxExecutionContext = VertxExecutionContext(this.vertx.getOrCreateContext())
 
   VertxBus.registerPayloadCodec(vertx.eventBus())
 

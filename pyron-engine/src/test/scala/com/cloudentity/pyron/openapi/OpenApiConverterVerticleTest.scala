@@ -15,30 +15,78 @@ import scala.collection.JavaConverters._
 
 
 @RunWith(classOf[JUnitRunner])
-class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with VertxSpec with FutureUtils with OpenApiTestUtils {
+class OpenApiConverterVerticleTest extends WordSpec with MustMatchers with VertxSpec with FutureUtils with OpenApiTestUtils {
 
   val converter = new OpenApiConverterVerticle()
 
   "OpenApiConverter" should {
 
     "build target service path" in {
-      val rule = OpenApiRule(HttpMethod.GET, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/test"), PathPrefix(""), false, None, None, List(), Nil, None)
-      rule.targetServicePath must be ("/test")
+      val rule = OpenApiRule(
+        method = HttpMethod.GET,
+        serviceId = sampleServiceId,
+        group = GroupMatchCriteria.empty,
+        pathPattern = PathPattern("/test"),
+        pathPrefix = PathPrefix(""),
+        dropPathPrefix = false,
+        rewriteMethod = None,
+        rewritePath = None,
+        plugins = Nil,
+        tags = Nil,
+        operationId = None
+      )
+      rule.targetServicePath mustBe "/test"
     }
 
     "build target service path with path prefix" in {
-      val rule = OpenApiRule(HttpMethod.GET, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/test"), PathPrefix("/service"), false, None, None, List(), Nil, None)
-      rule.targetServicePath must be ("/service/test")
+      val rule = OpenApiRule(
+        method = HttpMethod.GET,
+        serviceId = sampleServiceId,
+        group = GroupMatchCriteria.empty,
+        pathPattern = PathPattern("/test"),
+        pathPrefix = PathPrefix("/service"),
+        dropPathPrefix = false,
+        rewriteMethod = None,
+        rewritePath = None,
+        plugins = Nil,
+        tags = Nil,
+        operationId = None
+      )
+      rule.targetServicePath mustBe "/service/test"
     }
 
     "build target service path with dropped path prefix" in {
-      val rule = OpenApiRule(HttpMethod.GET, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/test"), PathPrefix("/service"), true, None, None, List(), Nil, None)
-      rule.targetServicePath must be ("/test")
+      val rule = OpenApiRule(
+        method = HttpMethod.GET,
+        serviceId = sampleServiceId,
+        group = GroupMatchCriteria.empty,
+        pathPattern = PathPattern("/test"),
+        pathPrefix = PathPrefix("/service"),
+        dropPathPrefix = true,
+        rewriteMethod = None,
+        rewritePath = None,
+        plugins = Nil,
+        tags = Nil,
+        operationId = None
+      )
+      rule.targetServicePath mustBe "/test"
     }
 
     "build target service path with rewrite path" in {
-      val rule = OpenApiRule(HttpMethod.GET, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/test"), PathPrefix(""), false, None, Some(RewritePath("/api/test")), List(), Nil, None)
-      rule.targetServicePath must be ("/api/test")
+      val rule = OpenApiRule(
+        method = HttpMethod.GET,
+        serviceId = sampleServiceId,
+        group = GroupMatchCriteria.empty,
+        pathPattern = PathPattern("/test"),
+        pathPrefix = PathPrefix(""),
+        dropPathPrefix = false,
+        rewriteMethod = None,
+        rewritePath = Some(RewritePath("/api/test")),
+        plugins = Nil,
+        tags = Nil,
+        operationId = None
+      )
+      rule.targetServicePath mustBe "/api/test"
     }
 
     "convert only apis defined in rules" in {
@@ -50,24 +98,60 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
       val swagger = sampleSwagger(swaggerBasePath, paths)
 
       val rules = List(
-        OpenApiRule(HttpMethod.GET, sampleServiceId, GroupMatchCriteria.empty, PathPattern(apiPath1), PathPrefix(swaggerBasePath), false, None, None, List(), Nil, None),
-        OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern(apiPath1), PathPrefix(swaggerBasePath), false, None, None, List(), Nil, None),
-        OpenApiRule(HttpMethod.GET, sampleServiceId, GroupMatchCriteria.empty, PathPattern(apiPath2), PathPrefix(swaggerBasePath), false, None, None, List(), Nil, None)
+        OpenApiRule(
+          method = HttpMethod.GET,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern(apiPath1),
+          pathPrefix = PathPrefix(swaggerBasePath),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = None,
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        ),
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern(apiPath1),
+          pathPrefix = PathPrefix(swaggerBasePath),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = None,
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        ),
+        OpenApiRule(
+          method = HttpMethod.GET,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern(apiPath2),
+          pathPrefix = PathPrefix(swaggerBasePath),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = None,
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        )
       )
 
       val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, swagger, rules, ConverterConf(None, None)))
       println(io.swagger.util.Json.pretty(result))
 
-      result.getBasePath must be ("/api")
-      result.getPaths.size() must be(2)
+      result.getBasePath mustBe "/api"
+      result.getPaths.size() mustBe 2
 
       val expectedPath1 = swaggerBasePath + apiPath1
       val path1 = result.getPath(expectedPath1)
-      path1.getOperations.size() must be (2)
+      path1.getOperations.size() mustBe 2
 
       val expectedPath2 = swaggerBasePath + apiPath2
       val path2 = result.getPath(expectedPath2)
-      path2.getOperations.size() must be (1)
+      path2.getOperations.size() mustBe 1
     }
 
     "convert api when rule with path rewrite" in {
@@ -78,17 +162,17 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
 
       val rules = List(
         OpenApiRule(
-          method         = HttpMethod.POST,
-          serviceId      = sampleServiceId,
-          group          = GroupMatchCriteria.empty,
-          pathPrefix     = PathPrefix("/apigw"),
-          pathPattern    = PathPattern("/other-users"),
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern("/other-users"),
+          pathPrefix = PathPrefix("/apigw"),
           dropPathPrefix = false,
-          rewriteMethod  = None,
-          rewritePath    = Some(RewritePath("/overlay/api/users")),
-          plugins        = List(),
-          tags           = Nil,
-          operationId    = None
+          rewriteMethod = None,
+          rewritePath = Some(RewritePath("/overlay/api/users")),
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
         )
       )
 
@@ -97,10 +181,10 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
       println(io.swagger.util.Json.pretty(result))
 
       // then
-      result.getBasePath must be ("/api")
+      result.getBasePath mustBe "/api"
 
-      result.getPaths.size() must be(1)
-      result.getPath("/apigw/other-users") must not be (null)
+      result.getPaths.size() mustBe 1
+      result.getPath("/apigw/other-users") must not be null
     }
 
     "convert api when rule with dropped path prefix" in {
@@ -119,7 +203,7 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
           dropPathPrefix = true,
           rewriteMethod  = None,
           rewritePath    = None,
-          plugins        = List(),
+          plugins        = Nil,
           tags           = Nil,
           operationId    = None
         )
@@ -130,10 +214,10 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
       println(io.swagger.util.Json.pretty(result))
 
       // then
-      result.getBasePath must be ("/api")
+      result.getBasePath mustBe "/api"
 
-      result.getPaths.size() must be(1)
-      result.getPath("/apigw/users") must not be (null)
+      result.getPaths.size() mustBe 1
+      result.getPath("/apigw/users") must not be null
     }
 
     "convert api when rule with method rewrite" in {
@@ -152,7 +236,7 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
           dropPathPrefix = false,
           rewriteMethod  = Some(RewriteMethod(HttpMethod.POST)),
           rewritePath    = None,
-          plugins        = List(),
+          plugins        = Nil,
           tags           = Nil,
           operationId    = None
         )
@@ -163,30 +247,50 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
       println(io.swagger.util.Json.pretty(result))
 
       // then
-      result.getBasePath must be ("/api")
+      result.getBasePath mustBe "/api"
 
-      result.getPaths.size() must be(1)
-      result.getPath("/users") must not be (null)
-      result.getPath("/users").getPut must not be (null)
+      result.getPaths.size() mustBe 1
+      result.getPath("/users") must not be null
+      result.getPath("/users").getPut must not be null
     }
 
     "set host, basePath and scheme based on config" in {
       val getPath = sampleGetPath()
       val targetServiceSwagger = sampleSwagger("/", Map("/test" -> getPath))
       val apiGwGetPath = PathPattern("/test")
-      val rules = List(OpenApiRule(HttpMethod.GET, sampleServiceId, GroupMatchCriteria.empty, apiGwGetPath, PathPrefix(""), false, None, None, List(), Nil, None))
+      val rules = List(
+        OpenApiRule(
+          method = HttpMethod.GET,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = apiGwGetPath,
+          pathPrefix = PathPrefix(""),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = None,
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        )
+      )
 
-      val conf = ConverterConf(Some(OpenApiDefaultsConf(Some(Host("example.com")), Some(BasePath("/api")), Some(true))), None)
+      val conf = ConverterConf(
+        defaults = Some(
+          OpenApiDefaultsConf(
+            host = Some(Host("example.com")),
+            basePath = Some(BasePath("/api")),
+            ssl = Some(true))),
+        processors = None)
       val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, targetServiceSwagger, rules, conf))
 
       println(io.swagger.util.Json.pretty(result))
 
-      result.getHost must be ("example.com")
-      result.getBasePath must be ("/api")
-      result.getSchemes.asScala must be (List(Scheme.HTTPS))
+      result.getHost mustBe "example.com"
+      result.getBasePath mustBe "/api"
+      result.getSchemes.asScala mustBe List(Scheme.HTTPS)
 
-      result.getPaths.size() must be (1)
-      result.getPath("/test") must be (getPath)
+      result.getPaths.size() mustBe 1
+      result.getPath("/test") mustBe getPath
     }
 
     "resolve operationId conflicts when rules proxy to the same api" in {
@@ -194,16 +298,40 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
       val targetServiceSwagger = sampleSwagger("/", Map("/applications" -> postPath))
 
       val rules = List(
-        OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/applications"), PathPrefix(""), false, None, None, List(), Nil, None),
-        OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/admin/applications"), PathPrefix(""), false, None, Some(RewritePath("/applications")), List(), Nil, None)
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern("/applications"),
+          pathPrefix = PathPrefix(""),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = None,
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        ),
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern("/admin/applications"),
+          pathPrefix = PathPrefix(""),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = Some(RewritePath("/applications")),
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        )
       )
 
       val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, targetServiceSwagger, rules, ConverterConf(None, None)))
       println(io.swagger.util.Json.pretty(result))
 
-      result.getPaths.size must be (2)
-      result.getPath("/applications").getPost.getOperationId must be ("postApplications")
-      result.getPath("/admin/applications").getPost.getOperationId must be ("postAdminApplications")
+      result.getPaths.size mustBe 2
+      result.getPath("/applications").getPost.getOperationId mustBe "postApplications"
+      result.getPath("/admin/applications").getPost.getOperationId mustBe "postAdminApplications"
     }
 
     "overwrite operationId from rule config so no conflicts when rules proxy to the same api" in {
@@ -211,37 +339,88 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
       val targetServiceSwagger = sampleSwagger("/", Map("/applications" -> postPath))
 
       val rules = List(
-        OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/applications"), PathPrefix(""), false, None, None, List(), Nil, None),
-        OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/admin/applications"), PathPrefix(""), false, None, Some(RewritePath("/applications")), List(), Nil, Some("operationId"))
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern("/applications"),
+          pathPrefix = PathPrefix(""),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = None,
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        ),
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern("/admin/applications"),
+          pathPrefix = PathPrefix(""),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = Some(RewritePath("/applications")),
+          plugins = Nil,
+          tags = Nil,
+          operationId = Some("operationId")
+        )
       )
 
       val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, targetServiceSwagger, rules, ConverterConf(None, None)))
       println(io.swagger.util.Json.pretty(result))
 
-      result.getPaths.size must be (2)
-      result.getPath("/applications").getPost.getOperationId must be ("postApi")
-      result.getPath("/admin/applications").getPost.getOperationId must be ("operationId")
+      result.getPaths.size mustBe 2
+      result.getPath("/applications").getPost.getOperationId mustBe "postApi"
+      result.getPath("/admin/applications").getPost.getOperationId mustBe "operationId"
     }
 
     "convert api when rule with drop prefix by adding prefix in generated swagger" in {
       val swagger = sampleSwagger("/", Map("/policy" -> samplePostPath()))
 
-      val rules = List(OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/policy"), PathPrefix("/authz"), true, None, None, List(), Nil, None))
+      val rules = List(
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern("/policy"),
+          pathPrefix = PathPrefix("/authz"),
+          dropPathPrefix = true,
+          rewriteMethod = None,
+          rewritePath = None,
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        ))
       val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, swagger, rules, ConverterConf(None, None)))
 
-      result.getBasePath must be ("/api")
-      result.getPaths.size() must be (1)
-      result.getPath("/authz/policy") must not be (null)
+      result.getBasePath mustBe "/api"
+      result.getPaths.size() mustBe 1
+      result.getPath("/authz/policy") must not be null
     }
 
     "convert api when rules with rewrite path proxying to generic api in target service" in {
       val swagger = sampleSwagger("/", Map("/relations/{relationType}/{relationValue}" -> samplePostPath()))
 
-      val rules = List(OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/device/trust"), PathPrefix(""), false, None, Some(RewritePath("/relations/trust/trusted")), List(), Nil, None))
+      val rules = List(
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern("/device/trust"),
+          pathPrefix = PathPrefix(""),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = Some(RewritePath("/relations/trust/trusted")),
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        )
+      )
       val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, swagger, rules, ConverterConf(None, None)))
 
-      result.getBasePath must be ("/api")
-      result.getPaths.size() must be (1)
+      result.getBasePath mustBe "/api"
+      result.getPaths.size() mustBe 1
 
       println(io.swagger.util.Json.pretty(result))
     }
@@ -249,13 +428,27 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
     "convert api when rules with rewrite path and path params proxying to generic api in target service" in {
       val swagger = sampleSwagger("/", Map("/relations/device/{deviceUuid}/{relationType}" -> samplePostPath()))
 
-      val rules = List(OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, PathPattern("/devices/{deviceUuid}/trust"), PathPrefix(""), false, None, Some(RewritePath("/relations/device/{deviceUuid}/trust")), List(), Nil, None))
+      val rules = List(
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = PathPattern("/devices/{deviceUuid}/trust"),
+          pathPrefix = PathPrefix(""),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = Some(RewritePath("/relations/device/{deviceUuid}/trust")),
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        )
+      )
       val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, swagger, rules, ConverterConf(None, None)))
 
       println(io.swagger.util.Json.pretty(result))
 
-      result.getBasePath must be ("/api")
-      result.getPaths.size() must be (1)
+      result.getBasePath mustBe "/api"
+      result.getPaths.size() mustBe 1
 
     }
 
@@ -263,13 +456,27 @@ class OpenApiConverterVerticleOpenTest extends WordSpec with MustMatchers with V
       val targetServiceSwagger = sampleSwagger("/", Map("/application/{uuid}/capability/oauthClient" -> samplePostPath()))
       val apiGwGetPath = PathPattern("/application/{applicationId}/capability/oauthClient")
 
-      val rules = List(OpenApiRule(HttpMethod.POST, sampleServiceId, GroupMatchCriteria.empty, apiGwGetPath, PathPrefix(""), false, None, None, List(), Nil, None))
+      val rules = List(
+        OpenApiRule(
+          method = HttpMethod.POST,
+          serviceId = sampleServiceId,
+          group = GroupMatchCriteria.empty,
+          pathPattern = apiGwGetPath,
+          pathPrefix = PathPrefix(""),
+          dropPathPrefix = false,
+          rewriteMethod = None,
+          rewritePath = None,
+          plugins = Nil,
+          tags = Nil,
+          operationId = None
+        )
+      )
       val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, targetServiceSwagger, rules, ConverterConf(None, None)))
 
       println(io.swagger.util.Json.pretty(result))
 
-      result.getBasePath must be ("/api")
-      result.getPaths.size() must be (1)
+      result.getBasePath mustBe "/api"
+      result.getPaths.size() mustBe 1
     }
 
   }

@@ -17,21 +17,46 @@ import scala.concurrent.{Await, Future}
 
 @RunWith(classOf[JUnitRunner])
 class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestRequestResponseCtx {
-  val host = TargetHost("host")
-  val uri = RelativeUri.of("uri").get
+  val host: TargetHost = TargetHost("host")
+  val uri: RelativeUri = RelativeUri.of("uri").get
 
-  val original = OriginalRequest(HttpMethod.GET, UriPath(uri.path), QueryParams.empty, Headers(), None, PathParams.empty)
-  val requestGet = TargetRequest(HttpMethod.GET, StaticService(host, 100, false), uri, Headers(), None)
-  val requestPost = TargetRequest(HttpMethod.POST, StaticService(host, 100, false), uri, Headers(), None)
-  val requestDelete = TargetRequest(HttpMethod.DELETE, StaticService(host, 100, false), uri, Headers(), None)
+  val original: OriginalRequest = OriginalRequest(
+    HttpMethod.GET,
+    UriPath(uri.path),
+    QueryParams.empty,
+    Headers(),
+    None,
+    PathParams.empty
+  )
+  val requestGet: TargetRequest = TargetRequest(
+    HttpMethod.GET,
+    StaticService(host = host, port = 100, ssl = false),
+    uri,
+    Headers(),
+    None
+  )
+  val requestPost: TargetRequest = TargetRequest(
+    method = HttpMethod.POST,
+    service = StaticService(host = host, port = 100, ssl = false),
+    uri = uri,
+    headers = Headers(),
+    bodyOpt = None
+  )
+  val requestDelete: TargetRequest = TargetRequest(
+    method = HttpMethod.DELETE,
+    service = StaticService(host = host, port = 100, ssl = false),
+    uri = uri,
+    headers = Headers(),
+    bodyOpt = None
+  )
 
-  val response = ApiResponse(200, Buffer.buffer(), Headers())
+  val response: ApiResponse = ApiResponse(200, Buffer.buffer(), Headers())
 
   def requestCtx(req: TargetRequest): RequestCtx =
     emptyRequestCtx.copy(request = req)
 
   def failingPlugin(ex: Throwable): RequestPlugin =
-    (ctx: RequestCtx) => Future.failed(ex)
+    (_: RequestCtx) => Future.failed(ex)
 
   def responsePlugin(response: ApiResponse): RequestPlugin =
     (ctx: RequestCtx) => Future.successful(ctx.abort(response))
@@ -49,7 +74,7 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
         PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f, 1 second).request must be(requestDelete)
+      Await.result(f, 1 second).request mustBe requestDelete
     }
 
     "break applying request plugins when applied plugin returned ApiResponse" in {
@@ -61,7 +86,7 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
         PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f, 1 second).aborted must be(Some(emptyResponse))
+      Await.result(f, 1 second).aborted mustBe Some(emptyResponse)
     }
 
     "break applying request plugins when applied plugin returned failure" in {
@@ -74,7 +99,7 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
         PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f, 1 second).aborted must be(Some(emptyResponse))
+      Await.result(f, 1 second).aborted mustBe Some(emptyResponse)
     }
   }
 

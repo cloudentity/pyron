@@ -4,7 +4,7 @@ import com.cloudentity.pyron.PyronAcceptanceTest
 import com.cloudentity.pyron.apigroup.{ApiGroupConf, ApiGroupId, ApiGroupsChangeListener}
 import com.cloudentity.pyron.domain.flow.{BasePath, GroupMatchCriteria}
 import com.cloudentity.pyron.rule.RulesConfReader
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import io.vertx.core.{Future, Promise}
 import io.vertx.ext.unit.TestContext
 import org.junit.{AfterClass, BeforeClass, Test}
@@ -15,7 +15,7 @@ import org.mockserver.verify.VerificationTimes
 import AcpApiGroupsSynchronizerTest._
 
 object AcpApiGroupsSynchronizerTest {
-  var authorizer: ClientAndServer = null
+  var authorizer: ClientAndServer = _
 
   @BeforeClass
   def setup(): Unit = {
@@ -28,7 +28,7 @@ object AcpApiGroupsSynchronizerTest {
     authorizer.stop()
   }
 
-  private def mockSetApis(code: Int): Unit = {
+  def mockSetApis(code: Int): Unit = {
     authorizer
       .when(request().withPath("/apis"))
       .respond(response.withStatusCode(code))
@@ -86,7 +86,7 @@ class AcpApiGroupsSynchronizerTest extends PyronAcceptanceTest {
     val expectedBody = """{"api_groups":[{"id":"a.1","apis":[{"method":"GET","path":"/payments"}]}]}"""
 
     // when
-    ServiceClientFactory.make(vertx.eventBus(), classOf[ApiGroupsChangeListener]).apiGroupsChanged(Nil, groups)
+    VertxEndpointClient.make(vertx, classOf[ApiGroupsChangeListener]).apiGroupsChanged(Nil, groups)
 
     // then
     verify("PUT", "/apis", expectedBody, 1).onComplete(ctx.asyncAssertSuccess())

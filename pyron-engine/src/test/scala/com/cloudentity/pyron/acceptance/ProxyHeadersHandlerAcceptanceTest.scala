@@ -9,7 +9,6 @@ import com.cloudentity.pyron.domain.flow.ProxyHeaders
 import com.cloudentity.pyron.domain.http.Headers
 import io.circe.Json
 import io.circe.parser._
-import io.circe.syntax._
 import io.restassured.RestAssured.given
 import io.vertx.core.MultiMap
 import org.hamcrest.{BaseMatcher, Description}
@@ -17,9 +16,9 @@ import org.junit.Test
 import org.scalatest.MustMatchers
 
 class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMatchers {
-  override def getMetaConfPath(): String ="src/test/resources/acceptance/proxy-headers/meta-config.json"
+  override def getMetaConfPath: String ="src/test/resources/acceptance/proxy-headers/meta-config.json"
 
-  def headerMatcher(name: String, value: String) = new BaseMatcher[String] {
+  def headerMatcher(name: String, value: String): BaseMatcher[String] = new BaseMatcher[String] {
     override def matches(o: Any): Boolean =
       decode[Map[String, Json]](o.toString).toOption.flatMap(_.get("request")).flatMap(_.asObject).flatMap(_.toMap.get("headers")).get.as[Headers].toOption.get.get(name).contains(value)
 
@@ -59,7 +58,7 @@ class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMa
     )
     val expectedTrueClientIp = trueIp
 
-    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), false, headerNames) must be(ProxyHeaders(expectedHeaders, expectedTrueClientIp))
+    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
   }
 
   @Test
@@ -78,7 +77,7 @@ class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMa
       )
       val expectedTrueClientIp = trueIp
 
-      ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), false, headerNames) must be(ProxyHeaders(expectedHeaders, expectedTrueClientIp))
+      ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
     }
 
   @Test
@@ -97,7 +96,7 @@ class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMa
     )
     val expectedTrueClientIp = trueIp
 
-    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), false, headerNames) must be(ProxyHeaders(expectedHeaders, expectedTrueClientIp))
+    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
   }
 
   @Test
@@ -116,7 +115,7 @@ class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMa
     )
     val expectedTrueClientIp = trueIp
 
-    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), false, headerNames) must be(ProxyHeaders(expectedHeaders, expectedTrueClientIp))
+    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
   }
 
   @Test
@@ -134,7 +133,7 @@ class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMa
     )
     val expectedTrueClientIp = remoteIp
 
-    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), false, headerNames) must be(ProxyHeaders(expectedHeaders, expectedTrueClientIp))
+    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
   }
 
   @Test
@@ -153,6 +152,6 @@ class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMa
     )
     val expectedTrueClientIp = trueIp
 
-    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), false, headerNames) must be(ProxyHeaders(expectedHeaders, expectedTrueClientIp))
+    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
   }
 }

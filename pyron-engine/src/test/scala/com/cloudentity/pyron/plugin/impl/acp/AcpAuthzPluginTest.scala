@@ -1,8 +1,7 @@
 package com.cloudentity.pyron.plugin.impl.acp
 
 import com.cloudentity.pyron.PyronAcceptanceTest
-import com.cloudentity.pyron.plugin.impl.acp.AcpAuthzPluginTest.authorizer
-import org.junit.{After, Before, BeforeClass, Test}
+import org.junit.{After, Before, Test}
 import org.mockserver.integration.ClientAndServer
 import io.restassured.RestAssured.given
 import org.mockserver.model.HttpRequest.request
@@ -12,24 +11,19 @@ import org.mockserver.model.{Body, HttpRequest, JsonBody}
 import io.vertx.ext.unit.TestContext
 
 object AcpAuthzPluginTest {
-  var authorizer: ClientAndServer = null
+  var authorizer: ClientAndServer = _
 
   //@BeforeClass
   def setup(): Unit = {
     authorizer = ClientAndServer.startClientAndServer(7777)
-    mockSetApis(204)
-  }
-
-  private def mockSetApis(code: Int): Unit = {
-
   }
 }
 
 class AcpAuthzPluginTest extends PyronAcceptanceTest {
   override val getMetaConfPath = "src/test/resources/modules/plugin/acp-authz/meta-config.json"
 
-  var targetService: ClientAndServer = null
-  var authorizer: ClientAndServer = null
+  var targetService: ClientAndServer = _
+  var authorizer: ClientAndServer = _
 
   @Before
   override def setUp(ctx: TestContext): Unit = {

@@ -12,7 +12,14 @@ import org.scalatestplus.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class RewritePathSpec extends FlatSpec {
 
-  val originalDefault = OriginalRequest(HttpMethod.GET, UriPath("/path"), QueryParams.empty, Headers(), None, PathParams.empty)
+  val originalDefault: OriginalRequest = OriginalRequest(
+    method = HttpMethod.GET,
+    path = UriPath("/path"),
+    queryParams = QueryParams.empty,
+    headers = Headers(),
+    bodyOpt = None,
+    pathParams = PathParams.empty
+  )
 
   it should "rewrite path without params" in {
     val rewritePathConf = "/api/new/path"

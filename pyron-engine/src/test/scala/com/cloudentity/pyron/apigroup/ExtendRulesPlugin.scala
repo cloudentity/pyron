@@ -14,7 +14,9 @@ import scala.concurrent.Future
 
 class ExtendRulesPlugin extends RequestPluginVerticle[Unit] {
   override def name: PluginName = PluginName("extend")
-  override def apply(ctx: RequestCtx, conf: Unit): Future[RequestCtx] = Future.successful(ctx.abort(ApiResponse(200, Buffer.buffer(), Headers())))
+  override def apply(ctx: RequestCtx, conf: Unit): Future[RequestCtx] = Future.successful(
+    ctx.abort(ApiResponse(200, Buffer.buffer(), Headers()))
+  )
   override def validate(conf: Unit): ValidateResponse = ValidateOk
   override def confDecoder: Decoder[Unit] = Decoder.decodeUnit
 

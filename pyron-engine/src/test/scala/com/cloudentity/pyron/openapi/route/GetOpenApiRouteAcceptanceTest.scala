@@ -48,7 +48,7 @@ class OpenApiMatcher(val expectedOpenApi: Swagger, val writer: ObjectWriter) ext
 }
 
 class GetOpenApiRouteAcceptanceTest extends PyronAcceptanceTest with MockUtils {
-  override def getMetaConfPath() = "src/test/resources/openapi/meta-config.json"
+  override def getMetaConfPath = "src/test/resources/openapi/meta-config.json"
 
   var targetServiceA: ClientAndServer = _
   var targetServiceB: ClientAndServer = _
@@ -69,7 +69,7 @@ class GetOpenApiRouteAcceptanceTest extends PyronAcceptanceTest with MockUtils {
     targetServiceC.close()
   }
 
-  val defaultOpenApi =
+  val defaultOpenApi: String =
     """
       |{
       |  "swagger": "2.0",

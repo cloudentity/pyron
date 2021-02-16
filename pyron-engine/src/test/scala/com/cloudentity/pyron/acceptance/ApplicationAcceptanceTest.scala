@@ -11,9 +11,9 @@ import org.mockserver.model.HttpResponse.response
 import org.scalatest.MustMatchers
 
 class ApplicationAcceptanceTest extends PyronAcceptanceTest with MustMatchers with MockUtils {
-  override def getMetaConfPath() = "src/test/resources/acceptance/application/meta-config-min.json"
+  override def getMetaConfPath = "src/test/resources/acceptance/application/meta-config-min.json"
 
-  var targetService: ClientAndServer = null
+  var targetService: ClientAndServer = _
 
   @Before
   def before(): Unit = {

@@ -11,7 +11,7 @@ import org.mockserver.verify.VerificationTimes
 trait MockUtils {
   def mockOnPathWithPongingBodyAndHeaders(service: ClientAndServer)(path: String, code: Int): Unit =
     service.when(request()).callback { request: HttpRequest =>
-      if (request.getPath == path)
+      if (request.getPath.getValue == path)
         response()
           .withStatusCode(code)
           .withBody(request.getBodyAsString)
@@ -21,7 +21,7 @@ trait MockUtils {
 
   def mockOnPath(service: ClientAndServer)(path: String, resp: HttpResponse): Unit =
     service.when(request().withPath(path)).callback { request: HttpRequest =>
-      if (request.getPath == path) resp
+      if (request.getPath.getValue == path) resp
       else response().withStatusCode(404)
     }
 
@@ -33,7 +33,7 @@ trait MockUtils {
           MatchType.STRICT)
       )
     ).callback { request: HttpRequest =>
-      if (request.getPath == path ) resp
+      if (request.getPath.getValue == path ) resp
       else response().withStatusCode(404)
     }
 
@@ -59,7 +59,7 @@ trait MockUtils {
       VerificationTimes.exactly(0)
     )
 
-  def mockVaultServiceResponse(vaultService: ClientAndServer)(serial: String, body: String) = {
+  def mockVaultServiceResponse(vaultService: ClientAndServer)(serial: String, body: String): Unit = {
     vaultService.when(HttpRequest.request().withMethod("GET").withPath(s"/v1/pki/cert/$serial"))
       .respond(HttpResponse.response(body).withStatusCode(200))
   }
