@@ -6,7 +6,7 @@ import org.junit.Test
 import org.scalatest.MustMatchers
 
 class TransferEncodingAcceptanceTest extends PyronAcceptanceTest with MustMatchers {
-  override def getMetaConfPath(): String = "src/test/resources/acceptance/transfer-encoding/meta-config.json"
+  override def getMetaConfPath: String = "src/test/resources/acceptance/transfer-encoding/meta-config.json"
 
   @Test
   def shouldNotSetContentLengthHeaderWhenApiResponseHasTransferEncodignChunkedHeader(): Unit = {

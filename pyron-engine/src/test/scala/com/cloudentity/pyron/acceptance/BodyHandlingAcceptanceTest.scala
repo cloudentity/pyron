@@ -10,12 +10,12 @@ import org.mockserver.integration.ClientAndServer
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 
-class BodyHandlingAccesptanceTestextends extends PyronAcceptanceTest with MockUtils {
-  override def getMetaConfPath() = "src/test/resources/acceptance/body-handling/meta-config.json"
+class BodyHandlingAcceptanceTest extends PyronAcceptanceTest with MockUtils {
+  override def getMetaConfPath = "src/test/resources/acceptance/body-handling/meta-config.json"
 
-  var targetService: ClientAndServer = null
-  val body1024Bytes = List.fill(102)("abcdefghij").mkString("") + "abcd"
-  val body1025Bytes = body1024Bytes + "e"
+  var targetService: ClientAndServer = _
+  val body1024Bytes: String = List.fill(102)("abcdefghij").mkString("") + "abcd"
+  val body1025Bytes: String = body1024Bytes + "e"
 
   @Before
   def before(): Unit = {
@@ -35,16 +35,16 @@ class BodyHandlingAccesptanceTestextends extends PyronAcceptanceTest with MockUt
 
     given()
       .body(body1024Bytes)
-    .when()
+      .when()
       .post("/upload/buffer/limit")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     given()
       .body(body1025Bytes)
-    .when()
+      .when()
       .post("/upload/buffer/limit")
-    .`then`()
+      .`then`()
       .statusCode(413)
   }
 
@@ -56,16 +56,16 @@ class BodyHandlingAccesptanceTestextends extends PyronAcceptanceTest with MockUt
 
     given()
       .body(body1024Bytes)
-    .when()
+      .when()
       .post("/upload/stream/limit")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     given()
       .body(body1025Bytes)
-    .when()
+      .when()
       .post("/upload/stream/limit")
-    .`then`()
+      .`then`()
       .statusCode(413)
   }
 
@@ -83,9 +83,9 @@ class BodyHandlingAccesptanceTestextends extends PyronAcceptanceTest with MockUt
         ctx.assertEquals(200, resp.statusCode())
         async.complete()
       }.exceptionHandler{ ex =>
-        ctx.fail(ex)
-        async.complete()
-      }.end(body1024Bytes)
+      ctx.fail(ex)
+      async.complete()
+    }.end(body1024Bytes)
   }
 
   @Test

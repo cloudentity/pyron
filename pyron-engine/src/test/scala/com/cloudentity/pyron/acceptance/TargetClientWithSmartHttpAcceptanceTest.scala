@@ -27,11 +27,11 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
     targetService.stop
   }
 
-  override def getMetaConfPath(): String = "src/test/resources/acceptance/http/meta-config.json"
+  override def getMetaConfPath: String = "src/test/resources/acceptance/http/meta-config.json"
 
   @Test
   def targetClientUsingSmartHttpClientShouldProxyHeadersAndBodyAndSetInternalJwtHeader(): Unit = {
-    // given
+
     val requestHeaders = Map("x" -> "y", "z" -> "w")
     val requestBody = "body"
 
@@ -48,20 +48,18 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
           .withHeader(targetResponseHeaderKey, targetResponseHeaderValue)
       )
 
-    // when
     given()
       .headers(requestHeaders.asJava)
       .body(requestBody)
     .when()
       .post("/discoverable-service/test")
-    // then
     .`then`()
       .statusCode(200)
       .header(targetResponseHeaderKey, targetResponseHeaderValue)
       .body(IsEqual.equalTo(targetResponseBody))
 
     val requests = targetService.retrieveRecordedRequests(null)
-    requests.size mustBe(1)
+    requests.size mustBe 1
 
     targetService.verify(
       request()
@@ -72,7 +70,6 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
 
   @Test
   def targetClientUsingSmartHttpClientWithServiceTagsShouldCallTargetService(): Unit = {
-    // given
     val requestBody = "body"
 
     targetService
@@ -83,18 +80,16 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
           .withBody(requestBody)
       )
 
-    // when
     given()
       .body(requestBody)
     .when()
       .post("/discoverable-service-with-tags/test")
-      // then
     .`then`()
       .statusCode(200)
       .body(IsEqual.equalTo(requestBody))
 
     val requests = targetService.retrieveRecordedRequests(null)
-    requests.size mustBe(1)
+    requests.size mustBe 1
 
     targetService.verify(
       request()
@@ -104,7 +99,6 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
 
   @Test
   def targetClientUsingSmartHttpClientWithDefaultConfigShouldCallTargetService(): Unit = {
-    // given
     val requestBody = "body"
 
     targetService
@@ -115,18 +109,16 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
           .withBody(requestBody)
       )
 
-    // when
     given()
       .body(requestBody)
-      .when()
+    .when()
       .post("/service-default-config/test")
-      // then
-      .`then`()
+    .`then`()
       .statusCode(400)
       .body(IsEqual.equalTo(requestBody))
 
     val requests = targetService.retrieveRecordedRequests(null)
-    requests.size mustBe(2)
+    requests.size mustBe 2
 
     targetService.verify(
       request()
@@ -148,18 +140,16 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
           .withBody(requestBody)
       )
 
-    // when
     given()
       .body(requestBody)
     .when()
       .post("/static-service/test")
-    // then
     .`then`()
       .statusCode(504)
       .body(StringContains.containsString("Response.Timeout"))
 
     val requests = targetService.retrieveRecordedRequests(null)
-    requests.size mustBe(1)
+    requests.size mustBe 1
   }
 
   @Test
@@ -171,7 +161,11 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
     val httpRequest = io.restassured.RestAssured.given.header("a", "1", "2", "3")
     val httpResponse = httpRequest.post("/discoverable-service/test")
 
-    Assert.assertEquals(List(new RestHeader("b", "4"), new RestHeader("b", "5")).asJava, httpResponse.headers().getList("b"))
+    Assert.assertEquals(List(
+      new RestHeader("b", "4"),
+      new RestHeader("b", "5")).asJava,
+      httpResponse.headers().getList("b")
+    )
     Assert.assertEquals(200, httpResponse.statusCode())
   }
 

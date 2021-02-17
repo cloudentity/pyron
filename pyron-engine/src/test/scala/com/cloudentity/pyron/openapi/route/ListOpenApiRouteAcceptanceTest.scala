@@ -18,9 +18,9 @@ import org.scalatest.MustMatchers
 
 
 class ListOpenApiRouteAcceptanceTest extends PyronAcceptanceTest with MustMatchers with MockUtils {
-  override def getMetaConfPath() = "src/test/resources/openapi/meta-config.json"
+  override def getMetaConfPath = "src/test/resources/openapi/meta-config.json"
 
-  val prettyPrinter = Printer.noSpaces.copy(dropNullValues = true)
+  val prettyPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
 
   var targetServiceA: ClientAndServer = _
   var targetServiceB: ClientAndServer = _
@@ -41,7 +41,7 @@ class ListOpenApiRouteAcceptanceTest extends PyronAcceptanceTest with MustMatche
     targetServiceC.close()
   }
 
-  val defaultOpenApi =
+  val defaultOpenApi: String =
     """
       |{
       |  "swagger": "2.0",
@@ -87,7 +87,7 @@ class ListOpenApiRouteAcceptanceTest extends PyronAcceptanceTest with MustMatche
   }
 
   class ListOpenApiMatcher(val expected: ListOpenApiResponse, val printer: Printer) extends BaseMatcher[ListOpenApiResponse] {
-    val expectedJson = expected.asJson.pretty(printer)
+    val expectedJson: String = expected.asJson.pretty(printer)
 
     override def matches(response: scala.Any): Boolean = {
       assertEquals(expectedJson, response.asInstanceOf[String])

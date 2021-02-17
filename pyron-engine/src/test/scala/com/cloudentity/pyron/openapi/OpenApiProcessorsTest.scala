@@ -4,7 +4,7 @@ import java.util
 
 import com.cloudentity.pyron.domain.flow.ServiceClientName
 import com.cloudentity.pyron.domain.openapi.{ConverterConf, DiscoverableServiceId, ProcessorsConf}
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.conf.ConfVerticleDeploy
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import com.cloudentity.tools.vertx.test.VertxUnitTest
@@ -19,31 +19,31 @@ import scala.collection.JavaConverters._
 
 class OpenApiProcessorsTest extends VertxUnitTest {
   @Test
-  def multiplePreAndPostProcessorsShouldByApplied(ctx: TestContext) =
+  def multiplePreAndPostProcessorsShouldByApplied(ctx: TestContext): Unit =
     processorsShouldByApplied(ctx, ProcessorsConf(Some(List("pre-a", "pre-b")), Some(List("post-a", "post-b")))) { swagger =>
       ctx.assertEquals(List("pre-a", "pre-b", "post-a", "post-b").asJava, swagger.getConsumes)
     }
 
   @Test
-  def multiplePreProcessorsShouldByApplied(ctx: TestContext) =
+  def multiplePreProcessorsShouldByApplied(ctx: TestContext): Unit =
     processorsShouldByApplied(ctx, ProcessorsConf(Some(List("pre-a", "pre-b")), None)) { swagger =>
       ctx.assertEquals(List("pre-a", "pre-b").asJava, swagger.getConsumes)
     }
 
   @Test
-  def multiplePostProcessorsShouldByApplied(ctx: TestContext) =
+  def multiplePostProcessorsShouldByApplied(ctx: TestContext): Unit =
     processorsShouldByApplied(ctx, ProcessorsConf(None, Some(List("post-a", "post-b")))) { swagger =>
       ctx.assertEquals(List("post-a", "post-b").asJava, swagger.getConsumes)
     }
 
   @Test
-  def singlePreProcessorShouldByApplied(ctx: TestContext) =
+  def singlePreProcessorShouldByApplied(ctx: TestContext): Unit =
     processorsShouldByApplied(ctx, ProcessorsConf(Some(List("pre-a")), None)) { swagger =>
       ctx.assertEquals(List("pre-a").asJava, swagger.getConsumes)
     }
 
   @Test
-  def singlePostProcessorShouldByApplied(ctx: TestContext) =
+  def singlePostProcessorShouldByApplied(ctx: TestContext): Unit =
     processorsShouldByApplied(ctx, ProcessorsConf(None, Some(List("post-a")))) { swagger =>
       ctx.assertEquals(List("post-a").asJava, swagger.getConsumes)
     }
@@ -52,7 +52,7 @@ class OpenApiProcessorsTest extends VertxUnitTest {
     ConfVerticleDeploy.deployFileConfVerticle(vertx, "src/test/resources/openapi/converter.json")
       .compose { _ => VertxDeploy.deploy(vertx, new OpenApiConverterVerticle) }
       .compose { _ =>
-        val converter = ServiceClientFactory.make(vertx.eventBus(), classOf[OpenApiConverter])
+        val converter = VertxEndpointClient.make(vertx, classOf[OpenApiConverter])
         val serviceId = DiscoverableServiceId(ServiceClientName("service-a"))
         val swagger = new Swagger()
         swagger.setPaths(new util.HashMap())

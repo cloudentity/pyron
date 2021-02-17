@@ -17,17 +17,31 @@ import scala.concurrent.{Await, Future}
 
 @RunWith(classOf[JUnitRunner])
 class ResponsePluginFunctionsSpec extends WordSpec with MustMatchers with TestRequestResponseCtx {
-  val original = OriginalRequest(HttpMethod.GET, UriPath("uri"), QueryParams.empty, Headers(), None, PathParams.empty)
-  val request = TargetRequest(HttpMethod.GET, StaticService(TargetHost("host"), 100, false), RelativeUri.of("uri").get, Headers(), None)
 
-  val response200 = ApiResponse(200, Buffer.buffer(), Headers())
-  val response300 = ApiResponse(300, Buffer.buffer(), Headers())
-  val response400 = ApiResponse(400, Buffer.buffer(), Headers())
+  val original: OriginalRequest = OriginalRequest(
+    method = HttpMethod.GET,
+    path = UriPath("uri"),
+    queryParams = QueryParams.empty,
+    headers = Headers(),
+    bodyOpt = None,
+    pathParams = PathParams.empty
+  )
+  val request: TargetRequest = TargetRequest(
+    method = HttpMethod.GET,
+    service = StaticService(host = TargetHost("host"), port = 100, ssl = false),
+    uri = RelativeUri.of("uri").get,
+    headers = Headers(),
+    bodyOpt = None
+  )
 
-  def responseCtx(resp: ApiResponse) = emptyResponseCtx.copy(response = resp)
+  val response200: ApiResponse = ApiResponse(200, Buffer.buffer(), Headers())
+  val response300: ApiResponse = ApiResponse(300, Buffer.buffer(), Headers())
+  val response400: ApiResponse = ApiResponse(400, Buffer.buffer(), Headers())
+
+  def responseCtx(resp: ApiResponse): ResponseCtx = emptyResponseCtx.copy(response = resp)
 
   def failingPlugin(ex: Throwable): ResponsePlugin =
-    (ctx: ResponseCtx) => Future.failed(ex)
+    (_: ResponseCtx) => Future.failed(ex)
 
   def increaseStatusCodePlugin(increment: Int): ResponsePlugin =
     (ctx: ResponseCtx) => Future.successful(ctx.modifyResponse(_.copy(statusCode = ctx.response.statusCode + increment)))
@@ -35,27 +49,34 @@ class ResponsePluginFunctionsSpec extends WordSpec with MustMatchers with TestRe
   "Plugins.applyResponsePlugins" should {
     "return final response when all plugins successful" in {
       //given
-      val plugins = List(increaseStatusCodePlugin(100), increaseStatusCodePlugin(100))
+      val plugins = List(
+        increaseStatusCodePlugin(100),
+        increaseStatusCodePlugin(100)
+      )
 
       //when
       val f: Future[ResponseCtx] =
         PluginFunctions.applyResponsePlugins(responseCtx(response200), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f, 1 second).response must be(response400)
+      Await.result(f, 1 second).response mustBe response400
     }
 
     "not break applying plugins when applied plugin returned failure" in {
       //given
       val ex = new Exception()
-      val plugins: List[ResponsePlugin] = List(increaseStatusCodePlugin(100), failingPlugin(ex), increaseStatusCodePlugin(100))
+      val plugins: List[ResponsePlugin] = List(
+        increaseStatusCodePlugin(100),
+        failingPlugin(ex),
+        increaseStatusCodePlugin(100)
+      )
 
       //when
       val f: Future[ResponseCtx] =
         PluginFunctions.applyResponsePlugins(responseCtx(response200), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f, 1 second).response must be(response300)
+      Await.result(f, 1 second).response mustBe response300
     }
   }
 }

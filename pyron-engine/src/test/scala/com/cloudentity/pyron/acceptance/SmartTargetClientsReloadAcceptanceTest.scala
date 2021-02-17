@@ -10,10 +10,10 @@ import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.HttpResponse
 
 class SmartTargetClientsReloadAcceptanceTest extends PyronAcceptanceTest with MockUtils {
-  override def getMetaConfPath(): String = "src/test/resources/acceptance/smart-clients-reload/meta-config.json"
+  override def getMetaConfPath: String = "src/test/resources/acceptance/smart-clients-reload/meta-config.json"
 
-  var targetServiceA: ClientAndServer = null
-  var targetServiceB: ClientAndServer = null
+  var targetServiceA: ClientAndServer = _
+  var targetServiceB: ClientAndServer = _
 
   @Before
   def before(): Unit = {

@@ -9,10 +9,10 @@ import org.scalatest.{MustMatchers, WordSpec}
 class PathMatchingSpec extends WordSpec with MustMatchers {
   "PathMatching.createPatternRegex" should {
     "wrap pattern in ^ and $ regex symbols" in {
-      PathMatching.createPatternRegex("/path").regex must be("^/path$")
+      PathMatching.createPatternRegex("/path").regex mustBe "^/path$"
     }
     "substitute placeholder with [^/]+ regex" in {
-      PathMatching.createPatternRegex("/path/{placeholder}/path").regex must be("^/path/(?<placeholder>[^/]+)/path$")
+      PathMatching.createPatternRegex("/path/{placeholder}/path").regex mustBe "^/path/(?<placeholder>[^/]+)/path$"
     }
   }
   "PathMatching.extractPathParamNames" should {
@@ -26,7 +26,7 @@ class PathMatchingSpec extends WordSpec with MustMatchers {
       val names = extract(path)
 
       // then
-      names.map(_.value) must be(Nil)
+      names.map(_.value) mustBe Nil
     }
 
     "extract single name" in {
@@ -37,7 +37,7 @@ class PathMatchingSpec extends WordSpec with MustMatchers {
       val names = extract(path)
 
       // then
-      names.map(_.value) must be(List("placeholder"))
+      names.map(_.value) mustBe List("placeholder")
     }
 
     "extract multiple names" in {
@@ -48,7 +48,7 @@ class PathMatchingSpec extends WordSpec with MustMatchers {
       val names = extract(path)
 
       // then
-      names.map(_.value) must be(List("placeholder1", "placeholder2"))
+      names.map(_.value) mustBe List("placeholder1", "placeholder2")
     }
   }
 }

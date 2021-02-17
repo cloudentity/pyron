@@ -187,10 +187,11 @@ class TestApiGroupsStore(apiGroups: List[ApiGroup]) extends ScalaServiceVerticle
 class ResponseHeaderPlugin extends ResponsePluginVerticle[Unit] {
   override def name: PluginName = PluginName("responseHeader")
 
-  override def apply(responseCtx: ResponseCtx, conf: Unit): Future[ResponseCtx] =
-    Future.successful {
-      responseCtx.modifyResponse(_.modifyHeaders(_.setHeaders(Map(getConfig().getString("headerName") -> getConfig().getString("headerValue")))))
-    }
+  override def apply(responseCtx: ResponseCtx, conf: Unit): Future[ResponseCtx] = Future.successful {
+    responseCtx.modifyResponse(_.modifyHeaders(_.setHeaders(
+      Map(getConfig.getString("headerName") -> getConfig.getString("headerValue"))
+    )))
+  }
 
   override def validate(conf: Unit): ValidateResponse = ValidateResponse.ok()
 
