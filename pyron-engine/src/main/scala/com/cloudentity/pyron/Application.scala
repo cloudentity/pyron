@@ -6,7 +6,7 @@ import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.config.Conf.AppConf
 import com.cloudentity.pyron.openapi.route.{GetOpenApiRoute, ListOpenApiRoute}
 import com.cloudentity.pyron.rule.RulesStoreVerticle
-import com.cloudentity.tools.vertx.bus.VertxEndpointClient
+import com.cloudentity.tools.vertx.bus.ServiceClientFactory
 import com.cloudentity.tools.vertx.conf.ConfService
 import com.cloudentity.tools.vertx.launchers.OrchisCommandLauncher
 import com.cloudentity.tools.vertx.registry.RegistryVerticle
@@ -30,7 +30,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
 
   override def beforeServerStart(): VxFuture[_] = {
     ec = VertxExecutionContext(vertx.getOrCreateContext())
-    confService = VertxEndpointClient.make(vertx, classOf[ConfService])
+    confService = ServiceClientFactory.make(vertx.eventBus(), classOf[ConfService])
 
     for {
       appConf <- readAppConf
@@ -54,7 +54,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   override def deployServer(): VxFuture[String] = {
     for {
       _          <- deployApiHandlers(appConf)
-      _          <- deployServerInstance(appConf)
+      _          <- deployServerInstances(appConf, getServerVerticlesNum(appConf), Future.successful(""))
       _          <- deployAdminServerIfConfigured()
       _          <- deployOpenApiEndpointIfEnabled(appConf)
     } yield ""
@@ -73,13 +73,14 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   // deploying ApiHandler per ApiServer
   private def deployApiHandlers(conf: AppConf): Future[Unit] =
     Future.sequence {
-      (0 until getApiHandlerVerticlesNum(conf)).map { _ =>
+      (0 until getServerVerticlesNum(conf)).map { _ =>
         deployVerticle(new ApiHandlerVerticle())
       }
     }.map(_ => ())
 
-  def deployServerInstance(conf: AppConf): Future[String] =
-    deployVerticle(new ApiServer(conf))
+  def deployServerInstances(conf: AppConf, instances: Int, acc: Future[String]): Future[String] =
+    if (instances > 0) deployServerInstances(conf, instances - 1, acc.flatMap(_ => deployVerticle(new ApiServer(conf))))
+    else               acc
 
   private def deployVerticle(verticle: Verticle): Future[String] = {
     log.debug(s"Deploying ${verticle.getClass.getName} verticle")
@@ -87,9 +88,9 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   }
 
   private def deployAdminServerIfConfigured(): Future[Unit] =
-    confService.getConf("adminServer").toScala().map(Option.apply).flatMap {
+    confService.getConf("apiServer").toScala().map(Option.apply).flatMap {
       case Some(_) =>
-        ApiServerDeployer.deployServer(vertx, "adminServer").map(()).toScala()
+        ApiServerDeployer.deployServer(vertx).map(()).toScala()
       case None    =>
         log.debug("Admin API server configuration missing, skipping deployment")
         Future.successful(())
@@ -103,8 +104,9 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       Future.successful(())
     }
 
-  def getApiHandlerVerticlesNum(conf: AppConf): Int =
-    conf.serverVerticles.getOrElse(Runtime.getRuntime.availableProcessors)
+  def getServerVerticlesNum(conf: AppConf): Int =
+    conf.serverVerticles
+      .getOrElse(2 * Runtime.getRuntime.availableProcessors)
 }
 
 object Application {
