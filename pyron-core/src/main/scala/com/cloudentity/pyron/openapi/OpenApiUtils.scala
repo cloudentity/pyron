@@ -2,7 +2,6 @@ package com.cloudentity.pyron.openapi
 
 import java.util
 
-import com.cloudentity.pyron.domain._
 import com.cloudentity.pyron.domain.flow.{PathMatching, PathPattern, PathPrefix}
 import com.cloudentity.pyron.domain.openapi.OpenApi.OpenApiOperations
 import com.cloudentity.pyron.domain.openapi.OpenApiRule
@@ -16,12 +15,12 @@ import scala.collection.JavaConverters._
 object OpenApiConverterUtils extends OpenApiConverterUtils
 trait OpenApiConverterUtils {
 
-  def buildPath(operations: OpenApiOperations): Path = {
-    operations.foldLeft(new Path())((path, args) => path.set(args._1.toString.toLowerCase, args._2))
+  def buildPath(operations: OpenApiOperations): Path = operations.foldLeft(new Path()) {
+    case (path, (method, operation)) => path.set(method.toString.toLowerCase, operation)
   }
 
   def buildAbsolutePathsMap(swagger: Swagger): Map[String, OpenApiOperations] = {
-    swagger.getPaths().asScala.map {
+    swagger.getPaths.asScala.map {
       case (key, value) => buildAbsolutePath(swagger, key) -> value.getOperationMap.asScala.toMap
     }.toMap
   }
@@ -39,9 +38,9 @@ trait OpenApiConverterUtils {
   }
 
   def findOperationWithAbsoluteUrl(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] = {
-    swagger.getPaths.asScala.find { case (k, _) => {
+    swagger.getPaths.asScala.find { case (k, _) =>
       path == buildAbsolutePath(swagger, k)
-    }}.flatMap(e => findOperationInPath(e._2, method))
+    }.flatMap(e => findOperationInPath(e._2, method))
   }
 
   def findPath(swagger: Swagger, targetServicePath: String): Option[Path] =
@@ -51,7 +50,7 @@ trait OpenApiConverterUtils {
     Option(path.getOperationMap.get(method))
 
   def buildPaths(pathsMap: Map[String, OpenApiOperations]): Map[String, Path] = {
-    pathsMap.mapValues(buildPath(_))
+    pathsMap.mapValues(buildPath)
   }
 
   def pathMatches(testPath: String, regexPath: String): Boolean = {
@@ -86,7 +85,7 @@ trait SwaggerCopy {
         val result = new util.ArrayList[A]()
         as.forEach(value => result.add(cp(value)))
         result
-      }.getOrElse(null)
+      }.orNull
   }
 
   implicit class CopyMap[A](value: util.Map[String, A]) {
@@ -95,7 +94,7 @@ trait SwaggerCopy {
         val result = new util.HashMap[String, A]()
         as.forEach((key, value) => result.put(key, cp(value)))
         result
-      }.getOrElse(null)
+      }.orNull
   }
 
   def copyOperation(o: Operation): Operation =
@@ -120,7 +119,8 @@ trait SwaggerCopy {
       no
     }
 
-  def copyListOfMaps(o: util.List[util.Map[String, util.List[String]]]) =
+  type ListOfMaps = util.List[util.Map[String, util.List[String]]]
+  def copyListOfMaps(o: ListOfMaps): ListOfMaps=
     if (o == null) o
     else {
       o.asScala.map(_.asScala.mapValues(_.asScala.asJava).asJava).asJava
@@ -143,10 +143,10 @@ trait SwaggerCopy {
         to.setAllowEmptyValue(from.getAllowEmptyValue)
         to.setCollectionFormat(from.getCollectionFormat)
         to.setDefault(from.getDefault)
-        to.setDefaultValue(Option(from.getDefaultValue).map(_.toString).getOrElse(null))
+        to.setDefaultValue(Option(from.getDefaultValue).map(_.toString).orNull)
         to.setEnum(from.getEnum.copy(identity))
         to.setEnumValue(from.getEnumValue.copy(identity))
-        to.setExample(Option(from.getExample).map(_.toString).getOrElse(null))
+        to.setExample(Option(from.getExample).map(_.toString).orNull)
         to.setExclusiveMaximum(from.isExclusiveMaximum)
         to.setExclusiveMinimum(from.isExclusiveMinimum)
         to.setFormat(from.getFormat)
@@ -245,7 +245,7 @@ trait SwaggerCopy {
         to.setProperties(from.getProperties.copy(copyProperty))
         to.setReference(from.getReference)
         to.setTitle(from.getTitle)
-        to.setExample(Option(from.getExample).map(_.toString).getOrElse(null))
+        to.setExample(Option(from.getExample).map(_.toString).orNull)
         to.setExclusiveMaximum(from.getExclusiveMaximum)
         to.setExclusiveMinimum(from.getExclusiveMinimum)
         to.setMaximum(from.getMaximum)
@@ -296,7 +296,7 @@ trait SwaggerCopy {
           setBaseAttributes(m, nm)
           nm.setAdditionalProperties(copyProperty(m.getAdditionalProperties))
           nm.setAllowEmptyValue(m.getAllowEmptyValue)
-          nm.setDefaultValue(Option(m.getDefaultValue).map(_.toString).getOrElse(null))
+          nm.setDefaultValue(Option(m.getDefaultValue).map(_.toString).orNull)
           nm.setDiscriminator(m.getDiscriminator)
           nm.setEnum(m.getEnum.copy(identity))
           nm.setFormat(m.getFormat)

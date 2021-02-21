@@ -20,12 +20,12 @@ case class PathPattern(value: String) extends AnyVal
 case class RewritePath(value: String) extends AnyVal
 case class RewriteMethod(value: HttpMethod) extends AnyVal
 
-case class PathParamName(value: String) extends AnyVal
 case class PathParams(value: Map[String, String]) extends AnyVal
 object PathParams {
   def empty: PathParams = PathParams(Map())
-}
+case class PathParamName(value: String) extends AnyVal}
 
+case class PathParamName(value: String) extends AnyVal
 case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
 
 object PathMatching {

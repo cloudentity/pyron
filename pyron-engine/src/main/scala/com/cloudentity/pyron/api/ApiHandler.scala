@@ -108,11 +108,24 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
 
           ApiRequestHandler.setRule(ctx, rule)
           setTracingOperationName(ctx, rule)
-          log.debug(tracingContext, s"Found ${ruleWithPathParams.rule} for, request='$requestSignature'")
+          log.debug(tracingContext, s"Found $rule for, request='$requestSignature'")
 
           for {
-            initRequestCtx       <- toRequestCtx(defaultRequestBodyMaxSize, ctx, tracingContext, proxyHeaders, rule.conf, apiGroup, pathParams)
-            finalRequestCtx      <- applyRequestPlugins(initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)), rule.requestPlugins)
+
+            initRequestCtx <- toRequestCtx(
+              defaultRequestBodyMaxSize,
+              ctx,
+              tracingContext,
+              proxyHeaders,
+              rule.conf,
+              apiGroup,
+              pathParams
+            )
+
+            finalRequestCtx <- applyRequestPlugins(
+              initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)),
+              rule.requestPlugins
+            )
 
             _                     = ApiRequestHandler.setAuthnCtx(ctx, finalRequestCtx.authnCtx)
             _                     = ApiRequestHandler.setAborted(ctx, finalRequestCtx.aborted.isDefined)
@@ -230,17 +243,19 @@ object ApiRequestHandler {
     }
 
   def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithPathParams] = {
-    @tailrec def rec(basePath: BasePath, left: List[Rule]): Option[RuleWithPathParams] =
-      left match {
-        case rule :: tail =>
-          RuleMatcher.makeMatch(vertxRequest.method(), Option(vertxRequest.path()).getOrElse(""), basePath, rule.conf.criteria) match {
-            case Match(pathParams) => Some(RuleWithPathParams(rule, pathParams))
-            case NoMatch => rec(basePath, tail)
-          }
-        case Nil => None
-      }
+    @tailrec
+    def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithPathParams] = rules match {
+      case rule :: tail =>
+        val criteria = rule.conf.criteria
+        val path = Option(vertxRequest.path()).getOrElse("")
+        RuleMatcher.makeMatch(vertxRequest.method(), path, basePath, criteria) match {
+          case Match(pathParams) => Some(RuleWithPathParams(rule, pathParams))
+          case NoMatch => loop(basePath, tail)
+        }
+      case Nil => None
+    }
 
-    rec(apiGroup.matchCriteria.basePathResolved, apiGroup.rules)
+    loop(apiGroup.matchCriteria.basePathResolved, apiGroup.rules)
   }
 
   def withProxyHeaders(proxyHeaders: ProxyHeaders)(req: TargetRequest): TargetRequest =
@@ -330,7 +345,16 @@ object ApiResponseHandler {
 object HttpConversions {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  def toRequestCtx(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext, tracingCtx: TracingContext, proxyHeaders: ProxyHeaders, ruleConf: RuleConf, apiGroup: ApiGroup, pathParams: PathParams)(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
+  def toRequestCtx(
+                    defaultRequestBodyMaxSize: Option[Kilobytes],
+                    ctx: RoutingContext,
+                    tracingCtx: TracingContext,
+                    proxyHeaders: ProxyHeaders,
+                    ruleConf: RuleConf,
+                    apiGroup: ApiGroup,
+                    pathParams: PathParams
+                  )(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
+
     val req = ctx.request()
     val contentLengthOpt: Option[Long] = Try[Long](java.lang.Long.valueOf(req.getHeader("Content-Length"))).toOption
     val requestBodyMaxSize = ruleConf.requestBodyMaxSize.orElse(defaultRequestBodyMaxSize)
@@ -407,7 +431,6 @@ object HttpConversions {
       case None =>
         val relativeOriginalPath =
           original.path.value.drop(basePath.value.length)
-
         val targetPath =
           if (ruleConf.dropPathPrefix) relativeOriginalPath.drop(ruleConf.criteria.path.prefix.value.length)
           else relativeOriginalPath
@@ -431,14 +454,11 @@ object HttpConversions {
   def toApiResponse(targetResponse: TargetResponse): ApiResponse =
     ApiResponse(targetResponse.http.statusCode(), targetResponse.body, toHeaders(targetResponse.http.headers()))
 
-  def toHeaders(from: MultiMap): Headers =
-    from.names().asScala.foldLeft(Headers()) { case (hs, name) =>
-      hs.addValues(name, from.getAll(name).asScala.toList)
-    }
+  def toHeaders(from: MultiMap): Headers = from.names().asScala.foldLeft(Headers()) {
+    case (hs, name) => hs.addValues(name, from.getAll(name).asScala.toList)
+  }
 
-  def toQueryParams(from: MultiMap): QueryParams =
-    from.names().asScala.foldLeft(QueryParams()) { case (ps, name) =>
-      ps.addValues(name, from.getAll(name).asScala.toList)
-    }
+  def toQueryParams(from: MultiMap): QueryParams = from.names().asScala.foldLeft(QueryParams()) {
+    case (ps, name) => ps.addValues(name, from.getAll(name).asScala.toList) }
 }
 

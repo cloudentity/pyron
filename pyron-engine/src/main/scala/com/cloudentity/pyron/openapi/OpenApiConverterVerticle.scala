@@ -1,17 +1,15 @@
 package com.cloudentity.pyron.openapi
 
 import java.util.Optional
-
-import com.cloudentity.pyron.domain.flow.{PluginConf, ApiGroupPluginConf}
+import com.cloudentity.pyron.domain.flow.ApiGroupPluginConf
 import com.cloudentity.pyron.domain.openapi.{ConverterConf, OpenApiRule, ServiceId}
-import com.cloudentity.pyron.plugin.openapi._
 import com.cloudentity.pyron.plugin.openapi._
 import com.cloudentity.pyron.plugin.ConvertOpenApiService
 import com.cloudentity.tools.vertx.registry.{RegistryVerticle, ServiceClientsFactory, ServiceClientsRepository}
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.swagger.models._
-import io.vertx.core.logging.LoggerFactory
+import io.vertx.core.logging.{Logger, LoggerFactory}
 import io.vertx.core.{Future => VxFuture}
 
 import scala.collection.JavaConverters._
@@ -20,18 +18,18 @@ import scala.concurrent.Future
 case class Api(path: String, method: HttpMethod, operation: Operation)
 
 class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverter with OpenApiConverterUtils {
-  val log = LoggerFactory.getLogger(this.getClass)
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   var preProcessors: ServiceClientsRepository[OpenApiPreProcessor] = _
   var postProcessors: ServiceClientsRepository[OpenApiPostProcessor] = _
 
-  override def initServiceAsyncS() = {
+  override def initServiceAsyncS(): Future[Unit] = {
     def registryClient[A](typ: String, clazz: Class[A]): Future[ServiceClientsRepository[A]] =
       ServiceClientsFactory.build(vertx.eventBus(), typ, clazz).toScala
 
     for {
-      _    <- RegistryVerticle.deploy(vertx, "openApiPreProcessors", false).toScala
-      _    <- RegistryVerticle.deploy(vertx, "openApiPostProcessors", false).toScala
+      _    <- RegistryVerticle.deploy(vertx, "openApiPreProcessors", isConfRequired = false).toScala
+      _    <- RegistryVerticle.deploy(vertx, "openApiPostProcessors", isConfRequired = false).toScala
       pre  <- registryClient("openApiPreProcessors", classOf[OpenApiPreProcessor])
       post <- registryClient("openApiPostProcessors", classOf[OpenApiPostProcessor])
     } yield {
@@ -54,13 +52,13 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
   def preProcess(swagger: Swagger, conf: ConverterConf): VxFuture[Swagger] =
     conf.processors.flatMap(_.pre).getOrElse(Nil).flatMap(name => Option(preProcessors.get(name)))
       .foldLeft(VxFuture.succeededFuture(swagger)) { case (acc, processor) =>
-        acc.compose(processor.preProcess)
+        acc.compose(processor.preProcess _)
       }
 
   def postProcess(swagger: Swagger, conf: ConverterConf): VxFuture[Swagger] =
     conf.processors.flatMap(_.post).getOrElse(Nil).flatMap(name => Option(postProcessors.get(name)))
       .foldLeft(VxFuture.succeededFuture(swagger)) { case (acc, processor) =>
-        acc.compose(processor.postProcess)
+        acc.compose(processor.postProcess _)
       }
 
   def rewritePathsAndMethodsAndOperationId(ctx: TracingContext, swagger: Swagger, rules: List[OpenApiRule]): VxFuture[Swagger] = {
@@ -78,7 +76,7 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
 
           Some((apiGwPath, (apiGwMethod, outOperation)))
         case None =>
-          log.warn(ctx, s"Can't find rule definition: ${rule} in target service docs")
+          log.warn(ctx, s"Can't find rule definition: $rule in target service docs")
           None
       }
 
@@ -97,7 +95,7 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
 
   def resolveOperationIdConflicts(ctx: TracingContext, swagger: Swagger): VxFuture[Swagger] = {
     def findConflicts(swagger: Swagger): List[Api] =
-      swagger.getPaths().asScala.flatMap {
+      swagger.getPaths.asScala.flatMap {
         case (key, value) => value.getOperationMap.asScala.map {
           case (method, operation) => Api(buildAbsolutePath(swagger, key), method, operation)
         }
@@ -105,7 +103,7 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
 
     def renameOperationId(operation: Operation, api: Api): Unit = {
       val camelCasePath =
-        api.path.split("\\/")
+        api.path.split('/')
           .map(segment => if (segment.startsWith("{") && segment.endsWith("}")) "with" + segment.drop(1).dropRight(1).capitalize else segment)
           .map(_.capitalize)
           .mkString("")
@@ -113,7 +111,7 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
       operation.setOperationId(newOperationId)
     }
 
-    findConflicts(swagger).map { api =>
+    findConflicts(swagger).foreach { api =>
       findOperation(swagger, api.path, api.method).foreach { operation =>
         renameOperationId(operation, api) // mutable!
       }

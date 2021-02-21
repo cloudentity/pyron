@@ -9,10 +9,10 @@ object RuleMatcher {
     case object NoMatch extends MatchResult
 
   def makeMatch(method: HttpMethod, path: String, basePath: BasePath, criteria: EndpointMatchCriteria): MatchResult =
-    if (criteria.method != method) NoMatch
-    else {
+    if (criteria.method == "*" || criteria.method == method) {
       val relativePath = path.drop(basePath.value.length)
-      PathMatcher.makeMatch(relativePath, criteria.path)
-        .fold[MatchResult](NoMatch)(Match)
+      PathMatcher.makeMatch(relativePath, criteria.path).fold[MatchResult](NoMatch)(Match)
+    } else {
+      NoMatch
     }
 }
