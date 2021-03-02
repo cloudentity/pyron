@@ -1,24 +1,45 @@
 package com.cloudentity.pyron.rule
 
+import com.cloudentity.pyron.domain.flow.PathParams
+
 import scala.util.Try
 
 object RewriteUtil {
 
-  def applyRewrite(pattern: String, rewrite: String, path: String): Option[String] = {
-    val (pat, rew) = finalPatternAndRewrite(pattern, rewrite)
-    pat.r.findFirstMatchIn(path)
-      .map(m => (0 to m.groupCount).map(v => (v, m.group(v))).foldLeft(rew) {
-        case (rew, (idx, value)) => rew.replace(s"{$idx}", value)
-      })
-  }
-
-  def finalPatternAndRewrite(pattern: String, rewrite: String): (String, String) = {
+  def prepareRewrite(pattern: String, prefix: String, rewrite: String): PreparedRewrite = {
     val parensCountPattern = parensCountingPattern(pattern)
     val indexedParamPlaceholders = paramPlaceholdersWithGroupIndex(pattern, parensCountPattern)
     val totalGroupsCount = 1 + parensCountPattern.count(_ == '(') + indexedParamPlaceholders.size
     val (pat, rew) = insertParamGroupsAndRefs(pattern, rewrite, indexedParamPlaceholders)
-    (s"^$pat$$", convertNegToPosNumericRefs(rew, totalGroupsCount))
+    PreparedRewrite(
+      pathPrefix = prefix,
+      checkedPattern = pat,
+      rewritePattern = convertNegToPosNumericRefs(rew, totalGroupsCount),
+      indexedParamPlaceholders = indexedParamPlaceholders)
   }
+
+  def applyRewrite(path: String, rewrite: PreparedRewrite): Option[AppliedRewrite] = for {
+    targetPath <- rewritePath(rewrite, path)
+    pathParams <- rewrite.regex.findFirstMatchIn(path).map { m =>
+      PathParams(rewrite.indexedParamPlaceholders.map {
+        case (placeholder, idx) => (getParamName(placeholder), m.group(idx))
+      }.toMap)
+    }
+  } yield AppliedRewrite(path, targetPath, pathParams, from = rewrite)
+
+  def rewritePath(rewrite: PreparedRewrite, path: String): Option[String] = rewrite.regex
+    .findFirstMatchIn(path)
+    .map(m => (0 to m.groupCount)
+      .map(v => (v, m.group(v))).foldLeft(rewrite.rewritePattern) {
+      case (rew, (idx, value)) => rew.replace(s"{$idx}", value)
+    })
+
+  def rewritePathWithParams(rewritePath: String, pathParams: PathParams): String =
+    pathParams.value.foldLeft(rewritePath) { case (path, (paramName, paramValue)) =>
+      path.replace(s"{$paramName}", paramValue)
+    }
+
+  def getParamName(placeholder: String): String = placeholder.slice(1, placeholder.length - 1)
 
   def parensCountingPattern(pattern: String): String = pattern
     .replaceAll("""\\{2}""", "") // remove literal '\'

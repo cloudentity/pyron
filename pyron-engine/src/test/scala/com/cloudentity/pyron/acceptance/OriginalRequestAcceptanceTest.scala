@@ -42,7 +42,19 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
       QueryParams(Map("queryParam1" -> List("queryValue1"))),
       PathParams(Map())
     )
-    val original = OriginalRequest(HttpMethod.GET, UriPath(relativeUri.path), scheme = "http", host = "127.0.0.1:8080", localHost = "127.0.0.1", remoteHost = "127.0.0.1", PathParams(Map("param1" -> "value1")), QueryParams("queryParam1" -> List("queryValue1")), Headers(), Map(), Some(Buffer.buffer()))
+    val original = OriginalRequest(
+      method = HttpMethod.GET,
+      path = UriPath(relativeUri.path),
+      scheme = "http",
+      host = "127.0.0.1:8080",
+      localHost = "127.0.0.1",
+      remoteHost = "127.0.0.1",
+      pathParams = PathParams(Map("param1" -> "value1")),
+      queryParams = QueryParams("queryParam1" -> List("queryValue1")),
+      headers = Headers(),
+      cookies = Map(),
+      bodyOpt = Some(Buffer.buffer())
+    )
 
       given()
       .when()
@@ -55,7 +67,19 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
   def shouldSetTargetRequestOriginalBody(): Unit = {
       val path = "/service/body"
       val body = """test-body"""
-      val original = OriginalRequest(HttpMethod.POST, UriPath(path), scheme = "http", host = "127.0.0.1:8080", localHost = "127.0.0.1", remoteHost = "127.0.0.1", PathParams.empty, QueryParams.empty, Headers(), Map(), Some(Buffer.buffer(body)))
+      val original = OriginalRequest(
+        method = HttpMethod.POST,
+        path = UriPath(path),
+        scheme = "http",
+        host = "127.0.0.1:8080",
+        localHost = "127.0.0.1",
+        remoteHost = "127.0.0.1",
+        pathParams = PathParams.empty,
+        queryParams = QueryParams.empty,
+        headers = Headers(),
+        cookies = Map(),
+        bodyOpt = Some(Buffer.buffer(body))
+      )
 
       given().body(body)
       .when().post(path)

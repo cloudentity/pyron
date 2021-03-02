@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.rule
 
 import io.circe.Json
-import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathMatching, PathPattern, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, ServiceClientName, StaticServiceRule, TargetHost}
+import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathPattern, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, ServiceClientName, StaticServiceRule, TargetHost}
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf}
 import com.cloudentity.pyron.rule.RulesConfReader._
 import io.vertx.core.http.HttpMethod
@@ -163,11 +163,11 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
           endpointName = fullRuleConfWoPlugins.endpointName,
           criteria = EndpointMatchCriteria(
             fullRuleConfWoPlugins.method.get,
-            PathMatching(
-              s"^${fullRuleConfWoPlugins.pathPrefix.get.value}${fullRuleConfWoPlugins.pathPattern.get.value}$$".r,
-              Nil,
-              fullRuleConfWoPlugins.pathPrefix.get,
-              "")
+            PreparedRewrite(
+              pathPrefix = fullRuleConfWoPlugins.pathPrefix.get.value,
+              checkedPattern = s"${fullRuleConfWoPlugins.pathPattern.get.value}",
+              rewritePattern = "",
+              indexedParamPlaceholders = Nil)
           ),
           target = StaticServiceRule(
             fullRuleConfWoPlugins.targetHost.get,
@@ -207,8 +207,8 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
   def assertRulesEqual(r1: RuleConf, r2: RuleConf): Unit = {
     // Regex has broken equals method (because of broken java.util.regex.Pattern.equals; it checks reference equality),
     // so we assert `regex: String` value and then copy the criteria.path
-    r1.criteria.path.regex.regex mustBe r2.criteria.path.regex.regex
-    r1 mustBe r2.copy(criteria = r2.criteria.copy(path = r1.criteria.path))
+    r1.criteria.rewrite.regex.regex mustBe r2.criteria.rewrite.regex.regex
+    r1 mustBe r2.copy(criteria = r2.criteria.copy(rewrite = r1.criteria.rewrite))
   }
 
   "RulesReader.composeRuleConfs" should {

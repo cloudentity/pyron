@@ -1,10 +1,10 @@
 package com.cloudentity.pyron.domain
 
 import java.time.Duration
-
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
 import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, DropBody, ExtRuleConf, Kilobytes, OpenApiRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins, StreamBody}
+import com.cloudentity.pyron.rule.PreparedRewrite
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.CursorOp.DownField
 import io.circe.Decoder.Result
@@ -136,8 +136,8 @@ object Codecs {
   implicit lazy val regexEnc: Encoder[Regex] = Encoder.encodeString.contramap(_.regex)
   implicit lazy val regexDec: Decoder[Regex] = Decoder.decodeString.map(_.r)
 
-  implicit lazy val PathMatchingEnc: Encoder[PathMatching] = deriveEncoder
-  implicit lazy val PathMatchingDec: Decoder[PathMatching] = deriveDecoder
+  implicit lazy val PathMatchingEnc: Encoder[PreparedRewrite] = deriveEncoder
+  implicit lazy val PathMatchingDec: Decoder[PreparedRewrite] = deriveDecoder
 
   implicit lazy val matchCriteriaEnc: Encoder[EndpointMatchCriteria] = deriveEncoder
   implicit lazy val matchCriteriaDec: Decoder[EndpointMatchCriteria] = deriveDecoder

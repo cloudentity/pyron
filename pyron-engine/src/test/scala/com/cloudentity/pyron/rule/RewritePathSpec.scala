@@ -1,8 +1,8 @@
 package com.cloudentity.pyron.rule
 
-import com.cloudentity.pyron.domain.http.PathOperations._
 import com.cloudentity.pyron.domain.flow.PathParams
 import com.cloudentity.pyron.domain.http.{OriginalRequest, QueryParams, UriPath}
+import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithParams
 import com.cloudentity.tools.vertx.http.Headers
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith

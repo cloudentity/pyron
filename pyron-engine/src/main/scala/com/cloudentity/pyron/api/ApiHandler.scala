@@ -187,8 +187,8 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
 
   def setTracingOperationName(ctx: RoutingContext, rule: Rule): Unit = {
-    val name = s"${rule.conf.criteria.method} ${rule.conf.criteria.path.originalPath}"
-    ctx.put(RouteHandler.urlPathKey, rule.conf.criteria.path.originalPath)
+    val name = s"${rule.conf.criteria.method} ${rule.conf.criteria.rewrite.checkedPattern}"
+    ctx.put(RouteHandler.urlPathKey, rule.conf.criteria.rewrite.checkedPattern)
     RoutingWithTracingS.getOrCreate(ctx, getTracing).setOperationName(name)
   }
 
@@ -432,7 +432,7 @@ object HttpConversions {
         val relativeOriginalPath =
           original.path.value.drop(basePath.value.length)
         val targetPath =
-          if (ruleConf.dropPathPrefix) relativeOriginalPath.drop(ruleConf.criteria.path.prefix.value.length)
+          if (ruleConf.dropPathPrefix) relativeOriginalPath.drop(ruleConf.criteria.rewrite.pathPrefix.length)
           else relativeOriginalPath
         FixedRelativeUri(UriPath(targetPath), original.queryParams, original.pathParams)
     }

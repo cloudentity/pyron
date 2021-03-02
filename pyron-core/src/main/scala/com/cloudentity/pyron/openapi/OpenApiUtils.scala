@@ -2,10 +2,8 @@ package com.cloudentity.pyron.openapi
 
 import java.util
 
-import com.cloudentity.pyron.domain.flow.{PathMatching, PathPattern, PathPrefix}
 import com.cloudentity.pyron.domain.openapi.OpenApi.OpenApiOperations
 import com.cloudentity.pyron.domain.openapi.OpenApiRule
-import com.cloudentity.pyron.rule.PathMatcher
 import io.swagger.models._
 import io.swagger.models.parameters._
 import io.swagger.models.properties.Property
@@ -54,9 +52,9 @@ trait OpenApiConverterUtils {
   }
 
   def pathMatches(testPath: String, regexPath: String): Boolean = {
-    val normalizedTargetServicePath = testPath.replaceAll("[{}]", "")
-    val pathMatching = PathMatching.build(PathPrefix(""), PathPattern(regexPath))
-    PathMatcher.makeMatch(normalizedTargetServicePath, pathMatching).isDefined
+    regexPath
+      .replaceAll("""\{\w+}""", """(\\w+)""").r
+      .findFirstIn(testPath.replaceAll("[{}]", "")).nonEmpty
   }
 
   def toSwaggerMethod(method: io.vertx.core.http.HttpMethod): io.swagger.models.HttpMethod = {

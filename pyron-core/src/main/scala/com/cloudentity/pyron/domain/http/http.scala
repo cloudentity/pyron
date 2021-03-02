@@ -2,7 +2,7 @@ package com.cloudentity.pyron.domain.http
 
 import java.net.{URI, URLEncoder}
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
-import com.cloudentity.pyron.domain.http.PathOperations.rewritePathWithParams
+import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithParams
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpHeaders, HttpMethod}
 import org.apache.http.client.utils.URLEncodedUtils
@@ -257,16 +257,6 @@ object QueryParams {
 }
 
 case class UriPath(value: String) extends AnyVal
-
-object PathOperations {
-  /**
-    * Replaces params in `rewritePath` with path params from `original`.
-    */
-  def rewritePathWithParams(rewritePath: String, pathParams: PathParams): String =
-    pathParams.value.foldLeft(rewritePath) { case (path, (paramName, paramValue)) =>
-      path.replace(s"{$paramName}", paramValue)
-    }
-}
 
 case class CallOpts(
                      responseTimeout: Option[Int],

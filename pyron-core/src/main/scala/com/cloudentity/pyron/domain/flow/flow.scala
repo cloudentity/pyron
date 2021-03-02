@@ -1,9 +1,9 @@
 package com.cloudentity.pyron.domain.flow
 
 import java.net.URL
-
 import io.circe.Json
 import com.cloudentity.pyron.domain.http.{ApiResponse, OriginalRequest, TargetRequest}
+import com.cloudentity.pyron.rule.PreparedRewrite
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
@@ -21,39 +21,13 @@ case class RewritePath(value: String) extends AnyVal
 case class RewriteMethod(value: HttpMethod) extends AnyVal
 
 case class PathParams(value: Map[String, String]) extends AnyVal
+
 object PathParams {
   def empty: PathParams = PathParams(Map())
-case class PathParamName(value: String) extends AnyVal}
+  case class PathParamName(value: String) extends AnyVal
+}
 
 case class PathParamName(value: String) extends AnyVal
-case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
-
-object PathMatching {
-  val paramNamePlaceholderPattern = """\{(\w+[^/])\}"""
-  val paramNamePlaceholderRegex: Regex = paramNamePlaceholderPattern.r
-
-  def build(pathPrefix: PathPrefix, pathPattern: PathPattern): PathMatching =
-    PathMatching(
-      regex = createPatternRegex(createRawPattern(pathPrefix, pathPattern)),
-      paramNames = extractPathParamNames(pathPattern),
-      prefix = pathPrefix,
-      originalPath = pathPattern.value
-    )
-
-  def createRawPattern(pathPrefix: PathPrefix, pathPattern: PathPattern): String =
-    pathPrefix.value + pathPattern.value
-
-  def createPatternRegex(rawPattern: String): Regex = {
-    // capture group 1 contains param name without surrounding parens
-    val regex = paramNamePlaceholderRegex.replaceAllIn(rawPattern, m => s"(?<${m.group(1)}>[^/]+)")
-    s"^$regex$$".r
-  }
-
-  def extractPathParamNames(pattern: PathPattern): List[PathParamName] = {
-    paramNamePlaceholderRegex.findAllMatchIn(pattern.value).map(m => PathParamName(m.group(1))).toList
-  }
-
-}
 
 case class BasePath(value: String) extends AnyVal
 case class DomainPattern(value: String) {
@@ -69,7 +43,7 @@ object GroupMatchCriteria {
   val empty: GroupMatchCriteria = GroupMatchCriteria(None, None)
 }
 
-case class EndpointMatchCriteria(method: HttpMethod, path: PathMatching)
+case class EndpointMatchCriteria(method: HttpMethod, rewrite: PreparedRewrite)
 case class TargetHost(value: String) extends AnyVal
 case class ServiceClientName(value: String) extends AnyVal
 

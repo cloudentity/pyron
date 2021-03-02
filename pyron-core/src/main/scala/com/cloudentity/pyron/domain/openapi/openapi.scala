@@ -18,13 +18,8 @@ case class OpenApiRule(
                         operationId: Option[String]
                       ) {
 
-  lazy val targetServicePath: String = rewritePath match {
-    case Some(rp) => rp.value
-    case None =>  if (dropPathPrefix) {
-      pathPattern.value
-    } else {
-      pathPrefix.value + pathPattern.value
-    }
+  lazy val targetServicePath: String = rewritePath.map(_.value).getOrElse {
+    if (dropPathPrefix) pathPattern.value else pathPrefix.value + pathPattern.value
   }
 
   lazy val apiGwPath: String =

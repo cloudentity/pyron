@@ -1,14 +1,13 @@
 package com.cloudentity.pyron.accesslog
 
 import java.time.{Instant, ZoneId}
-
 import io.circe.{Json, JsonObject}
 import com.cloudentity.pyron.accesslog.AccessLogHandler.RequestLog
 import com.cloudentity.pyron.accesslog.AccessLogHelper.{AccessLogConf, LogAllFields, LogWhitelistedFields, MaskFieldsConf}
 import com.cloudentity.pyron.api._
 import com.cloudentity.pyron.commons.JsonUtils
 import com.cloudentity.pyron.domain.http.Headers
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.server.api.RouteHandler
 import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingManager}
@@ -21,12 +20,13 @@ import io.vertx.ext.web.RoutingContext
 
 import scala.collection.JavaConverters._
 import scala.util.Try
+import scala.util.matching.Regex
 
 object AccessLogHandler extends AccessLogHelper {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  val targetHostNamespaceRegex = """[^.]*\.([^.]*)""".r
-  val targetServiceNamespaceRegex = """[^.]*\.([^.]*)""".r
+  val targetHostNamespaceRegex: Regex = """[^.]*\.([^.]*)""".r
+  val targetServiceNamespaceRegex: Regex = """[^.]*\.([^.]*)""".r
 
   val wasLoggedOnBodyEndCtxKey = "access-log.logged-on-body-end"
 
@@ -36,7 +36,7 @@ object AccessLogHandler extends AccessLogHelper {
   case class RequestLog(headers: Option[Headers])
 
   def createHandler(vertx: Vertx, tracing: TracingManager, conf: Option[AccessLogGlobalConf]): Handler[RoutingContext] = {
-    val accessLogPersister = ServiceClientFactory.make(vertx.eventBus(), classOf[AccessLogPersister])
+    val accessLogPersister = VertxEndpointClient.make(vertx, classOf[AccessLogPersister])
     handle(tracing)(conf, accessLogPersister)
   }
 
@@ -53,21 +53,21 @@ object AccessLogHandler extends AccessLogHelper {
       the handler is not invoked. In that case the log is created in the end-handler.
      */
     ctx.addBodyEndHandler { _ =>
-      responseHandler(tracing, conf, ctx, isoDate, timestamp, accessLogPersister, false).handle(())
+      responseHandler(tracing, conf, ctx, isoDate, timestamp, accessLogPersister, interrupted = false).handle(())
       ctx.put(wasLoggedOnBodyEndCtxKey, "logged")
     }
 
     ctx.response().endHandler { _ =>
       val wasLoggedOnBodyEnd = Option(ctx.get(wasLoggedOnBodyEndCtxKey)).isDefined
       if (!wasLoggedOnBodyEnd) {
-        responseHandler(tracing, conf, ctx, isoDate, timestamp, accessLogPersister, true).handle(())
+        responseHandler(tracing, conf, ctx, isoDate, timestamp, accessLogPersister, interrupted = true).handle(())
       }
     }
     ctx.next()
   }
 
   def responseHandler(tracing: TracingManager, conf: Option[AccessLogGlobalConf], ctx: RoutingContext, isoDate: Instant, timestamp: Long, accessLogPersister: AccessLogPersister, interrupted: Boolean): Handler[Unit] =
-    (event: Unit) => {
+    (_: Unit) => {
       val req = ctx.request()
       val resp = ctx.response()
 
@@ -75,7 +75,7 @@ object AccessLogHandler extends AccessLogHelper {
       val tracingContextMap: Map[String, String] = tracingContext
         .getSpanContextMap.iterator().asScala
         .map(e => e.getKey -> e.getValue).toMap
-      tracingContext.setTag(io.opentracing.tag.Tags.HTTP_STATUS.getKey, ctx.response().getStatusCode().toString)
+      tracingContext.setTag(io.opentracing.tag.Tags.HTTP_STATUS.getKey, ctx.response().getStatusCode.toString)
 
       val flowState = RoutingCtxData.getFlowState(ctx)
       val gatewayLog = buildGatewayLog(flowState, interrupted)
@@ -91,7 +91,7 @@ object AccessLogHandler extends AccessLogHelper {
           httpVersion = req.version(),
           method = req.method,
           uri = req.uri(),
-          status = if (interrupted) None else Some(resp.getStatusCode())
+          status = if (interrupted) None else Some(resp.getStatusCode)
         ),
         getAuthnCtxSignature(ctx, conf),
         getRequestLog(req, conf),
@@ -143,8 +143,8 @@ object AccessLogHandler extends AccessLogHelper {
 
     GatewayLog(
       method        = flowState.rule.map(_.conf.criteria.method),
-      path          = flowState.rule.map(_.conf.criteria.path.originalPath),
-      pathPrefix    = flowState.rule.map(_.conf.criteria.path.prefix.value),
+      path          = flowState.rule.map(_.conf.criteria.rewrite.checkedPattern),
+      pathPrefix    = flowState.rule.map(_.conf.criteria.rewrite.pathPrefix),
       aborted       = flowState.aborted.getOrElse(true),
       interrupted   = interrupted,
       failed        = flowState.failure.map(_ => true),

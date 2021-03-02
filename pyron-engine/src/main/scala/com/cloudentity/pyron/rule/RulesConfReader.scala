@@ -1,19 +1,20 @@
 package com.cloudentity.pyron.rule
 
+import com.cloudentity.pyron.domain.Codecs
 import io.circe._
 import io.circe.parser._
-import com.cloudentity.pyron.domain._
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.CallOpts
-import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, ExtRuleConf, Kilobytes, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
+import com.cloudentity.pyron.domain.rule.{BodyHandling, ExtRuleConf, Kilobytes, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.vertx.core.http.HttpMethod
 import scalaz.Scalaz._
 import scalaz.{ValidationNel, _}
+import Codecs._
+import com.cloudentity.pyron.rule.RewriteUtil.prepareRewrite
 
 object RulesConfReader {
-  import Codecs._
 
   // list of ServiceRulesConf matches rules.json schema
   case class ServiceRulesConf(default: Option[RuleRawConf], request: Option[ServiceFlowsConf], response: Option[ServiceFlowsConf], endpoints: List[EndpointConf])
@@ -50,7 +51,7 @@ object RulesConfReader {
     ext: Option[ExtRuleConf]
   )
 
-  val emptyRuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+  val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
   sealed trait ReadRulesError
     case class RuleDecodingError(ex: Throwable) extends ReadRulesError
@@ -59,7 +60,6 @@ object RulesConfReader {
   case class RuleRequiredFields(method: HttpMethod, pathPattern: PathPattern, service: TargetServiceRule)
 
   object codecs {
-    import Codecs._
 
     implicit lazy val serviceRulesConfEnc: Encoder[ServiceRulesConf] = deriveEncoder
     implicit lazy val serviceRulesConfDec: Decoder[ServiceRulesConf] = deriveDecoder
@@ -159,9 +159,9 @@ object RulesConfReader {
 
     val ruleValidation: ValidationNel[String, RuleConfWithPlugins] =
       composeAndValidateRequiredFields(defaultConf.rule, endpointConf.rule)
-        .map { (rf) =>
-          val pathMatching = PathMatching.build(pathPrefix, rf.pathPattern)
-          val criteria = EndpointMatchCriteria(rf.method, pathMatching)
+        .map { rf =>
+          val preparedRewrite = prepareRewrite(rf.pathPattern.value, pathPrefix.value, "")
+          val criteria = EndpointMatchCriteria(rf.method, preparedRewrite)
           val service  = rf.service
           val ruleConf =
             RuleConf(endpointName, criteria, service, dropPrefix, endpointConf.rule.rewriteMethod, endpointConf.rule.rewritePath,
@@ -232,7 +232,7 @@ object RulesConfReader {
       for {
         host <- hostOpt
         port <- portOpt
-      } yield (StaticServiceRule(host, port, sslOpt.getOrElse(false)))
+      } yield StaticServiceRule(host, port, sslOpt.getOrElse(false))
     val proxyServiceOpt = if (targetProxyOpt.getOrElse(false)) Some(ProxyServiceRule) else None
 
     List(staticServiceOpt, discoverableServiceOpt, proxyServiceOpt).flatten match {
