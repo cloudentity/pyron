@@ -6,7 +6,7 @@ import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.config.Conf.AppConf
 import com.cloudentity.pyron.openapi.route.{GetOpenApiRoute, ListOpenApiRoute}
 import com.cloudentity.pyron.rule.RulesStoreVerticle
-import com.cloudentity.tools.vertx.bus.VertxEndpointClient
+import com.cloudentity.tools.vertx.bus.ServiceClientFactory
 import com.cloudentity.tools.vertx.conf.ConfService
 import com.cloudentity.tools.vertx.launchers.OrchisCommandLauncher
 import com.cloudentity.tools.vertx.registry.RegistryVerticle
@@ -30,7 +30,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
 
   override def beforeServerStart(): VxFuture[_] = {
     ec = VertxExecutionContext(vertx.getOrCreateContext())
-    confService = VertxEndpointClient.make(vertx, classOf[ConfService])
+    confService = ServiceClientFactory.make(vertx.eventBus(), classOf[ConfService])
 
     for {
       appConf <- readAppConf
@@ -87,7 +87,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
     VertxDeploy.deploy(vertx, verticle).toScala()
   }
 
-  private def deployAdminServerIfConfigured(): Future[Unit] = {
+  private def deployAdminServerIfConfigured(): Future[Unit] =
     confService.getConf("apiServer").toScala().map(Option.apply).flatMap {
       case Some(_) =>
         ApiServerDeployer.deployServer(vertx).map(()).toScala()
@@ -95,7 +95,6 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
         log.debug("Admin API server configuration missing, skipping deployment")
         Future.successful(())
     }
-  }
 
   private def deployOpenApiEndpointIfEnabled(conf: AppConf): Future[Unit] =
     if (conf.openApi.flatMap(_.enabled).getOrElse(true)) {
