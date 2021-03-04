@@ -24,7 +24,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
 
   implicit lazy val ec: VertxExecutionContext = VertxExecutionContext(Vertx.vertx().getOrCreateContext())
 
-  val req = emptyRequestCtx
+  val req: RequestCtx = emptyRequestCtx
 
   def authnProviderF(f: RequestCtx => Future[Option[AuthnProviderResult]]): AuthnProvider = new AuthnProvider {
     override def authenticate(req: RequestCtx, methodConf: AuthnMethodConf): Future[Option[AuthnProviderResult]] = f(req)
@@ -37,10 +37,10 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
   }
 
   def entityProviderF(f: AuthnCtx => Future[AuthnCtx]): EntityProvider =
-    (tracingContext: TracingContext, ctx: AuthnCtx) => f(ctx)
+    (_: TracingContext, ctx: AuthnCtx) => f(ctx)
 
   def entityProvider(f: AuthnCtx => AuthnCtx): EntityProvider =
-    (tracingContext: TracingContext, ctx: AuthnCtx) => Future.succeededFuture(f(ctx))
+    (_: TracingContext, ctx: AuthnCtx) => Future.succeededFuture(f(ctx))
 
   "AuthnPluginWorker" should {
 
@@ -60,7 +60,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted() mustBe(false)
+      result.isAborted mustBe false
       result.authnCtx.value must contain(("authnMethod", Json.fromString("authn-method")))
     }
 
@@ -80,7 +80,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted() mustBe(false)
+      result.isAborted mustBe false
       result.authnCtx.value must contain(("authnMethod", Json.fromString("authn-method")))
     }
 
@@ -98,8 +98,8 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(true)
-      result.aborted.get.statusCode mustBe(401)
+      result.isAborted mustBe true
+      result.aborted.get.statusCode mustBe 401
     }
 
     "return ApiResponse WHEN authn method returned ApiResponse AND no authn method returned success" in {
@@ -116,8 +116,8 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(true)
-      result.aborted.get.statusCode mustBe(400)
+      result.isAborted mustBe true
+      result.aborted.get.statusCode mustBe 400
     }
 
     "recover authentication method provider failure by abstaining from decision" in {
@@ -135,7 +135,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(false)
+      result.isAborted mustBe false
       result.authnCtx.value must contain(("authnMethod", Json.fromString("authn-method-success")))
     }
 
@@ -160,8 +160,8 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(true)
-      result.aborted.get.statusCode mustBe(500)
+      result.isAborted mustBe true
+      result.aborted.get.statusCode mustBe 500
     }
 
     "return success with entity WHEN authn success and entity provider" in {
@@ -187,7 +187,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(false)
+      result.isAborted mustBe false
       result.authnCtx.value must contain(("user", userObject.deepMerge(fullUserObject)))
     }
 
@@ -214,7 +214,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(false)
+      result.isAborted mustBe false
       result.authnCtx.value.get("ctx-key").flatMap(_.asObject).get.toMap must contain(("user", userObject.deepMerge(fullUserObject)))
     }
 
@@ -241,7 +241,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(false)
+      result.isAborted mustBe false
       result.authnCtx.value must contain(("user", userObject.deepMerge(fullUserObject)))
     }
   }
@@ -270,9 +270,9 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(true)
-      result.aborted.get.statusCode must be(403)
-      result.aborted.get.headers.getValues("header") must be(Some(List("value")))
+      result.isAborted mustBe true
+      result.aborted.get.statusCode mustBe 403
+      result.aborted.get.headers.getValues("header") mustBe Some(List("value"))
     }
 
     "modify target request even if authn provider failed" in {
@@ -295,8 +295,8 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(false)
-      result.request.headers.getValues("header") must be(Some(List("value")))
+      result.isAborted mustBe false
+      result.request.headers.getValues("header") mustBe Some(List("value"))
     }
 
     "modify target request even if authn provider succeeded" in {
@@ -316,8 +316,8 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: RequestCtx = Await.result(worker.apply(req, conf), 1 second)
 
       // then
-      result.isAborted mustBe(false)
-      result.request.headers.getValues("header") must be(Some(List("value")))
+      result.isAborted mustBe false
+      result.request.headers.getValues("header") mustBe Some(List("value"))
     }
   }
 
@@ -342,7 +342,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: ValidateResponse = worker.validate(conf)
 
       // then
-      result mustBe(ValidateOk)
+      result mustBe ValidateOk
     }
 
     "return ValidateFailure when conf without authn methods" in {
@@ -365,7 +365,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: ValidateResponse = worker.validate(conf)
 
       // then
-      result.isInstanceOf[ValidateFailure] mustBe(true)
+      result.isInstanceOf[ValidateFailure] mustBe true
     }
 
     "return ValidateFailure when conf with entities for method without entity providers" in {
@@ -381,7 +381,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: ValidateResponse = worker.validate(conf)
 
       // then
-      result.isInstanceOf[ValidateFailure] mustBe(true)
+      result.isInstanceOf[ValidateFailure] mustBe true
     }
 
     "return ValidateFailure when conf with missing authn method" in {
@@ -404,7 +404,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: ValidateResponse = worker.validate(conf)
 
       // then
-      result.isInstanceOf[ValidateFailure] mustBe(true)
+      result.isInstanceOf[ValidateFailure] mustBe true
     }
 
     "return ValidateFailure when conf with missing entity for single authn method" in {
@@ -427,7 +427,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: ValidateResponse = worker.validate(conf)
 
       // then
-      result.isInstanceOf[ValidateFailure] mustBe(true)
+      result.isInstanceOf[ValidateFailure] mustBe true
     }
 
     "return ValidateFailure when conf with missing entity for different authn methods" in {
@@ -454,7 +454,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
       val result: ValidateResponse = worker.validate(conf)
 
       // then
-      result.isInstanceOf[ValidateFailure] mustBe(true)
+      result.isInstanceOf[ValidateFailure] mustBe true
     }
   }
 }

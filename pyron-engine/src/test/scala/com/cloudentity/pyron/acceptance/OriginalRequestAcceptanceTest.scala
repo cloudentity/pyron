@@ -16,7 +16,7 @@ import org.junit.{After, Before, Test}
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.scalatest.MustMatchers
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatchers with MockUtils {
   var targetService: ClientAndServer = _
@@ -31,9 +31,9 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
     targetService.stop
   }
 
-  override def getMetaConfPath(): String = "src/test/resources/acceptance/original/meta-config.json"
+  override def getMetaConfPath: String = "src/test/resources/acceptance/original/meta-config.json"
 
-  val log = LoggerFactory.getLogger(this.getClass)
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   @Test
   def shouldSetTargetRequestOriginalPathParamsAndQueryParamsAndMethod(): Unit = {

@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.apigroup
 
 import com.cloudentity.pyron.rule.RulesStoreVerticle
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.conf.ConfVerticleDeploy
 import com.cloudentity.tools.vertx.test.VertxUnitTest
 import com.cloudentity.tools.vertx.verticles.VertxDeploy
@@ -54,6 +54,6 @@ class ApiGroupsStoreVerticleSpec extends VertxUnitTest {
       .compose(_ => init)
       .compose { _ => VertxDeploy.deploy(vertx, new RulesStoreVerticle) }
       .compose { _ => VertxDeploy.deploy(vertx, new ApiGroupsStoreVerticle) }
-      .compose { _ => VxFuture.succeededFuture(ServiceClientFactory.make(vertx.eventBus(), classOf[ApiGroupsStore])) }
+      .compose { _ => VxFuture.succeededFuture(VertxEndpointClient.make(vertx, classOf[ApiGroupsStore])) }
       .compose { (client: ApiGroupsStore) => client.getGroups() }
 }

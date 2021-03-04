@@ -16,7 +16,7 @@ import scala.collection.mutable
 
 trait OpenApiTestUtils extends OpenApiConverterUtils {
 
-  val sampleServiceId = StaticServiceId(TargetHost("localhost"), 9999, false)
+  val sampleServiceId: StaticServiceId = StaticServiceId(TargetHost("localhost"), 9999, ssl = false)
 
   def sampleSwagger(basePath: String, paths: Map[String, Path]): Swagger = {
     val swagger = new Swagger()
@@ -34,18 +34,42 @@ trait OpenApiTestUtils extends OpenApiConverterUtils {
 
   def multiPath(): Path = {
     val path = new Path()
-    path.setGet(new Operation().operationId("getOperation").description("get desc").response(200, new Response().description("ok")))
-    path.setPost(new Operation().operationId("postOperation").description("get desc").response(200, new Response().description("ok")))
-    path.setPut(new Operation().operationId("putOperation").description("put desc").response(200, new Response().description("ok")))
+    path.setGet(new Operation()
+      .operationId("getOperation")
+      .description("get desc")
+      .response(200, new Response().description("ok"))
+    )
+    path.setPost(new Operation()
+      .operationId("postOperation")
+      .description("get desc")
+      .response(200, new Response().description("ok"))
+    )
+    path.setPut(new Operation()
+      .operationId("putOperation")
+      .description("put desc")
+      .response(200, new Response().description("ok"))
+    )
     path
   }
 
   def sampleGetPath(): Path = {
-    getPath("get", "getApi", "get api desc", 200, new Response().description("success"))
+    getPath(
+      method = "get",
+      operationId = "getApi",
+      desc = "get api desc",
+      responseCode = 200,
+      response = new Response().description("success")
+    )
   }
 
   def samplePostPath(): Path = {
-    getPath("post", "postApi", "post api desc", 200, new Response().description("success"))
+    getPath(
+      method = "post",
+      operationId = "postApi",
+      desc = "post api desc",
+      responseCode = 200,
+      response = new Response().description("success")
+    )
   }
 
   implicit class ConvertOpenApiResponseOps(resp: ConvertOpenApiResponse) {
@@ -67,13 +91,12 @@ trait OpenApiTestUtils extends OpenApiConverterUtils {
 
   def execMatcherOnResp[T](resp: ConvertOpenApiResponse, matcher: Matcher[T], extractor: Swagger => T): Assertion = {
     inside(resp) {
-      case ConvertedOpenApi(respSwagger) => {
+      case ConvertedOpenApi(respSwagger) =>
         val res = matcher.apply(extractor.apply(respSwagger))
         if (res.matches)
           Succeeded
         else
           fail(res.failureMessage)
-      }
       case e => fail(s"Failed to convert Swagger $e")
     }
   }

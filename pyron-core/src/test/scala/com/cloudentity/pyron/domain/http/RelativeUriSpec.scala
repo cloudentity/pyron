@@ -9,7 +9,7 @@ import org.scalatest.{MustMatchers, WordSpec}
 class RelativeUriSpec extends WordSpec with MustMatchers {
   "RelativeUri" should {
     "encode query params" in {
-      FixedRelativeUri(UriPath("/path"), QueryParams("x" -> List("a a=")), PathParams(Map())).value must be("/path?x=a+a%3D")
+      FixedRelativeUri(UriPath("/path"), QueryParams("x" -> List("a a=")), PathParams(Map())).value mustBe "/path?x=a+a%3D"
     }
   }
 }

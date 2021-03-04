@@ -7,7 +7,7 @@ import io.vertx.core.json.{JsonArray, JsonObject}
 import org.junit.Test
 
 class RulesReloadAcceptanceTest extends PyronAcceptanceTest with MockUtils {
-  override def getMetaConfPath(): String = "src/test/resources/acceptance/rules-reload/meta-config.json"
+  override def getMetaConfPath: String = "src/test/resources/acceptance/rules-reload/meta-config.json"
 
   @Test
   def shouldReloadRulesArray(): Unit = {
