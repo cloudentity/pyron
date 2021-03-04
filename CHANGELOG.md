@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.7.0] - 2021-02-26
 ### Added
 - support for dynamic port registration in Consul
 
