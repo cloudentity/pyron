@@ -21,9 +21,12 @@ object RewriteUtil {
   def applyRewrite(path: String, rewrite: PreparedRewrite): Option[AppliedRewrite] = for {
     targetPath <- rewritePath(rewrite, path)
     pathParams <- rewrite.regex.findFirstMatchIn(path).map { m =>
-      PathParams(rewrite.indexedParamPlaceholders.map {
+      val named = rewrite.indexedParamPlaceholders.map {
         case (placeholder, idx) => (getParamName(placeholder), m.group(idx))
-      }.toMap)
+      }
+      val numericPos = (0 to m.groupCount).map(idx => (s"$idx", m.group(idx))).toList
+      val numericNeg = (1 to m.groupCount).map(idx => (s"${idx - m.groupCount - 1}", m.group(idx))).toList
+      PathParams((named ::: numericPos ::: numericNeg).toMap)
     }
   } yield AppliedRewrite(path, targetPath, pathParams, from = rewrite)
 
