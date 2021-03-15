@@ -18,8 +18,6 @@ import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.scalatest.MustMatchers
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.util.Try
-
 class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatchers with MockUtils {
   var targetService: ClientAndServer = _
 
@@ -110,7 +108,7 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
         actual.copy(
           headers = Headers(),
           // skip generated numeric params
-          pathParams = PathParams(actual.pathParams.value.filterNot { case (key, _) => key.matches("[-]?\\d*") })
+          pathParams = PathParams(actual.pathParams.value.filterNot { case (key, _) => key.matches("[-]?\\d+") })
         ) == expected
       }
 
