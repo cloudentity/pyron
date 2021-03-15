@@ -2,7 +2,9 @@ package com.cloudentity.pyron.rule
 
 import com.cloudentity.pyron.domain.flow.PathParams
 
+import scala.annotation.tailrec
 import scala.util.Try
+import scala.util.matching.Regex
 
 object RewriteUtil {
 
@@ -24,11 +26,21 @@ object RewriteUtil {
       val named = rewrite.indexedParamPlaceholders.map {
         case (placeholder, idx) => (getParamName(placeholder), m.group(idx))
       }
-      val numericPos = (0 to m.groupCount).map(idx => (s"$idx", m.group(idx))).toList
-      val numericNeg = (1 to m.groupCount).map(idx => (s"${idx - m.groupCount - 1}", m.group(idx))).toList
-      PathParams((named ::: numericPos ::: numericNeg).toMap)
+      PathParams((named ::: getNumericParams(m)).toMap)
     }
   } yield AppliedRewrite(path, targetPath, pathParams, from = rewrite)
+
+  def getNumericParams(m: Regex.Match): List[(String, String)] = {
+    @tailrec
+    def loop(idx: Int, acc: List[(String, String)]): List[(String, String)] = if (idx > 0) {
+      val posParam = (s"$idx", m.group(idx))
+      val negParam = (s"${idx - m.groupCount - 1}", m.group(idx))
+      loop(idx - 1, posParam :: negParam :: acc)
+    } else {
+      acc
+    }
+    loop(m.groupCount, Nil)
+  }
 
   def rewritePath(rewrite: PreparedRewrite, path: String): Option[String] = rewrite.regex
     .findFirstMatchIn(path)

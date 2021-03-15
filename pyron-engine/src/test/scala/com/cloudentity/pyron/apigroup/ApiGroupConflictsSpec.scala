@@ -99,16 +99,12 @@ class ApiGroupConflictsSpec extends WordSpec with MustMatchers {
         GroupMatchCriteria(Some(BasePath("/x")), emptyDomains)
       ) mustBe true
       isConflicted(
-        GroupMatchCriteria(Some(BasePath("/x")), emptyDomains),
-        GroupMatchCriteria(None, emptyDomains)
+        GroupMatchCriteria(None, emptyDomains),
+        GroupMatchCriteria(Some(BasePath("/x")), emptyDomains)
       ) mustBe true
       isConflicted(
         GroupMatchCriteria(Some(BasePath("/x")), emptyDomains),
         GroupMatchCriteria(Some(BasePath("/x/y")), emptyDomains)
-      ) mustBe true
-      isConflicted(
-        GroupMatchCriteria(Some(BasePath("/x/y")), emptyDomains),
-        GroupMatchCriteria(Some(BasePath("/x")), emptyDomains)
       ) mustBe true
     }
 

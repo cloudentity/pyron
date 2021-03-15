@@ -18,6 +18,8 @@ import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.scalatest.MustMatchers
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.util.Try
+
 class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatchers with MockUtils {
   var targetService: ClientAndServer = _
 
@@ -103,7 +105,13 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
     new BaseMatcher {
       override def matches(o: Any): Boolean = {
         val actual = decode[OriginalRequest](o.toString).getOrElse(throw new Exception)
-        actual.copy(headers = Headers()) == expected // checking only one header to avoid checking headers set by RestAssured
+        // FIX: next comment seems wrong, headers are set to empty, not one value
+        // checking only one header to avoid checking headers set by RestAssured
+        actual.copy(
+          headers = Headers(),
+          // skip generated numeric params
+          pathParams = PathParams(actual.pathParams.value.filterNot { case (key, _) => key.matches("[-]?\\d*") })
+        ) == expected
       }
 
       override def describeTo(description: Description): Unit =

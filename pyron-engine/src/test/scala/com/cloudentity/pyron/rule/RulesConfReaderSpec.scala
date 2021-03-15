@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.rule
 
 import io.circe.Json
-import com.cloudentity.pyron.domain.flow.{EndpointMatchCriteria, PathPattern, PathPrefix, PluginConf, ApiGroupPluginConf, PluginName, ServiceClientName, StaticServiceRule, TargetHost}
+import com.cloudentity.pyron.domain.flow.{ApiGroupPluginConf, EndpointMatchCriteria, PathPattern, PathPrefix, PluginConf, PluginName, RewriteMethod, RewritePath, ServiceClientName, StaticServiceRule, TargetHost}
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf}
 import com.cloudentity.pyron.rule.RulesConfReader._
 import io.vertx.core.http.HttpMethod
@@ -22,8 +22,8 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     targetService = None,
     targetProxy = None,
     pathPattern = Some(PathPattern("pathPattern")),
-    rewritePath = None,
-    rewriteMethod = None,
+    rewritePath = Some(RewritePath("rewritePath")),
+    rewriteMethod = Some(RewriteMethod(HttpMethod.GET)),
     copyQueryOnRewrite = None,
     preserveHostHeader = None,
     pathPrefix = Some(PathPrefix("pathPrefix")),
