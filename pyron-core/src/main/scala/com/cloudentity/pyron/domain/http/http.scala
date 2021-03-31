@@ -2,7 +2,7 @@ package com.cloudentity.pyron.domain.http
 
 import java.net.{URI, URLEncoder}
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
-import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithParams
+import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithPathParams
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpHeaders, HttpMethod}
 import org.apache.http.client.utils.URLEncodedUtils
@@ -131,7 +131,7 @@ sealed trait RelativeUri {
       case FixedRelativeUri(path, _, _) =>
         path.value
       case RewritableRelativeUri(path, _, pathParams) =>
-        rewritePathWithParams(path.value, pathParams)
+        rewritePathWithPathParams(path.value, pathParams)
     }
   }
 
@@ -139,7 +139,7 @@ sealed trait RelativeUri {
     val queryString = if (query.toString.nonEmpty) "?" + query.toString else ""
     this match {
       case FixedRelativeUri(path, _, _) => path.value + queryString
-      case RewritableRelativeUri(path, _, pathParams) => rewritePathWithParams(path.value, pathParams) + queryString
+      case RewritableRelativeUri(path, _, pathParams) => rewritePathWithPathParams(path.value, pathParams) + queryString
     }
   }
 

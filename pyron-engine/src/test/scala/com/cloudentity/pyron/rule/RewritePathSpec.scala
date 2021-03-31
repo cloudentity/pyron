@@ -2,7 +2,7 @@ package com.cloudentity.pyron.rule
 
 import com.cloudentity.pyron.domain.flow.PathParams
 import com.cloudentity.pyron.domain.http.{OriginalRequest, QueryParams, UriPath}
-import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithParams
+import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithPathParams
 import com.cloudentity.tools.vertx.http.Headers
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
@@ -30,27 +30,27 @@ class RewritePathSpec extends FlatSpec {
     val rewritePathConf = "/api/new/path"
     val req = originalDefault.copy(pathParams = PathParams.empty)
 
-    assert(rewritePathWithParams(rewritePathConf, req.pathParams) == rewritePathConf)
+    assert(rewritePathWithPathParams(rewritePathConf, req.pathParams) == rewritePathConf)
   }
 
   it should "rewrite path with one param" in {
-    val rewritePathConf = "/api/new/path/{firstParamName}"
-    val req = originalDefault.copy(pathParams = PathParams(Map("firstParamName" -> "1-2-3")))
+    val rewritePathConf = "/api/new/path/{paramOne}"
+    val req = originalDefault.copy(pathParams = PathParams(Map("paramOne" -> "1-2-3")))
 
-    assert(rewritePathWithParams(rewritePathConf, req.pathParams) == "/api/new/path/1-2-3")
+    assert(rewritePathWithPathParams(rewritePathConf, req.pathParams) == "/api/new/path/1-2-3")
   }
 
-  it should "rewrite path with Two params" in {
-    val rewritePathConf = "/api/new/path/{firstParamName}/{secondParamName}"
-    val req = originalDefault.copy(pathParams = PathParams(Map("firstParamName" -> "1-2-3", "secondParamName" -> "4-5-6")))
+  it should "rewrite path with two params" in {
+    val rewritePathConf = "/api/new/path/{paramOne}/{paramTwo}"
+    val req = originalDefault.copy(pathParams = PathParams(Map("paramOne" -> "1-2-3", "paramTwo" -> "4-5-6")))
 
-    assert(rewritePathWithParams(rewritePathConf, req.pathParams) == "/api/new/path/1-2-3/4-5-6")
+    assert(rewritePathWithPathParams(rewritePathConf, req.pathParams) == "/api/new/path/1-2-3/4-5-6")
   }
 
-  it should "rewrite path with one param multiple times" in {
-    val rewritePathConf = "/api/new/path/{firstParamName}/{firstParamName}"
-    val req = originalDefault.copy(pathParams = PathParams(Map("firstParamName" -> "1-2-3")))
+  it should "rewrite path with repeated params" in {
+    val rewritePathConf = "/api/{paramTwo}/new/path/{paramOne}/{paramOne}-{paramTwo}"
+    val req = originalDefault.copy(pathParams = PathParams(Map("paramOne" -> "1-2-3", "paramTwo" -> "4-5-6")))
 
-    assert(rewritePathWithParams(rewritePathConf, req.pathParams) == "/api/new/path/1-2-3/1-2-3")
+    assert(rewritePathWithPathParams(rewritePathConf, req.pathParams) == "/api/4-5-6/new/path/1-2-3/1-2-3-4-5-6")
   }
 }
