@@ -1,5 +1,6 @@
 package com.cloudentity.pyron.domain.http
 
+import cats.data.Kleisli
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath}
 import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithPathParams
 
@@ -7,17 +8,11 @@ import java.net.URI
 import scala.util.Try
 
 object RelativeUri {
-  def of(uriString: String): Try[RelativeUri] =
-    Try(new URI(uriString)).flatMap { uri =>
-      val path = Option(uri.getPath).getOrElse("")
-
-      Option(uri.getQuery) match {
-        case Some(query) =>
-          QueryParams.fromString(query).map(FixedRelativeUri(UriPath(path), _, PathParams(Map())))
-        case None =>
-          scala.util.Success(FixedRelativeUri(UriPath(path), QueryParams.of(), PathParams(Map())))
-      }
-    }
+  def of(uriString: String): Try[RelativeUri] = Try(new URI(uriString)).flatMap { uri =>
+    val path = Option(uri.getPath).getOrElse("")
+    Option(uri.getQuery).fold(Try(QueryParams.of()))(QueryParams.fromString)
+      .map(query => FixedRelativeUri(UriPath(path), query, PathParams(Map())))
+  }
 
   def fromPath(path: String): RelativeUri =
     FixedRelativeUri(UriPath(path), QueryParams.of(), PathParams(Map()))
@@ -36,14 +31,11 @@ case class RewritableRelativeUri(_path: RewritePath, query: QueryParams, pathPar
 }
 
 sealed trait RelativeUri {
-  lazy val path: String = {
-    this match {
-      case FixedRelativeUri(path, _, _) =>
-        path.value
-      case RewritableRelativeUri(path, _, pathParams) =>
-        rewritePathWithPathParams(path.value, pathParams)
-    }
+  lazy val path: String = this match {
+    case FixedRelativeUri(path, _, _) => path.value
+    case RewritableRelativeUri(path, _, pathParams) => rewritePathWithPathParams(path.value, pathParams)
   }
+
   lazy val value: String = {
     val queryString = if (query.toString.nonEmpty) "?" + query.toString else ""
     this match {
