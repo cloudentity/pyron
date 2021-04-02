@@ -2,7 +2,6 @@ package com.cloudentity.pyron.openapi
 
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.TargetClient
-import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.{RelativeUri, TargetRequest}
 import com.cloudentity.pyron.domain.openapi._
@@ -26,7 +25,7 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
   var targetClient: TargetClient = _
   var apiGroupConfs: List[ApiGroupConf] = List()
 
-  lazy val converter = createClient(classOf[OpenApiConverter])
+  lazy val converter: OpenApiConverter = createClient(classOf[OpenApiConverter])
 
   override def configPath(): String = "openApi"
 

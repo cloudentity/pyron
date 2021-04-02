@@ -9,7 +9,7 @@ object RuleMatcher {
     case object NoMatch extends MatchResult
 
   def makeMatch(method: HttpMethod, path: String, basePath: BasePath, criteria: EndpointMatchCriteria): MatchResult =
-    if (criteria.method == "*" || criteria.method == method) {
+    if (criteria.method == method) {
       val relativePath = path.drop(basePath.value.length)
       RewriteUtil
         .applyRewrite(relativePath, criteria.rewrite)

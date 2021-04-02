@@ -2,7 +2,6 @@ package com.cloudentity.pyron.config
 
 import io.circe._
 import parser._
-import com.cloudentity.pyron.domain.Codecs._
 import io.circe.generic.auto._
 import com.cloudentity.pyron.accesslog.AccessLogHandler.AccessLogGlobalConf
 import com.cloudentity.pyron.domain.rule.Kilobytes
@@ -16,26 +15,25 @@ object Conf {
   val apiGroupsConfKey = "apiGroups"
   val rulesConfKey = "rules"
 
-  case class AppConf(
-    port: Option[Int],
-    serverVerticles: Option[Int],
-    alivePath: Option[String],
-    defaultProxyRules: Option[Json],
-    defaultProxyRulesEnabled: Option[Boolean],
-    docsEnabled: Option[Boolean],
-    proxyHeaders: Option[ProxyHeaderConf],
-    accessLog: Option[AccessLogGlobalConf],
-    defaultRequestBodyMaxSize: Option[Kilobytes],
-    openApi: Option[OpenApiConf]
-  )
+  case class AppConf(port: Option[Int],
+                     serverVerticles: Option[Int],
+                     alivePath: Option[String],
+                     defaultProxyRules: Option[Json],
+                     defaultProxyRulesEnabled: Option[Boolean],
+                     docsEnabled: Option[Boolean],
+                     proxyHeaders: Option[ProxyHeaderConf],
+                     accessLog: Option[AccessLogGlobalConf],
+                     defaultRequestBodyMaxSize: Option[Kilobytes],
+                     openApi: Option[OpenApiConf])
 
-  case class OpenApiConf(enabled: Option[Boolean], basePath: Option[String], getTimeout: Option[Int], listTimeout: Option[Int])
+  case class OpenApiConf(enabled: Option[Boolean],
+                         basePath: Option[String],
+                         getTimeout: Option[Int],
+                         listTimeout: Option[Int])
 
-  case class ProxyHeaderConf(
-    inputTrueClientIp: Option[String],
-    outputTrueClientIp: Option[String],
-    enabled: Option[Boolean]
-  )
+  case class ProxyHeaderConf(inputTrueClientIp: Option[String],
+                             outputTrueClientIp: Option[String],
+                             enabled: Option[Boolean])
 
   def decodeUnsafe(json: String): AppConf = {
     decode[AppConf](json) match {

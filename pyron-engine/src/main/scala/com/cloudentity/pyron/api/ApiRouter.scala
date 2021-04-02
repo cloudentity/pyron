@@ -1,12 +1,11 @@
 package com.cloudentity.pyron.api
 
 import java.util.Optional
-
 import com.cloudentity.pyron.accesslog.AccessLogHandler
 import com.cloudentity.pyron.openapi.route._
 import com.cloudentity.pyron.config.Conf.{AppConf, OpenApiConf}
 import com.cloudentity.pyron.openapi.route.GetOpenApiRoute
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.scala.FutureConversions
 import com.cloudentity.tools.vertx.server.api.routes.RouteService
 import com.cloudentity.tools.vertx.tracing.TracingManager
@@ -16,16 +15,14 @@ import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.StaticHandler
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 object ApiRouter extends FutureConversions {
-  val log = LoggerFactory.getLogger(this.getClass)
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def createRouter(vertx: Vertx, conf: AppConf, tracing: TracingManager): Router = {
-    val apiHandler = ServiceClientFactory.make(vertx.eventBus(), classOf[ApiHandler])
-    val router     = Router.router(vertx)
-
-    router.route().handler(ProxyHeadersHandler.handle(conf.proxyHeaders))
+    val router = Router.router(vertx)
+    router.route().handler(ProxyHeadersHandler.handle(conf.proxyHeaders) _)
     router.route().handler(AccessLogHandler.createHandler(vertx, tracing, conf.accessLog))
     router.route(conf.alivePath.getOrElse("/alive")).handler(AliveHandler.handle)
 
@@ -35,11 +32,13 @@ object ApiRouter extends FutureConversions {
       router.route("/docs/*").handler(StaticHandler.create())
     }
 
+    val apiHandler = VertxEndpointClient.make(vertx, classOf[ApiHandler])
     router.route("/*").handler { ctx =>
       ctx.request().pause()
       apiHandler.handle(conf.defaultRequestBodyMaxSize, ctx)
     }
-    router.exceptionHandler { ex => log.error("Unhandled exception", ex) }
+
+    router.errorHandler(500, ex => log.error("Unhandled exception", ex))
     router
   }
 
@@ -47,18 +46,32 @@ object ApiRouter extends FutureConversions {
     if (openApiConf.flatMap(_.enabled).getOrElse(true)) {
       val basePath = openApiConf.flatMap(_.basePath).getOrElse("/openapi")
       val endpointPath = basePath + "/:serviceName"
-
       val getTimeout = openApiConf.flatMap(_.getTimeout).getOrElse(30000)
-      val getOpenApiClient = ServiceClientFactory.makeWithTracing(vertx.eventBus(), tracing, classOf[RouteService], Optional.of(GetOpenApiRoute.verticleId), new DeliveryOptions().setSendTimeout(getTimeout))
       router.route(HttpMethod.GET, endpointPath).handler(ctx =>
-        getOpenApiClient.handleRequest(ctx)
+        getOpenApiClient(tracing, vertx, getTimeout).handleRequest(ctx)
       )
-
-      val listTimeout = openApiConf.flatMap(_.listTimeout).getOrElse(30000)
-      val listOpenApisClient = ServiceClientFactory.makeWithTracing(vertx.eventBus(), tracing, classOf[RouteService], Optional.of(ListOpenApiRoute.verticleId), new DeliveryOptions().setSendTimeout(getTimeout))
-      router.route(HttpMethod.GET, basePath).handler(ctx =>
-        listOpenApisClient.handleRequest(ctx)
-      )
+      router.route(HttpMethod.GET, basePath).handler(ctx => listOpenApisClient(tracing, vertx, getTimeout).handleRequest(ctx))
     }
   }
+
+  private def getOpenApiClient(tracing: TracingManager, vertx: Vertx, getTimeout: Int): RouteService = {
+    VertxEndpointClient.makeWithTracing(
+      vertx,
+      tracing,
+      classOf[RouteService],
+      Optional.of(GetOpenApiRoute.verticleId),
+      new DeliveryOptions().setSendTimeout(getTimeout)
+    )
+  }
+
+  private def listOpenApisClient(tracing: TracingManager, vertx: Vertx, getTimeout: Int): RouteService = {
+    VertxEndpointClient.makeWithTracing(
+      vertx,
+      tracing,
+      classOf[RouteService],
+      Optional.of(ListOpenApiRoute.verticleId),
+      new DeliveryOptions().setSendTimeout(getTimeout)
+    )
+  }
+
 }

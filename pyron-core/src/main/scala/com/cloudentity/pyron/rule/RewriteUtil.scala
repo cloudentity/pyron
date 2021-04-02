@@ -17,9 +17,9 @@ object RewriteUtil {
     }
 
   def prepareRewrite(pattern: String, prefix: String, rewrite: String): PreparedRewrite = {
-    val groupsCountPattern = getGroupsCountingPattern(pattern)
-    val indexedParamPlaceholders = paramPlaceholdersWithGroupIndex(pattern, groupsCountPattern)
-    val totalParamsCount = getCaptureGroupsCount(groupsCountPattern) + indexedParamPlaceholders.size
+    val groupsCountPattern: String = getGroupsCountingPattern(pattern)
+    val indexedParamPlaceholders: List[(String, Int)] = paramPlaceholdersWithGroupIndex(pattern, groupsCountPattern)
+    val totalParamsCount: Int = getCaptureGroupsCount(groupsCountPattern) + indexedParamPlaceholders.size
     val (pat, rew) = insertParamGroupsAndRefs(pattern, rewrite, indexedParamPlaceholders)
     PreparedRewrite(
       pathPrefix = prefix,
@@ -56,11 +56,11 @@ object RewriteUtil {
     loop(m.groupCount, Nil)
   }
 
-  private[rule] def getCaptureGroupsCount(groupsCountingPattern: String): Int =
-    groupsCountingPattern.count(_ == '(') + 1 // entire regex counts as capture group too, hence +1
+  private[rule] def getCaptureGroupsCount(groupsCountPattern: String): Int =
+    groupsCountPattern.count(_ == '(') + 1 // entire regex counts as capture group too, hence +1
 
-  private[rule] def getPrecedingGroupsCount(groupsCountingPattern: String, index: Int): Int =
-    groupsCountingPattern.slice(0, index).count(_ == '(') + 1 // entire regex counts as capture group too, hence +1
+  private[rule] def getPrecedingGroupsCount(groupsCountPattern: String, index: Int): Int =
+    groupsCountPattern.take(index).count(_ == '(') + 1 // entire regex counts as capture group too, hence +1
 
   private[rule] def getGroupsCountingPattern(pattern: String): String = pattern
     // any remaining '(' will be strictly these denoting beginning of a capture group
