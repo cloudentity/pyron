@@ -6,6 +6,7 @@ case class AppliedRewrite(path: String,
                           targetPath: String,
                           pathParams: PathParams,
                           from: PreparedRewrite) {
+
   def pathPrefix: String = from.pathPrefix
 
   def matchedPattern: String = from.matchPattern

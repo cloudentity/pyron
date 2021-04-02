@@ -81,76 +81,13 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit] = {
     val vertxRequest   = ctx.request()
     val vertxResponse  = ctx.response()
-    val tracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
+    val tracingContext: TracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
+    val requestSignature = getRequestSignature(vertxRequest)
 
-    val requestSignature = Option(vertxRequest.host()) match {
-      case Some(_) => s"${vertxRequest.method()} ${vertxRequest.uri()}"
-      case None => s"${vertxRequest.method()} ${vertxRequest.absoluteURI()}"
-    }
     log.debug(tracingContext, s"Received request: $requestSignature")
     log.trace(tracingContext, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
-    val matchOpt =
-      for {
-        apiGroup             <- findMatchingApiGroup(apiGroups, vertxRequest)
-        ruleWithPathParams   <- findMatchingRule(apiGroup, vertxRequest)
-      } yield (apiGroup, ruleWithPathParams)
-
-    val program: Future[ApiResponse] =
-      matchOpt match {
-        case None =>
-          Future.successful(Errors.ruleNotFound.toApiResponse())
-
-        case Some((apiGroup, ruleWithPathParams)) =>
-          val rule = ruleWithPathParams.rule
-          val pathParams = ruleWithPathParams.params
-          val proxyHeaders = getProxyHeaders(ctx)
-
-          ApiRequestHandler.setRule(ctx, rule)
-          setTracingOperationName(ctx, rule)
-          log.debug(tracingContext, s"Found $rule for, request='$requestSignature'")
-
-          for {
-
-            initRequestCtx <- toRequestCtx(
-              defaultRequestBodyMaxSize,
-              ctx,
-              tracingContext,
-              proxyHeaders,
-              rule.conf,
-              apiGroup,
-              pathParams
-            )
-
-            finalRequestCtx <- applyRequestPlugins(
-              initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)),
-              rule.requestPlugins
-            )
-
-            _                     = ApiRequestHandler.setAuthnCtx(ctx, finalRequestCtx.authnCtx)
-            _                     = ApiRequestHandler.setAborted(ctx, finalRequestCtx.aborted.isDefined)
-            _                     = ApiRequestHandler.setFailure(ctx, finalRequestCtx.failed)
-
-            _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalRequestCtx.accessLog)
-            _                     = ApiRequestHandler.addProperties(ctx, finalRequestCtx.properties)
-
-            (initResponse, fail) <- finalRequestCtx.aborted match {
-                                      case None =>
-                                        callTarget(tracingContext, finalRequestCtx, rule.conf.call)
-                                      case Some(response) =>
-                                        Future.successful((response, false))
-                                    }
-            modifiedResponse     <- finalRequestCtx.modifyResponse(initResponse)
-            responseCtx           = toResponseCtx(finalRequestCtx, fail, modifiedResponse)
-
-            finalResponseCtx     <- applyResponsePlugins(responseCtx, rule.responsePlugins)
-
-            _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalResponseCtx.accessLog)
-            _                     = ApiRequestHandler.addProperties(ctx, finalResponseCtx.properties)
-          } yield finalResponseCtx.response
-      }
-
-    program.onComplete { result =>
+    getProgram(defaultRequestBodyMaxSize, ctx, tracingContext, requestSignature).onComplete { result =>
       try {
         result match {
           case Success(apiResponse) =>
@@ -159,13 +96,69 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
             log.error(tracingContext, s"Unexpected error, request='$requestSignature'", ex)
             endWithException(tracingContext, vertxResponse, ex)
         }
-      } catch { case ex: Throwable =>
-        log.error(tracingContext, s"Unexpected error, request='$requestSignature'", ex)
-        endWithException(tracingContext, vertxResponse, ex)
+      } catch {
+        case ex: Throwable =>
+          log.error(tracingContext, s"Unexpected error, request='$requestSignature'", ex)
+          endWithException(tracingContext, vertxResponse, ex)
       }
     }
 
     VxFuture.succeededFuture(())
+  }
+
+  def getProgram(defaultRequestBodyMaxSize: Option[Kilobytes],
+                 ctx: RoutingContext,
+                 tracingContext: TracingContext,
+                 requestSignature: String): Future[ApiResponse] = {
+
+    val matchOpt = for {
+      apiGroup <- findMatchingApiGroup(apiGroups, ctx.request())
+      ruleWithPathParams <- findMatchingRule(apiGroup, ctx.request())
+    } yield (apiGroup, ruleWithPathParams)
+
+    matchOpt match {
+      case None =>
+        Future.successful(Errors.ruleNotFound.toApiResponse())
+
+      case Some((apiGroup, ruleWithPathParams)) =>
+        val rule = ruleWithPathParams.rule
+        val pathParams = ruleWithPathParams.params
+        val proxyHeaders = getProxyHeaders(ctx)
+
+        setRule(ctx, rule)
+        setTracingOperationName(ctx, rule)
+        log.debug(tracingContext, s"Found $rule for, request='$requestSignature'")
+
+        for {
+          initRequestCtx <- toRequestCtx(
+            defaultRequestBodyMaxSize,
+            ctx,
+            tracingContext,
+            proxyHeaders,
+            rule.conf,
+            apiGroup,
+            pathParams
+          )
+
+          finalRequestCtx <- applyRequestPlugins(
+            initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)),
+            rule.requestPlugins
+          ).map(setupFinalRequest(ctx, _))
+
+          (initResponse, fail) <- finalRequestCtx.aborted match {
+            case None =>
+              callTarget(tracingContext, finalRequestCtx, rule.conf.call)
+            case Some(response) =>
+              Future.successful((response, false))
+          }
+
+          modifiedResponse <- finalRequestCtx.modifyResponse(initResponse)
+          responseCtx = toResponseCtx(finalRequestCtx, fail, modifiedResponse)
+          finalResponseCtx <- applyResponsePlugins(responseCtx, rule.responsePlugins)
+            .map(setupFinalResponse(ctx, _))
+
+        } yield finalResponseCtx.response
+    }
   }
 
   def applyRequestPlugins(requestCtx: RequestCtx, plugins: List[RequestPlugin]): Future[RequestCtx] =
@@ -174,11 +167,26 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       exceptionToApiResponse(ex)
     }
 
+  def setupFinalRequest(ctx: RoutingContext, requestCtx: RequestCtx): RequestCtx = {
+    setAuthnCtx(ctx, requestCtx.authnCtx)
+    setAborted(ctx, requestCtx.aborted.isDefined)
+    setFailure(ctx, requestCtx.failed)
+    addExtraAccessLogItems(ctx, requestCtx.accessLog)
+    addProperties(ctx, requestCtx.properties)
+    requestCtx
+  }
+
   def applyResponsePlugins(responseCtx: ResponseCtx, plugins: List[ResponsePlugin]): Future[ResponseCtx] =
     PluginFunctions.applyResponsePlugins(responseCtx, plugins) { ex =>
       log.error(responseCtx.tracingCtx, s"Could not apply response plugin", ex)
       exceptionToApiResponse(ex)
     }
+
+  def setupFinalResponse(ctx: RoutingContext, responseCtx:ResponseCtx): ResponseCtx = {
+    addExtraAccessLogItems(ctx, responseCtx.accessLog)
+    addProperties(ctx, responseCtx.properties)
+    responseCtx
+  }
 
   def callTarget(tracing: TracingContext, ctx: RequestCtx, callOpts: Option[CallOpts]): Future[(ApiResponse, Boolean)] =
     targetClient.call(tracing, ctx.request, ctx.bodyStreamOpt, callOpts).map {
@@ -201,6 +209,11 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       response, requestCtx.request, requestCtx.original, requestCtx.tracingCtx,
       requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined, failed
     )
+  }
+
+  def getRequestSignature(vertxRequest: HttpServerRequest): String = Option(vertxRequest.host()) match {
+    case Some(_) => s"${vertxRequest.method()} ${vertxRequest.uri()}"
+    case None => s"${vertxRequest.method()} ${vertxRequest.absoluteURI()}"
   }
 
   def getProxyHeaders(ctx: RoutingContext): ProxyHeaders =
@@ -357,53 +370,53 @@ object HttpConversions {
                   )(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
 
     val req = ctx.request()
-    val contentLengthOpt: Option[Long] = Try[Long](java.lang.Long.valueOf(req.getHeader("Content-Length"))).toOption
+    val contentLengthOpt = Try(req.getHeader("Content-Length").toLong).toOption
     val requestBodyMaxSize = ruleConf.requestBodyMaxSize.orElse(defaultRequestBodyMaxSize)
 
-    val bodyFut: Future[(Option[ReadStream[Buffer]], Option[Buffer])] =
-      if (BodyLimit.isMaxSizeExceeded(contentLengthOpt.getOrElse(-1), requestBodyMaxSize)) {
-        Future.failed(new RequestBodyTooLargeException())
-      } else {
-        ruleConf.requestBody.getOrElse(BufferBody) match {
-          case BufferBody => BodyBuffer.bufferBody(req, contentLengthOpt, requestBodyMaxSize)
-          case StreamBody   =>
-            requestBodyMaxSize match {
-              case Some(maxSize) =>
-                Future.successful((Some(SizeLimitedBodyStream(ctx.request(), maxSize)), None))
-              case None =>
-                Future.successful((Some(req), None))
-            }
-
-          case DropBody   => Future.successful((None, None))
-        }
-      }
-
-    bodyFut.map { case (bodyStreamOpt, bodyOpt) =>
-      val original = toOriginalRequest(req, pathParams, bodyOpt)
-      val targetRequest =
-        TargetRequest(
-          method  = ruleConf.rewriteMethod.map(_.value).getOrElse(original.method),
+    getBodyFuture(ctx, ruleConf, req, contentLengthOpt, requestBodyMaxSize)
+      .map { case (bodyStreamOpt, bodyOpt) =>
+        val original = toOriginalRequest(req, pathParams, bodyOpt)
+        val dropBody = ruleConf.requestBody.contains(DropBody)
+        val request = TargetRequest(
+          method = ruleConf.rewriteMethod.map(_.value).getOrElse(original.method),
           service = TargetService(ruleConf.target, req),
-          uri     = chooseRelativeUri(tracingCtx, apiGroup.matchCriteria.basePathResolved, ruleConf, original),
+          uri = chooseRelativeUri(tracingCtx, apiGroup.matchCriteria.basePathResolved, ruleConf, original),
           headers = removeHeadersAsProxy(ruleConf, original.headers),
           bodyOpt = bodyOpt
+        ).modifyHeaders(hs => if (!dropBody) hs else hs.set("Content-Length", "0"))
+
+        RequestCtx(
+          request,
+          bodyStreamOpt,
+          original,
+          Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup),
+          tracingCtx,
+          proxyHeaders,
+          AuthnCtx(),
+          aborted = None
         )
+      }
+  }
 
-      val targetRequestWithDroppedBody =
-        if (ruleConf.requestBody.contains(DropBody))
-          targetRequest.modifyHeaders(_.set("Content-Length", "0"))
-        else targetRequest
-
-      RequestCtx(
-        tracingCtx = tracingCtx,
-        request = targetRequestWithDroppedBody,
-        bodyStreamOpt = bodyStreamOpt,
-        original = original,
-        proxyHeaders = proxyHeaders,
-        properties = Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup),
-        authnCtx = AuthnCtx(),
-        aborted = None
-      )
+  private def getBodyFuture(ctx: RoutingContext,
+                            ruleConf: RuleConf,
+                            req: HttpServerRequest,
+                            contentLengthOpt: Option[Long],
+                            requestBodyMaxSize: Option[Kilobytes]): Future[(Option[ReadStream[Buffer]], Option[Buffer])] = {
+    if (BodyLimit.isMaxSizeExceeded(contentLengthOpt.getOrElse(-1), requestBodyMaxSize)) {
+      Future.failed(new RequestBodyTooLargeException())
+    } else {
+      ruleConf.requestBody.getOrElse(BufferBody) match {
+        case BufferBody => BodyBuffer.bufferBody(req, contentLengthOpt, requestBodyMaxSize)
+        case StreamBody =>
+          requestBodyMaxSize match {
+            case Some(maxSize) =>
+              Future.successful((Some(SizeLimitedBodyStream(ctx.request(), maxSize)), None))
+            case None =>
+              Future.successful((Some(req), None))
+          }
+        case DropBody => Future.successful((None, None))
+      }
     }
   }
 
@@ -443,7 +456,6 @@ object HttpConversions {
     val hs =
       if (conf.preserveHostHeader.getOrElse(false)) headers
       else headers.remove("Host")
-
     removeConnectionHeaders(hs)
   }
 

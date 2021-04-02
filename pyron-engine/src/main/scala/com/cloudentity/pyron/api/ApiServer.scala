@@ -24,14 +24,10 @@ class ApiServer(conf: AppConf) extends ScalaServiceVerticle with HttpService {
     val router = ApiRouter.createRouter(vertx, conf, getTracing)
     val opts = new HttpServerOptions(getHttpConfig)
     asFuture[HttpServer](vertx.createHttpServer(opts).requestHandler(router).listen(_)).toScala()
-      .map { server =>
-        actualPort = server.actualPort()
-        log.info(s"Started HTTP server on port $actualPort")
-        ()
-      }
+      .map(server => log.info(s"Started HTTP server on port ${server.actualPort()}"))
   }
 
-  private def getHttpConfig = {
+  private def getHttpConfig: JsonObject = {
     val httpConfig = Option(getConfig).getOrElse(new JsonObject()).getJsonObject("http", new JsonObject())
     conf.port.foreach(httpConfig.put("port", _)) // we use app.port conf value for backward-compatibility
     httpConfig
