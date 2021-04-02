@@ -11,12 +11,11 @@ case class QueryParams(private val params: Map[String, List[String]]) {
 
   def nonEmpty: Boolean = params.nonEmpty
 
-  override def toString: String =
-    params.flatMap { case (name, values) =>
-      if (values.nonEmpty)
-        values.map(value => s"${encode(name)}=${encode(value)}")
-      else List(encode(name))
-    }.mkString("&")
+  override def toString: String = params.flatMap { case (name, values) =>
+    if (values.nonEmpty)
+      values.map(value => s"${encode(name)}=${encode(value)}")
+    else List(encode(name))
+  }.mkString("&")
 
   private def encode(s: String): String = URLEncoder.encode(s, "UTF-8")
 
@@ -26,13 +25,12 @@ case class QueryParams(private val params: Map[String, List[String]]) {
   def set(name: String, value: String): QueryParams =
     this.copy(params = params.updated(name, List(value)))
 
-  def remove(name: String, value: String): QueryParams =
-    params.get(name) match {
-      case Some(values) =>
-        val filtered = values.filter(value != _)
-        if (filtered.nonEmpty) this.setValues(name, filtered) else remove(name)
-      case None => this
-    }
+  def remove(name: String, value: String): QueryParams = params.get(name) match {
+    case Some(values) =>
+      val filtered = values.filter(value != _)
+      if (filtered.nonEmpty) this.setValues(name, filtered) else remove(name)
+    case None => this
+  }
 
   def setValues(name: String, values: List[String]): QueryParams =
     this.copy(params = params.updated(name, values))
@@ -43,20 +41,18 @@ case class QueryParams(private val params: Map[String, List[String]]) {
   def addParams(addPs: Map[String, String]): QueryParams =
     addPs.foldLeft(this) { case (ps, (key, value)) => ps.add(key, value) }
 
-  def add(name: String, value: String): QueryParams =
-    params.get(name) match {
-      case Some(oldValues) => this.setValues(name, oldValues ::: List(value))
-      case None => this.set(name, value)
-    }
+  def add(name: String, value: String): QueryParams = params.get(name) match {
+    case Some(oldValues) => this.setValues(name, oldValues ::: List(value))
+    case None => this.set(name, value)
+  }
 
   def addMultiParams(values: Map[String, List[String]]): QueryParams =
     values.foldLeft(this) { case (ps, (key, values)) => ps.addValues(key, values) }
 
-  def addValues(name: String, values: List[String]): QueryParams =
-    params.get(name) match {
-      case Some(oldValues) => this.setValues(name, oldValues ::: values)
-      case None => this.setValues(name, values)
-    }
+  def addValues(name: String, values: List[String]): QueryParams = params.get(name) match {
+    case Some(oldValues) => this.setValues(name, oldValues ::: values)
+    case None => this.setValues(name, values)
+  }
 
   def contains(name: String): Boolean =
     get(name).nonEmpty
