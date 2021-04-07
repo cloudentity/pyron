@@ -30,7 +30,32 @@ class PreparedRewriteTest extends WordSpec with MustMatchers {
     }
   }
 
-  "getCaptureGroupCount" should {
+  "rewritePath" should {
+    "produce rewritten path with resolved params, captured by the matching pattern" in {
+      val preparedRewrite = prepareRewrite(
+        "/pattern/with_(balanced_(parens))/should/{one}/be/{two}/ok/{two}",
+        "/api",
+        "/resources/{two}/{one}/{1}")
+
+      val result = for {
+        regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/DOS")
+      } yield rewritePathWithPreparedRewrite(preparedRewrite.rewritePattern, regexMatch)
+      result mustBe Some("/resources/DOS/UNO/balanced_parens")
+    }
+    "not produce rewritten path when the pattern does not match" in {
+      val preparedRewrite = prepareRewrite(
+        "/pattern/with_(balanced_(parens))/should/{one}/be/{two}/ok/{two}",
+        "/api",
+        "/resources/{two}/{one}/{1}")
+
+      val result = for {
+        regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/TRES")
+      } yield rewritePathWithPreparedRewrite(preparedRewrite.rewritePattern, regexMatch)
+      result mustBe None
+    }
+  }
+
+  "getCaptureGroupsCount" should {
     "count capture groups occurring within pattern by counting all opening parens" in {
       getCaptureGroupCount("here we have only implicit capture group which matches entire pattern") mustBe 1
       getCaptureGroupCount("some(.*)stuff(capture_this(\\d+)is_here(capture_that)") mustBe 5
