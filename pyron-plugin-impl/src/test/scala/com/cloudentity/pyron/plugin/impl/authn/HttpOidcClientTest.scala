@@ -3,7 +3,7 @@ package com.cloudentity.pyron.plugin.impl.authn
 import java.security.interfaces.{RSAPrivateKey, RSAPublicKey}
 import java.security.{KeyPair, KeyPairGenerator}
 
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.test.{VertxDeployTest, VertxUnitTest}
 import com.nimbusds.jose.jwk.{JWK, JWKSet, RSAKey}
 import io.vertx.core.Future
@@ -33,7 +33,7 @@ class HttpOidcClientTest extends VertxUnitTest {
   def getPublicKeys(ctx: TestContext): Unit = {
     mockOidcKeys(oidcKeysMockedBody)
 
-    val client = ServiceClientFactory.make(vertx().eventBus(), classOf[OidcClient])
+    val client = VertxEndpointClient.make(vertx(), classOf[OidcClient])
 
     val config: JsonObject = verticleConfig
     val verticle = new HttpOidcClient()
@@ -52,7 +52,7 @@ class HttpOidcClientTest extends VertxUnitTest {
   def getModifiedPublicKeys(ctx: TestContext): Unit = {
     mockOidcKeys(oidcKeysMockedBody)
 
-    val client = ServiceClientFactory.make(vertx().eventBus(), classOf[OidcClient])
+    val client = VertxEndpointClient.make(vertx(), classOf[OidcClient])
 
     val config: JsonObject = verticleConfig
     val verticle = new HttpOidcClient()
@@ -72,13 +72,11 @@ class HttpOidcClientTest extends VertxUnitTest {
 
   def assertKeySetEquals(result: \/[OidcClientError, JWKSet], ctx: TestContext, expectedSize: Int): Future[Void] = {
     result match {
-      case \/-(keysSet) => {
+      case \/-(keysSet) =>
         ctx.assertNotNull(keysSet)
         ctx.assertEquals(expectedSize, keysSet.getKeys.size())
-      }
-      case -\/(ex) => {
-        ctx.fail(s"Failed to get jwk key set: ${ex}")
-      }
+      case -\/(ex) =>
+        ctx.fail(s"Failed to get jwk key set: $ex")
     }
     Future.succeededFuture[Void]()
   }
@@ -90,12 +88,12 @@ class HttpOidcClientTest extends VertxUnitTest {
     Future.succeededFuture[Void]()
   }
 
-  private def mockOidcKeys(body: String) = {
+  private def mockOidcKeys(body: String): Unit = {
     oidcService.when(HttpRequest.request().withMethod("GET").withPath("/oauth/jwk"))
       .respond(HttpResponse.response(body).withStatusCode(200))
   }
 
-  private def oidcKeysMockedBody = {
+  private def oidcKeysMockedBody: String = {
     val keyPair = generateRsaKeyPair
     val jwk = new JWKSet(generateRsaJwk(keyPair, "rsa1"))
     jwk.toString

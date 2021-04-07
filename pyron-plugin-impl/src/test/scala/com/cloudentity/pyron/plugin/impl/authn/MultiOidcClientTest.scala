@@ -1,11 +1,10 @@
-package com.cloudentity.edge.plugin.impl.authn
+package com.cloudentity.pyron.plugin.impl.authn
 
 import java.security.interfaces.{RSAPrivateKey, RSAPublicKey}
 import java.security.{KeyPair, KeyPairGenerator}
 
-import com.cloudentity.pyron.plugin.impl.authn.{MultiOidcClient, OidcClient, OidcClientError}
 import com.nimbusds.jose.jwk.{JWK, JWKSet, RSAKey}
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.test.{VertxDeployTest, VertxUnitTest}
 import io.vertx.core.Future
 import io.vertx.core.json.{JsonArray, JsonObject}
@@ -41,7 +40,7 @@ class MultiOidcClientTest extends VertxUnitTest {
     mockJwk(idp1, jwkKeys("kid1"))
     mockJwk(idp2, jwkKeys("kid2"))
 
-    val client = ServiceClientFactory.make(vertx().eventBus(), classOf[OidcClient])
+    val client = VertxEndpointClient.make(vertx(), classOf[OidcClient])
 
     VertxDeployTest.deployWithConfig(vertx(), new MultiOidcClient(), verticleConfig)
       .compose { _ => client.getPublicKeys() }
@@ -58,9 +57,9 @@ class MultiOidcClientTest extends VertxUnitTest {
     mockJwkError(idp1, 404)
     mockJwk(idp2, jwkKeys("kid2"))
 
-    val client = ServiceClientFactory.make(vertx().eventBus(), classOf[OidcClient])
+    val client = VertxEndpointClient.make(vertx(), classOf[OidcClient])
 
-    VertxDeployTest.deployWithConfig(vertx(), new MultiOidcClient(), verticleConfig)
+    VertxDeployTest.deployWithConfig(vertx(), new MultiOidcClient(), verticleConfig())
       .compose { _ => client.getPublicKeys() }
       .compose { keySet => assertKeySetEquals(keySet, ctx, 1) }
       .compose { _ => {
@@ -72,23 +71,21 @@ class MultiOidcClientTest extends VertxUnitTest {
 
   def assertKeySetEquals(result: \/[OidcClientError, JWKSet], ctx: TestContext, expectedSize: Int): Future[Void] = {
     result match {
-      case \/-(keysSet) => {
+      case \/-(keysSet) =>
         ctx.assertNotNull(keysSet)
         ctx.assertEquals(expectedSize, keysSet.getKeys.size())
-      }
-      case -\/(ex) => {
-        ctx.fail(s"Failed to get jwk key set: ${ex}")
-      }
+      case -\/(ex) =>
+        ctx.fail(s"Failed to get jwk key set: $ex")
     }
     Future.succeededFuture[Void]()
   }
 
-  private def mockJwk(mock: ClientAndServer, body: String) = {
+  private def mockJwk(mock: ClientAndServer, body: String): Unit = {
     mock.when(HttpRequest.request().withMethod("GET").withPath("/oauth/jwk"))
       .respond(HttpResponse.response(body).withStatusCode(200))
   }
 
-  private def mockJwkError(mock: ClientAndServer, statusCode: Int) = {
+  private def mockJwkError(mock: ClientAndServer, statusCode: Int): Unit = {
     mock.when(HttpRequest.request().withMethod("GET").withPath("/oauth/jwk"))
       .respond(HttpResponse.response().withStatusCode(statusCode))
   }
