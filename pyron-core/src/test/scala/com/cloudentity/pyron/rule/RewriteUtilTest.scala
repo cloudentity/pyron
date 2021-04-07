@@ -43,15 +43,22 @@ class RewriteUtilTest extends WordSpec with MustMatchers {
         "/pattern/with_(balanced_(parens))/should/{one}/be/{two}/ok/{two}",
         "/api",
         "/resources/{two}/{one}/{1}")
-      rewritePathWithPreparedRewrite(preparedRewrite, "/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/DOS") mustBe
-        Some("/resources/DOS/UNO/balanced_parens")
+
+      val result = for {
+        regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/DOS")
+      } yield rewritePathWithPreparedRewrite(preparedRewrite.rewritePattern, regexMatch)
+      result mustBe Some("/resources/DOS/UNO/balanced_parens")
     }
     "not produce rewritten path when the pattern does not match" in {
       val preparedRewrite = prepareRewrite(
         "/pattern/with_(balanced_(parens))/should/{one}/be/{two}/ok/{two}",
         "/api",
         "/resources/{two}/{one}/{1}")
-      rewritePathWithPreparedRewrite(preparedRewrite, "/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/TRES") mustBe None
+
+      val result = for {
+        regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/TRES")
+      } yield rewritePathWithPreparedRewrite(preparedRewrite.rewritePattern, regexMatch)
+      result mustBe None
     }
   }
 

@@ -29,31 +29,32 @@ object RewriteUtil {
   }
 
   def applyRewrite(path: String, rewrite: PreparedRewrite): Option[AppliedRewrite] = for {
-    targetPath <- rewritePathWithPreparedRewrite(rewrite, path)
-    pathParams <- rewrite.regex.findFirstMatchIn(path).map { m =>
-      val named = rewrite.indexedParamPlaceholders.map {
-        case (placeholder, idx) => (getParamName(placeholder), m.group(idx))
-      }
-      PathParams((named ::: getNumericParams(m)).toMap)
-    }
+    regexMatch <- rewrite.regex.findFirstMatchIn(path)
+    targetPath = rewritePathWithPreparedRewrite(rewrite.rewritePattern, regexMatch)
+    pathParams = extractPathParams(rewrite.indexedParamPlaceholders, regexMatch)
   } yield AppliedRewrite(path, targetPath, pathParams, from = rewrite)
 
-  private[rule] def rewritePathWithPreparedRewrite(rewrite: PreparedRewrite, path: String): Option[String] = rewrite.regex
-    .findFirstMatchIn(path)
-    .map(m => (0 to m.groupCount)
-      .map(v => (v, m.group(v))).foldLeft(rewrite.rewritePattern) {
+  private[rule] def rewritePathWithPreparedRewrite(rewritePattern: String, regexMatch: Regex.Match): String =
+    (0 to regexMatch.groupCount).map(i => (i, regexMatch.group(i))).foldLeft(rewritePattern) {
       case (rew, (idx, value)) => rew.replace(s"{$idx}", value)
-    })
+    }
 
-  private[rule] def getNumericParams(m: Regex.Match): List[(String, String)] = {
+  private[rule] def extractPathParams(paramPlaceholders: List[(String,Int)], regexMatch: Regex.Match) = {
+    val namedParams = paramPlaceholders.map {
+      case (placeholder, idx) => (getParamName(placeholder), regexMatch.group(idx))
+    }
+    PathParams((namedParams ::: getNumericParams(regexMatch)).toMap)
+  }
+
+  private[rule] def getNumericParams(regexMatch: Regex.Match): List[(String, String)] = {
     @tailrec
     def loop(idx: Int, acc: List[(String, String)]): List[(String, String)] = if (idx > 0) {
-      val (posIdx, negIdx, groupAtIdx) = (s"$idx", s"${idx - m.groupCount - 1}", m.group(idx))
+      val (posIdx, negIdx, groupAtIdx) = (s"$idx", s"${idx - regexMatch.groupCount - 1}", regexMatch.group(idx))
       loop(idx - 1,  (posIdx, groupAtIdx) :: (negIdx, groupAtIdx) :: acc)
     } else {
       acc
     }
-    loop(m.groupCount, Nil)
+    loop(regexMatch.groupCount, Nil)
   }
 
   private[rule] def getCaptureGroupsCount(groupsCountingPattern: String): Int =
