@@ -29,28 +29,28 @@ object RulesConfReader {
   case class EndpointFlowConf(disableAllPlugins: Option[Boolean], disablePlugins: Option[List[PluginName]])
 
   case class RuleRawConf(
-                          endpointName: Option[String],
-                          targetHost: Option[TargetHost],
-                          targetPort: Option[Int],
-                          targetSsl: Option[Boolean],
-                          targetService: Option[ServiceClientName],
-                          targetProxy: Option[Boolean],
-                          pathPattern: Option[PathPattern],
-                          rewritePath: Option[RewritePath],
-                          rewriteMethod: Option[RewriteMethod],
-                          copyQueryOnRewrite: Option[Boolean],
-                          preserveHostHeader: Option[Boolean],
-                          pathPrefix: Option[PathPrefix],
-                          method: Option[HttpMethod],
-                          dropPrefix: Option[Boolean],
-                          requestPlugins: Option[List[PluginConf]],
-                          responsePlugins: Option[List[PluginConf]],
-                          tags: Option[List[String]],
-                          requestBody: Option[BodyHandling],
-                          requestBodyMaxSize: Option[Kilobytes],
-                          call: Option[CallOpts],
-                          ext: Option[ExtRuleConf]
-                        )
+    endpointName: Option[String],
+    targetHost: Option[TargetHost],
+    targetPort: Option[Int],
+    targetSsl: Option[Boolean],
+    targetService: Option[ServiceClientName],
+    targetProxy: Option[Boolean],
+    pathPattern: Option[PathPattern],
+    rewritePath: Option[RewritePath],
+    rewriteMethod: Option[RewriteMethod],
+    copyQueryOnRewrite: Option[Boolean],
+    preserveHostHeader: Option[Boolean],
+    pathPrefix: Option[PathPrefix],
+    method: Option[HttpMethod],
+    dropPrefix: Option[Boolean],
+    requestPlugins: Option[List[PluginConf]],
+    responsePlugins: Option[List[PluginConf]],
+    tags: Option[List[String]],
+    requestBody: Option[BodyHandling],
+    requestBodyMaxSize: Option[Kilobytes],
+    call: Option[CallOpts],
+    ext: Option[ExtRuleConf]
+  )
 
   val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
@@ -151,18 +151,16 @@ object RulesConfReader {
     }
   }
 
-  // in the end used for validation only
-  private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields): RuleConf = {
+  private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields) = {
     val pathPrefix = endpointConf.rule.pathPrefix.orElse(defaultConf.rule.pathPrefix).getOrElse(PathPrefix(""))
-    val rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath)
-    val preparedRewrite = PreparedRewrite(rf.pathPattern.value, pathPrefix.value, rewritePath.map(_.value).getOrElse(""))
+    val preparedRewrite = prepareRewrite(rf.pathPattern.value, pathPrefix.value, "")
     RuleConf(
       endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName),
       criteria = EndpointMatchCriteria(rf.method, preparedRewrite),
       target = rf.service,
       dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true),
       rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod),
-      rewritePath = rewritePath,
+      rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath),
       copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite),
       preserveHostHeader = endpointConf.rule.preserveHostHeader.orElse(defaultConf.rule.preserveHostHeader),
       tags = endpointConf.rule.tags.orElse(defaultConf.rule.tags).getOrElse(Nil),
@@ -247,12 +245,12 @@ object RulesConfReader {
                                        ): ValidationNel[String, TargetServiceRule] = {
 
     val discoverableServiceOpt = serviceNameOpt.map(DiscoverableServiceRule)
-    val staticServiceOpt = for {
-      host <- hostOpt
-      port <- portOpt
-    } yield StaticServiceRule(host, port, sslOpt.getOrElse(false))
-
-    val proxyServiceOpt = targetProxyOpt.collect { case true => ProxyServiceRule }
+    val staticServiceOpt: Option[StaticServiceRule] =
+      for {
+        host <- hostOpt
+        port <- portOpt
+      } yield StaticServiceRule(host, port, sslOpt.getOrElse(false))
+    val proxyServiceOpt = if (targetProxyOpt.getOrElse(false)) Some(ProxyServiceRule) else None
 
     List(staticServiceOpt, discoverableServiceOpt, proxyServiceOpt).flatten match {
       case service :: Nil => Success(service)
