@@ -3,9 +3,6 @@ package com.cloudentity.pyron.domain.rule
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.CallOpts
 
-case class RequestPluginsConf(pre: List[ApiGroupPluginConf], endpoint: List[ApiGroupPluginConf], post: List[ApiGroupPluginConf]) extends PluginsConf
-case class ResponsePluginsConf(pre: List[ApiGroupPluginConf], endpoint: List[ApiGroupPluginConf], post: List[ApiGroupPluginConf]) extends PluginsConf
-
 sealed trait BodyHandling
   case object BufferBody extends BodyHandling
   case object StreamBody extends BodyHandling
@@ -31,6 +28,16 @@ case class RuleConf(
   ext: ExtRuleConf
 )
 case class RuleConfWithPlugins(rule: RuleConf, requestPlugins: RequestPluginsConf, responsePlugins: ResponsePluginsConf)
+
+case class RequestPluginsConf(pre: List[ApiGroupPluginConf],
+                              endpoint: List[ApiGroupPluginConf],
+                              post: List[ApiGroupPluginConf]
+                             ) extends PluginsConf
+
+case class ResponsePluginsConf(pre: List[ApiGroupPluginConf],
+                               endpoint: List[ApiGroupPluginConf],
+                               post: List[ApiGroupPluginConf]
+                              ) extends PluginsConf
 
 case class ExtRuleConf(openapi: Option[OpenApiRuleConf])
 case class OpenApiRuleConf(operationId: Option[String])

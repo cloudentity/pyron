@@ -19,7 +19,7 @@ object RewriteUtil {
   def prepareRewrite(pattern: String, prefix: String, rewrite: String): PreparedRewrite = {
     val groupsCountPattern: String = getGroupsCountingPattern(pattern)
     val indexedParamPlaceholders: List[(String, Int)] = paramPlaceholdersWithGroupIndex(pattern, groupsCountPattern)
-    val totalParamsCount: Int = getCaptureGroupsCount(groupsCountPattern) + indexedParamPlaceholders.size
+    val totalParamsCount = getCaptureGroupsCount(groupsCountPattern) + indexedParamPlaceholders.size
     val (pat, rew) = insertParamGroupsAndRefs(pattern, rewrite, indexedParamPlaceholders)
     PreparedRewrite(
       pathPrefix = prefix,
