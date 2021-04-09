@@ -43,6 +43,7 @@ object RulesConfReader {
     pathPrefix: Option[PathPrefix],
     method: Option[HttpMethod],
     dropPrefix: Option[Boolean],
+    loopback: Option[Boolean],
     requestPlugins: Option[List[PluginConf]],
     responsePlugins: Option[List[PluginConf]],
     tags: Option[List[String]],
@@ -52,7 +53,7 @@ object RulesConfReader {
     ext: Option[ExtRuleConf]
   )
 
-  val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+  val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
   sealed trait ReadRulesError
   case class RuleDecodingError(ex: Throwable) extends ReadRulesError
@@ -151,16 +152,19 @@ object RulesConfReader {
     }
   }
 
-  private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields) = {
+  // in the end used for validation only
+  private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields): RuleConf = {
     val pathPrefix = endpointConf.rule.pathPrefix.orElse(defaultConf.rule.pathPrefix).getOrElse(PathPrefix(""))
-    val preparedRewrite = prepareRewrite(rf.pathPattern.value, pathPrefix.value, "")
+    val rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath)
+    val preparedRewrite = prepareRewrite(rf.pathPattern.value, pathPrefix.value, rewritePath.map(_.value).getOrElse(""))
     RuleConf(
       endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName),
       criteria = EndpointMatchCriteria(rf.method, preparedRewrite),
       target = rf.service,
       dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true),
+      loopback = endpointConf.rule.loopback.orElse(defaultConf.rule.loopback).getOrElse(false),
       rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod),
-      rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath),
+      rewritePath = rewritePath,
       copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite),
       preserveHostHeader = endpointConf.rule.preserveHostHeader.orElse(defaultConf.rule.preserveHostHeader),
       tags = endpointConf.rule.tags.orElse(defaultConf.rule.tags).getOrElse(Nil),
