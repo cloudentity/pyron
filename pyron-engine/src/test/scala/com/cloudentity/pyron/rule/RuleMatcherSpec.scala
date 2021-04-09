@@ -23,14 +23,22 @@ class RuleMatcherSpec extends WordSpec with MustMatchers with ScalaCheckDrivenPr
     "return Match when basePath, path, prefix and method IS matching" in {
       forAll(minSuccessful(10)) { (method: HttpMethod, prefix: PathPrefix, suffix: PathSuffix) =>
         val criteria = EndpointMatchCriteria(method, PreparedRewrite(prefix.value, suffix.value, "", Nil))
-        makeMatch(method, "/base-path" + prefix.value + suffix.value, BasePath("/base-path"), criteria) mustBe Match(PathParams(Map()))
+        val theMatch: MatchResult = makeMatch(method, "/base-path" + prefix.value + suffix.value, BasePath("/base-path"), criteria)
+        theMatch match {
+          case NoMatch => fail("no match was found")
+          case Match(AppliedRewrite(path, targetPath, pathParams, from)) => pathParams mustBe PathParams(Map())
+        }
       }
     }
 
     "return Match with path params" in {
       forAll(minSuccessful(10)) { (method: HttpMethod, prefix: PathPrefix, suffix: PathSuffix) =>
         val criteria = EndpointMatchCriteria(method, PreparedRewrite(prefix.value, suffix.value, "", Nil))
-        makeMatch(method, prefix.value + suffix.value, BasePath(""), criteria) mustBe Match(PathParams(Map()))
+        val theMatch = makeMatch(method, prefix.value + suffix.value, BasePath(""), criteria)
+        theMatch match {
+          case NoMatch => fail("no match was found")
+          case Match(AppliedRewrite(path, targetPath, pathParams, from)) => pathParams mustBe PathParams(Map())
+        }
       }
     }
 

@@ -75,10 +75,10 @@ object ApiGroupReader {
             }
 
           val validSubGroups: List[ValidResult[ApiGroupConfUnresolved]] =
-            subGroups.flatMap(_.asValid)
+            subGroups.flatMap(_.asValid())
 
           val invalidSubGroups: List[ReadResult[ApiGroupConfUnresolved]] =
-            subGroups.flatMap(_.asInvalid)
+            subGroups.flatMap(_.asInvalid())
 
           compactRulesInSubGroups(levelPath, validSubGroups)
             .map {
