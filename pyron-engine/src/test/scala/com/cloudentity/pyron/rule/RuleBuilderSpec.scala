@@ -55,7 +55,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       endpointName = None,
       criteria = EndpointMatchCriteria(
         HttpMethod.GET,
-        PreparedRewrite("", "", "", Nil)
+        PreparedRewrite("")
       ),
       target = StaticServiceRule(TargetHost(""), 9000, ssl = false),
       dropPathPrefix = true,

@@ -143,7 +143,7 @@ object AccessLogHandler extends AccessLogHelper {
 
     GatewayLog(
       method        = flowState.rule.map(_.conf.criteria.method),
-      path          = flowState.rule.map(_.conf.criteria.rewrite.checkedPattern),
+      path          = flowState.rule.map(_.conf.criteria.rewrite.matchPattern),
       pathPrefix    = flowState.rule.map(_.conf.criteria.rewrite.pathPrefix),
       aborted       = flowState.aborted.getOrElse(true),
       interrupted   = interrupted,

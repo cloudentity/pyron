@@ -8,7 +8,7 @@ case class AppliedRewrite(path: String,
                           from: PreparedRewrite) {
   def pathPrefix: String = from.pathPrefix
 
-  def checkedPattern: String = from.checkedPattern
+  def matchedPattern: String = from.matchPattern
 
   def rewritePattern: String = from.rewritePattern
 

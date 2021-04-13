@@ -187,8 +187,8 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
 
   def setTracingOperationName(ctx: RoutingContext, rule: Rule): Unit = {
-    val name = s"${rule.conf.criteria.method} ${rule.conf.criteria.rewrite.checkedPattern}"
-    ctx.put(RouteHandler.urlPathKey, rule.conf.criteria.rewrite.checkedPattern)
+    val name = s"${rule.conf.criteria.method} ${rule.conf.criteria.rewrite.matchPattern}"
+    ctx.put(RouteHandler.urlPathKey, rule.conf.criteria.rewrite.matchPattern)
     RoutingWithTracingS.getOrCreate(ctx, getTracing).setOperationName(name)
   }
 
@@ -242,6 +242,7 @@ object ApiRequestHandler {
       ApiGroupMatcher.makeMatch(Option(vertxRequest.host()), Option(vertxRequest.path()).getOrElse(""), group.matchCriteria)
     }
 
+
   def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithPathParams] = {
     @tailrec
     def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithPathParams] = rules match {
@@ -249,7 +250,7 @@ object ApiRequestHandler {
         val criteria = rule.conf.criteria
         val path = Option(vertxRequest.path()).getOrElse("")
         RuleMatcher.makeMatch(vertxRequest.method(), path, basePath, criteria) match {
-          case Match(pathParams) => Some(RuleWithPathParams(rule, pathParams))
+          case Match(rewrite) => Some(RuleWithPathParams(rule, rewrite.pathParams))
           case NoMatch => loop(basePath, tail)
         }
       case Nil => None

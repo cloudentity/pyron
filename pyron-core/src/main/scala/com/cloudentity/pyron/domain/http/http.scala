@@ -2,7 +2,7 @@ package com.cloudentity.pyron.domain.http
 
 import java.net.{URI, URLEncoder}
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
-import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithPathParams
+import com.cloudentity.pyron.rule.PreparedRewrite.rewritePathWithPathParams
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpHeaders, HttpMethod}
 import org.apache.http.client.utils.URLEncodedUtils
