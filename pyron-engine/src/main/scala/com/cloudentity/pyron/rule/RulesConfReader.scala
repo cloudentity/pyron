@@ -4,7 +4,6 @@ import com.cloudentity.pyron.domain.Codecs._
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.CallOpts
 import com.cloudentity.pyron.domain.rule._
-import com.cloudentity.pyron.rule.RewriteUtil.prepareRewrite
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.parser._
@@ -157,7 +156,7 @@ object RulesConfReader {
   private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields): RuleConf = {
     val pathPrefix = endpointConf.rule.pathPrefix.orElse(defaultConf.rule.pathPrefix).getOrElse(PathPrefix(""))
     val rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath)
-    val preparedRewrite = prepareRewrite(rf.pathPattern.value, pathPrefix.value, rewritePath.map(_.value).getOrElse(""))
+    val preparedRewrite = PreparedRewrite(rf.pathPattern.value, pathPrefix.value, rewritePath.map(_.value).getOrElse(""))
     RuleConf(
       endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName),
       criteria = EndpointMatchCriteria(rf.method, preparedRewrite),

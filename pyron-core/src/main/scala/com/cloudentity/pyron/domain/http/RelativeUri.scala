@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.domain.http
 
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath}
-import com.cloudentity.pyron.rule.RewriteUtil.rewritePathWithPathParams
+import com.cloudentity.pyron.rule.PreparedRewrite.rewritePathWithPathParams
 
 import java.net.URI
 import scala.util.Try
@@ -37,10 +37,7 @@ sealed trait RelativeUri {
 
   lazy val value: String = {
     val queryString = if (query.toString.nonEmpty) "?" + query.toString else ""
-    this match {
-      case FixedRelativeUri(path, _, _) => path.value + queryString
-      case RewritableRelativeUri(path, _, pathParams) => rewritePathWithPathParams(path.value, pathParams) + queryString
-    }
+    path + queryString
   }
 
   def query: QueryParams

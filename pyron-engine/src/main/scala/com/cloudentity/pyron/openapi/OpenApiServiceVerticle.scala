@@ -130,7 +130,7 @@ object OpenApiRuleBuilder {
         serviceId      = serviceId,
         group          = groupMatchCriteria,
         pathPrefix     = PathPrefix(r.rule.criteria.rewrite.pathPrefix),
-        pathPattern    = PathPattern(r.rule.criteria.rewrite.checkedPattern),
+        pathPattern    = PathPattern(r.rule.criteria.rewrite.matchPattern),
         dropPathPrefix = r.rule.dropPathPrefix,
         rewritePath    = r.rule.rewritePath,
         rewriteMethod  = r.rule.rewriteMethod,

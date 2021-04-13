@@ -11,8 +11,7 @@ object RuleMatcher {
   def makeMatch(method: HttpMethod, path: String, basePath: BasePath, criteria: EndpointMatchCriteria): MatchResult = {
     if (criteria.method == method) {
       val relativePath = path.drop(basePath.value.length)
-      RewriteUtil
-        .applyRewrite(relativePath, criteria.rewrite)
+      criteria.rewrite.applyRewrite(relativePath)
         .fold[MatchResult](NoMatch)(Match)
     } else {
       NoMatch

@@ -3,7 +3,7 @@ package com.cloudentity.pyron.domain
 import java.time.Duration
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
-import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, DropBody, ExtRuleConf, Kilobytes, OpenApiRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins, StreamBody}
+import com.cloudentity.pyron.domain.rule._
 import com.cloudentity.pyron.rule.PreparedRewrite
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.CursorOp.DownField
@@ -12,7 +12,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, ObjectEncoder, _}
+import io.circe.{Decoder, Encoder, _}
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.json.{JsonObject => VxJsonObject}
@@ -25,7 +25,7 @@ object Codecs {
   def IdEnc[A](f: A => String): Encoder[A] = Encoder.encodeString.contramap(f)
   def IdDec[A](f: String => A): Decoder[A] = Decoder.decodeString.map(f)
 
-  implicit val durationDecoder = Decoder.decodeString.emapTry(value => Try(Duration.parse(value)))
+  implicit val durationDecoder: Decoder[Duration] = Decoder.decodeString.emapTry(value => Try(Duration.parse(value)))
 
   implicit lazy val httpMethodEnc: Encoder[HttpMethod] = Encoder.encodeString.contramap(_.toString)
   implicit lazy val httpMethodDec: Decoder[HttpMethod] = (c: HCursor) => c.focus
