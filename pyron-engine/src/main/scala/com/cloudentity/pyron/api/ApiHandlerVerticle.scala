@@ -6,7 +6,7 @@ import com.cloudentity.pyron.client.TargetClient
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow.{CallFailure, ProxyHeaders, RequestCtx, ResponseCtx}
 import com.cloudentity.pyron.domain.http.{ApiResponse, CallOpts}
-import com.cloudentity.pyron.domain.rule.Kilobytes
+import com.cloudentity.pyron.domain.rule.{Kilobytes, RuleConf}
 import com.cloudentity.pyron.plugin.PluginFunctions
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
 import com.cloudentity.pyron.rule.{Rule, RulesStore}
@@ -15,8 +15,8 @@ import com.cloudentity.tools.vertx.server.api.RouteHandler
 import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.config.ConfigChange
-import io.vertx.core.{Future => VxFuture}
 import io.vertx.core.http.HttpServerRequest
+import io.vertx.core.{Future => VxFuture}
 import io.vertx.ext.web.RoutingContext
 import scalaz.{-\/, \/-}
 
@@ -55,12 +55,19 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
   }
 
-  def resetRulesAndSmartClients(gs: List[ApiGroup]): Future[Unit] =
-    TargetClient.resetTargetClient(vertx, getConfService, getTracing, gs.flatMap(_.rules).map(_.conf), Option(targetClient))
-      .map { newTargetClient =>
-        apiGroups = gs
-        targetClient = newTargetClient
-      }
+  def resetRulesAndSmartClients(gs: List[ApiGroup]): Future[Unit] = {
+    val ruleConfs: List[RuleConf] = gs.flatMap(_.rules).map(_.conf)
+    TargetClient.resetTargetClient(
+      vertx = vertx,
+      confService = getConfService,
+      tracing = getTracing,
+      rules = ruleConfs,
+      oldTargetClientOpt = Option(targetClient)
+    ).map { newTargetClient =>
+      apiGroups = gs
+      targetClient = newTargetClient
+    }
+  }
 
   def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit] = {
     val vertxRequest = ctx.request()
@@ -101,9 +108,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     } yield (apiGroup, ruleWithPathParams)
 
     matchingApiGroupAndRuleOpt match {
-      case None =>
-        Future.successful(Errors.ruleNotFound.toApiResponse())
-
+      case None => Future.successful(Errors.ruleNotFound.toApiResponse())
       case Some((apiGroup, ruleWithPathParams)) =>
         val rule = ruleWithPathParams.rule
         val pathParams = ruleWithPathParams.appliedRewrite.pathParams
@@ -177,8 +182,8 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
 
   def setTracingOperationName(ctx: RoutingContext, rule: Rule): Unit = {
-    val name = s"${rule.conf.criteria.method} ${rule.conf.criteria.rewrite.checkedPattern}"
-    ctx.put(RouteHandler.urlPathKey, rule.conf.criteria.rewrite.checkedPattern)
+    val name = s"${rule.conf.criteria.method} ${rule.conf.criteria.rewrite.matchPattern}"
+    ctx.put(RouteHandler.urlPathKey, rule.conf.criteria.rewrite.matchPattern)
     RoutingWithTracingS.getOrCreate(ctx, getTracing).setOperationName(name)
   }
 

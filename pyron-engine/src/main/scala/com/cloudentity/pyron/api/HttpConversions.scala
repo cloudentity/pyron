@@ -101,15 +101,11 @@ object HttpConversions {
   def chooseRelativeUri(ctx: TracingContext, basePath: BasePath, ruleConf: RuleConf, original: OriginalRequest): RelativeUri = {
     ruleConf.rewritePath match {
       case Some(rewritePath) =>
-        if (ruleConf.copyQueryOnRewrite.getOrElse(true))
-          RewritableRelativeUri(rewritePath, original.queryParams, original.pathParams)
-        else RewritableRelativeUri(rewritePath, QueryParams.of(), original.pathParams)
+        val queryParams = if (ruleConf.copyQueryOnRewrite.getOrElse(true)) original.queryParams else QueryParams.of()
+        RewritableRelativeUri(rewritePath, queryParams, original.pathParams)
       case None =>
-        val relativeOriginalPath =
-          original.path.value.drop(basePath.value.length)
-        val targetPath =
-          if (ruleConf.dropPathPrefix) relativeOriginalPath.drop(ruleConf.criteria.rewrite.pathPrefix.length)
-          else relativeOriginalPath
+        val targetPath = original.path.value.drop(basePath.value.length +
+          (if (ruleConf.dropPathPrefix) ruleConf.criteria.rewrite.pathPrefix.length else 0))
         FixedRelativeUri(UriPath(targetPath), original.queryParams, original.pathParams)
     }
   }
