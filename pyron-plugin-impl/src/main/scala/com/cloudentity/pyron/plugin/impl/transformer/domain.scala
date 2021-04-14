@@ -5,18 +5,16 @@ import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
 
 // root conf
-case class TransformerConf(
-                            body: BodyOps,
-                            parseJsonBody: Boolean,
-                            pathParams: PathParamOps,
-                            queryParams: QueryParamOps,
-                            headers: HeaderOps)
+case class TransformerConf(body: BodyOps,
+                           parseJsonBody: Boolean,
+                           pathParams: PathParamOps,
+                           queryParams: QueryParamOps,
+                           headers: HeaderOps)
 // actual JSON schema
-case class TransformerConfRaw(
-                               body: Option[BodyOps],
-                               pathParams: Option[PathParamOps],
-                               queryParams: Option[QueryParamOps],
-                               headers: Option[HeaderOps])
+case class TransformerConfRaw(body: Option[BodyOps],
+                              pathParams: Option[PathParamOps],
+                              queryParams: Option[QueryParamOps],
+                              headers: Option[HeaderOps])
 
 // transformations
 sealed trait TransformOps

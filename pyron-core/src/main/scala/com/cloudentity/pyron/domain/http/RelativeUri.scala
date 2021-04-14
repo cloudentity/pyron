@@ -36,8 +36,8 @@ sealed trait RelativeUri {
   }
 
   lazy val value: String = {
-    val queryString = if (query.toString.nonEmpty) "?" + query.toString else ""
-    path + queryString
+    val queryString = query.toString
+    if (queryString.isEmpty) path else path + "?" + queryString
   }
 
   def query: QueryParams

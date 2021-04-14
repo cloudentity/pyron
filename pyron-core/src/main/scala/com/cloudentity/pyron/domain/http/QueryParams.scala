@@ -42,7 +42,7 @@ case class QueryParams(private val params: Map[String, List[String]]) {
     addPs.foldLeft(this) { case (ps, (key, value)) => ps.add(key, value) }
 
   def add(name: String, value: String): QueryParams = params.get(name) match {
-    case Some(oldValues) => this.setValues(name, oldValues ::: List(value))
+    case Some(oldValues) => this.setValues(name, oldValues :+ value)
     case None => this.set(name, value)
   }
 
@@ -85,7 +85,7 @@ object QueryParams {
        *   QueryParams.fromString("y&y=1") == QueryParams(Map("y" -> List("1")))
        */
       val params: Map[String, List[String]] = URLEncodedUtils.parse(query, defaultCharset()).asScala.toList
-        .groupBy(_.getName).mapValues(_.map(_.getValue).filter(_ != null))
+        .groupBy(_.getName).mapValues(_.flatMap(v => Option(v.getValue)))
       new QueryParams(params)
     }
 

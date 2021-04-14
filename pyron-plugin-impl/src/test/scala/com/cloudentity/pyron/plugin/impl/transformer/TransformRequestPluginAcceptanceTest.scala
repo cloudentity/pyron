@@ -15,11 +15,11 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
 
   var targetService: ClientAndServer = _
 
-  def getHeaderAllValues(req: HttpRequest, headerName: String) =
+  def getHeaderAllValues(req: HttpRequest, headerName: String): Option[List[String]] =
     req.getHeaders.asScala.toList.find(_.getName.toString == headerName)
       .map(v => v.getValues.asScala.toList.map(_.toString))
 
-  def getHeaderOnlyValue(req: HttpRequest, headerName: String) = {
+  def getHeaderOnlyValue(req: HttpRequest, headerName: String): Option[String] = {
     getHeaderAllValues(req, headerName).map { values =>
       assert(values.size == 1)
       values.head
