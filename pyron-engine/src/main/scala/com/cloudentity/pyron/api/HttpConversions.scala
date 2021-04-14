@@ -21,15 +21,14 @@ import scala.util.Try
 object HttpConversions {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  def toRequestCtx(
-                    defaultRequestBodyMaxSize: Option[Kilobytes],
-                    ctx: RoutingContext,
-                    tracingCtx: TracingContext,
-                    proxyHeaders: ProxyHeaders,
-                    ruleConf: RuleConf,
-                    apiGroup: ApiGroup,
-                    pathParams: PathParams
-                  )(implicit ec: VertxExecutionContext): Future[RequestCtx] = {
+  def toRequestCtx(defaultRequestBodyMaxSize: Option[Kilobytes],
+                   ctx: RoutingContext,
+                   tracingCtx: TracingContext,
+                   proxyHeaders: ProxyHeaders,
+                   ruleConf: RuleConf,
+                   apiGroup: ApiGroup,
+                   pathParams: PathParams)
+                  (implicit ec: VertxExecutionContext): Future[RequestCtx] = {
 
     val req = ctx.request()
     val contentLengthOpt = Try(req.getHeader("Content-Length").toLong).toOption
@@ -82,7 +81,9 @@ object HttpConversions {
     }
   }
 
-  def toOriginalRequest(req: HttpServerRequest, pathParams: PathParams, bodyOpt: Option[Buffer]): OriginalRequest = {
+  def toOriginalRequest(req: HttpServerRequest,
+                        pathParams: PathParams,
+                        bodyOpt: Option[Buffer]): OriginalRequest = {
     OriginalRequest(
       method = req.method(),
       path = UriPath(Option(req.path()).getOrElse("")),
@@ -98,7 +99,10 @@ object HttpConversions {
     )
   }
 
-  def chooseRelativeUri(ctx: TracingContext, basePath: BasePath, ruleConf: RuleConf, original: OriginalRequest): RelativeUri = {
+  def chooseRelativeUri(ctx: TracingContext,
+                        basePath: BasePath,
+                        ruleConf: RuleConf,
+                        original: OriginalRequest): RelativeUri = {
     ruleConf.rewritePath match {
       case Some(rewritePath) =>
         val queryParams = if (ruleConf.copyQueryOnRewrite.getOrElse(true)) original.queryParams else QueryParams.of()

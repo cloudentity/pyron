@@ -1,125 +1,127 @@
 package com.cloudentity.pyron.client
 
 import com.cloudentity.pyron.config.Conf
-import com.cloudentity.pyron.domain._
-import com.cloudentity.pyron.domain.flow.{DiscoverableService, DiscoverableServiceRule, FixedHttpClientConf, ServiceClientName, SmartHttpClientConf, StaticService}
+import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.{CallOpts, Headers, TargetRequest}
 import com.cloudentity.pyron.domain.rule.RuleConf
 import com.cloudentity.tools.vertx.conf.ConfService
+import com.cloudentity.tools.vertx.http.SmartHttp.clientBuilder
+import com.cloudentity.tools.vertx.http.builder.RequestCtxBuilder
 import com.cloudentity.tools.vertx.http.builder.SmartHttpClientBuilderImpl.CallOk
-import com.cloudentity.tools.vertx.http.builder.{RequestCtxBuilder, SmartHttpResponse}
 import com.cloudentity.tools.vertx.http.circuit.NoopCB
 import com.cloudentity.tools.vertx.http.client.SmartHttpClientImpl
-import com.cloudentity.tools.vertx.http.{Sd, SmartHttp, SmartHttpClient}
-import com.cloudentity.tools.vertx.scala.FutureConversions
+import com.cloudentity.tools.vertx.http.{Sd, SmartHttpClient}
+import com.cloudentity.tools.vertx.scala.{FutureConversions, VertxExecutionContext}
+import com.cloudentity.tools.vertx.sd.{Location, ServiceName, Node => SdNode}
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext, TracingManager}
-import io.vertx.core.buffer.Buffer
-import com.cloudentity.tools.vertx.scala.VertxExecutionContext
-import com.cloudentity.tools.vertx.sd.{Node => SdNode}
-import com.cloudentity.tools.vertx.sd.{Location, ServiceName}
+import io.opentracing.tag.Tags.HTTP_STATUS
 import io.vertx.core
 import io.vertx.core.Vertx
+import io.vertx.core.buffer.Buffer
 import io.vertx.core.http._
 import io.vertx.core.streams.ReadStream
-import org.slf4j.LoggerFactory
-import scalaz._
+import org.slf4j.{Logger, LoggerFactory}
+import scalaz.{-\/, \/, \/-}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 case class TargetResponse(http: HttpClientResponse, body: Buffer)
 
 object TargetClient extends FutureConversions {
-  val log = LoggerFactory.getLogger(this.getClass)
 
-  def apply(vertx: Vertx, tracing: TracingManager, rules: List[RuleConf], smartHttpConfs: Map[ServiceClientName, SmartHttpClientConf], defaultSmartHttpConf: Option[SmartHttpClientConf], defaultFixedHttpConf: Option[FixedHttpClientConf])
-           (implicit ec: VertxExecutionContext): Future[TargetClient] = {
-    val serviceNames: Set[ServiceClientName] =
-      rules.map(_.target).collect { case DiscoverableServiceRule(serviceClientName) => serviceClientName }.toSet
-    val smartClients: Set[Future[(ServiceClientName, SmartHttpClient)]] =
-      serviceNames.map { name =>
-        smartHttpConfs.get(name).orElse(defaultSmartHttpConf) match {
-          case Some(smartHttpConf) => buildSmartHttpClient(vertx, name, smartHttpConf).map(name -> _)
-          case None                => buildSmartHttpClient(vertx, name).map(name -> _)
-        }
-      }
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-    val fixedClientOpts = defaultFixedHttpConf.map(_.value).map(new HttpClientOptions(_)).getOrElse(new HttpClientOptions())
-    val fixedClient = vertx.createHttpClient(fixedClientOpts)
-    Future.sequence(smartClients)
-      .map(_.toMap)
-      .map(clients => new TargetClient(tracing, fixedClient, clients))
+  def apply(vertx: Vertx,
+            tracing: TracingManager,
+            rules: List[RuleConf],
+            smartHttpConfs: Map[ServiceClientName, SmartHttpClientConf],
+            defaultSmartHttpConf: Option[SmartHttpClientConf],
+            defaultFixedHttpConf: Option[FixedHttpClientConf]
+           )(implicit ec: VertxExecutionContext): Future[TargetClient] = {
+
+    val serviceNames: Set[ServiceClientName] = rules.map(_.target).collect {
+      case DiscoverableServiceRule(serviceClientName) => serviceClientName
+    }.toSet
+
+    Future.sequence {
+      buildSmartHttpClients(vertx, serviceNames, smartHttpConfs, defaultSmartHttpConf)
+    } map { clients =>
+      val fixedClient = vertx.createHttpClient(defaultFixedHttpConf.map(_.value)
+        .fold(new HttpClientOptions())(new HttpClientOptions(_)))
+      new TargetClient(tracing, fixedClient, clients.toMap)
+    }
   }
 
-  def buildSmartHttpClient(vertx: Vertx, serviceName: ServiceClientName)
-                          (implicit ec: VertxExecutionContext): Future[SmartHttpClient] =
-    SmartHttp.clientBuilder(vertx, serviceName.value).build().toScala()
+  def buildSmartHttpClients(vertx: Vertx,
+                            serviceNames: Set[ServiceClientName],
+                            smartHttpConfs: Map[ServiceClientName, SmartHttpClientConf],
+                            defaultSmartHttpConf: Option[SmartHttpClientConf]
+                           )(implicit ec: VertxExecutionContext): Set[Future[(ServiceClientName, SmartHttpClient)]] =
+    serviceNames.map { serviceName =>
+      smartHttpConfs.get(serviceName).orElse(defaultSmartHttpConf).fold {
+        clientBuilder(vertx, serviceName.value)
+      } { smartHttpClientConf =>
+        clientBuilder(vertx, serviceName.value, smartHttpClientConf.value)
+      }.build().toScala().map(serviceName -> _)
+    }
 
-  def buildSmartHttpClient(vertx: Vertx, serviceName: ServiceClientName, smartHttpClientConf: SmartHttpClientConf)
-                          (implicit ec: VertxExecutionContext): Future[SmartHttpClient] =
-    SmartHttp.clientBuilder(vertx, serviceName.value, smartHttpClientConf.value).build().toScala()
+  def resetTargetClient(vertx: Vertx,
+                        confService: ConfService,
+                        tracing: TracingManager,
+                        rules: List[RuleConf],
+                        oldTargetClientOpt: Option[TargetClient]
+                       )(implicit ec: VertxExecutionContext): Future[TargetClient] = {
 
-  def resetTargetClient(vertx: Vertx, confService: ConfService, tracing: TracingManager, rules: List[RuleConf], oldTargetClientOpt: Option[TargetClient])
-                       (implicit ec: VertxExecutionContext): Future[TargetClient] = {
-    val resetFut =
-      for {
-        smartConfs      <- getSmartHttpConfs(confService)
-        defaultSmartConf<- getDefaultSmartHttpConf(confService)
-        defaultFixedConf<- getDefaultFixedHttpConf(confService)
-        newTargetClient <- TargetClient(vertx, tracing, rules, smartConfs, defaultSmartConf, defaultFixedConf)
-      } yield {
-        oldTargetClientOpt.foreach { tc =>
-          vertx.setTimer(60000, _ => tc.close()) // waiting 60s before closing old clients to let active connections finish
-        }
-        newTargetClient
-      }
-    resetFut.onComplete {
-      case Success(_)  => log.debug("TargetClient reset successfully")
+    val resetFuture = for {
+      smartConfs <- SmartHttpConfsReader.readAll(confService, Conf.smartHttpClientsKey)
+      defaultSmartConf <- SmartHttpConfsReader.readDefault(confService, Conf.defaultSmartHttpClientKey)
+      defaultFixedConf <- FixedHttpConfsReader.readDefault(confService, Conf.defaultFixedHttpClientKey)
+      newTargetClient <- TargetClient(vertx, tracing, rules, smartConfs, defaultSmartConf, defaultFixedConf)
+    } yield {
+      // wait 60s before closing old clients to let active connections finish
+      oldTargetClientOpt.foreach(tc => vertx.setTimer(60000, _ => tc.close()))
+      newTargetClient
+    }
+
+    resetFuture.onComplete {
+      case Success(_) => log.debug("TargetClient reset successfully")
       case Failure(ex) => log.error("Could not reset TargetClient", ex)
     }
-    resetFut
+    resetFuture
   }
 
-  private def getDefaultSmartHttpConf(confService: ConfService)(implicit ec: VertxExecutionContext): Future[Option[SmartHttpClientConf]] =
-    SmartHttpConfsReader.readDefault(confService, Conf.defaultSmartHttpClientKey)
-
-  private def getDefaultFixedHttpConf(confService: ConfService)(implicit ec: VertxExecutionContext): Future[Option[FixedHttpClientConf]] =
-    FixedHttpConfsReader.readDefault(confService, Conf.defaultFixedHttpClientKey)
-
-  private def getSmartHttpConfs(confService: ConfService)(implicit ec: VertxExecutionContext): Future[Map[ServiceClientName, SmartHttpClientConf]] =
-    SmartHttpConfsReader.readAll(confService, Conf.smartHttpClientsKey)
 }
 
-class TargetClient(tracing: TracingManager, fixedClient: HttpClient, clients: Map[ServiceClientName, SmartHttpClient])
-                  (implicit ec: VertxExecutionContext) extends FutureConversions {
+class TargetClient(tracing: TracingManager,
+                   fixedClient: HttpClient,
+                   clients: Map[ServiceClientName, SmartHttpClient]
+                  )(implicit ec: VertxExecutionContext) extends FutureConversions {
+
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  def call(ctx: TracingContext, request: TargetRequest, bodyStreamOpt: Option[ReadStream[Buffer]], callOpts: Option[CallOpts]): Future[Throwable \/ TargetResponse] = {
+  def call(ctx: TracingContext,
+           request: TargetRequest,
+           bodyStreamOpt: Option[ReadStream[Buffer]],
+           callOpts: Option[CallOpts]
+          ): Future[Throwable \/ TargetResponse] = {
+
     log.debug(ctx, s"Forwarding request: $request")
     val childCtx = buildChildContext(ctx, request)
     val requestWithTracingHeaders = injectTracingHeaders(childCtx, request)
 
-    val result = request.service match {
+    val responseFuture = request.service match {
       case StaticService(host, port, ssl) =>
-        callStaticService(ctx, Location(host.value, port, ssl, None), requestWithTracingHeaders, bodyStreamOpt, callOpts)
+        val location = Location(host.value, port, ssl, root = None)
+        callStaticService(ctx, location, requestWithTracingHeaders, bodyStreamOpt, callOpts)
       case DiscoverableService(serviceName) =>
         callDiscoverableService(ctx, serviceName, requestWithTracingHeaders, bodyStreamOpt, callOpts)
     }
 
-    result.onComplete {
-      case scala.util.Success(\/-(response)) =>
-        childCtx.setTag(io.opentracing.tag.Tags.HTTP_STATUS.getKey, response.http.statusCode().toString)
-        childCtx.finish()
-      case scala.util.Success(-\/(err)) =>
-        childCtx.logError(err)
-        childCtx.finish()
-      case scala.util.Failure(ex) =>
-        childCtx.logException(ex)
-        childCtx.finish()
-    }
+    onCallComplete(childCtx, responseFuture)
 
-    result
+    responseFuture
   }
 
   private def injectTracingHeaders(ctx: TracingContext, request: TargetRequest): TargetRequest = {
@@ -135,45 +137,57 @@ class TargetClient(tracing: TracingManager, fixedClient: HttpClient, clients: Ma
   }
 
   private def getOperationName(request: TargetRequest): String = request.service match {
-    case StaticService(host, port, ssl) => s"${host.value}:$port"
+    case StaticService(host, port, _) => s"${host.value}:$port"
     case DiscoverableService(serviceName) => serviceName.value
   }
 
-  private def callDiscoverableService(tracing: TracingContext, serviceName: ServiceClientName, request: TargetRequest, bodyStreamOpt: Option[ReadStream[Buffer]], callOpts: Option[CallOpts]): Future[Throwable \/ TargetResponse] = {
+  private def onCallComplete(ctx: TracingContext, responseFuture: Future[Throwable \/ TargetResponse]): Unit = {
+    responseFuture.andThen {
+      case Success(\/-(response)) => ctx.setTag(HTTP_STATUS.getKey, response.http.statusCode().toString)
+      case Success(-\/(err)) => ctx.logError(err)
+      case Failure(ex) => ctx.logException(ex)
+    }.onComplete(_ => ctx.finish())
+  }
+
+  private def callDiscoverableService(tracing: TracingContext,
+                                      serviceName: ServiceClientName,
+                                      request: TargetRequest,
+                                      bodyStreamOpt: Option[ReadStream[Buffer]],
+                                      callOpts: Option[CallOpts]): Future[Throwable \/ TargetResponse] = {
     clients.get(serviceName) match {
-      case Some(cli) => makeSmartCall(tracing, request, bodyStreamOpt, callOpts, None, cli)
+      case Some(cli) => makeSmartCall(tracing, request, bodyStreamOpt, callOpts, cli)
       case None      => Future.failed(new Exception(s"Could not get SmartHttpClient for $serviceName"))
     }
   }
 
-  private def makeSmartCall(tracing: TracingContext, request: TargetRequest, bodyStreamOpt: Option[ReadStream[Buffer]], callOpts: Option[CallOpts], sd: Option[Sd], cli: SmartHttpClient) = {
+  private def makeSmartCall(tracing: TracingContext,
+                            request: TargetRequest,
+                            bodyStreamOpt: Option[ReadStream[Buffer]],
+                            callOpts: Option[CallOpts],
+                            cli: SmartHttpClient
+                           ): Future[Throwable \/ TargetResponse] = {
+
     val reqBuilder = withCallOpts(cli.request(request.method, request.uri.value), callOpts)
 
-    val responseFut: Future[SmartHttpResponse] =
-      request.bodyOpt match {
-        case Some(body) =>
-          copyHeadersWithoutContentLength(request.headers, reqBuilder).endWithBody(tracing, body).toScala()
-        case None =>
-          bodyStreamOpt match {
-            case Some(stream) =>
-              copyHeaders(request.headers, reqBuilder).endWithBody(tracing, stream).toScala()
-            case None =>
-              copyHeaders(request.headers, reqBuilder).endWithBody(tracing).toScala()
-          }
+    val responseFuture = request.bodyOpt match {
+      case Some(body) => copyHeadersDropContentLength(request.headers, reqBuilder).endWithBody(tracing, body)
+      case None => bodyStreamOpt match {
+        case Some(stream) => copyHeaders(request.headers, reqBuilder).endWithBody(tracing, stream)
+        case None => copyHeaders(request.headers, reqBuilder).endWithBody(tracing)
       }
+    }
 
-    responseFut
-      .map[Throwable \/ TargetResponse] { resp =>
-        \/-(TargetResponse(resp.getHttp, resp.getBody))
-      }.recover { case ex: Throwable => -\/(ex) }
+    responseFuture.toScala().map[Throwable \/ TargetResponse] {
+      resp => \/-(TargetResponse(resp.getHttp, resp.getBody))
+    } recover { case ex: Throwable => -\/(ex) }
   }
 
-  private def withCallOpts(reqBuilder: RequestCtxBuilder, callOpts: Option[CallOpts]) =
+  private def withCallOpts(reqBuilder: RequestCtxBuilder, callOpts: Option[CallOpts]): RequestCtxBuilder =
     callOpts match {
       case Some(opts) =>
         val withResponseTimeout     = opts.responseTimeout.map(reqBuilder.responseTimeout).getOrElse(reqBuilder)
         val withRetries             = opts.retries.map(withResponseTimeout.retries).getOrElse(withResponseTimeout)
-        val withFailureCodes        = opts.failureHttpCodes.map(codes => withRetries.responseFailure(resp => codes.contains(resp.getHttp().statusCode()))).getOrElse(withRetries)
+        val withFailureCodes        = opts.failureHttpCodes.map(codes => withRetries.responseFailure(resp => codes.contains(resp.getHttp.statusCode()))).getOrElse(withRetries)
         val withRetryFailedResponse = opts.retryFailedResponse.map(withFailureCodes.retryFailedResponse).getOrElse(withFailureCodes)
         val withRetryOnException    = opts.retryOnException.map(withRetryFailedResponse.retryOnException).getOrElse(withRetryFailedResponse)
 
@@ -182,22 +196,28 @@ class TargetClient(tracing: TracingManager, fixedClient: HttpClient, clients: Ma
         reqBuilder
     }
 
-  private def callStaticService(tracing: TracingContext, location: Location, request: TargetRequest, bodyStreamOpt: Option[ReadStream[Buffer]], callOpts: Option[CallOpts]): Future[Throwable \/ TargetResponse] = {
-    val sd = new Sd {
-      val sn = ServiceName(s"http${if (location.ssl) "s" else ""}://${location.host}:${location.port}")
-      override def discover(): Option[SdNode] = Some(SdNode(sn, new NoopCB(sn.value), location))
+  private def callStaticService(tracing: TracingContext,
+                                location: Location,
+                                request: TargetRequest,
+                                bodyStreamOpt: Option[ReadStream[Buffer]],
+                                callOpts: Option[CallOpts]
+                               ): Future[Throwable \/ TargetResponse] = {
+    val sd: Sd = new Sd {
+      val sn: ServiceName = ServiceName(s"http${if (location.ssl) "s" else ""}://${location.host}:${location.port}")
+      override def discover(): Option[SdNode] = Option(SdNode(sn, new NoopCB(sn.value), location))
       override def serviceName(): ServiceName = sn
       override def close(): core.Future[Unit] = core.Future.succeededFuture(())
     }
 
-    makeSmartCall(tracing, request, bodyStreamOpt, callOpts, Some(sd), new SmartHttpClientImpl(sd, fixedClient, 0, None, _ => CallOk, _ => true))
+    val smartClient = new SmartHttpClientImpl(sd, fixedClient, 0, None, _ => CallOk, _ => true)
+    makeSmartCall(tracing, request, bodyStreamOpt, callOpts, smartClient)
   }
 
   /**
     * Plugins could have changed original body, without adjusting Content-Length.
     * We drop Content-Length and let Vertx http client set it.
     */
-  def copyHeadersWithoutContentLength(from: Headers, to: RequestCtxBuilder): RequestCtxBuilder =
+  def copyHeadersDropContentLength(from: Headers, to: RequestCtxBuilder): RequestCtxBuilder =
     copyHeaders(from.remove("Content-Length"), to)
 
   def copyHeaders(from: Headers, to: RequestCtxBuilder): RequestCtxBuilder =
@@ -207,8 +227,7 @@ class TargetClient(tracing: TracingManager, fixedClient: HttpClient, clients: Ma
 
   def close(): Future[Unit] = {
     fixedClient.close()
-    Future.sequence(
-      clients.values.map(_.close().toScala())
-    ).map(_ => ())
+    Future.sequence(clients.values.map(_.close().toScala())).map(_ => ())
   }
+
 }

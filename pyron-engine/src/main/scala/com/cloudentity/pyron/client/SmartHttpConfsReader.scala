@@ -2,52 +2,47 @@ package com.cloudentity.pyron.client
 
 import com.cloudentity.pyron.domain.flow.{ServiceClientName, SmartHttpClientConf}
 import com.cloudentity.tools.vertx.conf.ConfService
-import com.cloudentity.tools.vertx.scala.FutureConversions
-import io.vertx.core.json.JsonObject
 import com.cloudentity.tools.vertx.scala.VertxExecutionContext
-import org.slf4j.LoggerFactory
+import io.vertx.core.json.JsonObject
+import org.slf4j.{Logger, LoggerFactory}
+import scalaz.{-\/, \/, \/-}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util.Try
-import scalaz.{-\/, \/, \/-}
 
-object SmartHttpConfsReader extends FutureConversions {
-  val log = LoggerFactory.getLogger(this.getClass)
+object SmartHttpConfsReader {
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  def readAll(confService: ConfService, targetSmartClientsConfPath: String)(implicit ec: VertxExecutionContext): Future[Map[ServiceClientName, SmartHttpClientConf]] =
-    confService.getConf(targetSmartClientsConfPath).toScala()
-      .map(Option.apply)
-      .map(readFromConfig(_, targetSmartClientsConfPath))
-      .map(_.toEither.toTry)
-      .flatMap(Future.fromTry)
+  def readAll(confService: ConfService, targetSmartClientsConfPath: String)
+             (implicit ec: VertxExecutionContext): Future[Map[ServiceClientName, SmartHttpClientConf]] =
+    getConf(confService, targetSmartClientsConfPath).flatMap(confOpt =>
+      Future.fromTry(readFromConfig(confOpt, targetSmartClientsConfPath).toEither.toTry))
 
-  def readDefault(confService: ConfService, targetSmartClientsDefaultConfPath: String)(implicit ec: VertxExecutionContext): Future[Option[SmartHttpClientConf]] =
-    confService.getConf(targetSmartClientsDefaultConfPath).toScala()
-      .map(Option.apply)
-      .map(_.map(SmartHttpClientConf.apply))
+  def readDefault(confService: ConfService, targetSmartClientsDefaultConfPath: String)
+                 (implicit ec: VertxExecutionContext): Future[Option[SmartHttpClientConf]] =
+    getConf(confService, targetSmartClientsDefaultConfPath)
+      .map(_.map(SmartHttpClientConf))
 
-  def readFromConfig(confOpt: Option[JsonObject], targetSmartClientsConfPath: String): Throwable \/ Map[ServiceClientName, SmartHttpClientConf] =
-    confOpt match {
-      case Some(conf) =>
-        log.debug(s"Configuration of SmartHttpClients for target services: ${conf.toString()}")
+  def readFromConfig(confOpt: Option[JsonObject],
+                     targetSmartClientsConfPath: String
+                    ): Throwable \/ Map[ServiceClientName, SmartHttpClientConf] = confOpt match {
+    case None =>
+      log.debug(s"No configuration of SmartHttpClients for target services at '$targetSmartClientsConfPath' config path. Using default configuration")
+      \/-(Map())
+    case Some(conf) =>
+      log.debug(s"Configuration of SmartHttpClients for target services: ${conf.toString}")
 
-        val smartConfigs: Iterable[(ServiceClientName, Option[SmartHttpClientConf])] =
-          conf.fieldNames().asScala.map { serviceName =>
-            ServiceClientName(serviceName) -> Try(conf.getJsonObject(serviceName)).toOption.map(SmartHttpClientConf.apply)
-          }
+      val smartConfigs = conf.fieldNames().asScala.map(serviceName =>
+        ServiceClientName(serviceName) -> Try(conf.getJsonObject(serviceName)).toOption.map(SmartHttpClientConf))
 
-        val wrongSmartConfigs = smartConfigs.filter(_._2.isEmpty)
-        if (wrongSmartConfigs.isEmpty) {
-          val result: Map[ServiceClientName, SmartHttpClientConf] =
-            smartConfigs.flatMap { case (serviceName, confOpt) => confOpt.map(serviceName -> _) }.toMap
+      val wrongSmartConfigs = smartConfigs.filter { case (_, confOpt) => confOpt.isEmpty }
 
-          \/-(result)
-        } else {
-          -\/(new Exception(s"Some configuration of SmartHttpClients are not JSON objects: ${wrongSmartConfigs.map(_._1.value).mkString(", ")}"))
-        }
-      case None =>
-        log.debug(s"No configuration of SmartHttpClients for target services at '$targetSmartClientsConfPath' config path. Using default configuration")
-        \/-(Map())
-    }
+      if (wrongSmartConfigs.isEmpty) {
+        \/-(smartConfigs.collect { case (serviceName, Some(conf)) => serviceName -> conf }.toMap)
+      } else {
+        val namesOfWrongConfigs = wrongSmartConfigs.map { case (name, _) => name.value }.mkString(", ")
+        -\/(new Exception(s"Some configuration of SmartHttpClients are not JSON objects: $namesOfWrongConfigs"))
+      }
+  }
 }
