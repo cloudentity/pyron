@@ -5,6 +5,7 @@ import com.cloudentity.pyron.domain.http.ApiResponse
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.core.eventbus.ReplyException
 import io.vertx.core.http.HttpServerResponse
+
 import scala.collection.JavaConverters._
 
 object ApiResponseHandler {
@@ -23,7 +24,7 @@ object ApiResponseHandler {
     }
 
   def handleApiResponse(ctx: TracingContext, vertxResponse: HttpServerResponse, apiResponse: ApiResponse): Unit = {
-    copyHeadersWithoutContentLength(apiResponse, vertxResponse)
+    copyHeadersDropContentLength(apiResponse, vertxResponse)
 
     if (isChunked(apiResponse)) {
       vertxResponse.setChunked(true) // don't do vertxResponse.setChunked(false) - Vertx 3.5.4 throws NPE in that case
@@ -38,12 +39,16 @@ object ApiResponseHandler {
     }
   }
 
-  def copyHeadersWithoutContentLength(from: ApiResponse, to: HttpServerResponse): Unit = {
-    for {
-      (name, values) <- from.headers.toMap
-      value <- values
-    } to.headers().add(name, value)
-    dropContentLengthHeader(to)
+  /**
+   * Plugins could have changed original body, without adjusting Content-Length.
+   * We drop Content-Length and let Vertx http server set it.
+   */
+  def copyHeadersDropContentLength(from: ApiResponse, to: HttpServerResponse): Unit = {
+    val respHeaders = to.headers()
+    from.headers.toMap.foreach { case (name, values) =>
+      values.foreach(value => respHeaders.add(name, value))
+    }
+    respHeaders.remove("Content-Length")
   }
 
   private def isChunked(resp: ApiResponse): Boolean =
@@ -51,13 +56,6 @@ object ApiResponseHandler {
       case Some(values) => values.exists(_.contains("chunked"))
       case None => false
     }
-
-  /**
-   * Plugins could have changed original body, without adjusting Content-Length.
-   * We drop Content-Length and let Vertx http server set it.
-   */
-  private def dropContentLengthHeader(response: HttpServerResponse) =
-    response.headers().remove("Content-Length")
 
   def endWithException(tracing: TracingContext, response: HttpServerResponse, ex: Throwable): Unit = {
     val apiResponse = exceptionToApiResponse(ex)
