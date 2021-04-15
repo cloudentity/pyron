@@ -9,7 +9,7 @@ object SizeLimitedBodyStream {
 
   def apply(from: ReadStream[Buffer], maxSize: Kilobytes): ReadStream[Buffer] = {
     new ReadStream[Buffer] {
-      var exHandler: Handler[Throwable] = null
+      var exHandler: Handler[Throwable] = _
       var size = 0
       var failed = false
 
