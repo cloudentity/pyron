@@ -13,7 +13,7 @@ import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingManager}
 import io.vertx.core.http.{HttpMethod, HttpServerRequest, HttpVersion}
 import io.vertx.core.{Handler, Vertx}
-import com.cloudentity.pyron.api.ApiHandler.FlowState
+import com.cloudentity.pyron.api.FlowState
 import com.cloudentity.pyron.domain.flow.{AccessLogItems, AuthnCtx, DiscoverableServiceRule, Properties, ProxyServiceRule, ServiceClientName, StaticServiceRule, TargetHost}
 import io.vertx.core.net.SocketAddress
 import io.vertx.ext.web.RoutingContext
