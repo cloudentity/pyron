@@ -1,13 +1,12 @@
 package com.cloudentity.pyron.openapi
 
-import java.util
-
 import com.cloudentity.pyron.domain.openapi.OpenApi.OpenApiOperations
 import com.cloudentity.pyron.domain.openapi.OpenApiRule
 import io.swagger.models._
 import io.swagger.models.parameters._
 import io.swagger.models.properties.Property
 
+import java.util
 import scala.collection.JavaConverters._
 
 object OpenApiConverterUtils extends OpenApiConverterUtils
@@ -17,29 +16,23 @@ trait OpenApiConverterUtils {
     case (path, (method, operation)) => path.set(method.toString.toLowerCase, operation)
   }
 
-  def buildAbsolutePathsMap(swagger: Swagger): Map[String, OpenApiOperations] = {
+  def buildAbsolutePathsMap(swagger: Swagger): Map[String, OpenApiOperations] =
     swagger.getPaths.asScala.map {
       case (key, value) => buildAbsolutePath(swagger, key) -> value.getOperationMap.asScala.toMap
     }.toMap
-  }
 
   def buildAbsolutePath(swagger: Swagger, path: String): String =
-    Option(swagger.getBasePath) match {
-      case Some(basePath) =>
-        if (basePath.endsWith("/")) basePath.dropRight(1) + path
-        else basePath + path
-      case None => path
-    }
+    Option(swagger.getBasePath).map(basePath =>
+      if (basePath.endsWith("/")) basePath.init else basePath
+    ).getOrElse("") + path
 
-  def findOperation(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] = {
+  def findOperation(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] =
     findPath(swagger, path).flatMap(p => findOperationInPath(p, method))
-  }
 
-  def findOperationWithAbsoluteUrl(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] = {
+  def findOperationWithAbsoluteUrl(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] =
     swagger.getPaths.asScala.find { case (k, _) =>
       path == buildAbsolutePath(swagger, k)
     }.flatMap(e => findOperationInPath(e._2, method))
-  }
 
   def findPath(swagger: Swagger, targetServicePath: String): Option[Path] =
     swagger.getPaths.asScala.find(x => pathMatches(targetServicePath, x._1)).map(_._2)
@@ -47,19 +40,15 @@ trait OpenApiConverterUtils {
   def findOperationInPath(path: Path, method: HttpMethod): Option[Operation] =
     Option(path.getOperationMap.get(method))
 
-  def buildPaths(pathsMap: Map[String, OpenApiOperations]): Map[String, Path] = {
+  def buildPaths(pathsMap: Map[String, OpenApiOperations]): Map[String, Path] =
     pathsMap.mapValues(buildPath)
-  }
 
-  def pathMatches(testPath: String, regexPath: String): Boolean = {
-    regexPath
-      .replaceAll("""\{\w+}""", """(\\w+)""").r
-      .findFirstIn(testPath.replaceAll("[{}]", "")).nonEmpty
-  }
+  def pathMatches(testPath: String, regexPath: String): Boolean = regexPath
+    .replaceAll("""\{\w+}""", """(\\w+)""").r
+    .findFirstIn(testPath.replaceAll("[{}]", "")).nonEmpty
 
-  def toSwaggerMethod(method: io.vertx.core.http.HttpMethod): io.swagger.models.HttpMethod = {
+  def toSwaggerMethod(method: io.vertx.core.http.HttpMethod): io.swagger.models.HttpMethod =
     io.swagger.models.HttpMethod.valueOf(method.toString.toUpperCase)
-  }
 
   def deepCopyOperation(operation: Operation): Operation =
     SwaggerCopy.copyOperation(operation)
