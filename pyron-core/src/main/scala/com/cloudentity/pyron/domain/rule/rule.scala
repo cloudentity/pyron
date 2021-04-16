@@ -17,7 +17,7 @@ case class RuleConf(
   criteria: EndpointMatchCriteria,
   target: TargetServiceRule,
   dropPathPrefix: Boolean,
-  loopback: Boolean,
+  reroute: Boolean,
   rewriteMethod: Option[RewriteMethod],
   rewritePath: Option[RewritePath],
   copyQueryOnRewrite: Option[Boolean],

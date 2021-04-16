@@ -10,7 +10,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import io.vertx.core.http.HttpMethod
 import scalaz.Scalaz._
-import scalaz.{ValidationNel, _}
+import scalaz._
 
 object RulesConfReader {
 
@@ -43,7 +43,7 @@ object RulesConfReader {
     pathPrefix: Option[PathPrefix],
     method: Option[HttpMethod],
     dropPrefix: Option[Boolean],
-    loopback: Option[Boolean],
+    reroute: Option[Boolean],
     requestPlugins: Option[List[PluginConf]],
     responsePlugins: Option[List[PluginConf]],
     tags: Option[List[String]],
@@ -162,7 +162,7 @@ object RulesConfReader {
       criteria = EndpointMatchCriteria(rf.method, preparedRewrite),
       target = rf.service,
       dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true),
-      loopback = endpointConf.rule.loopback.orElse(defaultConf.rule.loopback).getOrElse(false),
+      reroute = endpointConf.rule.reroute.orElse(defaultConf.rule.reroute).getOrElse(false),
       rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod),
       rewritePath = rewritePath,
       copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite),
@@ -241,14 +241,20 @@ object RulesConfReader {
     )
   }.apply(RuleRequiredFields)
 
-  private def validateTargetServiceRule(hostOpt: Option[TargetHost], portOpt: Option[Int], sslOpt: Option[Boolean], serviceNameOpt: Option[ServiceClientName], targetProxyOpt: Option[Boolean]): ValidationNel[String, TargetServiceRule] = {
+  private def validateTargetServiceRule(hostOpt: Option[TargetHost],
+                                        portOpt: Option[Int],
+                                        sslOpt: Option[Boolean],
+                                        serviceNameOpt: Option[ServiceClientName],
+                                        targetProxyOpt: Option[Boolean]
+                                       ): ValidationNel[String, TargetServiceRule] = {
+
     val discoverableServiceOpt = serviceNameOpt.map(DiscoverableServiceRule)
-    val staticServiceOpt: Option[StaticServiceRule] =
-      for {
-        host <- hostOpt
-        port <- portOpt
-      } yield StaticServiceRule(host, port, sslOpt.getOrElse(false))
-    val proxyServiceOpt = if (targetProxyOpt.getOrElse(false)) Some(ProxyServiceRule) else None
+    val staticServiceOpt = for {
+      host <- hostOpt
+      port <- portOpt
+    } yield StaticServiceRule(host, port, sslOpt.getOrElse(false))
+
+    val proxyServiceOpt = targetProxyOpt.collect { case true => ProxyServiceRule }
 
     List(staticServiceOpt, discoverableServiceOpt, proxyServiceOpt).flatten match {
       case service :: Nil => Success(service)

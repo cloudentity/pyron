@@ -1,6 +1,7 @@
 package com.cloudentity.pyron.rule
 
 import io.circe.Json
+import com.cloudentity.pyron.domain.Codecs._
 import com.cloudentity.pyron.domain.flow.{ApiGroupPluginConf, EndpointMatchCriteria, PathPattern, PathPrefix, PluginConf, PluginName, RewriteMethod, RewritePath, ServiceClientName, StaticServiceRule, TargetHost}
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf}
 import com.cloudentity.pyron.rule.RulesConfReader._
@@ -29,7 +30,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     pathPrefix = Some(PathPrefix("pathPrefix")),
     method = Some(HttpMethod.GET),
     dropPrefix = Some(true),
-    loopback = Some(false),
+    reroute = Some(false),
     requestPlugins = None,
     responsePlugins = None,
     tags = None,
@@ -53,7 +54,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     pathPrefix = Some(PathPrefix("pathPrefix2")),
     method = Some(HttpMethod.POST),
     dropPrefix = Some(false),
-    loopback = Some(false),
+    reroute = Some(false),
     requestPlugins = None,
     responsePlugins = None,
     tags = None,
@@ -176,7 +177,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
             fullRuleConfWoPlugins.targetSsl.getOrElse(false)
           ),
           dropPathPrefix = fullRuleConfWoPlugins.dropPrefix.get,
-          loopback = fullRuleConfWoPlugins.loopback.get,
+          reroute = fullRuleConfWoPlugins.reroute.get,
           rewritePath = fullRuleConfWoPlugins.rewritePath,
           rewriteMethod = fullRuleConfWoPlugins.rewriteMethod,
           copyQueryOnRewrite = fullRuleConfWoPlugins.copyQueryOnRewrite,

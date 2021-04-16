@@ -1,10 +1,9 @@
 package com.cloudentity.pyron.openapi
 
-import java.util.Optional
 import com.cloudentity.pyron.domain.flow.ApiGroupPluginConf
 import com.cloudentity.pyron.domain.openapi.{ConverterConf, OpenApiRule, ServiceId}
-import com.cloudentity.pyron.plugin.openapi._
 import com.cloudentity.pyron.plugin.ConvertOpenApiService
+import com.cloudentity.pyron.plugin.openapi._
 import com.cloudentity.tools.vertx.registry.{RegistryVerticle, ServiceClientsFactory, ServiceClientsRepository}
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import com.cloudentity.tools.vertx.tracing.TracingContext
@@ -12,6 +11,7 @@ import io.swagger.models._
 import io.vertx.core.logging.{Logger, LoggerFactory}
 import io.vertx.core.{Future => VxFuture}
 
+import java.util.Optional
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
@@ -102,11 +102,11 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
       }.groupBy(_.operation.getOperationId).filter(_._2.size > 1).values.flatten.toList
 
     def renameOperationId(operation: Operation, api: Api): Unit = {
-      val camelCasePath =
-        api.path.split('/')
-          .map(segment => if (segment.startsWith("{") && segment.endsWith("}")) "with" + segment.drop(1).dropRight(1).capitalize else segment)
-          .map(_.capitalize)
-          .mkString("")
+      val camelCasePath = api.path.split('/').map { segment =>
+        if (segment.startsWith("{") && segment.endsWith("}")) {
+          "With" + segment.substring(1, segment.length - 1).capitalize
+        } else segment.capitalize
+      }.mkString
       val newOperationId = api.method.toString.toLowerCase + camelCasePath
       operation.setOperationId(newOperationId)
     }
