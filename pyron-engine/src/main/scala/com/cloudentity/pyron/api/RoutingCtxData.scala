@@ -1,11 +1,9 @@
 package com.cloudentity.pyron.api
 
-import com.cloudentity.pyron.api.ApiHandler.FlowState
-import com.cloudentity.pyron.domain.flow.{AccessLogItems, Properties}
 import io.vertx.ext.web.RoutingContext
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 object RoutingCtxData {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
@@ -18,10 +16,10 @@ object RoutingCtxData {
 
   def getFlowState(ctx: RoutingContext): FlowState = {
     Try(Option(ctx.get[FlowState](flowStateKey))) match {
-      case scala.util.Success(stateOpt) => stateOpt
-      case scala.util.Failure(ex) =>
+      case Success(stateOpt) => stateOpt
+      case Failure(ex) =>
         log.error("Could not read FlowState from RoutingContext", ex)
         None
     }
-  }.getOrElse(FlowState(None, None, None, None, AccessLogItems(), Properties()))
+  }.getOrElse(FlowState.empty)
 }
