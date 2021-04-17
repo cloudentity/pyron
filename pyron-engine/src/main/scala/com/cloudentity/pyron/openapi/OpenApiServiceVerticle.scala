@@ -55,7 +55,6 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
       .orElse(cfg.defaultConverter)
       .getOrElse(ConverterConf(None, None))
 
-
   def resetRulesAndTargetClient(groups: List[ApiGroup], confs: List[ApiGroupConf]): Future[Unit] =
     TargetClient.resetTargetClient(vertx, getConfService, getTracing, groups.flatMap(_.rules).map(_.conf), Option(targetClient))
       .map { client =>
@@ -64,22 +63,21 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
       }
 
   override def build(ctx: TracingContext, serviceId: ServiceId, tag: Option[String]): VxFuture[OpenApiServiceError \/ Swagger] = {
-    val openApiRules = {
-      for {
-        group <- apiGroupConfs
-        rule  <- group.rules
-      } yield OpenApiRuleBuilder.from(rule, group.matchCriteria)
-    }.flatten
+    val openApiRules = for {
+      group <- apiGroupConfs
+      ruleConfWithPlugins <- group.rules
+      openApiRule <- OpenApiRuleBuilder.from(ruleConfWithPlugins, group.matchCriteria)
+    } yield openApiRule
 
-    val filteredOpenApiRules = filterOpenApiRules(openApiRules, serviceId, tag)
+    val filteredRules = filterOpenApiRules(openApiRules, serviceId, tag)
 
     val program: Operation[OpenApiServiceError, Swagger] = for {
-      _                   <- filteredOpenApiRules.headOption.toOperation[OpenApiServiceError](NoRulesFound)
-      sourceConf           = getSourceConf(serviceId)
-      openApi             <- fetchOpenApi(ctx, serviceId, sourceConf)
-      converterConf        = getConverterConf(serviceId)
-      apiGatewayOpenApi   <- converter.convert(ctx, serviceId, openApi, filteredOpenApiRules, converterConf).toOperation
-    } yield apiGatewayOpenApi
+      _             <- filteredRules.headOption.toOperation[OpenApiServiceError](NoRulesFound)
+      sourceConf    = getSourceConf(serviceId)
+      openApi       <- fetchOpenApi(ctx, serviceId, sourceConf)
+      converterConf = getConverterConf(serviceId)
+      apiGwOpenApi  <- converter.convert(ctx, serviceId, openApi, filteredRules, converterConf).toOperation[OpenApiServiceError]
+    } yield apiGwOpenApi
 
     program.run.toJava()
   }
@@ -88,27 +86,24 @@ class OpenApiServiceVerticle extends ScalaServiceVerticle with OpenApiService wi
     rules.filter(_.serviceId == serviceId).filter(r => tag.forall(r.tags.contains(_)))
 
   def fetchOpenApi(tracing: TracingContext, serviceId: ServiceId, sourceConf: SourceConf): Operation[OpenApiServiceError, Swagger] = {
-    val uri = sourceConf.path
-
     val service = serviceId match {
       case DiscoverableServiceId(name) => DiscoverableService(ServiceClientName(name.value))
       case StaticServiceId(host, port, ssl) => StaticService(host, port, ssl)
     }
 
-    targetClient.call(tracing, TargetRequest(HttpMethod.GET, service, uri, Headers(), None), None, None)
-      .toOperation
+    val targetRequest = TargetRequest(HttpMethod.GET, service, sourceConf.path, Headers(), None)
+
+    targetClient.call(tracing, targetRequest, None, None).toOperation
       .leftMap[OpenApiServiceError](ex => ClientError(ex))
       .flatMap { resp =>
-        if (resp.http.statusCode() == 200) {
-          Try(Option(new SwaggerParser().parse(resp.body.toString()))) match {
+        resp.http.statusCode() match {
+          case 200 => Try(Option(new SwaggerParser().parse(resp.body.toString()))) match {
             case Success(Some(swagger)) => Operation.success(swagger)
-            case Success(None)          => Operation.error(EmptyOpenApi)
-            case Failure(ex)            => Operation.error(OpenApiParsingError(ex))
+            case Success(None) => Operation.error(EmptyOpenApi)
+            case Failure(ex) => Operation.error(OpenApiParsingError(ex))
           }
-        } else if (resp.http.statusCode() == 404){
-          Operation.error(OpenApiNotFound)
-        } else {
-          Operation.error(InvalidStatusCode(resp.http.statusCode))
+          case 404 => Operation.error(OpenApiNotFound)
+          case statusCode => Operation.error(InvalidStatusCode(statusCode))
         }
       }
   }
@@ -132,6 +127,7 @@ object OpenApiRuleBuilder {
         pathPrefix     = PathPrefix(r.rule.criteria.rewrite.pathPrefix),
         pathPattern    = PathPattern(r.rule.criteria.rewrite.matchPattern),
         dropPathPrefix = r.rule.dropPathPrefix,
+        reroute        = r.rule.reroute,
         rewritePath    = r.rule.rewritePath,
         rewriteMethod  = r.rule.rewriteMethod,
         plugins        = r.requestPlugins.toList ::: r.responsePlugins.toList,
