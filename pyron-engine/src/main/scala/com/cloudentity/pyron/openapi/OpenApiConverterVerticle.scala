@@ -11,6 +11,7 @@ import io.swagger.models._
 import io.vertx.core.logging.{Logger, LoggerFactory}
 import io.vertx.core.{Future => VxFuture}
 
+import java.util
 import java.util.Optional
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -62,34 +63,30 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
       }
 
   def rewritePathsAndMethodsAndOperationId(ctx: TracingContext, swagger: Swagger, rules: List[OpenApiRule]): VxFuture[Swagger] = {
-    val paths: Map[String, Map[HttpMethod, Operation]] = rules.flatMap { rule =>
-      val targetServicePath = rule.targetServicePath
-      val apiGwPath = rule.apiGwPath
+    val rulesAndOperations: List[(OpenApiRule, Operation)] = rules.flatMap { rule =>
       val targetMethod = toSwaggerMethod(rule.rewriteMethod.map(_.value).getOrElse(rule.method))
-      val apiGwMethod = toSwaggerMethod(rule.method)
-
-      findOperation(swagger, targetServicePath, targetMethod) match {
-        case Some(operation) =>
-          val outOperation = deepCopyOperation(operation)
-          val operationId = rule.operationId.getOrElse(operation.getOperationId)
-          outOperation.setOperationId(operationId)
-
-          Some((apiGwPath, (apiGwMethod, outOperation)))
-        case None =>
-          log.warn(ctx, s"Can't find rule definition: $rule in target service docs")
-          None
-      }
-
-    }.groupBy(t => t._1).mapValues(_.map(_._2).toMap)
-
-    VxFuture.succeededFuture(swagger.paths(buildPaths(paths).asJava))
+      findOperation(swagger, rule.targetServicePath, targetMethod).fold {
+        log.warn(ctx, s"Can't find rule definition: $rule in target service docs")
+        Option.empty[(OpenApiRule, Operation)]
+      } { operation => Some((rule, deepCopyOperation(operation))) }
+    }
+    VxFuture.succeededFuture(swagger.paths(makePaths(rulesAndOperations)))
   }
+
+  def makePaths(rulesAndOperations: List[(OpenApiRule, Operation)]): util.Map[String, Path] =
+    rulesAndOperations
+      .groupBy { case (rule, _) => rule.apiGwPath }
+      .mapValues(_.map { case (rule, operation) =>
+        val opId = rule.operationId.getOrElse(operation.getOperationId)
+        operation.setOperationId(opId)
+        (toSwaggerMethod(rule.method), operation)
+      }.toMap)
+      .mapValues(buildPath).asJava
 
   def modifyMetadata(ctx: TracingContext, swagger: Swagger, conf: ConverterConf): VxFuture[Swagger] = {
     val basePath = conf.defaults.flatMap(_.basePath).map(_.value).getOrElse("/api")
     val host = conf.defaults.flatMap(_.host).map(_.value).getOrElse("localhost")
     val scheme = if (conf.defaults.flatMap(_.ssl).getOrElse(true)) Scheme.HTTPS else Scheme.HTTP
-
     VxFuture.succeededFuture(swagger.basePath(basePath).host(host).schemes(List(scheme).asJava))
   }
 
