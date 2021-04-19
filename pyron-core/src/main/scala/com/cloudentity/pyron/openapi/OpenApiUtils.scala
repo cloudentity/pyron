@@ -40,9 +40,6 @@ trait OpenApiConverterUtils {
   def findOperationInPath(path: Path, method: HttpMethod): Option[Operation] =
     Option(path.getOperationMap.get(method))
 
-  def buildPaths(pathsMap: Map[String, OpenApiOperations]): Map[String, Path] =
-    pathsMap.mapValues(buildPath)
-
   def pathMatches(testPath: String, regexPath: String): Boolean = regexPath
     .replaceAll("""\{\w+}""", """(\\w+)""").r
     .findFirstIn(testPath.replaceAll("[{}]", "")).nonEmpty
