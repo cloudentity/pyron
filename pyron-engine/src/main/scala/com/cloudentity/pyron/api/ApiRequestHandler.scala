@@ -13,15 +13,15 @@ import scala.annotation.tailrec
 
 object ApiRequestHandler {
 
-  case class RuleWithAppliedRewrite(rule: Rule, appliedRewrite: AppliedRewrite)
+  case class AppliedRule(rule: Rule, appliedRewrite: AppliedRewrite)
 
-  def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithAppliedRewrite] = {
-    @tailrec def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithAppliedRewrite] = rules match {
+  def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[AppliedRule] = {
+    @tailrec def loop(basePath: BasePath, rules: List[Rule]): Option[AppliedRule] = rules match {
       case rule :: tail =>
         val criteria = rule.conf.criteria
         val path = Option(vertxRequest.path()).getOrElse("")
         RuleMatcher.makeMatch(vertxRequest.method(), path, basePath, criteria) match {
-          case Match(appliedRewrite) => Some(RuleWithAppliedRewrite(rule, appliedRewrite))
+          case Match(appliedRewrite) => Some(AppliedRule(rule, appliedRewrite))
           case NoMatch => loop(basePath, tail)
         }
       case Nil => None
@@ -38,8 +38,8 @@ object ApiRequestHandler {
   def setAuthnCtx(ctx: RoutingContext, authnCtx: AuthnCtx): Unit =
     updateFlowState(ctx, _.copy(authnCtx = Some(authnCtx)))
 
-  def setRule(ctx: RoutingContext, rule: Rule): Unit =
-    updateFlowState(ctx, _.copy(rule = Some(rule)))
+  def addRule(ctx: RoutingContext, rule: Rule): Unit =
+    updateFlowState(ctx, flow => flow.copy(rules = rule :: flow.rules))
 
   def setAborted(ctx: RoutingContext, aborted: Boolean): Unit =
     updateFlowState(ctx, _.copy(aborted = Some(aborted)))
@@ -50,8 +50,9 @@ object ApiRequestHandler {
   def addExtraAccessLogItems(ctx: RoutingContext, items: AccessLogItems): Unit =
     updateFlowState(ctx, state => state.copy(extraAccessLogs = state.extraAccessLogs.merge(items)))
 
-  def addProperties(ctx: RoutingContext, props: Properties): Unit =
+  def addProperties(ctx: RoutingContext, props: Properties): Unit = {
     updateFlowState(ctx, state => state.copy(properties = Properties(state.properties.toMap ++ props.toMap)))
+  }
 
   def withProxyHeaders(proxyHeaders: ProxyHeaders)(req: TargetRequest): TargetRequest =
     req.withHeaderValues(proxyHeaders.headers)

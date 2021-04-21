@@ -80,8 +80,10 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     log.trace(tracing, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
     getProgram(defaultRequestBodyMaxSize, ctx, tracing, requestSignature)
-      .map(handleApiResponse(tracing, vertxResponse, _))
-      .recover { case ex: Throwable =>
+      .map {
+        case Some(apiResponse) => handleApiResponse(tracing, vertxResponse, apiResponse)
+        case None => ()
+      }.recover { case ex: Throwable =>
         log.error(tracing, s"Unexpected error, request='$requestSignature'", ex)
         endWithException(tracing, vertxResponse, ex)
       }
@@ -92,22 +94,37 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   def getProgram(maxBodySize: Option[Kilobytes],
                  ctx: RoutingContext,
                  tracing: TracingContext,
-                 requestSignature: String): Future[ApiResponse] = {
+                 requestSignature: String): Future[Option[ApiResponse]] = {
 
     findMatchingApiGroup(apiGroups, ctx.request()) flatMap { apiGroup =>
       findMatchingRule(apiGroup, ctx.request()).map(_ -> apiGroup)
     } match {
-      case None => Future.successful(Errors.ruleNotFound.toApiResponse())
-      case Some((RuleWithAppliedRewrite(rule, rewrite), apiGroup)) =>
+      case None => Future.successful(Some(Errors.ruleNotFound.toApiResponse()))
+      case Some((appliedRule @ AppliedRule(rule, rewrite), apiGroup)) =>
         log.debug(tracing, s"Found $rule for, request='$requestSignature'")
-        setRule(ctx, rule)
+
+        addRule(ctx, rule)
         setTracingOperationName(ctx, rule)
-        val proxyHeaders = getProxyHeaders(ctx).getOrElse(ProxyHeaders(Map(), ""))
-        for {
-          finalRequestCtx <- getFinalRequestCtx(maxBodySize, ctx, tracing, proxyHeaders, rule, apiGroup, rewrite)
-          finalResponseCtx <- getFinalResponseCtx(ctx, tracing, rule, finalRequestCtx)
-        } yield finalResponseCtx.response
+
+        if (rule.conf.reroute) {
+          reroute(ctx, appliedRule)
+          Future.successful(None)
+        } else {
+          val proxyHeaders = getProxyHeaders(ctx).getOrElse(ProxyHeaders(Map(), ""))
+          for {
+            finalRequestCtx <- getFinalRequestCtx(maxBodySize, ctx, tracing, proxyHeaders, rule, apiGroup, rewrite)
+            finalResponseCtx <- getFinalResponseCtx(ctx, tracing, rule, finalRequestCtx)
+          } yield Some(finalResponseCtx.response)
+        }
+
     }
+  }
+
+  private def reroute(ctx: RoutingContext, appliedRule: AppliedRule): HttpServerRequest = {
+    appliedRule.rule.conf.rewriteMethod.fold {
+      ctx.reroute(appliedRule.appliedRewrite.targetPath)
+    } { method => ctx.reroute(method.value, appliedRule.appliedRewrite.targetPath) }
+    ctx.request().pause()
   }
 
   def getFinalRequestCtx(maxBodySize: Option[Kilobytes],

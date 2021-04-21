@@ -4,12 +4,12 @@ import com.cloudentity.pyron.domain.flow.{AccessLogItems, AuthnCtx, FlowFailure,
 import com.cloudentity.pyron.rule.Rule
 
 case class FlowState(authnCtx: Option[AuthnCtx],
-                     rule: Option[Rule],
+                     rules: List[Rule],
                      aborted: Option[Boolean],
                      failure: Option[FlowFailure],
                      extraAccessLogs: AccessLogItems,
                      properties: Properties)
 
 object FlowState {
-  def empty: FlowState = FlowState(None, None, None, None, AccessLogItems(), Properties())
+  def empty: FlowState = FlowState(None, Nil, None, None, AccessLogItems(), Properties())
 }
