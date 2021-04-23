@@ -3,6 +3,7 @@ package com.cloudentity.pyron.api
 import com.cloudentity.pyron.api.HttpConversions.toRequestCtx
 import com.cloudentity.pyron.api.ProxyHeadersHandler.getProxyHeaders
 import com.cloudentity.pyron.api.Responses.Errors
+import com.cloudentity.pyron.api.RoutingCtxData.{getFlowState, ruleCount}
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.TargetClient
 import com.cloudentity.pyron.config.Conf
@@ -37,7 +38,6 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
 
   override def initServiceAsyncS(): Future[Unit] = {
     registerConfChangeConsumer(onSmartClientsChanged)
-
     createClient(classOf[ApiGroupsStore]).getGroups().toScala()
       .map(apiGroups = _)
       .flatMap(_ => resetRulesAndSmartClients(apiGroups))
@@ -53,9 +53,6 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
   }
 
-  override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit =
-    resetRulesAndSmartClients(groups)
-
   def resetRulesAndSmartClients(gs: List[ApiGroup]): Future[Unit] = {
     val ruleConfs: List[RuleConf] = gs.flatMap(_.rules).map(_.conf)
     TargetClient.resetTargetClient(
@@ -70,6 +67,9 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
   }
 
+  override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit =
+    resetRulesAndSmartClients(groups)
+
   def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit] = {
     val vertxRequest = ctx.request()
     val vertxResponse = ctx.response()
@@ -79,16 +79,15 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     log.debug(tracing, s"Received request: $requestSignature")
     log.trace(tracing, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
-    getProgram(defaultRequestBodyMaxSize, ctx, tracing, requestSignature)
-      .map {
+    VxFuture.succeededFuture(
+      getProgram(defaultRequestBodyMaxSize, ctx, tracing, requestSignature) map {
         case Some(apiResponse) => handleApiResponse(tracing, vertxResponse, apiResponse)
         case None => ()
-      }.recover { case ex: Throwable =>
+      } recover { case ex: Throwable =>
         log.error(tracing, s"Unexpected error, request='$requestSignature'", ex)
         endWithException(tracing, vertxResponse, ex)
       }
-
-    VxFuture.succeededFuture(())
+    )
   }
 
   def getProgram(maxBodySize: Option[Kilobytes],
@@ -100,64 +99,69 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       findMatchingRule(apiGroup, ctx.request()).map(_ -> apiGroup)
     } match {
       case None => Future.successful(Some(Errors.ruleNotFound.toApiResponse()))
-      case Some((appliedRule @ AppliedRule(rule, rewrite), apiGroup)) =>
+      case Some((appliedRule@AppliedRule(rule, rewrite), apiGroup)) =>
         log.debug(tracing, s"Found $rule for, request='$requestSignature'")
-
+        val isFirstOrOnlyPass = ruleCount(ctx) == 0
+        if (isFirstOrOnlyPass) setTracingOperationName(ctx, rule)
         addRule(ctx, rule)
-        setTracingOperationName(ctx, rule)
-
-        if (rule.conf.reroute) {
-          reroute(ctx, appliedRule)
-          Future.successful(None)
-        } else {
-          val proxyHeaders = getProxyHeaders(ctx).getOrElse(ProxyHeaders(Map(), ""))
-          for {
-            finalRequestCtx <- getFinalRequestCtx(maxBodySize, ctx, tracing, proxyHeaders, rule, apiGroup, rewrite)
-            finalResponseCtx <- getFinalResponseCtx(ctx, tracing, rule, finalRequestCtx)
-          } yield Some(finalResponseCtx.response)
-        }
-
+        rerouteOrFinish(ctx, tracing, appliedRule, apiGroup, maxBodySize)
     }
   }
 
-  private def reroute(ctx: RoutingContext, appliedRule: AppliedRule): HttpServerRequest = {
+  private def rerouteOrFinish(ctx: RoutingContext,
+                              tracing: TracingContext,
+                              appliedRule: AppliedRule,
+                              apiGroup: ApiGroup,
+                              maxBodySize: Option[Kilobytes]
+                             ): Future[Option[ApiResponse]] = {
+    val AppliedRule(rule, rewrite) = appliedRule
+    if (rule.conf.reroute) {
+      reroute(ctx, appliedRule)
+      Future.successful(None)
+    } else {
+      val proxyHeaders = getProxyHeaders(ctx).getOrElse(ProxyHeaders(Map(), ""))
+      for {
+        finalRequestCtx <- makeRequestCtx(ctx, tracing, proxyHeaders, rule, apiGroup, rewrite, maxBodySize)
+        _ = setupRoutingCtxRequest(ctx, finalRequestCtx)
+        finalResponseCtx <- makeResponseCtx(ctx, finalRequestCtx, tracing, rule)
+        _ = setupRoutingCtxResponse(ctx, finalResponseCtx)
+      } yield Some(finalResponseCtx.response)
+    }
+  }
+
+  def reroute(ctx: RoutingContext, appliedRule: AppliedRule): Unit = {
     appliedRule.rule.conf.rewriteMethod.fold {
       ctx.reroute(appliedRule.appliedRewrite.targetPath)
     } { method => ctx.reroute(method.value, appliedRule.appliedRewrite.targetPath) }
-    ctx.request().pause()
   }
 
-  def getFinalRequestCtx(maxBodySize: Option[Kilobytes],
-                         ctx: RoutingContext,
-                         tracing: TracingContext,
-                         proxyHeaders: ProxyHeaders,
-                         rule: Rule,
-                         apiGroup: ApiGroup,
-                         appliedRewrite: AppliedRewrite): Future[RequestCtx] = for {
-    initRequestCtx <- toRequestCtx(
-      maxBodySize, ctx, tracing, proxyHeaders, rule.conf, apiGroup, appliedRewrite.pathParams)
-    finalRequestCtx <- applyRequestPlugins(
-      initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)),
-      rule.requestPlugins
-    ) map (setupFinalRequest(ctx, _))
-  } yield finalRequestCtx
+  def makeRequestCtx(ctx: RoutingContext,
+                     tracing: TracingContext,
+                     proxyHeaders: ProxyHeaders,
+                     rule: Rule,
+                     apiGroup: ApiGroup,
+                     appliedRewrite: AppliedRewrite,
+                     maxBodySize: Option[Kilobytes]): Future[RequestCtx] =
+    for {
+      initReqCtx <- toRequestCtx(ctx, tracing, apiGroup, rule.conf, appliedRewrite.pathParams, proxyHeaders, maxBodySize)
+      reqCtxWithProxyHeaders = initReqCtx.modifyRequest(withProxyHeaders(proxyHeaders))
+      finalRequestCtx <- applyRequestPlugins(reqCtxWithProxyHeaders, rule.requestPlugins)
+    } yield finalRequestCtx
 
-  def getFinalResponseCtx(ctx: RoutingContext,
-                          tracing: TracingContext,
-                          rule: Rule,
-                          requestCtx: RequestCtx): Future[ResponseCtx] = for {
-
-    (initResponse, fail) <- requestCtx.aborted.fold {
-      callTarget(requestCtx, tracing, rule.conf.call)
-    } { response => Future.successful((response, false)) }
-
-    modifiedResponse <- requestCtx.modifyResponse(initResponse)
-    finalResponseCtx <- applyResponsePlugins(
-      toResponseCtx(requestCtx, fail, modifiedResponse),
-      rule.responsePlugins
-    ).map(setupFinalResponse(ctx, _))
-  } yield finalResponseCtx
-
+  def makeResponseCtx(ctx: RoutingContext,
+                      requestCtx: RequestCtx,
+                      tracing: TracingContext,
+                      rule: Rule): Future[ResponseCtx] =
+    for {
+      (initResponse, fail) <- requestCtx.aborted.fold {
+        callTarget(requestCtx, tracing, rule.conf.call)
+      } { response =>
+        Future.successful((response, false))
+      }
+      modifiedResponse <- requestCtx.modifyResponse(initResponse)
+      allResponsePlugins = getFlowState(ctx).rules.flatMap(_.responsePlugins)
+      finalResponseCtx <- applyResponsePlugins(toResponseCtx(requestCtx, fail, modifiedResponse), allResponsePlugins)
+    } yield finalResponseCtx
 
   def applyRequestPlugins(requestCtx: RequestCtx, plugins: List[RequestPlugin]): Future[RequestCtx] =
     PluginFunctions.applyRequestPlugins(requestCtx, plugins) { ex =>
@@ -165,25 +169,23 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       exceptionToApiResponse(ex)
     }
 
-  def setupFinalRequest(ctx: RoutingContext, requestCtx: RequestCtx): RequestCtx = {
-    setAuthnCtx(ctx, requestCtx.authnCtx)
-    setAborted(ctx, requestCtx.aborted.isDefined)
-    setFailure(ctx, requestCtx.failed)
-    addExtraAccessLogItems(ctx, requestCtx.accessLog)
-    addProperties(ctx, requestCtx.properties)
-    requestCtx
-  }
-
   def applyResponsePlugins(responseCtx: ResponseCtx, plugins: List[ResponsePlugin]): Future[ResponseCtx] =
     PluginFunctions.applyResponsePlugins(responseCtx, plugins) { ex =>
       log.error(responseCtx.tracingCtx, s"Could not apply response plugin", ex)
       exceptionToApiResponse(ex)
     }
 
-  def setupFinalResponse(ctx: RoutingContext, responseCtx: ResponseCtx): ResponseCtx = {
+  def setupRoutingCtxRequest(ctx: RoutingContext, requestCtx: RequestCtx): Unit = {
+    setAuthnCtx(ctx, requestCtx.authnCtx)
+    setAborted(ctx, requestCtx.aborted.isDefined)
+    setFailure(ctx, requestCtx.failed)
+    addExtraAccessLogItems(ctx, requestCtx.accessLog)
+    addProperties(ctx, requestCtx.properties)
+  }
+
+  def setupRoutingCtxResponse(ctx: RoutingContext, responseCtx: ResponseCtx): Unit = {
     addExtraAccessLogItems(ctx, responseCtx.accessLog)
     addProperties(ctx, responseCtx.properties)
-    responseCtx
   }
 
   def callTarget(requestCtx: RequestCtx, tracing: TracingContext, callOpts: Option[CallOpts]): Future[(ApiResponse, Boolean)] =

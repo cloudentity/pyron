@@ -21,27 +21,26 @@ import scala.util.Try
 object HttpConversions {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
-  def toRequestCtx(defaultRequestBodyMaxSize: Option[Kilobytes],
-                   ctx: RoutingContext,
-                   tracingCtx: TracingContext,
-                   proxyHeaders: ProxyHeaders,
-                   ruleConf: RuleConf,
+  def toRequestCtx(ctx: RoutingContext,
+                   tracing: TracingContext,
                    apiGroup: ApiGroup,
-                   pathParams: PathParams)
+                   ruleConf: RuleConf,
+                   pathParams: PathParams,
+                   proxyHeaders: ProxyHeaders,
+                   defaultRequestBodyMaxSize: Option[Kilobytes])
                   (implicit ec: VertxExecutionContext): Future[RequestCtx] = {
 
     val req = ctx.request()
-    val contentLengthOpt = Try(req.getHeader("Content-Length").toLong).toOption
-    val requestBodyMaxSize = ruleConf.requestBodyMaxSize.orElse(defaultRequestBodyMaxSize)
 
-    getBodyFuture(ctx, ruleConf, req, contentLengthOpt, requestBodyMaxSize)
+    getBodyFuture(req, ruleConf, defaultRequestBodyMaxSize)
       .map { case (bodyStreamOpt, bodyOpt) =>
         val original = toOriginalRequest(req, pathParams, bodyOpt)
         val dropBody = ruleConf.requestBody.contains(DropBody)
+        val properties = Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup)
         val request = TargetRequest(
           method = ruleConf.rewriteMethod.map(_.value).getOrElse(original.method),
           service = TargetService(ruleConf.target, req),
-          uri = chooseRelativeUri(tracingCtx, apiGroup.matchCriteria.basePathResolved, ruleConf, original),
+          uri = chooseRelativeUri(apiGroup.matchCriteria.basePathResolved, ruleConf, original),
           headers = removeHeadersAsProxy(ruleConf, original.headers),
           bodyOpt = bodyOpt
         ).modifyHeaders(hs => if (!dropBody) hs else hs.set("Content-Length", "0"))
@@ -50,8 +49,8 @@ object HttpConversions {
           request,
           bodyStreamOpt,
           original,
-          Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup),
-          tracingCtx,
+          properties,
+          tracing,
           proxyHeaders,
           AuthnCtx(),
           aborted = None
@@ -59,25 +58,22 @@ object HttpConversions {
       }
   }
 
-  private def getBodyFuture(ctx: RoutingContext,
+  private def getBodyFuture(req: HttpServerRequest,
                             ruleConf: RuleConf,
-                            req: HttpServerRequest,
-                            contentLengthOpt: Option[Long],
-                            requestBodyMaxSize: Option[Kilobytes]): Future[(Option[ReadStream[Buffer]], Option[Buffer])] = {
+                            defaultRequestBodyMaxSize: Option[Kilobytes]
+                           ): Future[(Option[ReadStream[Buffer]], Option[Buffer])] = {
+
+    val contentLengthOpt = Try(req.getHeader("Content-Length").toLong).toOption
+    val requestBodyMaxSize = ruleConf.requestBodyMaxSize.orElse(defaultRequestBodyMaxSize)
+
     if (BodyLimit.isMaxSizeExceeded(contentLengthOpt.getOrElse(-1), requestBodyMaxSize)) {
       Future.failed(new RequestBodyTooLargeException())
-    } else {
-      ruleConf.requestBody.getOrElse(BufferBody) match {
-        case BufferBody => BodyBuffer.bufferBody(req, contentLengthOpt, requestBodyMaxSize)
-        case StreamBody =>
-          requestBodyMaxSize match {
-            case Some(maxSize) =>
-              Future.successful((Some(SizeLimitedBodyStream(ctx.request(), maxSize)), None))
-            case None =>
-              Future.successful((Some(req), None))
-          }
-        case DropBody => Future.successful((None, None))
-      }
+    } else ruleConf.requestBody.getOrElse(BufferBody) match {
+      case BufferBody => BodyBuffer.bufferBody(req, contentLengthOpt, requestBodyMaxSize)
+      case StreamBody => requestBodyMaxSize
+        .map(maxSize => Future.successful((Some(SizeLimitedBodyStream(req, maxSize)), None)))
+        .getOrElse(Future.successful((Some(req), None)))
+      case DropBody => Future.successful((None, None))
     }
   }
 
@@ -99,8 +95,7 @@ object HttpConversions {
     )
   }
 
-  def chooseRelativeUri(ctx: TracingContext,
-                        basePath: BasePath,
+  def chooseRelativeUri(basePath: BasePath,
                         ruleConf: RuleConf,
                         original: OriginalRequest): RelativeUri = {
     ruleConf.rewritePath match {
