@@ -42,7 +42,6 @@ trait AuthnPluginOpenApiTestTools extends OpenApiTestUtils {
       PathPattern(endpoint.path),
       PathPrefix("/some/prefix"),
       dropPathPrefix = false,
-      reroute = false,
       None,
       None,
       List(jsonPluginConf),

@@ -15,12 +15,6 @@ object ApiRequestHandler {
 
   case class RuleWithAppliedRewrite(rule: Rule, appliedRewrite: AppliedRewrite)
 
-  def findMatchingApiGroup(apiGroups: List[ApiGroup], vertxRequest: HttpServerRequest): Option[ApiGroup] = {
-    val path = Option(vertxRequest.path()).getOrElse("")
-    val hostOpt = Option(vertxRequest.host())
-    apiGroups.find { group => ApiGroupMatcher.makeMatch(hostOpt, path, group.matchCriteria) }
-  }
-
   def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithAppliedRewrite] = {
     @tailrec def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithAppliedRewrite] = rules match {
       case rule :: tail =>
