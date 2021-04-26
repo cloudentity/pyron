@@ -11,6 +11,8 @@ object RoutingCtxData {
   val flowStateKey            = "_internal.flowState"
   val propertiesKey           = "_internal.routingContext"
 
+  def ruleCount(ctx: RoutingContext): Int = getFlowState(ctx).rules.length
+
   def updateFlowState(ctx: RoutingContext, f: FlowState => FlowState): Unit =
     ctx.put(flowStateKey, f(getFlowState(ctx)))
 

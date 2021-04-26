@@ -49,6 +49,7 @@ class OpenApiConverterApplyPluginsTest extends ScalaVertxUnitTest with OpenApiTe
       pathPattern = PathPattern("/test"),
       pathPrefix = PathPrefix(""),
       dropPathPrefix = false,
+      reroute = false,
       rewriteMethod = None,
       rewritePath = None,
       plugins = plugins,

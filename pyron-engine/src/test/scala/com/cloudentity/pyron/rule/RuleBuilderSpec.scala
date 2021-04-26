@@ -59,6 +59,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       ),
       target = StaticServiceRule(TargetHost(""), 9000, ssl = false),
       dropPathPrefix = true,
+      reroute = false,
       rewriteMethod = None,
       rewritePath = None,
       copyQueryOnRewrite = None,

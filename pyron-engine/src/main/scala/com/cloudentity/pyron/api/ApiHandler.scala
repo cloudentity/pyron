@@ -6,6 +6,6 @@ import io.vertx.core.Future
 import io.vertx.ext.web.RoutingContext
 
 trait ApiHandler {
-    @VertxEndpoint
-      def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): Future[Unit]
+  @VertxEndpoint
+  def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): Future[Unit]
 }

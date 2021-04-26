@@ -30,6 +30,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     pathPrefix = Some(PathPrefix("pathPrefix")),
     method = Some(HttpMethod.GET),
     dropPrefix = Some(true),
+    reroute = Some(false),
     requestPlugins = None,
     responsePlugins = None,
     tags = None,
@@ -53,6 +54,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     pathPrefix = Some(PathPrefix("pathPrefix2")),
     method = Some(HttpMethod.POST),
     dropPrefix = Some(false),
+    reroute = Some(false),
     requestPlugins = None,
     responsePlugins = None,
     tags = None,
@@ -175,6 +177,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
             fullRuleConfWoPlugins.targetSsl.getOrElse(false)
           ),
           dropPathPrefix = fullRuleConfWoPlugins.dropPrefix.get,
+          reroute = fullRuleConfWoPlugins.reroute.get,
           rewritePath = fullRuleConfWoPlugins.rewritePath,
           rewriteMethod = fullRuleConfWoPlugins.rewriteMethod,
           copyQueryOnRewrite = fullRuleConfWoPlugins.copyQueryOnRewrite,
