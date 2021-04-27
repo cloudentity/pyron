@@ -70,7 +70,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
   "RulesConfReader.composeRuleConf" should {
     val composeRuleConf = RulesConfReader.composeRuleConf _
 
-    val targetError = "either 'targetHost' and 'targetPort' or 'targetService' or 'targetProxy' should be set"
+    val targetError = "either 'targetHost' and 'targetPort' or 'reroute: true' and 'rewritePath', or 'targetService' or 'targetProxy' should be set"
     "return error when `targetHost` and `targetPort` and `targetService` and 'targetProxy' missing in default and endpoint conf" in {
       composeRuleConf(
         Map(),

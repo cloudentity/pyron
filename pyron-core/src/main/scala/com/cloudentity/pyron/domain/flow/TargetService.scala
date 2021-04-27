@@ -8,10 +8,12 @@ import scala.util.Try
 sealed trait TargetService
 case class StaticService(host: TargetHost, port: Int, ssl: Boolean) extends TargetService
 case class DiscoverableService(serviceName: ServiceClientName) extends TargetService
+case class RerouteService(rewritePath: RewritePath) extends TargetService
 
 sealed trait TargetServiceRule
 case class StaticServiceRule(host: TargetHost, port: Int, ssl: Boolean) extends TargetServiceRule
 case class DiscoverableServiceRule(serviceName: ServiceClientName) extends TargetServiceRule
+case class RerouteServiceRule(rewritePath: RewritePath) extends TargetServiceRule
 case object ProxyServiceRule extends TargetServiceRule
 
 object TargetService {
@@ -23,6 +25,7 @@ object TargetService {
       case StaticServiceRule(host, port, ssl) => StaticService(host, port, ssl)
       case DiscoverableServiceRule(serviceName) => DiscoverableService(serviceName)
       case ProxyServiceRule => readStaticService(req)
+      case RerouteServiceRule(rewritePath) => RerouteService(rewritePath)
     }
 
   private def readStaticService(req: HttpServerRequest): StaticService = {

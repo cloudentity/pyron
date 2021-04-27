@@ -31,8 +31,6 @@ object PreparedRewrite {
   private val PARAM_NAME_PATTERN = """[a-zA-Z_][a-zA-Z0-9_]*"""
   private val PLACEHOLDER_PATTERN = s"\\{$PARAM_NAME_PATTERN}"
 
-  // TODO: Update pathParams and get updated path rewrite efficiently
-  // TODO: it's used by RelativeUri bcs of TransformRequestPluign
   def rewritePathWithPathParams(rewritePath: String, pathParams: PathParams): String =
     pathParams.value.foldLeft(rewritePath) { case (path, (paramName, paramValue)) =>
       path.replace(s"{$paramName}", paramValue)
@@ -77,14 +75,19 @@ object PreparedRewrite {
   } yield AppliedRewrite(path, targetPath, pathParams, from = rewrite)
 
   private[rule] def rewritePath(rewritePattern: String, regexMatch: Regex.Match): String =
-    (0 to regexMatch.groupCount).map(i => (i, regexMatch.group(i))).foldLeft(rewritePattern) {
+    (1 to regexMatch.groupCount).map(i => (i, regexMatch.group(i))).foldLeft(rewritePattern) {
       case (rew, (idx, value)) => rew.replace(s"{$idx}", value)
     }
 
   private[rule] def getPathParams(rewrite: PreparedRewrite, regexMatch: Regex.Match): PathParams = {
-    // TODO: Do we need numeric params here? Seems to work fine without them -> add some test
-    val namedParams = rewrite.paramNames.map { case (name, i) => name -> regexMatch.group(i)}.toMap
-    PathParams(namedParams)
+    val params = for {
+      i <- (2 - rewrite.groupCount) until rewrite.groupCount
+    } yield if ( i > 0) {
+      rewrite.paramName(i).getOrElse(s"$i") -> regexMatch.group(i)
+    } else {
+      rewrite.paramName(i - 1).getOrElse(s"${i - 1}") -> regexMatch.group(rewrite.groupCount + i - 1)
+    }
+    PathParams(params.toMap)
   }
 
   private[rule] def getCaptureGroupCount(groupsCountPattern: String): Int =

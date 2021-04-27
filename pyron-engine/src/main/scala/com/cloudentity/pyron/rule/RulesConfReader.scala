@@ -231,23 +231,27 @@ object RulesConfReader {
      */
   def composeAndValidateRequiredFields(defaultConf: RuleRawConf, endpointConf: RuleRawConf): Validation[NonEmptyList[String], RuleRequiredFields] = {
     orElse(endpointConf.method, defaultConf.method, "missing `method`") |@|
-    orElse(endpointConf.pathPattern, defaultConf.pathPattern, "missing `pathPattern`") |@|
-    validateTargetServiceRule(
-      endpointConf.targetHost.orElse(defaultConf.targetHost),
-      endpointConf.targetPort.orElse(defaultConf.targetPort),
-      endpointConf.targetSsl.orElse(defaultConf.targetSsl),
-      endpointConf.targetService.orElse(defaultConf.targetService),
-      endpointConf.targetProxy.orElse(defaultConf.targetProxy)
-    )
+      orElse(endpointConf.pathPattern, defaultConf.pathPattern, "missing `pathPattern`") |@|
+      validateTargetServiceRule(
+        endpointConf.reroute.orElse(defaultConf.reroute).filter(_ == true)
+          .flatMap(_ => endpointConf.rewritePath.orElse(defaultConf.rewritePath)),
+        endpointConf.targetHost.orElse(defaultConf.targetHost),
+        endpointConf.targetPort.orElse(defaultConf.targetPort),
+        endpointConf.targetSsl.orElse(defaultConf.targetSsl),
+        endpointConf.targetService.orElse(defaultConf.targetService),
+        endpointConf.targetProxy.orElse(defaultConf.targetProxy)
+      )
   }.apply(RuleRequiredFields)
 
-  private def validateTargetServiceRule(hostOpt: Option[TargetHost],
+  private def validateTargetServiceRule(reroute: Option[RewritePath],
+                                        hostOpt: Option[TargetHost],
                                         portOpt: Option[Int],
                                         sslOpt: Option[Boolean],
                                         serviceNameOpt: Option[ServiceClientName],
                                         targetProxyOpt: Option[Boolean]
                                        ): ValidationNel[String, TargetServiceRule] = {
 
+    val rerouteServiceOpt = reroute.map(RerouteServiceRule)
     val discoverableServiceOpt = serviceNameOpt.map(DiscoverableServiceRule)
     val staticServiceOpt = for {
       host <- hostOpt
@@ -256,9 +260,9 @@ object RulesConfReader {
 
     val proxyServiceOpt = targetProxyOpt.collect { case true => ProxyServiceRule }
 
-    List(staticServiceOpt, discoverableServiceOpt, proxyServiceOpt).flatten match {
+    List(rerouteServiceOpt, staticServiceOpt, discoverableServiceOpt, proxyServiceOpt).flatten match {
       case service :: Nil => Success(service)
-      case _ => Validation.failureNel("either 'targetHost' and 'targetPort' or 'targetService' or 'targetProxy' should be set")
+      case _ => Validation.failureNel("either 'targetHost' and 'targetPort' or 'reroute: true' and 'rewritePath', or 'targetService' or 'targetProxy' should be set")
     }
   }
 
