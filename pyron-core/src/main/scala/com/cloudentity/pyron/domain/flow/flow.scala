@@ -3,7 +3,7 @@ package com.cloudentity.pyron.domain.flow
 import java.net.URL
 import io.circe.Json
 import com.cloudentity.pyron.domain.http.{ApiResponse, OriginalRequest, TargetRequest}
-import com.cloudentity.pyron.rule.PreparedRewrite
+import com.cloudentity.pyron.rule.PreparedPathRewrite
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
@@ -24,9 +24,7 @@ case class PathParams(value: Map[String, String]) extends AnyVal
 
 object PathParams {
   def empty: PathParams = PathParams(Map())
-  case class PathParamName(value: String) extends AnyVal
 }
-
 case class PathParamName(value: String) extends AnyVal
 
 case class BasePath(value: String) extends AnyVal
@@ -43,7 +41,7 @@ object GroupMatchCriteria {
   val empty: GroupMatchCriteria = GroupMatchCriteria(None, None)
 }
 
-case class EndpointMatchCriteria(method: HttpMethod, rewrite: PreparedRewrite)
+case class EndpointMatchCriteria(method: HttpMethod, rewrite: PreparedPathRewrite)
 case class TargetHost(value: String) extends AnyVal
 case class ServiceClientName(value: String) extends AnyVal
 

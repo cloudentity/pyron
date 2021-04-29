@@ -2,7 +2,7 @@ package com.cloudentity.pyron.domain.http
 
 import java.net.{URI, URLEncoder}
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
-import com.cloudentity.pyron.rule.PreparedRewrite.rewritePathWithPathParams
+import com.cloudentity.pyron.rule.PreparedPathRewrite.rewritePathWithPathParams
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpHeaders, HttpMethod}
 import org.apache.http.client.utils.URLEncodedUtils
@@ -11,13 +11,11 @@ import java.nio.charset.Charset.defaultCharset
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-case class TargetRequest(
-  method: HttpMethod,
-  service: TargetService,
-  uri: RelativeUri,
-  headers: Headers,
-  bodyOpt: Option[Buffer]
-) {
+case class TargetRequest(method: HttpMethod,
+                         service: TargetService,
+                         uri: RelativeUri,
+                         headers: Headers,
+                         bodyOpt: Option[Buffer]) {
 
   def modifyHeaders(f: Headers => Headers): TargetRequest = this.copy(headers = f(headers))
 
@@ -89,19 +87,17 @@ object ApiResponse {
     ApiResponse(statusCode, body, headers)
 }
 
-case class OriginalRequest(
-                            method: HttpMethod,
-                            path: UriPath,
-                            scheme: String,
-                            host: String,
-                            localHost: String,
-                            remoteHost: String,
-                            pathParams: PathParams,
-                            queryParams: QueryParams,
-                            headers: Headers,
-                            cookies: Map[String, String],
-                            bodyOpt: Option[Buffer]
-                          )
+case class OriginalRequest(method: HttpMethod,
+                           path: UriPath,
+                           scheme: String,
+                           host: String,
+                           localHost: String,
+                           remoteHost: String,
+                           pathParams: PathParams,
+                           queryParams: QueryParams,
+                           headers: Headers,
+                           cookies: Map[String, String],
+                           bodyOpt: Option[Buffer])
 
 object RelativeUri {
   def of(uriString: String): Try[RelativeUri] =

@@ -2,18 +2,16 @@ package com.cloudentity.pyron.api
 
 import com.cloudentity.pyron.api.Responses.Errors
 import com.cloudentity.pyron.api.body.{BodyBuffer, BodyLimit, RequestBodyTooLargeException, SizeLimitedBodyStream}
-import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
-import io.vertx.core.streams.ReadStream
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow.{FlowFailure, _}
 import com.cloudentity.pyron.domain.http._
-import com.cloudentity.pyron.domain.rule.{BufferBody, DropBody, Kilobytes, RuleConf, StreamBody}
+import com.cloudentity.pyron.domain.rule._
 import com.cloudentity.pyron.plugin.PluginFunctions
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
-import com.cloudentity.pyron.rule.{ApiGroupMatcher, Rule, RuleMatcher, RulesStore}
 import com.cloudentity.pyron.rule.RuleMatcher.{Match, NoMatch}
+import com.cloudentity.pyron.rule.{ApiGroupMatcher, Rule, RuleMatcher, RulesStore}
 import com.cloudentity.tools.vertx.bus.VertxEndpoint
 import com.cloudentity.tools.vertx.scala.VertxExecutionContext
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
@@ -22,16 +20,17 @@ import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.config.ConfigChange
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.{MultiMap, Future => VxFuture}
 import io.vertx.core.eventbus.ReplyException
+import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
+import io.vertx.core.streams.ReadStream
+import io.vertx.core.{MultiMap, Future => VxFuture}
 import io.vertx.ext.web.RoutingContext
-
-import scala.annotation.tailrec
-import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/-}
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 trait ApiHandler {
   @VertxEndpoint
@@ -245,16 +244,17 @@ object ApiRequestHandler {
 
   def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithPathParams] = {
     @tailrec
-    def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithPathParams] = rules match {
-      case rule :: tail =>
-        val criteria = rule.conf.criteria
-        val path = Option(vertxRequest.path()).getOrElse("")
-        RuleMatcher.makeMatch(vertxRequest.method(), path, basePath, criteria) match {
-          case Match(rewrite) => Some(RuleWithPathParams(rule, rewrite.pathParams))
-          case NoMatch => loop(basePath, tail)
-        }
-      case Nil => None
-    }
+    def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithPathParams] =
+      rules match {
+        case rule :: tail =>
+          val criteria = rule.conf.criteria
+          val path = Option(vertxRequest.path()).getOrElse("")
+          RuleMatcher.makeMatch(vertxRequest.method(), path, basePath, criteria) match {
+            case Match(rewrite) => Some(RuleWithPathParams(rule, rewrite.pathParams))
+            case NoMatch => loop(basePath, tail)
+          }
+        case Nil => None
+      }
 
     loop(apiGroup.matchCriteria.basePathResolved, apiGroup.rules)
   }
@@ -407,7 +407,7 @@ object HttpConversions {
     }
   }
 
-  def toOriginalRequest(req: HttpServerRequest, pathParams: PathParams, bodyOpt: Option[Buffer]): OriginalRequest = {
+  def toOriginalRequest(req: HttpServerRequest, pathParams: PathParams, bodyOpt: Option[Buffer]): OriginalRequest =
     OriginalRequest(
       method = req.method(),
       path = UriPath(Option(req.path()).getOrElse("")),
@@ -421,9 +421,8 @@ object HttpConversions {
       cookies = req.cookieMap().asScala.toMap.mapValues(cookie => cookie.getValue),
       bodyOpt = bodyOpt
     )
-  }
 
-  def chooseRelativeUri(ctx: TracingContext, basePath: BasePath, ruleConf: RuleConf, original: OriginalRequest): RelativeUri = {
+  def chooseRelativeUri(ctx: TracingContext, basePath: BasePath, ruleConf: RuleConf, original: OriginalRequest): RelativeUri =
     ruleConf.rewritePath match {
       case Some(rewritePath) =>
         if (ruleConf.copyQueryOnRewrite.getOrElse(true))
@@ -437,7 +436,6 @@ object HttpConversions {
           else relativeOriginalPath
         FixedRelativeUri(UriPath(targetPath), original.queryParams, original.pathParams)
     }
-  }
 
   def removeHeadersAsProxy(conf: RuleConf, headers: Headers): Headers = {
     val hs =
@@ -455,11 +453,14 @@ object HttpConversions {
   def toApiResponse(targetResponse: TargetResponse): ApiResponse =
     ApiResponse(targetResponse.http.statusCode(), targetResponse.body, toHeaders(targetResponse.http.headers()))
 
-  def toHeaders(from: MultiMap): Headers = from.names().asScala.foldLeft(Headers()) {
-    case (hs, name) => hs.addValues(name, from.getAll(name).asScala.toList)
-  }
+  def toHeaders(from: MultiMap): Headers =
+    from.names().asScala.foldLeft(Headers()) {
+      case (hs, name) => hs.addValues(name, from.getAll(name).asScala.toList)
+    }
 
-  def toQueryParams(from: MultiMap): QueryParams = from.names().asScala.foldLeft(QueryParams()) {
-    case (ps, name) => ps.addValues(name, from.getAll(name).asScala.toList) }
+  def toQueryParams(from: MultiMap): QueryParams =
+    from.names().asScala.foldLeft(QueryParams()) {
+      case (ps, name) => ps.addValues(name, from.getAll(name).asScala.toList)
+    }
 }
 

@@ -3,7 +3,7 @@ package com.cloudentity.pyron.rule
 import org.junit.runner.RunWith
 import org.scalatest.{MustMatchers, WordSpec}
 import org.scalatestplus.junit.JUnitRunner
-import PreparedRewrite._
+import PreparedPathRewrite._
 import com.cloudentity.pyron.domain.flow.PathParams
 
 import scala.util.Try
@@ -11,12 +11,12 @@ import scala.util.Try
 @RunWith(classOf[JUnitRunner])
 class PreparedRewriteTest extends WordSpec with MustMatchers {
 
-  "PreparedRewrite" should {
+  "PreparedPathRewrite" should {
     "fail to create prepared rewrite when pattern is not a valid regex pattern" in {
-      Try(PreparedRewrite("/pattern/with(unbalanced(parens)/should/{param}/fail", "/api", "/resources/{param}/{1}")).isFailure mustBe true
+      Try(PreparedPathRewrite("/pattern/with(unbalanced(parens)/should/{param}/fail", "/api", "/resources/{param}/{1}")).isFailure mustBe true
     }
     "succeed in creating prepared rewrite when pattern is a valid regex pattern" in {
-      val tryPreparedRewrite = Try(PreparedRewrite(
+      val tryPreparedRewrite = Try(PreparedPathRewrite(
         "/pattern/with(balanced(parens))/should/{one}/be/{two}/ok/{two}",
         "/api",
         "/resources/{two}/{one}/{1}")
@@ -138,7 +138,7 @@ class PreparedRewriteTest extends WordSpec with MustMatchers {
   }
 
   "produce rewritten path with resolved params, captured by the matching pattern" in {
-    val preparedRewrite = PreparedRewrite(
+    val preparedRewrite = PreparedPathRewrite(
       "/pattern/with_(balanced_(parens))/should/{one}/be/{two}/ok/{two}",
       "/api",
       "/resources/{two}/{one}/{1}")
@@ -150,7 +150,7 @@ class PreparedRewriteTest extends WordSpec with MustMatchers {
   }
 
   "not produce rewritten path when the pattern does not match" in {
-    val preparedRewrite = PreparedRewrite(
+    val preparedRewrite = PreparedPathRewrite(
       "/pattern/with_(balanced_(parens))/should/{one}/be/{two}/ok/{two}",
       "/api",
       "/resources/{two}/{one}/{1}")

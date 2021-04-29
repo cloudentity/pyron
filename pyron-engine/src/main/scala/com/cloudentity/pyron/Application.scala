@@ -6,7 +6,7 @@ import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.config.Conf.AppConf
 import com.cloudentity.pyron.openapi.route.{GetOpenApiRoute, ListOpenApiRoute}
 import com.cloudentity.pyron.rule.RulesStoreVerticle
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.conf.ConfService
 import com.cloudentity.tools.vertx.launchers.OrchisCommandLauncher
 import com.cloudentity.tools.vertx.registry.RegistryVerticle
@@ -30,7 +30,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
 
   override def beforeServerStart(): VxFuture[_] = {
     ec = VertxExecutionContext(vertx.getOrCreateContext())
-    confService = ServiceClientFactory.make(vertx.eventBus(), classOf[ConfService])
+    confService = VertxEndpointClient.make(vertx, classOf[ConfService])
 
     for {
       appConf <- readAppConf
