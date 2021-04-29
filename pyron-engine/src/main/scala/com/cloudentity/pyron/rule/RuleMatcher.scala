@@ -5,8 +5,8 @@ import io.vertx.core.http.HttpMethod
 
 object RuleMatcher {
   sealed trait MatchResult
-    case class Match(appliedRewrite: AppliedRewrite) extends MatchResult
-    case object NoMatch extends MatchResult
+  case class Match(appliedRewrite: AppliedPathRewrite) extends MatchResult
+  case object NoMatch extends MatchResult
 
   def makeMatch(method: HttpMethod, path: String, basePath: BasePath, criteria: EndpointMatchCriteria): MatchResult = {
     if (criteria.method == method) {

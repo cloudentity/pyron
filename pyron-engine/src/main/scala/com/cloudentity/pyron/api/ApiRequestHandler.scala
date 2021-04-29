@@ -5,7 +5,7 @@ import com.cloudentity.pyron.apigroup.ApiGroup
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.TargetRequest
 import com.cloudentity.pyron.rule.RuleMatcher.{Match, NoMatch}
-import com.cloudentity.pyron.rule.{ApiGroupMatcher, AppliedRewrite, Rule, RuleMatcher}
+import com.cloudentity.pyron.rule.{ApiGroupMatcher, AppliedPathRewrite, Rule, RuleMatcher}
 import io.vertx.core.http.HttpServerRequest
 import io.vertx.ext.web.RoutingContext
 
@@ -13,7 +13,7 @@ import scala.annotation.tailrec
 
 object ApiRequestHandler {
 
-  case class AppliedRule(rule: Rule, appliedRewrite: AppliedRewrite)
+  case class AppliedRule(rule: Rule, appliedRewrite: AppliedPathRewrite)
 
   def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[AppliedRule] = {
     @tailrec def loop(basePath: BasePath, rules: List[Rule]): Option[AppliedRule] = rules match {
@@ -50,9 +50,8 @@ object ApiRequestHandler {
   def addExtraAccessLogItems(ctx: RoutingContext, items: AccessLogItems): Unit =
     updateFlowState(ctx, state => state.copy(extraAccessLogs = state.extraAccessLogs.merge(items)))
 
-  def addProperties(ctx: RoutingContext, props: Properties): Unit = {
+  def addProperties(ctx: RoutingContext, props: Properties): Unit =
     updateFlowState(ctx, state => state.copy(properties = Properties(state.properties.toMap ++ props.toMap)))
-  }
 
   def withProxyHeaders(proxyHeaders: ProxyHeaders)(req: TargetRequest): TargetRequest =
     req.withHeaderValues(proxyHeaders.headers)

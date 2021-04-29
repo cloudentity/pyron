@@ -166,9 +166,10 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
           endpointName = fullRuleConfWoPlugins.endpointName,
           criteria = EndpointMatchCriteria(
             fullRuleConfWoPlugins.method.get,
-            PreparedRewrite(
+            PreparedPathRewrite(
                s"${fullRuleConfWoPlugins.pathPattern.get.value}",
                fullRuleConfWoPlugins.pathPrefix.get.value,
+              ""
             )
           ),
           target = StaticServiceRule(

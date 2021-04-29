@@ -12,7 +12,7 @@ import com.cloudentity.pyron.domain.http.{ApiResponse, CallOpts}
 import com.cloudentity.pyron.domain.rule.{Kilobytes, RuleConf}
 import com.cloudentity.pyron.plugin.PluginFunctions
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
-import com.cloudentity.pyron.rule.{AppliedRewrite, Rule, RulesStore}
+import com.cloudentity.pyron.rule.{AppliedPathRewrite, Rule, RulesStore}
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import com.cloudentity.tools.vertx.server.api.RouteHandler
 import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
@@ -140,7 +140,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
                      proxyHeaders: ProxyHeaders,
                      rule: Rule,
                      apiGroup: ApiGroup,
-                     appliedRewrite: AppliedRewrite,
+                     appliedRewrite: AppliedPathRewrite,
                      maxBodySize: Option[Kilobytes]): Future[RequestCtx] =
     for {
       initReqCtx <- toRequestCtx(ctx, tracing, apiGroup, rule.conf, appliedRewrite.pathParams, proxyHeaders, maxBodySize)
@@ -211,9 +211,10 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     )
   }
 
-  def getRequestSignature(vertxRequest: HttpServerRequest): String = Option(vertxRequest.host()) match {
-    case Some(_) => s"${vertxRequest.method()} ${vertxRequest.uri()}"
-    case None => s"${vertxRequest.method()} ${vertxRequest.absoluteURI()}"
-  }
+  def getRequestSignature(vertxRequest: HttpServerRequest): String =
+    Option(vertxRequest.host()) match {
+      case Some(_) => s"${vertxRequest.method()} ${vertxRequest.uri()}"
+      case None => s"${vertxRequest.method()} ${vertxRequest.absoluteURI()}"
+    }
 
 }

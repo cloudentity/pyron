@@ -152,11 +152,14 @@ object RulesConfReader {
     }
   }
 
-  // in the end used for validation only
   private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields): RuleConf = {
     val pathPrefix = endpointConf.rule.pathPrefix.orElse(defaultConf.rule.pathPrefix).getOrElse(PathPrefix(""))
     val rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath)
-    val preparedRewrite = PreparedRewrite(rf.pathPattern.value, pathPrefix.value, rewritePath.map(_.value).getOrElse(""))
+    val preparedRewrite = PreparedPathRewrite(
+      inputPattern = rf.pathPattern.value,
+      prefix = pathPrefix.value,
+      outputPattern = rewritePath.map(_.value).getOrElse("")
+    )
     RuleConf(
       endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName),
       criteria = EndpointMatchCriteria(rf.method, preparedRewrite),

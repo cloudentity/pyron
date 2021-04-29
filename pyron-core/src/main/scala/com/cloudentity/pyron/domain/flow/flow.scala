@@ -1,6 +1,6 @@
 package com.cloudentity.pyron.domain.flow
 
-import com.cloudentity.pyron.rule.PreparedRewrite
+import com.cloudentity.pyron.rule.PreparedPathRewrite
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.json.JsonObject
 
@@ -9,7 +9,7 @@ case class PathPattern(value: String) extends AnyVal
 case class RewritePath(value: String) extends AnyVal
 case class RewriteMethod(value: HttpMethod) extends AnyVal
 
-case class EndpointMatchCriteria(method: HttpMethod, rewrite: PreparedRewrite)
+case class EndpointMatchCriteria(method: HttpMethod, rewrite: PreparedPathRewrite)
 case class TargetHost(value: String) extends AnyVal
 case class ServiceClientName(value: String) extends AnyVal
 

@@ -6,27 +6,27 @@ import scala.util.Try
 import scala.util.matching.Regex
 
 
-case class PreparedRewrite private (matchPattern: String,
-                                    pathPrefix: String,
-                                    rewritePattern: String,
-                                    paramNames: List[(String, Int)],
-                                    groupCount: Int) {
+case class PreparedPathRewrite private(matchPattern: String,
+                                       pathPrefix: String,
+                                       rewritePattern: String,
+                                       paramNames: List[(String, Int)],
+                                       groupCount: Int) {
 
   val regexPattern: String = "^" + pathPrefix + matchPattern + "$" // anchor
   val regex: Regex = regexPattern.r // fails fast if regexPattern is invalid
 
-  def applyRewrite(path: String): Option[AppliedRewrite] =
-    PreparedRewrite.applyRewrite(path, this)
+  def applyRewrite(path: String): Option[AppliedPathRewrite] =
+    PreparedPathRewrite.applyRewrite(path, this)
 
   def groupNum(param: String): Option[Int] =
-    PreparedRewrite.groupNum(param, paramNames, groupCount)
+    PreparedPathRewrite.groupNum(param, paramNames, groupCount)
 
   def paramName(num: Int): Option[String] =
-    PreparedRewrite.paramName(num, paramNames)
+    PreparedPathRewrite.paramName(num, paramNames)
 
 }
 
-object PreparedRewrite {
+object PreparedPathRewrite {
 
   private val PARAM_NAME_PATTERN = """[a-zA-Z_][a-zA-Z0-9_]*"""
   private val PLACEHOLDER_PATTERN = s"\\{$PARAM_NAME_PATTERN}"
@@ -36,12 +36,12 @@ object PreparedRewrite {
       path.replace(s"{$paramName}", paramValue)
     }
 
-  def apply(inputPattern: String, prefix: String = "", outputPattern: String = ""): PreparedRewrite = {
+  def apply(inputPattern: String, prefix: String, outputPattern: String): PreparedPathRewrite = {
     val groupsCountPattern: String = getGroupsCountingPattern(inputPattern)
     val indexedParamNames: List[(String, Int)] = paramNamesWithGroupIndex(inputPattern, groupsCountPattern)
     val totalGroupCount = getCaptureGroupCount(groupsCountPattern) + indexedParamNames.size
     val (pat, rew) = insertParamGroupsAndRefs(inputPattern, outputPattern, indexedParamNames)
-    PreparedRewrite(
+    PreparedPathRewrite(
       matchPattern = pat,
       pathPrefix = prefix,
       rewritePattern = convertNegToPosNumericRefs(rew, totalGroupCount),
@@ -68,18 +68,18 @@ object PreparedRewrite {
     }
   }
 
-  def applyRewrite(path: String, rewrite: PreparedRewrite): Option[AppliedRewrite] = for {
+  def applyRewrite(path: String, rewrite: PreparedPathRewrite): Option[AppliedPathRewrite] = for {
     regexMatch <- rewrite.regex.findFirstMatchIn(path)
     targetPath = rewritePath(rewrite.rewritePattern, regexMatch)
     pathParams = getPathParams(rewrite, regexMatch)
-  } yield AppliedRewrite(path, targetPath, pathParams, from = rewrite)
+  } yield AppliedPathRewrite(path, targetPath, pathParams, from = rewrite)
 
   private[rule] def rewritePath(rewritePattern: String, regexMatch: Regex.Match): String =
     (1 to regexMatch.groupCount).map(i => (i, regexMatch.group(i))).foldLeft(rewritePattern) {
       case (rew, (idx, value)) => rew.replace(s"{$idx}", value)
     }
 
-  private[rule] def getPathParams(rewrite: PreparedRewrite, regexMatch: Regex.Match): PathParams = {
+  private[rule] def getPathParams(rewrite: PreparedPathRewrite, regexMatch: Regex.Match): PathParams = {
     val params = for {
       i <- (2 - rewrite.groupCount) until rewrite.groupCount
     } yield if ( i > 0) {
