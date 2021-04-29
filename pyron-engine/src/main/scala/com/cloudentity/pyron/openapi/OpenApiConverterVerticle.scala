@@ -154,10 +154,11 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
     if (exposed.isEmpty) None else Some(buildPath(exposed))
   }
 
-  def isExposed(rules: List[OpenApiRule], targetMethod: HttpMethod, path: String): Boolean = rules.exists { rule =>
-    val apiGwMethod = rule.rewriteMethod.map(_.value).getOrElse(rule.method)
-    val methodMatched = apiGwMethod.toString.toUpperCase == targetMethod.toString.toUpperCase
-    methodMatched && OpenApiConverterUtils.pathMatches(rule.targetServicePath, path)
-  }
+  def isExposed(rules: List[OpenApiRule], targetMethod: HttpMethod, path: String): Boolean =
+    rules.exists { rule =>
+      val apiGwMethod = rule.rewriteMethod.map(_.value).getOrElse(rule.method)
+      val methodMatched = apiGwMethod.toString.toUpperCase == targetMethod.toString.toUpperCase
+      methodMatched && OpenApiConverterUtils.pathMatches(rule.targetServicePath, path)
+    }
 
 }

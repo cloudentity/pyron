@@ -5,7 +5,7 @@ import com.cloudentity.pyron.apigroup.ApiGroup
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.TargetRequest
 import com.cloudentity.pyron.rule.RuleMatcher.{Match, NoMatch}
-import com.cloudentity.pyron.rule.{ApiGroupMatcher, AppliedRewrite, Rule, RuleMatcher}
+import com.cloudentity.pyron.rule.{ApiGroupMatcher, AppliedPathRewrite, Rule, RuleMatcher}
 import io.vertx.core.http.HttpServerRequest
 import io.vertx.ext.web.RoutingContext
 
@@ -13,7 +13,7 @@ import scala.annotation.tailrec
 
 object ApiRequestHandler {
 
-  case class RuleWithAppliedRewrite(rule: Rule, appliedRewrite: AppliedRewrite)
+  case class RuleWithAppliedRewrite(rule: Rule, appliedRewrite: AppliedPathRewrite)
 
   def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithAppliedRewrite] = {
     @tailrec def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithAppliedRewrite] = rules match {

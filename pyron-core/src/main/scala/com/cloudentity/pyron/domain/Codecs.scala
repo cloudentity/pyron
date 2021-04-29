@@ -3,7 +3,7 @@ package com.cloudentity.pyron.domain
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
 import com.cloudentity.pyron.domain.rule._
-import com.cloudentity.pyron.rule.PreparedRewrite
+import com.cloudentity.pyron.rule.PreparedPathRewrite
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.CursorOp.DownField
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -133,8 +133,8 @@ object Codecs {
   implicit lazy val regexEnc: Encoder[Regex] = Encoder.encodeString.contramap(_.regex)
   implicit lazy val regexDec: Decoder[Regex] = Decoder.decodeString.map(_.r)
 
-  implicit lazy val preparedRewriteEnc: Encoder[PreparedRewrite] = deriveEncoder
-  implicit lazy val preparedRewriteDec: Decoder[PreparedRewrite] = deriveDecoder
+  implicit lazy val PreparedPathRewriteEnc: Encoder[PreparedPathRewrite] = deriveEncoder
+  implicit lazy val PreparedPathRewriteDec: Decoder[PreparedPathRewrite] = deriveDecoder
 
   implicit lazy val matchCriteriaEnc: Encoder[EndpointMatchCriteria] = deriveEncoder
   implicit lazy val matchCriteriaDec: Decoder[EndpointMatchCriteria] = deriveDecoder

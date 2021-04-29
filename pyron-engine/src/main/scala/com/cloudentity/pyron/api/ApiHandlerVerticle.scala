@@ -11,7 +11,7 @@ import com.cloudentity.pyron.domain.http.{ApiResponse, CallOpts}
 import com.cloudentity.pyron.domain.rule.{Kilobytes, RuleConf}
 import com.cloudentity.pyron.plugin.PluginFunctions
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
-import com.cloudentity.pyron.rule.{AppliedRewrite, Rule, RulesStore}
+import com.cloudentity.pyron.rule.{AppliedPathRewrite, Rule, RulesStore}
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
 import com.cloudentity.tools.vertx.server.api.RouteHandler
 import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
@@ -116,7 +116,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
                          proxyHeaders: ProxyHeaders,
                          rule: Rule,
                          apiGroup: ApiGroup,
-                         appliedRewrite: AppliedRewrite): Future[RequestCtx] = for {
+                         appliedRewrite: AppliedPathRewrite): Future[RequestCtx] = for {
     initRequestCtx <- toRequestCtx(
       maxBodySize, ctx, tracing, proxyHeaders, rule.conf, apiGroup, appliedRewrite.pathParams)
     finalRequestCtx <- applyRequestPlugins(

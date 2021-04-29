@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.domain.http
 
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath}
-import com.cloudentity.pyron.rule.PreparedRewrite.rewritePathWithPathParams
+import com.cloudentity.pyron.rule.PreparedPathRewrite.rewritePathWithPathParams
 
 import java.net.URI
 import scala.util.Try
