@@ -38,7 +38,7 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
   @Test
   def shouldSetTargetRequestOriginalPathParamsAndQueryParamsAndMethod(): Unit = {
     val relativeUri = FixedRelativeUri(UriPath("/service/params/value1"), QueryParams(Map("queryParam1" -> List("queryValue1"))), PathParams(Map()))
-    val original = OriginalRequest(HttpMethod.GET, UriPath(relativeUri.path), QueryParams("queryParam1" -> List("queryValue1")), Headers(), Some(Buffer.buffer()), PathParams(Map("param1" -> "value1")))
+    val original = OriginalRequest(HttpMethod.GET, UriPath(relativeUri.path), QueryParams("queryParam1" -> List("queryValue1")), Headers(), Map(), Some(Buffer.buffer()), PathParams(Map("param1" -> "value1")))
 
       given()
       .when()
@@ -51,7 +51,7 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
   def shouldSetTargetRequestOriginalBody(): Unit = {
       val path = "/service/body"
       val body = """test-body"""
-      val original = OriginalRequest(HttpMethod.POST, UriPath(path), QueryParams.empty, Headers(), Some(Buffer.buffer(body)), PathParams.empty)
+      val original = OriginalRequest(HttpMethod.POST, UriPath(path), QueryParams.empty, Headers(), Map(), Some(Buffer.buffer(body)), PathParams.empty)
 
       given().body(body)
       .when().post(path)

@@ -120,9 +120,6 @@ object Codecs {
   implicit lazy val QueryParamsEnc: Encoder[QueryParams] = Encoder.encodeString.contramap(_.toString)
   implicit lazy val QueryParamsDec: Decoder[QueryParams] = Decoder.decodeString.emapTry(QueryParams.fromString)
 
-  implicit lazy val OriginalRequestEnc: Encoder[OriginalRequest] = deriveEncoder
-  implicit lazy val OriginalRequestDec: Decoder[OriginalRequest] = deriveDecoder
-
   implicit lazy val targetRequestEnc: Encoder[TargetRequest] = deriveEncoder
   implicit lazy val targetRequestDec: Decoder[TargetRequest] = deriveDecoder
 

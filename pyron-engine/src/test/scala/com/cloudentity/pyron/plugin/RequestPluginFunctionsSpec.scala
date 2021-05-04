@@ -25,6 +25,7 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
     path = UriPath(uri.path),
     queryParams = QueryParams.empty,
     headers = Headers(),
+    cookies = Map(),
     bodyOpt = None,
     pathParams = PathParams.empty
   )
