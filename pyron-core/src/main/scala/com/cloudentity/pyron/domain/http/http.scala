@@ -2,13 +2,13 @@ package com.cloudentity.pyron.domain.http
 
 import java.net.{URI, URLEncoder}
 import java.nio.charset.Charset
-
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
+import com.cloudentity.pyron.domain.http.Cookie.Cookies
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.http.{HttpHeaders, HttpMethod}
+import io.vertx.core.http.{CookieSameSite, HttpHeaders, HttpMethod}
 import org.apache.http.client.utils.URLEncodedUtils
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 case class TargetRequest(
@@ -85,7 +85,13 @@ object ApiResponse {
     ApiResponse(statusCode, body, headers)
 }
 
-case class OriginalRequest(method: HttpMethod, path: UriPath, queryParams: QueryParams, headers: Headers, bodyOpt: Option[Buffer], pathParams: PathParams)
+case class OriginalRequest(method: HttpMethod,
+                           path: UriPath,
+                           queryParams: QueryParams,
+                           headers: Headers,
+                           cookies: Cookies,
+                           bodyOpt: Option[Buffer],
+                           pathParams: PathParams)
 
 object RelativeUri {
   def of(uriString: String): Try[RelativeUri] =

@@ -7,7 +7,7 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 
 trait TestRequestResponseCtx {
-  val emptyOriginal = OriginalRequest(HttpMethod.GET, UriPath("/"), QueryParams.empty, Headers(), None, PathParams.empty)
+  val emptyOriginal = OriginalRequest(HttpMethod.GET, UriPath("/"), QueryParams.empty, Headers(), Map(), None, PathParams.empty)
   val emptyRequest = TargetRequest(HttpMethod.GET, StaticService(TargetHost("localhost"), 100, false), RelativeUri.of("/").get, Headers(), None)
   val emptyRequestCtx = RequestCtx(emptyRequest, None, emptyOriginal, Properties(), TracingContext.dummy(), ProxyHeaders(Map(), ""), AuthnCtx(), AccessLogItems())
 
