@@ -1,10 +1,8 @@
 package com.cloudentity.pyron.domain
 
-import java.time.Duration
-
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
-import com.cloudentity.pyron.domain.rule.{BodyHandling, BufferBody, DropBody, ExtRuleConf, Kilobytes, OpenApiRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf, RuleConfWithPlugins, StreamBody}
+import com.cloudentity.pyron.domain.rule._
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.CursorOp.DownField
 import io.circe.Decoder.Result
@@ -12,11 +10,12 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, ObjectEncoder, _}
+import io.circe.{Decoder, Encoder, _}
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.http.HttpMethod
+import io.vertx.core.http.{CookieSameSite, HttpMethod}
 import io.vertx.core.json.{JsonObject => VxJsonObject}
 
+import java.time.Duration
 import scala.concurrent.Future
 import scala.util.Try
 import scala.util.matching.Regex
@@ -119,6 +118,15 @@ object Codecs {
 
   implicit lazy val QueryParamsEnc: Encoder[QueryParams] = Encoder.encodeString.contramap(_.toString)
   implicit lazy val QueryParamsDec: Decoder[QueryParams] = Decoder.decodeString.emapTry(QueryParams.fromString)
+
+  implicit val CookieSameSiteEnc: Encoder[CookieSameSite] = Encoder.encodeString.contramap(_.toString)
+  implicit val CookieSameSiteDec: Decoder[CookieSameSite] = Decoder.decodeString.emap { str =>
+    Try { CookieSameSite.valueOf(str.toUpperCase) }
+      .toEither.left.map(v => s"Invalid SameSite value: $v")
+  }
+
+  implicit lazy val OriginalRequestEnc: Encoder[OriginalRequest] = deriveEncoder
+  implicit lazy val OriginalRequestDec: Decoder[OriginalRequest] = deriveDecoder
 
   implicit lazy val targetRequestEnc: Encoder[TargetRequest] = deriveEncoder
   implicit lazy val targetRequestDec: Decoder[TargetRequest] = deriveDecoder

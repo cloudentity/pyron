@@ -23,7 +23,7 @@ class ResponsePluginFunctionsSpec extends WordSpec with MustMatchers with TestRe
     path = UriPath("uri"),
     queryParams = QueryParams.empty,
     headers = Headers(),
-    cookies = Map(),
+    cookies = Nil,
     bodyOpt = None,
     pathParams = PathParams.empty
   )

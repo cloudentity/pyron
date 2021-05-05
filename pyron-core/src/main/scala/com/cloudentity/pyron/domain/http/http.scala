@@ -5,7 +5,7 @@ import java.nio.charset.Charset
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
 import com.cloudentity.pyron.domain.http.Cookie.Cookies
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.http.{CookieSameSite, HttpHeaders, HttpMethod}
+import io.vertx.core.http.{HttpHeaders, HttpMethod}
 import org.apache.http.client.utils.URLEncodedUtils
 
 import scala.collection.JavaConverters._

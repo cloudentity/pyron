@@ -17,7 +17,7 @@ class RewritePathSpec extends FlatSpec {
     path = UriPath("/path"),
     queryParams = QueryParams.empty,
     headers = Headers(),
-    cookies = Map(),
+    cookies = Nil,
     bodyOpt = None,
     pathParams = PathParams.empty
   )

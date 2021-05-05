@@ -1,19 +1,38 @@
 package com.cloudentity.pyron.domain.http
 
-import io.vertx.core.http.Cookie.cookie
+import io.vertx.core.http.{Cookie => VertxCookie}
 import io.vertx.core.http.CookieSameSite
 
 case class Cookie(name: String,
-                  domain: String,
-                  path: String,
                   value: String,
+                  domain: Option[String],
+                  path: Option[String],
                   isHttpOnly: Boolean,
                   isSecure: Boolean,
-                  sameSite: SameSite)
+                  sameSite: Option[CookieSameSite])
 
 object Cookie {
 
-  type Cookies = Map[(String, String, String), Cookie]
+  type Cookies = List[Cookie]
+
+  def apply(from: VertxCookie): Cookie = Cookie(
+    from.getName,
+    from.getValue,
+    Option(from.getDomain),
+    Option(from.getPath),
+    from.isHttpOnly,
+    from.isSecure,
+    Option(from.getSameSite)
+  )
+
+  def find(name: String)(cookies: Cookies): Option[Cookie] =
+    cookies.find(_.name == name)
+
+  def find(name: String, domain: Option[String], path: Option[String])(cookies: Cookies): Option[Cookie] =
+    cookies.find(cookie => cookie.name == name &&
+      domain == cookie.domain &&
+      path == cookie.path
+    )
 
   def parse(s: String): Option[Cookie] = {
     val splitAt = s.indexOf('=')
@@ -21,51 +40,12 @@ object Cookie {
       val name = s.substring(0, splitAt)
       val value = s.substring(splitAt + 1)
       try {
-        Some(Cookie(cookie(name, value)))
+        Some(Cookie(VertxCookie.cookie(name, value)))
       }
       catch {
         case _: Throwable => None
       }
     } else None
-  }
-
-  def apply(from: io.vertx.core.http.Cookie): Cookie = Cookie(
-    from.getName,
-    from.getDomain,
-    from.getPath,
-    from.getValue,
-    from.isHttpOnly,
-    from.isSecure,
-    SameSite(from.getSameSite)
-  )
-
-}
-
-sealed trait SameSite
-
-object SameSite {
-  def parse(name: String): Option[SameSite] = try {
-    Some(SameSite(CookieSameSite.valueOf(name)))
-  } catch {
-    case _: Throwable => Option.empty
-  }
-
-  def apply(from: CookieSameSite): SameSite = from match {
-    case CookieSameSite.LAX => Lax
-    case CookieSameSite.STRICT => Strict
-    case CookieSameSite.NONE => None
-  }
-
-  case object None extends SameSite {
-    override def toString: String = CookieSameSite.NONE.toString
-  }
-
-  case object Lax extends SameSite {
-    override def toString: String = CookieSameSite.LAX.toString
-  }
-
-  case object Strict extends SameSite {
-    override def toString: String = CookieSameSite.STRICT.toString
   }
 
 }

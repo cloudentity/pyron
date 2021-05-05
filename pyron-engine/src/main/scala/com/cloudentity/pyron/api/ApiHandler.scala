@@ -388,7 +388,7 @@ object HttpConversions {
       path        = UriPath(Option(req.path()).getOrElse("")),
       queryParams = toQueryParams(req.params()),
       headers     = toHeaders(req.headers()),
-      cookies     = Map(),
+      cookies     = Nil,
       bodyOpt     = bodyOpt,
       pathParams  = pathParams
     )
