@@ -7,6 +7,7 @@ import io.vertx.core.streams.{ReadStream, WriteStream}
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupId, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.{TargetClient, TargetResponse}
 import com.cloudentity.pyron.config.Conf
+import com.cloudentity.pyron.config.Conf.AppConf
 import com.cloudentity.pyron.domain.flow.{FlowFailure, _}
 import com.cloudentity.pyron.domain.http._
 import com.cloudentity.pyron.domain.rule.{BufferBody, DropBody, Kilobytes, RuleConf, StreamBody}
@@ -35,7 +36,7 @@ import scala.collection.JavaConverters._
 
 trait ApiHandler {
   @VertxEndpoint
-  def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit]
+  def handle(conf: AppConf, ctx: RoutingContext): VxFuture[Unit]
 }
 
 class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGroupsChangeListener {
@@ -78,7 +79,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
         targetClient = newTargetClient
       }
 
-  def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit] = {
+  def handle(conf: AppConf, ctx: RoutingContext): VxFuture[Unit] = {
     val vertxRequest   = ctx.request()
     val vertxResponse  = ctx.response()
     val tracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
@@ -109,6 +110,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
           ApiRequestHandler.setRule(ctx, rule)
           setTracingOperationName(ctx, rule)
           log.debug(tracingContext, s"Found ${ruleWithPathParams.rule} for, request='$requestSignature'")
+          val defaultRequestBodyMaxSize = conf.defaultRequestBodyMaxSize
 
           for {
             initRequestCtx       <- toRequestCtx(defaultRequestBodyMaxSize, ctx, tracingContext, proxyHeaders, rule.conf, apiGroup, pathParams)
@@ -138,6 +140,9 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       }
 
     program.onComplete { result =>
+      if (conf.traceIdHeaderEnabled.contains(true)) {
+        vertxResponse.putHeader("Trace-Id", tracingContext.getTraceId)
+      }
       try {
         result match {
           case Success(apiResponse) =>

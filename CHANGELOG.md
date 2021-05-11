@@ -1,4 +1,6 @@
 ## [Unreleased]
+### Added
+- Enable adding Trace-Id header to response
 ### Fixed
 - Use 'rewritePath' and 'rewriteMethod' rule default value
 
