@@ -1,5 +1,7 @@
 ## [Unreleased]
-### Add Pyron capabilities to allow nginx relpacement
+### Added
+- Add Pyron capabilities to allow nginx relpacement
+- Enable adding Trace-Id header to response
 ### Fixed
 - Use 'rewritePath' and 'rewriteMethod' rule default value
 

@@ -23,6 +23,7 @@ object Conf {
     defaultProxyRules: Option[Json],
     defaultProxyRulesEnabled: Option[Boolean],
     docsEnabled: Option[Boolean],
+    traceIdHeaderEnabled: Option[Boolean],
     proxyHeaders: Option[ProxyHeaderConf],
     accessLog: Option[AccessLogGlobalConf],
     defaultRequestBodyMaxSize: Option[Kilobytes],
