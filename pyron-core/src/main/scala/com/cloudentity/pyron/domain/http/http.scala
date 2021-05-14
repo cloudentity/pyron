@@ -2,6 +2,7 @@ package com.cloudentity.pyron.domain.http
 
 import java.net.{URI, URLEncoder}
 import com.cloudentity.pyron.domain.flow.{PathParams, RewritePath, TargetService}
+import com.cloudentity.pyron.domain.http.Cookie.Cookies
 import com.cloudentity.pyron.rule.PreparedPathRewrite.rewritePathWithPathParams
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{HttpHeaders, HttpMethod}
@@ -96,7 +97,7 @@ case class OriginalRequest(method: HttpMethod,
                            pathParams: PathParams,
                            queryParams: QueryParams,
                            headers: Headers,
-                           cookies: Map[String, String],
+                           cookies: Cookies,
                            bodyOpt: Option[Buffer])
 
 object RelativeUri {

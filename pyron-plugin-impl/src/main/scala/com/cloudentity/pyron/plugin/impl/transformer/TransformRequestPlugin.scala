@@ -190,12 +190,15 @@ object TransformRequestOpenApiConverter extends OpenApiPluginUtils {
                 }.toList
 
             pathParamsToTransform.foreach { case (swaggerParam, valueOrRef) =>
-              (valueOrRef: @unchecked) match { // no default case, fail fast
-                case Value(_)        => swaggerOperation.getParameters.remove(swaggerParam)
-                case AuthnRef(_)     => swaggerOperation.getParameters.remove(swaggerParam)
-                case BodyRef(_)      => // TODO implement
-                case PathParamRef(_) => // TODO implement
-                case HeaderRef(_, _) => // TODO implement
+              valueOrRef match {
+                case Value(_)         => swaggerOperation.getParameters.remove(swaggerParam)
+                case AuthnRef(_)      => swaggerOperation.getParameters.remove(swaggerParam)
+                case BodyRef(_)       => // TODO implement
+                case PathParamRef(_)  => // TODO implement
+                case QueryParamRef(_) => // TODO implement
+                case CookieRef(_)     => // TODO implement
+                case HeaderRef(_, _)  => // TODO implement
+                case _ =>                // TODO implement
               }
             }
           case None =>

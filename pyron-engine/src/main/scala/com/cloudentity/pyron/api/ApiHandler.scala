@@ -24,7 +24,7 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.ReplyException
 import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
 import io.vertx.core.streams.ReadStream
-import io.vertx.core.{MultiMap, Future => VxFuture}
+import io.vertx.core.{MultiMap, http, Future => VxFuture}
 import io.vertx.ext.web.RoutingContext
 import scalaz.{-\/, \/-}
 
@@ -413,7 +413,7 @@ object HttpConversions {
     }
   }
 
-  def toOriginalRequest(req: HttpServerRequest, pathParams: PathParams, bodyOpt: Option[Buffer]): OriginalRequest =
+  def toOriginalRequest(req: HttpServerRequest, pathParams: PathParams, bodyOpt: Option[Buffer]): OriginalRequest = {
     OriginalRequest(
       method = req.method(),
       path = UriPath(Option(req.path()).getOrElse("")),
@@ -424,9 +424,10 @@ object HttpConversions {
       pathParams = pathParams,
       queryParams = toQueryParams(req.params()),
       headers = toHeaders(req.headers()),
-      cookies = req.cookieMap().asScala.toMap.mapValues(cookie => cookie.getValue),
+      cookies = req.cookieMap().asScala.toMap.mapValues(Cookie(_)),
       bodyOpt = bodyOpt
     )
+  }
 
   def chooseRelativeUri(ctx: TracingContext, basePath: BasePath, ruleConf: RuleConf, original: OriginalRequest): RelativeUri =
     ruleConf.rewritePath match {

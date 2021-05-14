@@ -14,7 +14,7 @@ object ValueResolver extends ValueResolver
 trait ValueResolver {
 
   def resolveString(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[String] =
-    (valueOrRef: @unchecked) match { // no default case, fail fast
+    valueOrRef match { // no default case, fail fast
       case Value(value) => value.asString
       case HostRef => Option(req.original.host).filter(_.nonEmpty)
       case HostNameRef => resolveHostName(req)
@@ -37,7 +37,7 @@ trait ValueResolver {
   }
 
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
-    (valueOrRef: @unchecked) match { // no default case, fail fast
+    valueOrRef match {
       case Value(value)                          =>
         if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value)
         else circeJsonToJsonValue(value).asListOfStrings
@@ -57,15 +57,19 @@ trait ValueResolver {
     }
 
   def resolveJson(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[JsonValue] =
-    (valueOrRef: @unchecked) match { // no default case, fail fast
+    valueOrRef match {
       case Value(value)                          => Some(circeJsonToJsonValue(value))
       case HostRef                               => Some(req.original.host).filter(_.nonEmpty).map(StringJsonValue)
+      case HostNameRef                           => resolveHostName(req).map(StringJsonValue)
+      case HostPortRef                           => resolveHostPort(req).map(StringJsonValue)
+      case SchemeRef                             => resolveScheme(req).map(StringJsonValue)
       case RemoteHostRef                         => Some(req.original.remoteHost).filter(_.nonEmpty).map(StringJsonValue)
       case LocalHostRef                          => Some(req.original.localHost).filter(_.nonEmpty).map(StringJsonValue)
       case BodyRef(path)                         => resolveBody(bodyOpt, path)
       case PathParamRef(param)                   => resolvePathParam(req, param).map(StringJsonValue)
       case QueryParamRef(param)                  => req.request.uri.query.getValues(param) // array of all query param values
                                                       .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
+      case CookieRef(cookie)                     => resolveCookie(req, cookie).map(StringJsonValue)
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path)
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(StringJsonValue) // first header value
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header) // array of all header values
@@ -91,7 +95,7 @@ trait ValueResolver {
     Option(req.original.remoteHost).filter(_.nonEmpty)
 
   private def resolveCookie(req: RequestCtx, cookie: String): Option[String] =
-    req.original.cookies.get(cookie)
+    req.original.cookies.get(cookie).map(_.value)
 
   private def resolveBody(bodyOpt: Option[JsonObject], path: Path): Option[JsonValue] =
     bodyOpt.flatMap(extractBodyAttribute(_, path))

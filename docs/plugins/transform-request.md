@@ -80,17 +80,27 @@ e.g.
   }
 }
 ```
-
 Supported subjects with operations:
 * `body` - set, drop
 * `headers` - set
 * `pathParams` - set
+* `queryParams` - set
 
-Supported reference types:
+Supported reference types with sub-items:
 * `body`
 * `headers`
 * `pathParams`
+* `queryParams`
+* `cookies`
 * `authn`
+
+Supported basic references types without sub-items:
+* `scheme` - original request scheme
+* `host` - original request host (name and port)
+* `hostName` - original request host name only 
+* `hostPort` - original request host port only
+* `localHost` - original request local host
+* `remoteHost` - original request remote host
 
 > [Transformation details](#transformation-details).
 

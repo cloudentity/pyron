@@ -41,6 +41,121 @@
           ]
         },
         {
+          "method": "GET",
+          "pathPattern": "/path-param-from-query-param/{param}",
+          "rewritePath": "/path-param-from-query-param/{param}",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "pathParams": {
+                  "set": {
+                    "param": "$queryParams.userUuid"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/path-param-from-cookie/{param}",
+          "rewritePath": "/path-param-from-cookie/{param}",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "pathParams": {
+                  "set": {
+                    "param": "$cookies.userUuid"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/fixed-query-param",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "queryParams": {
+                  "set": {
+                    "userUuid": "123"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/query-param-from-header",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "queryParams": {
+                  "set": {
+                    "userUuid": "$headers.userUuid"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/query-param-from-path-param/{value}",
+          "rewritePath": "/query-param-from-path-param",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "queryParams": {
+                  "set": {
+                    "userUuid": "$pathParams.value"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/query-param-from-cookie",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "queryParams": {
+                  "set": {
+                    "userUuid": "$cookies.userUuid"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/query-param-from-body",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "queryParams": {
+                  "set": {
+                    "userUuid": "$body.userUuid"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
           "method": "POST",
           "pathPattern": "/fixed-body",
           "requestPlugins": [
@@ -66,6 +181,38 @@
                 "body": {
                   "set": {
                     "attr": "$pathParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/body-from-query-param",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$queryParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/body-from-cookie",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$cookies.userUuid"
                   }
                 }
               }
@@ -120,6 +267,38 @@
         },
         {
           "method": "GET",
+          "pathPattern": "/header-from-query-param",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$queryParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-cookie",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$cookies.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "pathPattern": "/header-from-body",
           "requestPlugins": [
             {

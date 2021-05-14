@@ -10,8 +10,13 @@ sealed trait RefType extends ValueOrRef
 case class BodyRef(path: Path) extends RefType
 case class PathParamRef(param: String) extends RefType
 case class QueryParamRef(param: String) extends RefType
+case class CookieRef(cookie: String) extends RefType
 case class AuthnRef(path: Path) extends RefType
 case class HeaderRef(header: String, typ: HeaderRefType) extends RefType
+
+sealed trait HeaderRefType
+case object FirstHeaderRefType extends HeaderRefType
+case object AllHeaderRefType extends HeaderRefType
 
 case object HostRef extends RefType
 case object HostNameRef extends RefType
@@ -21,11 +26,6 @@ case object SchemeRef extends RefType
 
 case object LocalHostRef extends RefType
 case object RemoteHostRef extends RefType
-case class CookieRef(cookie: String) extends RefType
-
-sealed trait HeaderRefType
-case object FirstHeaderRefType extends HeaderRefType
-case object AllHeaderRefType extends HeaderRefType
 
 object ValueOrRef {
 

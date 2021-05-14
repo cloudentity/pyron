@@ -1,6 +1,7 @@
 package com.cloudentity.pyron.rule
 
 import com.cloudentity.pyron.domain.flow.{BasePath, EndpointMatchCriteria, PathParams, PathPrefix}
+import com.cloudentity.pyron.rule.PreparedPathRewrite.prepare
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
 import org.scalacheck.{Arbitrary, Gen}
@@ -22,7 +23,7 @@ class RuleMatcherSpec extends WordSpec with MustMatchers with ScalaCheckDrivenPr
   "RuleMatcher.makeMatch" should {
     "return Match when basePath, path, prefix and method IS matching" in {
       forAll(minSuccessful(10)) { (method: HttpMethod, prefix: PathPrefix, suffix: PathSuffix) =>
-        val criteria = EndpointMatchCriteria(method, PreparedPathRewrite(suffix.value, prefix.value, ""))
+        val criteria = EndpointMatchCriteria(method, prepare(suffix.value, prefix.value, "").get)
         val theMatch: MatchResult = makeMatch(method, "/base-path" + prefix.value + suffix.value, BasePath("/base-path"), criteria)
         theMatch match {
           case NoMatch => fail("no match was found")
@@ -33,7 +34,7 @@ class RuleMatcherSpec extends WordSpec with MustMatchers with ScalaCheckDrivenPr
 
     "return Match with path params" in {
       forAll(minSuccessful(10)) { (method: HttpMethod, prefix: PathPrefix, suffix: PathSuffix) =>
-        val criteria = EndpointMatchCriteria(method, PreparedPathRewrite(suffix.value, prefix.value, ""))
+        val criteria = EndpointMatchCriteria(method, prepare(suffix.value, prefix.value, "").get)
         val theMatch = makeMatch(method, prefix.value + suffix.value, BasePath(""), criteria)
         theMatch match {
           case NoMatch => fail("no match was found")
@@ -43,27 +44,27 @@ class RuleMatcherSpec extends WordSpec with MustMatchers with ScalaCheckDrivenPr
     }
 
     "return NoMatch when path with prefix IS NOT matching" in {
-      val criteria = EndpointMatchCriteria(HttpMethod.GET, PreparedPathRewrite("/suffix", "/prefix", ""))
+      val criteria = EndpointMatchCriteria(HttpMethod.GET, prepare("/suffix", "/prefix", "").get)
       makeMatch(HttpMethod.GET, "/suffix", BasePath(""), criteria) mustBe NoMatch
     }
 
     "return NoMatch when base-path IS NOT matching" in {
-      val criteria = EndpointMatchCriteria(HttpMethod.GET,  PreparedPathRewrite("/suffix", "/prefix", ""))
+      val criteria = EndpointMatchCriteria(HttpMethod.GET,  prepare("/suffix", "/prefix", "").get)
       makeMatch(HttpMethod.GET, "/other-base-path/prefix/suffix", BasePath("/base-path"), criteria) mustBe NoMatch
     }
 
     "return NoMatch when path wo prefix IS NOT matching" in {
-      val criteria = EndpointMatchCriteria(HttpMethod.GET, PreparedPathRewrite("", "/prefix", ""))
+      val criteria = EndpointMatchCriteria(HttpMethod.GET, prepare("", "/prefix", "").get)
       makeMatch(HttpMethod.GET, "/prefix/suffix", BasePath(""), criteria) mustBe NoMatch
     }
 
     "return NoMatch when path with prefix IS matching and method IS NOT matching" in {
-      val criteria = EndpointMatchCriteria(HttpMethod.GET, PreparedPathRewrite("/suffix", "/prefix", ""))
+      val criteria = EndpointMatchCriteria(HttpMethod.GET, prepare("/suffix", "/prefix", "").get)
       makeMatch(HttpMethod.POST, "/prefix/suffix", BasePath(""), criteria) mustBe NoMatch
     }
 
     "return NoMatch when path with prefix IS NOT matching and method IS matching" in {
-      val criteria = EndpointMatchCriteria(HttpMethod.GET, PreparedPathRewrite("/suffix", "/prefix", ""))
+      val criteria = EndpointMatchCriteria(HttpMethod.GET, prepare("/suffix", "/prefix", "").get)
       makeMatch(HttpMethod.GET, "/suffix", BasePath(""), criteria) mustBe NoMatch
     }
   }
