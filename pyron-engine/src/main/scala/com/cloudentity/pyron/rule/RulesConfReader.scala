@@ -139,6 +139,8 @@ object RulesConfReader {
     val endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName)
     val pathPrefix = endpointConf.rule.pathPrefix.orElse(defaultConf.rule.pathPrefix).getOrElse(PathPrefix(""))
     val dropPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true)
+    val rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod)
+    val rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath)
     val copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite)
     val preserveHostHeader = endpointConf.rule.preserveHostHeader.orElse(defaultConf.rule.preserveHostHeader)
     val tags = endpointConf.rule.tags.orElse(defaultConf.rule.tags)
@@ -164,7 +166,7 @@ object RulesConfReader {
           val criteria = EndpointMatchCriteria(rf.method, pathMatching)
           val service  = rf.service
           val ruleConf =
-            RuleConf(endpointName, criteria, service, dropPrefix, endpointConf.rule.rewriteMethod, endpointConf.rule.rewritePath,
+            RuleConf(endpointName, criteria, service, dropPrefix, rewriteMethod, rewritePath,
               copyQueryOnRewrite, preserveHostHeader, tags.getOrElse(Nil), requestBody, requestBodyMaxSize, call, ext)
           RuleConfWithPlugins(ruleConf, requestPluginsConf, responsePluginConfs)
         }
