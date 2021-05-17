@@ -440,7 +440,7 @@
                   "set": {
                     "X-Account": {
                       "path": "$body.scp",
-                      "pattern": "account-{countryCode_0_3}{a_4}-{b_4}-{c_4}-{d_4}",
+                      "pattern": "account-{countryCode:0:3}{a:4}-{b:4}-{c:4}-{d:4}",
                       "output": "{countryCode}:{a}{b}{c}{d}"
                     }
                   }

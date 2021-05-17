@@ -28,7 +28,7 @@ object PatternUtil {
 
   private def getSliceItAt(pattern: String): List[Int] = {
     // Find indexes delimiting non-param and param-def slices of the pattern
-    val paramDef = """\{([a-zA-Z][a-zA-Z0-9]*(:?_[0-9]+){0,2}?)}"""
+    val paramDef = """\{([a-zA-Z][a-zA-Z0-9]*(:?\:[0-9]+){0,2}?)}"""
     val re = if (pattern.contains("{{")) {
       // We allow {{ and }} to match literal { and }, which makes finding params harder
       ("""(?:\G|[^{])(?:\{\{)*""" + paramDef).r
@@ -46,11 +46,11 @@ object PatternUtil {
   }
 
   private def getParamMatch(paramDef: String): (String, String) = {
-    paramDef.split('_').toList match {
+    paramDef.split(':').toList match {
       case paramName :: Nil => (paramName, s"(?<$paramName>.+)")
       case paramName :: matchSize :: Nil => (paramName, s"(?<$paramName>.{$matchSize})")
       case paramName :: minSize :: maxSize :: Nil =>
-        assert(minSize < maxSize, s"Minimum must be smaller than maximum capture size but was: ($minSize, $maxSize)")
+        assert(minSize.toInt < maxSize.toInt, s"Minimum must be smaller than maximum capture size but was: ($minSize, $maxSize)")
         (paramName, s"(?<$paramName>.{$minSize,$maxSize})")
       case _ => throw new Exception(s"Malformed param definition: [$paramDef]")
     }
@@ -63,8 +63,8 @@ object PatternUtil {
 
   private def normalizeParens(nonParamSlice: String): String = {
     // this match will un-double all {{ and drop single/odd { parens
-    val normalizeParensRegex = """([{}])(?<dualParen>\1?)""".r
-    normalizeParensRegex.replaceAllIn(nonParamSlice, _.group("dualParen"))
+    val normalizeParensRegex = """([{}])(\1?)""".r
+    normalizeParensRegex.replaceAllIn(nonParamSlice, _.group(2))
   }
 
 }

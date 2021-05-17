@@ -288,6 +288,10 @@ We use value of `id` parameter, captured by `{id}` in our pattern and then refer
 Here `id` will capture whatever follows the `transaction-` prefix.
 The value of `X-Transaction` header will be set to the calculated value of the output, with parameters applied.
 
+Within `pattern` we can specify required length or length range for a named parameter, by using `:` symbol.
+For example `{id:4}` would only match a string of 4 chars, while `{id:4:8}` would match a string of 4 to 8 chars length.
+If length criteria is specified it must be fulfilled for transformation to be applied.
+
 If authentication context contains:
 ```json
 {
