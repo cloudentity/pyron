@@ -6,25 +6,24 @@ object ApiGroupConflicts {
 
   case class Conflict(pathA: List[String], pathB: List[String])
 
-  def findConflicts(validGroups: List[ValidResult[ApiGroupConfUnresolved]]): List[Either[Conflict, ValidResult[ApiGroupConfUnresolved]]] = {
-    val validAndConflicted = for {
-      (validGroup, idx) <- validGroups.zipWithIndex
-    } yield (validGroup, validGroups.drop(idx + 1).find { otherGroup =>
-      validGroup.path != otherGroup.path && isConflicted(validGroup.value.matchCriteria, otherGroup.value.matchCriteria)
-    })
+  def findConflicts(validGroups: List[ValidResult[ApiGroupConfUnresolved]]): List[Either[Conflict, ValidResult[ApiGroupConfUnresolved]]] =
+    validGroups.map { validGroup =>
+      val otherConflictedGroupOpt =
+        validGroups.find { otherGroup =>
+          validGroup.path != otherGroup.path && isConflicted(validGroup.value.matchCriteria, otherGroup.value.matchCriteria)
+        }
 
-    validAndConflicted.map {
-      case (valid, None) => Right(valid)
-      case (valid, Some(conflicted)) => Left(Conflict(valid.path, conflicted.path))
+      otherConflictedGroupOpt match {
+        case Some(otherConflictedGroup) => Left(Conflict(validGroup.path, otherConflictedGroup.path))
+        case None                       => Right(validGroup)
+      }
     }
-  }
 
   def isConflicted(a: GroupMatchCriteria, b: GroupMatchCriteria): Boolean =
     isBasePathConflicted(a.basePathResolved, b.basePathResolved) && isDomainsConflicted(a.domains, b.domains)
 
-  def isBasePathConflicted(a: BasePath, b: BasePath): Boolean = {
-    b.value.startsWith(a.value)
-  }
+  def isBasePathConflicted(a: BasePath, b: BasePath): Boolean =
+    a.value.startsWith(b.value) || b.value.startsWith(a.value)
 
   def isDomainsConflicted(asOpt: Option[List[DomainPattern]], bsOpt: Option[List[DomainPattern]]): Boolean =
     (asOpt, bsOpt) match {

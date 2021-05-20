@@ -2,6 +2,7 @@ package com.cloudentity.pyron.plugin.util.value
 
 import io.circe.{Decoder, Json, KeyDecoder}
 import io.vertx.core.json.{JsonArray, JsonObject}
+
 import scala.collection.JavaConverters._
 
 sealed trait ValueOrRef
@@ -35,32 +36,35 @@ object ValueOrRef {
     } getOrElse Right(Value(json))
   }
 
-  private def decodeReference(string: String): Either[String, RefType] = string.drop(1).split('.').toList match {
-    case Nil => Left("reference cannot be empty")
-    case refType :: path => decodeRefWithPath(refType, path)
-      .orElse(if (path.isEmpty) decodeRefWithNoPath(refType) else None)
-      .map(Right(_)).getOrElse(Left(s"invalid reference: $string"))
-  }
+  private def decodeReference(string: String): Either[String, RefType] =
+    string.drop(1).split('.').toList match {
+      case Nil => Left("reference cannot be empty")
+      case refType :: path => decodeRefWithPath(refType, path)
+        .orElse(if (path.isEmpty) decodeRefWithNoPath(refType) else None)
+        .map(Right(_)).getOrElse(Left(s"invalid reference: $string"))
+    }
 
-  private def decodeRefWithNoPath(refType: String): Option[RefType] = refType match {
-    case "scheme" => Some(SchemeRef)
-    case "host" => Some(HostRef)
-    case "hostName" => Some(HostNameRef)
-    case "hostPort" => Some(HostPortRef)
-    case "localHost" => Some(LocalHostRef)
-    case "remoteHost" => Some(RemoteHostRef)
-    case _ => None
-  }
+  private def decodeRefWithNoPath(refType: String): Option[RefType] =
+    refType match {
+      case "scheme" => Some(SchemeRef)
+      case "host" => Some(HostRef)
+      case "hostName" => Some(HostNameRef)
+      case "hostPort" => Some(HostPortRef)
+      case "localHost" => Some(LocalHostRef)
+      case "remoteHost" => Some(RemoteHostRef)
+      case _ => None
+    }
 
-  private def decodeRefWithPath(refType: String, path: List[String]): Option[RefType] = refType match {
-    case "authn" => Some(AuthnRef(Path(path)))
-    case "body" => Some(BodyRef(Path(path)))
-    case "cookies" => Some(CookieRef(path.mkString(".")))
-    case "headers" => decodeHeadersRef(path)
-    case "pathParams" => Some(PathParamRef(path.mkString(".")))
-    case "queryParams" => Some(QueryParamRef(path.mkString(".")))
-    case _ => None
-  }
+  private def decodeRefWithPath(refType: String, path: List[String]): Option[RefType] =
+    refType match {
+      case "authn" => Some(AuthnRef(Path(path)))
+      case "body" => Some(BodyRef(Path(path)))
+      case "cookies" => Some(CookieRef(path.mkString(".")))
+      case "headers" => decodeHeadersRef(path)
+      case "pathParams" => Some(PathParamRef(path.mkString(".")))
+      case "queryParams" => Some(QueryParamRef(path.mkString(".")))
+      case _ => None
+    }
 
   private def decodeHeadersRef(path: List[String]): Option[HeaderRef] = Some {
     path match {

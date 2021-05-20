@@ -14,7 +14,7 @@ object ValueResolver extends ValueResolver
 trait ValueResolver {
 
   def resolveString(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[String] =
-    valueOrRef match { // no default case, fail fast
+    valueOrRef match {
       case Value(value) => value.asString
       case HostRef => Option(req.original.host).filter(_.nonEmpty)
       case HostNameRef => resolveHostName(req)
@@ -31,10 +31,11 @@ trait ValueResolver {
       case AuthnRef(path) => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
     }
 
-  def resolveString(req: RequestCtx, valueOrRef: ValueOrRef): Option[String] = valueOrRef match {
-    case BodyRef(_) => resolveString(req, req.request.bodyOpt.flatMap(buf => Try(buf.toJsonObject).toOption), valueOrRef)
-    case x          => resolveString(req, None, x)
-  }
+  def resolveString(req: RequestCtx, valueOrRef: ValueOrRef): Option[String] =
+    valueOrRef match {
+      case BodyRef(_) => resolveString(req, req.request.bodyOpt.flatMap(buf => Try(buf.toJsonObject).toOption), valueOrRef)
+      case x => resolveString(req, None, x)
+    }
 
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
     valueOrRef match {
