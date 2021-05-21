@@ -600,7 +600,7 @@ further processing.
 API Group definition can also contain `_plugin` array to configure plugins.
 
 Note `_` (underscore) in `_rules` and `_group` and `_plugin` field names.
-Other fields names can be added do API group definition to define sub API groups, if the containing group has no rules of its own.
+Other fields names can be added to API group definition to define sub API groups, if the containing group has no rules of its own.
 Each such field name will be used as sub API group's name.
 Each such entry should be an object and will be resolved recursively as another API group definition.
  

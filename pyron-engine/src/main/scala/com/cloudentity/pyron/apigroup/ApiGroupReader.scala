@@ -25,7 +25,7 @@ object ApiGroupReader {
       .emap(_.asArray.toRight("JSON array required"))
       .map(plugins => plugins.toList.flatMap(_.as[ApiGroupPlugin].toOption)).map(x => ApiGroupLevelPlugins.apply(x))
   implicit val PartialApiGroupDecoder: Decoder[ApiGroupLevelRaw] = deriveDecoder
-  val reservedNames = Set("_rules", "_group", "_plugins")
+  val reservedNames = List("_rules", "_group", "_plugins")
 
   def readApiGroupLevels(jsonString: String): ReadResult[ApiGroupLevel] = {
     def isGroupName(name: String) = !reservedNames.contains(name)
