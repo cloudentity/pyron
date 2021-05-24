@@ -597,9 +597,9 @@ further processing.
 | _group.domains           | Host headers Pyron matches the API group for        |
 | _group.basePath          | base path Pyron matches the API group at (optional) |
 
-API Group definition can also contain `_plugin` array to configure plugins.
+API Group definition can also contain `_plugins` array to configure plugins.
 
-Note `_` (underscore) in `_rules` and `_group` and `_plugin` field names.
+Note `_` (underscore) in `_rules` and `_group` and `_plugins` field names.
 Other fields names can be added to API group definition to define sub API groups, if the containing group has no rules of its own.
 Each such field name will be used as sub API group's name.
 Each such entry should be an object and will be resolved recursively as another API group definition.
