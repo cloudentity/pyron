@@ -7,16 +7,6 @@ import io.netty.handler.codec.http.cookie.CookieHeaderNames.SameSite
 
 import scala.util.Try
 
-case class CookieDomain(value: String)
-object CookieDomain {
-  def empty: CookieDomain = CookieDomain(null)
-}
-
-case class CookiePath(value: String)
-object CookiePath {
-  def empty: CookiePath = CookiePath(null)
-}
-
 case class TransformResponseCookieConf(name: String,
                                        domain: Option[String],
                                        path: Option[String],
@@ -39,14 +29,6 @@ object TransformResponseCookieConf {
 
   def apply(name: String, set: SetResponseCookie): TransformResponseCookieConf =
     TransformResponseCookieConf(name, None, None, set)
-
-  implicit val cookieDomainEnc: Encoder[CookieDomain] = deriveEncoder[CookieDomain]
-
-  implicit val cookieDomainDec: Decoder[CookieDomain] = deriveDecoder[CookieDomain]
-
-  implicit val cookiePathEnc: Encoder[CookiePath] = deriveEncoder[CookiePath]
-
-  implicit val cookiePathDec: Decoder[CookiePath] = deriveDecoder[CookiePath]
 
   implicit lazy val sameSiteEnc: Encoder[SameSite] = Encoder.encodeString.contramap(_.toString)
 

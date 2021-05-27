@@ -14,7 +14,7 @@ class TransformResponseCookiePlugin  extends ResponsePluginVerticle[TransformRes
 
   import TransformResponseCookiePlugin.transformCookie
 
-  override def name: PluginName = PluginName("transform-response-cookie-plugin")
+  override def name: PluginName = PluginName("transform-response-cookie")
 
   override def confDecoder: Decoder[TransformResponseCookieConf] =
     TransformResponseCookieConf.transformResponseCookieConfDec
