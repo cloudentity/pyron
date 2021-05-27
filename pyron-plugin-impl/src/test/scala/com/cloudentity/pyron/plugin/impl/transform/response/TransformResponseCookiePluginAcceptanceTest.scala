@@ -16,7 +16,7 @@ class TransformResponseCookiePluginAcceptanceTest extends PluginAcceptanceTest w
   @Before
   def before(): Unit = {
     targetService = startClientAndServer(7760)
-    targetService.when(new HttpRequest()).respond(new HttpResponse().withStatusCode(200))
+    targetService.when(new HttpRequest()).respond(new HttpResponse().withStatusCode(200).withHeader("Set-Cookie", "foo=bar"))
   }
 
   @After
@@ -28,19 +28,9 @@ class TransformResponseCookiePluginAcceptanceTest extends PluginAcceptanceTest w
   def shouldChangeCookieValue(): Unit = {
     given()
     .when()
-      .header("Set-Cookie", "foo=bar")
       .get("/transform-response-cookie")
     .`then`()
+      .header("Set-Cookie", "foo=42")
       .statusCode(200)
-
-    assertTargetRequest { req =>
-      println("SHOULD CHANGE COOKIE foo VALUE TO 42 - according to conf, but apparently nothing happens")
-      println("REQ HEADERS" + req.getHeaders.get(2))
-    }
-  }
-
-  def assertTargetRequest(f: HttpRequest => Unit): Unit = {
-    targetService.retrieveRecordedRequests(null).length mustBe 1
-    f(targetService.retrieveRecordedRequests(null)(0))
   }
 }
