@@ -31,18 +31,16 @@ Enable `transform-response-cookie` plugin by adding `plugin/transform-response-c
                 "name": "originalCookieName",
                 "domain": "optional.domain.com",
                 "path": "/optional/path/",
-                "body": {
-                  "set": {
-                    "name": "newCookieName",
-                    "value": "new-cookie-value",
-                    "domain": "new.cookie.com",
-                    "path": "/new/path",
-                    "maxAge": 123456,
-                    "httpOnly": true,
-                    "secure": true,
-                    "sameSite": "Strict",
-                    "wrap": true
-                  }
+                "set": {
+                  "name": "newCookieName",
+                  "value": "new-cookie-value",
+                  "domain": "new.cookie.com",
+                  "path": "/new/path",
+                  "maxAge": 123456,
+                  "httpOnly": true,
+                  "secure": true,
+                  "sameSite": "Strict",
+                  "wrap": true
                 }
               }
             }
