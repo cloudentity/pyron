@@ -73,7 +73,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   // deploying ApiHandler per ApiServer
   private def deployApiHandlers(conf: AppConf): Future[Unit] =
     Future.sequence {
-      (0 until getServerVerticlesNum(conf)).map { _ =>
+      (0 until getApiHandlerVerticlesNum(conf)).map { _ =>
         deployVerticle(new ApiHandlerVerticle())
       }
     }.map(_ => ())
@@ -103,9 +103,8 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       Future.successful(())
     }
 
-  def getServerVerticlesNum(conf: AppConf): Int =
-    conf.serverVerticles
-      .getOrElse(2 * Runtime.getRuntime.availableProcessors)
+  def getApiHandlerVerticlesNum(conf: AppConf): Int =
+    conf.serverVerticles.getOrElse(Runtime.getRuntime.availableProcessors)
 }
 
 object Application {
