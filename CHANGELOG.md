@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.8.0] - 2021-05-14
 ### Added
 - Enable adding Trace-Id header to response
 - Add Pyron capabilities to allow nginx replacement
