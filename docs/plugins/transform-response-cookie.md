@@ -1,4 +1,4 @@
-## Request transformation plugin
+## Transform response cookie plugin
 
 `transform-response-cookie` plugin allows setting of any attributes of cookies encoded in Set-Cookie, which are sent out through Pyron.
 Changes, as specified in the plugin's conf, will be applied to the cookies matching the filter.
@@ -24,9 +24,9 @@ Enable `transform-response-cookie` plugin by adding `plugin/transform-response-c
         {
           "method": "GET",
           "pathPattern": "/transform-some-cookies",
-          "requestPlugins": [
+          "responsePlugins": [
             {
-              "name": "transform-response-cookie-",
+              "name": "transform-response-cookie",
               "conf": {
                 "name": "originalCookieName",
                 "domain": "optional.domain.com",
