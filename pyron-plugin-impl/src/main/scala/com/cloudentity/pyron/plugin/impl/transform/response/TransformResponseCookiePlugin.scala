@@ -48,8 +48,8 @@ object TransformResponseCookiePlugin {
       .filter(filter).map(buildCookie(_, conf)).map(ServerCookieEncoder.STRICT.encode)
 
   def buildCookie(decoded: DefaultCookie, conf: TransformResponseCookieConf): DefaultCookie = {
-    val name = conf.set.name.getOrElse(decoded.name)
-    val value = conf.set.value.getOrElse(decoded.value)
+    val name = conf.set.name.flatMap(Option(_)).getOrElse(decoded.name)
+    val value = conf.set.value.flatMap(Option(_)).getOrElse(decoded.value)
     val cookie = new DefaultCookie(name, value)
 
     Option(conf.set.maxAge).foreach(_.orElse(Option(decoded.maxAge)).foreach(cookie.setMaxAge))

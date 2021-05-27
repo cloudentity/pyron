@@ -59,4 +59,5 @@ Inside "set" object, we have fields corresponding to all cookie attributes.
 Setting the field to specific value, will set that attribute on any cookie matching the filter.
 If attribute exists on the cookie it will be updated, if it doesn't it will be added.
 Setting some field within "set" explicitly to null, will purge this attribute on all matching cookies.
+However, it will not unset name or value of the cookie, since these are strictly required attributes.
 Multiple modifications can be defined at once and will all be applied.
