@@ -54,7 +54,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   override def deployServer(): VxFuture[String] = {
     for {
       _          <- deployApiHandlers(appConf)
-      _          <- deployServerInstances(appConf, getServerVerticlesNum(appConf), Future.successful(""))
+      _          <- deployServerInstance(appConf)
       _          <- deployAdminServerIfConfigured()
       _          <- deployOpenApiEndpointIfEnabled(appConf)
     } yield ""
@@ -78,9 +78,8 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       }
     }.map(_ => ())
 
-  def deployServerInstances(conf: AppConf, instances: Int, acc: Future[String]): Future[String] =
-    if (instances > 0) deployServerInstances(conf, instances - 1, acc.flatMap(_ => deployVerticle(new ApiServer(conf))))
-    else               acc
+  def deployServerInstance(conf: AppConf): Future[String] =
+    deployVerticle(new ApiServer(conf))
 
   private def deployVerticle(verticle: Verticle): Future[String] = {
     log.debug(s"Deploying ${verticle.getClass.getName} verticle")
