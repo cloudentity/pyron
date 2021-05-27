@@ -87,9 +87,9 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   }
 
   private def deployAdminServerIfConfigured(): Future[Unit] =
-    confService.getConf("apiServer").toScala().map(Option.apply).flatMap {
+    confService.getConf("adminServer").toScala().map(Option.apply).flatMap {
       case Some(_) =>
-        ApiServerDeployer.deployServer(vertx).map(()).toScala()
+        ApiServerDeployer.deployServer(vertx, "adminServer").map(()).toScala()
       case None    =>
         log.debug("Admin API server configuration missing, skipping deployment")
         Future.successful(())
