@@ -1,0 +1,7 @@
+{
+  "registry:request-plugins": {
+    "transform-response-cookie": {
+      "main": "com.cloudentity.pyron.plugin.impl.transform.response.TransformResponseCookiePlugin"
+    }
+  }
+}

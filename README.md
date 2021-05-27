@@ -22,6 +22,7 @@
     * OAuth 2 with JWT access token
     * OAuth 2 with opaque token introspection
   * [Request transformation](docs/plugins/transform-request.md)
+  * [Response cookie transformation](docs/plugins/transform-response-cookie.md)
   * [CORS](docs/plugins/cors.md)
   * [Brute-force protection](docs/plugins/bruteforce.md)
   * [Rate limiting](docs/plugins/rate-limit.md)
@@ -901,6 +902,7 @@ Plugins extend request-response flow, e.g. can enforce authorization rules, modi
 
 * [Authentication](docs/plugins/authn.md)
 * [Request transformation](docs/plugins/transform-request.md)
+* [Response cookie transformation](docs/plugins/transform-response-cookie.md)
 * [CORS](docs/plugins/cors.md)
 * [Brute-force protection](docs/plugins/bruteforce.md)
 * [Rate limiting](docs/plugins/rate-limit.md)
