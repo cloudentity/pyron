@@ -16,8 +16,79 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
   val SET_COOKIE = "Set-Cookie"
 
   def calcExpires(expireAfter: Long): String =
-      ZonedDateTime.now(ZoneId.of("GMT")).plusSeconds(expireAfter)
-          .format(DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss z"))
+    ZonedDateTime.now(ZoneId.of("GMT")).plusSeconds(expireAfter)
+      .format(DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss z"))
+
+  "setResponseCookieDec" should {
+
+    "decode the SetResponseCookie correctly" in {
+
+      val json =
+        """|{
+           |  "name": "Name",
+           |  "domain": "Domain",
+           |  "path": "Path",
+           |  "value": "Value",
+           |  "maxAge": 123456,
+           |  "httpOnly": true,
+           |  "secure": true,
+           |  "sameSite": "Lax",
+           |  "wrap": true
+           |}
+           |""".stripMargin
+
+      import TransformResponseCookieConf.setResponseCookieDec
+
+      io.circe.parser.decode[SetResponseCookie](json) mustBe Right(
+        SetResponseCookie(Some("Name"), Some("Value"), Some("Domain"), Some("Path"), Some(123456), Some(true), Some(true), Some(SameSite.Lax), Some(true)))
+
+    }
+  }
+
+  "transformResponseCookieConfDec" should {
+
+    "decode the TransformResponseCookieConf correctly" in {
+
+      val json =
+        """|{
+           |  "name": "origName",
+           |  "domain": "origDomain",
+           |  "path": "origPath",
+           |  "set": {
+           |    "name": "Name",
+           |    "value": "Value",
+           |    "domain": "Domain",
+           |    "path": "Path",
+           |    "maxAge": 123456,
+           |    "httpOnly": true,
+           |    "secure": true,
+           |    "sameSite": "Lax",
+           |    "wrap": true
+           |  }
+           |}""".stripMargin
+
+      import TransformResponseCookieConf.transformResponseCookieConfDec
+
+      io.circe.parser.decode[TransformResponseCookieConf](json) mustBe Right(
+        TransformResponseCookieConf(
+          "origName",
+          Some("origDomain"),
+          Some("origPath"),
+          SetResponseCookie(
+            Some("Name"),
+            Some("Value"),
+            Some("Domain"),
+            Some("Path"),
+            Some(123456),
+            Some(true),
+            Some(true),
+            Some(SameSite.Lax),
+            Some(true)
+          )
+        )
+      )
+    }
+  }
 
   "TransformResponseCookiePlugin.transformCookie" should {
 
@@ -26,7 +97,7 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       val newName = "newName"
 
       val h0 = "Foo-Header" -> "fooValue"
-      val setNewName =  SetResponseCookie.empty.copy(name = Some(newName))
+      val setNewName = SetResponseCookie.empty.copy(name = Some(newName))
 
       val h1 = SET_COOKIE -> "cookieOne=valueOneA"
       val h1Updated = SET_COOKIE -> s"$newName=valueOneA"
@@ -49,23 +120,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setNewName)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setNewName)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setNewName)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setNewName)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setNewName)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setNewName)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setNewName)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setNewName)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setNewName)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setNewName)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -99,23 +170,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setNewValue)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setNewValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setNewValue)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setNewValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setNewValue)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setNewValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setNewValue)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setNewValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setNewValue)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setNewValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -150,23 +221,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setNewNameAndValue)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setNewNameAndValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setNewNameAndValue)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setNewNameAndValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setNewNameAndValue)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setNewNameAndValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setNewNameAndValue)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setNewNameAndValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setNewNameAndValue)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setNewNameAndValue)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -201,23 +272,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setNewPath)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setNewPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setNewPath)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setNewPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setNewPath)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setNewPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setNewPath)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setNewPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setNewPath)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setNewPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -249,23 +320,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), unsetPath)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, unsetPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), unsetPath)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), unsetPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, unsetPath)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), unsetPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), unsetPath)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, unsetPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), unsetPath)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, unsetPath)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3, h4Updated, h5, h6)
 
@@ -300,23 +371,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setNewDomain)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setNewDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setNewDomain)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setNewDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setNewDomain)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setNewDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setNewDomain)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setNewDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setNewDomain)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setNewDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -348,23 +419,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), unsetDomain)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, unsetDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), unsetDomain)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), unsetDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, unsetDomain)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), unsetDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2, h3, h4Updated, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), unsetDomain)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, unsetDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), unsetDomain)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, unsetDomain)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -394,23 +465,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1Secure, h2Secure, h3Secure, h4Secure, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setSecure)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1Secure, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setSecure)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Secure, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setSecure)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Secure, h3, h4Secure, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setSecure)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Secure, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setSecure)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Secure, h4Secure, h5, h6)
 
@@ -440,23 +511,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1Insecure, h2Insecure, h3Insecure, h4Insecure, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), unsetSecure)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, unsetSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1Insecure, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), unsetSecure)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), unsetSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Insecure, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, unsetSecure)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), unsetSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Insecure, h3, h4Insecure, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), unsetSecure)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, unsetSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Insecure, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), unsetSecure)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, unsetSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Insecure, h4Insecure, h5, h6)
 
@@ -486,23 +557,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1Secure, h2Secure, h3Secure, h4Secure, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setSecure)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1Secure, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setSecure)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2Secure, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setSecure)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2Secure, h3, h4Secure, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setSecure)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Secure, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setSecure)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setSecure)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3Secure, h4Secure, h5, h6)
 
@@ -532,23 +603,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
         Headers.of(h0, h1NoHttpOnly, h2NoHttpOnly, h3NoHttpOnly, h4NoHttpOnly, h5, h6)
 
-      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), unsetHttpOnly)
+      val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, unsetHttpOnly)
       TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
         Headers.of(h0, h1NoHttpOnly, h2, h3, h4, h5, h6)
 
-      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), unsetHttpOnly)
+      val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), unsetHttpOnly)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
         Headers.of(h0, h1, h2NoHttpOnly, h3, h4, h5, h6)
 
-      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, unsetHttpOnly)
+      val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), unsetHttpOnly)
       TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
         Headers.of(h0, h1, h2NoHttpOnly, h3, h4NoHttpOnly, h5, h6)
 
-      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), unsetHttpOnly)
+      val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, unsetHttpOnly)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
         Headers.of(h0, h1, h2, h3NoHttpOnly, h4, h5, h6)
 
-      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), unsetHttpOnly)
+      val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, unsetHttpOnly)
       TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
         Headers.of(h0, h1, h2, h3NoHttpOnly, h4NoHttpOnly, h5, h6)
 
@@ -580,23 +651,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
     TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
       Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setSameSiteStrict)
+    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setSameSiteStrict)
     TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
       Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-    val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setSameSiteStrict)
+    val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setSameSiteStrict)
     TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
       Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-    val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setSameSiteStrict)
+    val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setSameSiteStrict)
     TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
       Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-    val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setSameSiteStrict)
+    val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setSameSiteStrict)
     TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
       Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-    val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setSameSiteStrict)
+    val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setSameSiteStrict)
     TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
       Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -626,23 +697,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
     TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
       Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), unsetSameSite)
+    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, unsetSameSite)
     TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
       Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-    val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), unsetSameSite)
+    val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), unsetSameSite)
     TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
       Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-    val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, unsetSameSite)
+    val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), unsetSameSite)
     TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
       Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-    val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), unsetSameSite)
+    val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, unsetSameSite)
     TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
       Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-    val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), unsetSameSite)
+    val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, unsetSameSite)
     TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
       Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -671,23 +742,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
     TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
       Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), setMaxAge)
+    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, setMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
       Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-    val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), setMaxAge)
+    val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), setMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
       Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-    val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, setMaxAge)
+    val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), setMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
       Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-    val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), setMaxAge)
+    val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, setMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
       Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-    val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), setMaxAge)
+    val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, setMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
       Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -717,23 +788,23 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
     TransformResponseCookiePlugin.transformCookie(headersIn, anyDomainAndPathConf) mustBe
       Headers.of(h0, h1Updated, h2Updated, h3Updated, h4Updated, h5, h6)
 
-    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), unsetMaxAge)
+    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, unsetMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf) mustBe
       Headers.of(h0, h1Updated, h2, h3, h4, h5, h6)
 
-    val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain.empty), unsetMaxAge)
+    val somePathEmptyDomainConf = TransformResponseCookieConf("cookieOne", null, Some("/some/path"), unsetMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, somePathEmptyDomainConf) mustBe
       Headers.of(h0, h1, h2Updated, h3, h4, h5, h6)
 
-    val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), None, unsetMaxAge)
+    val somePathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/some/path"), unsetMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, somePathAnyDomainConf) mustBe
       Headers.of(h0, h1, h2Updated, h3, h4Updated, h5, h6)
 
-    val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain("some.domain.com")), unsetMaxAge)
+    val someDomainEmptyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), null, unsetMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, someDomainEmptyPathConf) mustBe
       Headers.of(h0, h1, h2, h3Updated, h4, h5, h6)
 
-    val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("some.domain.com")), unsetMaxAge)
+    val someDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), None, unsetMaxAge)
     TransformResponseCookiePlugin.transformCookie(headersIn, someDomainAnyPathConf) mustBe
       Headers.of(h0, h1, h2, h3Updated, h4Updated, h5, h6)
 
@@ -750,19 +821,19 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
       "Bar-Header" -> "barValue"
     )
 
-    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", Some(CookiePath.empty), Some(CookieDomain.empty), SetResponseCookie.empty.copy(value=Some("newValue")))
+    val emptyDomainAndPathConf = TransformResponseCookieConf("cookieOne", null, null, SetResponseCookie.empty.copy(value = Some("newValue")))
     headersIn mustBe TransformResponseCookiePlugin.transformCookie(headersIn, emptyDomainAndPathConf)
 
-    val differentDomainAnyPathConf = TransformResponseCookieConf("cookieOne", None, Some(CookieDomain("different.domain.com")), SetResponseCookie.empty.copy(value=Some("newValue")))
+    val differentDomainAnyPathConf = TransformResponseCookieConf("cookieOne", Some("different.domain.com"), None, SetResponseCookie.empty.copy(value = Some("newValue")))
     headersIn mustBe TransformResponseCookiePlugin.transformCookie(headersIn, differentDomainAnyPathConf)
 
-    val differentPathAnyDomainConf = TransformResponseCookieConf("cookieOne", Some(CookiePath("/different/path")), None, SetResponseCookie.empty.copy(value=Some("newValue")))
+    val differentPathAnyDomainConf = TransformResponseCookieConf("cookieOne", None, Some("/different/path"), SetResponseCookie.empty.copy(value = Some("newValue")))
     headersIn mustBe TransformResponseCookiePlugin.transformCookie(headersIn, differentPathAnyDomainConf)
 
-    val sameDomainDifferentPath = TransformResponseCookieConf("cookieOne", Some(CookiePath("/different/path")), Some(CookieDomain("some.domain.com")), SetResponseCookie.empty.copy(value=Some("newValue")))
+    val sameDomainDifferentPath = TransformResponseCookieConf("cookieOne", Some("some.domain.com"), Some("/different/path"), SetResponseCookie.empty.copy(value = Some("newValue")))
     headersIn mustBe TransformResponseCookiePlugin.transformCookie(headersIn, sameDomainDifferentPath)
 
-    val samePathDifferentDomain = TransformResponseCookieConf("cookieOne", Some(CookiePath("/some/path")), Some(CookieDomain("different.domain.com")), SetResponseCookie.empty.copy(value=Some("newValue")))
+    val samePathDifferentDomain = TransformResponseCookieConf("cookieOne", Some("different.domain.com"), Some("/some/path"), SetResponseCookie.empty.copy(value = Some("newValue")))
     headersIn mustBe TransformResponseCookiePlugin.transformCookie(headersIn, samePathDifferentDomain)
   }
 

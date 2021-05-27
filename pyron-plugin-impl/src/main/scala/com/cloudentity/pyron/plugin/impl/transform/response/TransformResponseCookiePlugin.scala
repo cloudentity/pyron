@@ -1,12 +1,11 @@
 package com.cloudentity.pyron.plugin.impl.transform.response
 
-import io.netty.handler.codec.http.cookie.{ClientCookieDecoder, ClientCookieEncoder, Cookie, DefaultCookie, ServerCookieEncoder}
 import com.cloudentity.pyron.domain.flow.{PluginName, ResponseCtx}
 import com.cloudentity.pyron.domain.http.Headers
 import com.cloudentity.pyron.plugin.config.{ValidateOk, ValidateResponse}
-import com.cloudentity.pyron.plugin.impl.transform.response.TransformResponseCookieConf.transformResponseCookieConfDecoder
 import com.cloudentity.pyron.plugin.verticle.ResponsePluginVerticle
 import io.circe.Decoder
+import io.netty.handler.codec.http.cookie.{ClientCookieDecoder, DefaultCookie, ServerCookieEncoder}
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -17,13 +16,13 @@ class TransformResponseCookiePlugin  extends ResponsePluginVerticle[TransformRes
 
   override def name: PluginName = PluginName("transform-response-cookie-plugin")
 
-  override def confDecoder: Decoder[TransformResponseCookieConf] = transformResponseCookieConfDecoder
+  override def confDecoder: Decoder[TransformResponseCookieConf] =
+    TransformResponseCookieConf.transformResponseCookieConfDec
 
   override def validate(conf: TransformResponseCookieConf): ValidateResponse = ValidateOk
 
   override def apply(responseCtx: ResponseCtx, conf: TransformResponseCookieConf): Future[ResponseCtx] =
     Future.successful(responseCtx.modifyResponse(resp => resp.modifyHeaders(transformCookie(_, conf))))
-
 
 }
 
@@ -53,13 +52,13 @@ object TransformResponseCookiePlugin {
     val value = conf.set.value.getOrElse(decoded.value)
     val cookie = new DefaultCookie(name, value)
 
-    if (conf.set.maxAge != null) conf.set.maxAge.orElse(Option(decoded.maxAge)).foreach(cookie.setMaxAge)
-    if (conf.set.path != null) conf.set.path.orElse(Option(decoded.path)).foreach(cookie.setPath)
-    if (conf.set.domain != null) conf.set.domain.orElse(Option(decoded.domain)).foreach(cookie.setDomain)
-    if (conf.set.secure != null) conf.set.secure.orElse(Option(decoded.isSecure)).foreach(cookie.setSecure)
-    if (conf.set.httpOnly != null) conf.set.httpOnly.orElse(Option(decoded.isHttpOnly)).foreach(cookie.setHttpOnly)
-    if (conf.set.sameSite != null) conf.set.sameSite.orElse(Option(decoded.sameSite)).foreach(cookie.setSameSite)
-    if (conf.set.wrap != null) conf.set.wrap.orElse(Option(decoded.wrap)).foreach(cookie.setWrap)
+    Option(conf.set.maxAge).foreach(_.orElse(Option(decoded.maxAge)).foreach(cookie.setMaxAge))
+    Option(conf.set.path).foreach(_.orElse(Option(decoded.path)).foreach(cookie.setPath))
+    Option(conf.set.domain).foreach(_.orElse(Option(decoded.domain)).foreach(cookie.setDomain))
+    Option(conf.set.secure).foreach(_.orElse(Option(decoded.isSecure)).foreach(cookie.setSecure))
+    Option(conf.set.httpOnly).foreach(_.orElse(Option(decoded.isHttpOnly)).foreach(cookie.setHttpOnly))
+    Option(conf.set.sameSite).foreach(_.orElse(Option(decoded.sameSite)).foreach(cookie.setSameSite))
+    Option(conf.set.wrap).foreach(_.orElse(Option(decoded.wrap)).foreach(cookie.setWrap))
 
     cookie
   }
