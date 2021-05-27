@@ -1,7 +1,7 @@
 package com.cloudentity.pyron.plugin.impl.transformer
 
 import com.cloudentity.pyron.domain.flow.{PathParams, PluginName, RequestCtx}
-import com.cloudentity.pyron.domain.http.Headers
+import com.cloudentity.pyron.domain.http.{Headers, QueryParams}
 import com.cloudentity.pyron.domain.openapi.OpenApiRule
 import com.cloudentity.pyron.openapi.OpenApiPluginUtils
 import com.cloudentity.pyron.plugin.config._
@@ -21,7 +21,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
-  with TransformJsonBody with TransformPathParams with TransformHeaders {
+  with TransformJsonBody with TransformPathParams with TransformQueryParams with TransformHeaders {
 
   override def name: PluginName = PluginName("transform-request")
 
@@ -31,6 +31,7 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
     ctx |>
       transformJsonBody(resolveBodyOps(ctx, conf.body, jsonBodyOpt), jsonBodyOpt) |>
       transformPathParams(resolvePathParamOps(ctx, conf.pathParams, jsonBodyOpt)) |>
+      transformQueryParams(resolveQueryParamOps(ctx, conf.queryParams, jsonBodyOpt)) |>
       transformHeaders(resolveHeaderOps(ctx, conf.headers, jsonBodyOpt))
   }
 
@@ -51,6 +52,9 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
 
   def resolvePathParamOps(ctx: RequestCtx, pathParamOps: PathParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedPathParamOps =
     ResolvedPathParamOps(pathParamOps.set.map(_.mapValues(ValueResolver.resolveString(ctx, jsonBodyOpt, _))))
+
+  def resolveQueryParamOps(ctx: RequestCtx, queryParamOps: QueryParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedQueryParamOps =
+    ResolvedQueryParamOps(queryParamOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, _))))
 
   def resolveHeaderOps(ctx: RequestCtx, headerOps: HeaderOps, jsonBodyOpt: Option[JsonObject]): ResolvedHeaderOps =
     ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, _))))
@@ -74,13 +78,10 @@ trait TransformJsonBody {
         ctx
     }
 
-  // NOTE: this method mutates jsonBody
-  // apply here other body transformations
   def applyBodyTransformations(bodyOps: ResolvedBodyOps, jsonBody: JsonObject): Buffer =
     if (bodyOps.drop.getOrElse(false)) Buffer.buffer()
     else setJsonBody(bodyOps.set.getOrElse(Map()))(jsonBody).toBuffer
 
-  // NOTE: this method mutates jsonBody
   def setJsonBody(set: Map[Path, Option[JsonValue]])(body: JsonObject): JsonObject = {
     @tailrec
     def mutateBodyAttribute(body: JsonObject, bodyPath: List[String], resolvedValue: Option[JsonValue]): Unit =
@@ -116,17 +117,37 @@ trait TransformPathParams {
     ctx.modifyRequest(_.modifyPathParams(_ => transformedPathParams))
   }
 
-  // apply here other path-param transformations
   def applyPathParamsTransformations(pathParamOps: ResolvedPathParamOps)(pathParams: PathParams): PathParams =
     setPathParams(pathParamOps.set.getOrElse(Map()))(pathParams)
 
-  def setPathParams(set: Map[String, Option[String]])(pathParams: PathParams): PathParams =
+  def setPathParams(set: Map[String, Option[String]])(pathParams: PathParams): PathParams = {
     set.foldLeft(pathParams) { case (params, (paramName, valueOpt)) =>
       valueOpt match {
         case Some(value) => PathParams(params.value.updated(paramName, value))
         case None => PathParams(params.value - paramName)
       }
     }
+  }
+}
+
+object TransformQueryParams extends TransformQueryParams
+trait TransformQueryParams {
+  def transformQueryParams(queryParamsOps: ResolvedQueryParamOps)(ctx: RequestCtx): RequestCtx = {
+    val transformedQueryParams = applyQueryParamsTransformations(queryParamsOps)(ctx.request.uri.query)
+    ctx.modifyRequest(_.modifyQueryParams(_ => transformedQueryParams))
+  }
+
+  def applyQueryParamsTransformations(queryParamOps: ResolvedQueryParamOps)(queryParams: QueryParams): QueryParams =
+    setQueryParams(queryParamOps.set.getOrElse(Map()))(queryParams)
+
+  def setQueryParams(set: Map[String, Option[List[String]]])(queryParams: QueryParams): QueryParams = {
+    set.foldLeft(queryParams) { case (ps, (paramName, valueOpt)) =>
+      valueOpt match {
+        case Some(value) => ps.setValues(paramName, value)
+        case None => ps.remove(paramName)
+      }
+    }
+  }
 }
 
 object TransformHeaders extends TransformHeaders
@@ -136,7 +157,6 @@ trait TransformHeaders {
     ctx.modifyRequest(_.modifyHeaders(_ => transformedHeaders))
   }
 
-  // apply here other header transformations
   def applyHeadersTransformations(headerOps: ResolvedHeaderOps)(headers: Headers): Headers =
     setHeaders(headerOps.set.getOrElse(Map()))(headers)
 
@@ -171,11 +191,14 @@ object TransformRequestOpenApiConverter extends OpenApiPluginUtils {
 
             pathParamsToTransform.foreach { case (swaggerParam, valueOrRef) =>
               valueOrRef match {
-                case Value(_)        => swaggerOperation.getParameters.remove(swaggerParam)
-                case AuthnRef(_)     => swaggerOperation.getParameters.remove(swaggerParam)
-                case BodyRef(_)      => // TODO implement
-                case PathParamRef(_) => // TODO implement
-                case HeaderRef(_, _) => // TODO implement
+                case Value(_)         => swaggerOperation.getParameters.remove(swaggerParam)
+                case AuthnRef(_)      => swaggerOperation.getParameters.remove(swaggerParam)
+                case BodyRef(_)       => // TODO implement
+                case PathParamRef(_)  => // TODO implement
+                case QueryParamRef(_) => // TODO implement
+                case CookieRef(_)     => // TODO implement
+                case HeaderRef(_, _)  => // TODO implement
+                case _ =>                // TODO implement
               }
             }
           case None =>

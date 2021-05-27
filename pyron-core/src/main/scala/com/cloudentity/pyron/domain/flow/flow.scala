@@ -1,9 +1,9 @@
 package com.cloudentity.pyron.domain.flow
 
 import java.net.URL
-
 import io.circe.Json
 import com.cloudentity.pyron.domain.http.{ApiResponse, OriginalRequest, TargetRequest}
+import com.cloudentity.pyron.rule.PreparedPathRewrite
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
@@ -20,41 +20,12 @@ case class PathPattern(value: String) extends AnyVal
 case class RewritePath(value: String) extends AnyVal
 case class RewriteMethod(value: HttpMethod) extends AnyVal
 
-case class PathParamName(value: String) extends AnyVal
-
 case class PathParams(value: Map[String, String]) extends AnyVal
+
 object PathParams {
-  def empty = PathParams(Map())
+  def empty: PathParams = PathParams(Map())
 }
-
-case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
-
-object PathMatching {
-  val paramNamePlaceholderPattern = """\{(\w+[^/])\}"""
-  val paramNamePlaceholderRegex = paramNamePlaceholderPattern.r
-
-  def build(pathPrefix: PathPrefix, pathPattern: PathPattern): PathMatching =
-    PathMatching(
-      regex = createPatternRegex(createRawPattern(pathPrefix, pathPattern)),
-      paramNames = extractPathParamNames(pathPattern),
-      prefix = pathPrefix,
-      originalPath = pathPattern.value
-    )
-
-  def createRawPattern(pathPrefix: PathPrefix, pathPattern: PathPattern): String =
-    pathPrefix.value + pathPattern.value
-
-  def createPatternRegex(rawPattern: String): Regex = {
-    // capture group 1 contains param name without surrounding parens
-    val regex = paramNamePlaceholderRegex.replaceAllIn(rawPattern, m => s"(?<${m.group(1)}>[^/]+)")
-    s"^$regex$$".r
-  }
-
-  def extractPathParamNames(pattern: PathPattern): List[PathParamName] = {
-    paramNamePlaceholderRegex.findAllMatchIn(pattern.value).map(m => PathParamName(m.group(1))).toList
-  }
-
-}
+case class PathParamName(value: String) extends AnyVal
 
 case class BasePath(value: String) extends AnyVal
 case class DomainPattern(value: String) {
@@ -67,10 +38,10 @@ case class GroupMatchCriteria(basePath: Option[BasePath], domains: Option[List[D
 }
 
 object GroupMatchCriteria {
-  val empty = GroupMatchCriteria(None, None)
+  val empty: GroupMatchCriteria = GroupMatchCriteria(None, None)
 }
 
-case class EndpointMatchCriteria(method: HttpMethod, path: PathMatching)
+case class EndpointMatchCriteria(method: HttpMethod, rewrite: PreparedPathRewrite)
 case class TargetHost(value: String) extends AnyVal
 case class ServiceClientName(value: String) extends AnyVal
 
@@ -119,7 +90,7 @@ trait PluginsConf {
   def endpoint: List[ApiGroupPluginConf]
   def post: List[ApiGroupPluginConf]
 
-  def toList = pre ::: endpoint ::: post
+  def toList: List[ApiGroupPluginConf] = pre ::: endpoint ::: post
 }
 
 object Properties {
@@ -137,24 +108,24 @@ case class Properties(private val ps: Map[String, Any]) {
 }
 
 case class AuthnCtx(value: Map[String, Json]) extends AnyVal {
-  def apply(v: Map[String, Json]) = AuthnCtx(v)
+  def apply(v: Map[String, Json]): AuthnCtx = AuthnCtx(v)
 
-  def modify(f: Map[String, Json] => Map[String, Json]) =
+  def modify(f: Map[String, Json] => Map[String, Json]): AuthnCtx =
     apply(f(value))
 
   def get(name: String): Option[Json] =
     value.get(name)
 
-  def updated(name: String, json: Json) =
+  def updated(name: String, json: Json): AuthnCtx =
     apply(value.updated(name, json))
 
-  def remove(name: String) =
+  def remove(name: String): AuthnCtx =
     apply(value - name)
 
-  def merge(other: AuthnCtx) =
+  def merge(other: AuthnCtx): AuthnCtx =
     apply(value ++ other.value)
 
-  def mergeMap(other: Map[String, Json]) =
+  def mergeMap(other: Map[String, Json]): AuthnCtx =
     apply(value ++ other)
 }
 
@@ -164,24 +135,24 @@ object AuthnCtx {
 }
 
 case class AccessLogItems(value: Map[String, Json]) extends AnyVal {
-  def apply(v: Map[String, Json]) = AccessLogItems(v)
+  def apply(v: Map[String, Json]): AccessLogItems = AccessLogItems(v)
 
-  def modify(f: Map[String, Json] => Map[String, Json]) =
+  def modify(f: Map[String, Json] => Map[String, Json]): AccessLogItems =
     apply(f(value))
 
   def get(name: String): Option[Json] =
     value.get(name)
 
-  def updated(name: String, json: Json) =
+  def updated(name: String, json: Json): AccessLogItems =
     apply(value.updated(name, json))
 
-  def remove(name: String) =
+  def remove(name: String): AccessLogItems =
     apply(value - name)
 
-  def merge(other: AccessLogItems) =
+  def merge(other: AccessLogItems): AccessLogItems =
     apply(value ++ other.value)
 
-  def mergeMap(other: Map[String, Json]) =
+  def mergeMap(other: Map[String, Json]): AccessLogItems =
     apply(value ++ other)
 }
 
@@ -204,7 +175,6 @@ case class RequestCtx(
   authnCtx: AuthnCtx = AuthnCtx(),
   accessLog: AccessLogItems = AccessLogItems(),
   modifyResponse: List[ApiResponse => Future[ApiResponse]] = Nil,
-
   aborted: Option[ApiResponse] = None,
   failed: Option[FlowFailure] = None
 ) {
@@ -232,10 +202,10 @@ case class RequestCtx(
   def modifyResponse(response: ApiResponse)(implicit ec: ExecutionContext): Future[ApiResponse] =
     modifyResponse.foldLeft(Future.successful(response)) { case (fut, mod) => fut.flatMap(mod) }
 
-  def withModifyResponse(f: ApiResponse => ApiResponse) =
+  def withModifyResponse(f: ApiResponse => ApiResponse): RequestCtx =
     withModifyResponseAsync(f.andThen(Future.successful))
 
-   def withModifyResponseAsync(f: ApiResponse => Future[ApiResponse]) =
+  def withModifyResponseAsync(f: ApiResponse => Future[ApiResponse]): RequestCtx =
     this.copy(modifyResponse = f :: modifyResponse)
 
   def abort(response: ApiResponse): RequestCtx =

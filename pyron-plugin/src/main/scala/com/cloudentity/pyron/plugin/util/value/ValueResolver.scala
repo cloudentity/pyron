@@ -1,30 +1,40 @@
 package com.cloudentity.pyron.plugin.util.value
 
 import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx}
+import com.cloudentity.pyron.plugin.util.value.PatternUtil.safePatternAndParams
 import io.circe.Json
 import io.vertx.core.json.{JsonArray, JsonObject}
 
 import java.util.{List => JavaList, Map => JavaMap}
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
 import scala.util.Try
-import scala.util.matching.Regex
-
 
 object ValueResolver extends ValueResolver
 trait ValueResolver {
+
   def resolveString(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[String] =
     valueOrRef match {
-      case Value(value)        => value.asString
-      case BodyRef(path)       => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asString)
-      case PathParamRef(param) => req.request.uri.pathParams.value.get(param)
-      case AuthnRef(path)      => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
-      case HeaderRef(header, _) => req.request.headers.get(header) // always take first header value
+      case Value(value) => value.asString
+      case HostRef => Option(req.original.host).filter(_.nonEmpty)
+      case HostNameRef => resolveHostName(req)
+      case HostPortRef => resolveHostPort(req)
+      case SchemeRef => resolveScheme(req)
+      case LocalHostRef => resolveLocalHost(req)
+      case RemoteHostRef => resolveRemoteHost(req)
+      case CookieRef(cookie) => resolveCookie(req, cookie)
+      case BodyRef(path) => resolveBody(bodyOpt, path).flatMap(_.asString)
+      case PathParamRef(param) => resolvePathParam(req, param)
+      case QueryParamRef(param) => req.request.uri.query.get(param) // take first param value
+      case HeaderRef(header, AllHeaderRefType) => req.request.headers.get(header) // take first header value
+      case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header) // take first header value
+      case AuthnRef(path) => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
     }
 
   def resolveString(req: RequestCtx, valueOrRef: ValueOrRef): Option[String] =
     valueOrRef match {
       case BodyRef(_) => resolveString(req, req.request.bodyOpt.flatMap(buf => Try(buf.toJsonObject).toOption), valueOrRef)
-      case x          => resolveString(req, None, x)
+      case x => resolveString(req, None, x)
     }
 
   def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
@@ -32,22 +42,67 @@ trait ValueResolver {
       case Value(value)                          =>
         if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value)
         else circeJsonToJsonValue(value).asListOfStrings
-      case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path)).flatMap(_.asListOfStrings)
-      case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(List(_))
-      case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
+      case HostRef                               => resolveHost(req).map(List(_))
+      case HostNameRef                           => resolveHostName(req).map(List(_))
+      case HostPortRef                           => resolveHostPort(req).map(List(_))
+      case SchemeRef                             => resolveScheme(req).map(List(_))
+      case LocalHostRef                          => resolveLocalHost(req).map(List(_))
+      case RemoteHostRef                         => resolveRemoteHost(req).map(List(_))
+      case CookieRef(cookie)                     => resolveCookie(req, cookie).map(List(_))
+      case BodyRef(path)                         => resolveBody(bodyOpt, path).flatMap(_.asListOfStrings)
+      case PathParamRef(param)                   => resolvePathParam(req, param).map(List(_))
+      case QueryParamRef(param)                  => req.request.uri.query.getValues(param)
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(List(_))
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header)
+      case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
     }
 
   def resolveJson(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[JsonValue] =
     valueOrRef match {
       case Value(value)                          => Some(circeJsonToJsonValue(value))
-      case BodyRef(path)                         => bodyOpt.flatMap(extractBodyAttribute(_, path))
-      case PathParamRef(param)                   => req.request.uri.pathParams.value.get(param).map(StringJsonValue)
+      case HostRef                               => Some(req.original.host).filter(_.nonEmpty).map(StringJsonValue)
+      case HostNameRef                           => resolveHostName(req).map(StringJsonValue)
+      case HostPortRef                           => resolveHostPort(req).map(StringJsonValue)
+      case SchemeRef                             => resolveScheme(req).map(StringJsonValue)
+      case RemoteHostRef                         => Some(req.original.remoteHost).filter(_.nonEmpty).map(StringJsonValue)
+      case LocalHostRef                          => Some(req.original.localHost).filter(_.nonEmpty).map(StringJsonValue)
+      case BodyRef(path)                         => resolveBody(bodyOpt, path)
+      case PathParamRef(param)                   => resolvePathParam(req, param).map(StringJsonValue)
+      case QueryParamRef(param)                  => req.request.uri.query.getValues(param) // array of all query param values
+                                                      .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
+      case CookieRef(cookie)                     => resolveCookie(req, cookie).map(StringJsonValue)
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path)
-      case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(StringJsonValue) // returning String with first header value
-      case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header).map(_.foldLeft(new JsonArray())(_.add(_))).map(ArrayJsonValue) // returning JsonArray with all header values
+      case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(StringJsonValue) // first header value
+      case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header) // array of all header values
+                                                      .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
     }
+
+  private def resolveHost(req: RequestCtx): Option[String] =
+    Option(req.original.host).filter(_.nonEmpty)
+
+  private def resolveHostName(req: RequestCtx): Option[String] =
+    Option(req.original.host).flatMap(_.split(':').headOption).filter(_.nonEmpty)
+
+  private def resolveHostPort(req: RequestCtx): Option[String] =
+    Option(req.original.host).flatMap(_.split(':').lastOption).filter(_.nonEmpty)
+
+  private def resolveScheme(req: RequestCtx): Option[String] =
+    Option(req.original.scheme).filter(_.nonEmpty)
+
+  private def resolveLocalHost(req: RequestCtx): Option[String] =
+    Option(req.original.localHost).filter(_.nonEmpty)
+
+  private def resolveRemoteHost(req: RequestCtx): Option[String] =
+    Option(req.original.remoteHost).filter(_.nonEmpty)
+
+  private def resolveCookie(req: RequestCtx, cookie: String): Option[String] =
+    req.original.cookies.get(cookie).map(_.value)
+
+  private def resolveBody(bodyOpt: Option[JsonObject], path: Path): Option[JsonValue] =
+    bodyOpt.flatMap(extractBodyAttribute(_, path))
+
+  private def resolvePathParam(req: RequestCtx, param: String): Option[String] =
+    req.request.uri.pathParams.value.get(param)
 
   @tailrec
   private def extractBodyAttribute(body: JsonObject, path: Path): Option[JsonValue] = {
@@ -115,59 +170,13 @@ trait ValueResolver {
       outputStr <- outputOpt.asString
       pathOpt <- json.hcursor.downField("path").focus
       valOrRef <- pathOpt.as[ValueOrRef].toOption
-      (safePattern, paramNames) = makeSafePatternAndParamList(patternStr)
+      (safePattern, paramNames) = safePatternAndParams(patternStr)
       jsonValue <- resolveJson(req, bodyOpt, valOrRef)
       candidates <- jsonValue.asListOfStrings
     } yield candidates.flatMap(safePattern.findFirstMatchIn)
-        .map(matched => paramNames.foldLeft(outputStr)((output, param) => {
-          output.replace(s"{$param}", matched.group(param))
-        }))
+      .map(matched => paramNames.foldLeft(outputStr)((output, param) => {
+        output.replace(s"{$param}", matched.group(param))
+      }))
   }
 
-  private def makeSafePatternAndParamList(pattern: String): (Regex, List[String]) = {
-    val (paramNames, paramSlices) = findParamSlices(pattern)
-    val safePattern = "^" + ("" :: paramNames).zip(makeNonParamSlices(pattern, paramSlices))
-      .map { case (paramName: String, followingSlice: String) =>
-        if (paramName.nonEmpty) s"(?<$paramName>.+)" + followingSlice else followingSlice
-      }.mkString + "$"
-    (safePattern.r, paramNames)
-  }
-
-  private def findParamSlices(pattern: String): (List[String], List[(Int, Int)]) = {
-    if (pattern.contains("{{")) {
-      // We allow {{ and }} to match literal { and }, which makes finding params harder
-      // capture group 1 contains possible occurrences of {{ before opening paren { of param definition
-      // capture group 2 contains param name without surrounding parens
-      """((?:\G|[^{])(?:\{\{)*)\{(\w+)}""".r.findAllMatchIn(pattern)
-        .map(m => m.group(2) -> (m.start + m.group(1).length, m.end)).toList.unzip
-    } else {
-      // Patterns without {{ and }} are likely much more common and simpler matcher will do
-      // capture group 1 contains param name without surrounding parens
-      """\{(\w+)}""".r.findAllMatchIn(pattern)
-        .map(m => m.group(1) -> (m.start, m.end)).toList.unzip
-    }
-  }
-
-  private def makeNonParamSlices(pattern: String, paramSlices: List[(Int, Int)]): List[String] = {
-    val nonParamSlices: List[Int] = pattern.length :: paramSlices
-      .foldLeft(List(0)) { case (acc, (start, end)) => end :: start :: acc }
-    nonParamSlices.sliding(2, 2).foldLeft(List[String]()) {
-      (acc, slice) => {
-        val (start, end) = (slice.tail.head, slice.head)
-        escapeSymbols(normalizeParens(pattern.slice(start, end))) :: acc
-      }
-    }
-  }
-
-  private def escapeSymbols(normalizedParensSlice: String): String = {
-    val escapeSymbolsRegex = """[.*+?^$()|{\[\\]""".r
-    escapeSymbolsRegex.replaceAllIn(normalizedParensSlice, v => """\\\""" + v)
-  }
-
-  private def normalizeParens(nonParamSlice: String): String = {
-    // this match will un-double all {{ and drop single/odd { parens which are invalid
-    // since they could only precede param names, and nonParamSlice contains no params
-    val normalizeParensRegex = """([{}])(?<dualParen>\1?)""".r
-    normalizeParensRegex.replaceAllIn(nonParamSlice, _.group("dualParen"))
-  }
 }

@@ -4,13 +4,23 @@ import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.RelativeUri
 import io.vertx.core.http.HttpMethod
 
-case class OpenApiRule(method: HttpMethod, serviceId: ServiceId, group: GroupMatchCriteria, pathPattern: PathPattern, pathPrefix: PathPrefix,
-                       dropPathPrefix: Boolean, rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], plugins: List[ApiGroupPluginConf], tags: List[String], operationId: Option[String]) {
-  lazy val targetServicePath: String =
-    rewritePath.map(_.value).getOrElse {
-      if (dropPathPrefix) pathPattern.value
-      else pathPrefix.value + pathPattern.value
-    }
+case class OpenApiRule(
+                        method: HttpMethod,
+                        serviceId: ServiceId,
+                        group: GroupMatchCriteria,
+                        pathPattern: PathPattern,
+                        pathPrefix: PathPrefix,
+                        dropPathPrefix: Boolean,
+                        rewriteMethod: Option[RewriteMethod],
+                        rewritePath: Option[RewritePath],
+                        plugins: List[ApiGroupPluginConf],
+                        tags: List[String],
+                        operationId: Option[String]
+                      ) {
+
+  lazy val targetServicePath: String = rewritePath.map(_.value).getOrElse {
+    if (dropPathPrefix) pathPattern.value else pathPrefix.value + pathPattern.value
+  }
 
   lazy val apiGwPath: String =
     group.basePath.map(_.value).getOrElse("") + pathPrefix.value + pathPattern.value
@@ -18,7 +28,7 @@ case class OpenApiRule(method: HttpMethod, serviceId: ServiceId, group: GroupMat
 
 sealed trait ServiceId
 case class StaticServiceId(host: TargetHost, port: Int, ssl: Boolean) extends ServiceId {
-  override def toString(): String = s"${host.value}?port=${port}&ssl=${ssl}"
+  override def toString: String = s"${host.value}?port=$port&ssl=$ssl"
 }
 case class DiscoverableServiceId(name: ServiceClientName) extends ServiceId {
   override def toString: String = name.value

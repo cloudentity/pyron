@@ -22,7 +22,7 @@ object ApiGroupConflicts {
   def isConflicted(a: GroupMatchCriteria, b: GroupMatchCriteria): Boolean =
     isBasePathConflicted(a.basePathResolved, b.basePathResolved) && isDomainsConflicted(a.domains, b.domains)
 
-  def isBasePathConflicted(a: BasePath, b: BasePath) =
+  def isBasePathConflicted(a: BasePath, b: BasePath): Boolean =
     a.value.startsWith(b.value) || b.value.startsWith(a.value)
 
   def isDomainsConflicted(asOpt: Option[List[DomainPattern]], bsOpt: Option[List[DomainPattern]]): Boolean =

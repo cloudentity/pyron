@@ -1,3 +1,12 @@
+## [Unreleased]
+### Added
+- Add Pyron capabilities to allow nginx replacement
+  - support both named and numeric references in rewrite patterns
+  - full regex support in path patterns
+  - full support for query params rewrites and references
+  - full support for cookie references
+  - provide references for $hostName $hostPort $localHost $remoteHost
+  
 ## [1.8.0] - 2021-05-14
 ### Added
 - Enable adding Trace-Id header to response

@@ -21,11 +21,17 @@ class ResponsePluginFunctionsSpec extends WordSpec with MustMatchers with TestRe
   val original: OriginalRequest = OriginalRequest(
     method = HttpMethod.GET,
     path = UriPath("uri"),
+    scheme = "http",
+    host = "host",
+    localHost = "localHost",
+    remoteHost = "remoteHost",
+    pathParams = PathParams.empty,
     queryParams = QueryParams.empty,
     headers = Headers(),
-    bodyOpt = None,
-    pathParams = PathParams.empty
+    cookies = Map(),
+    bodyOpt = None
   )
+
   val request: TargetRequest = TargetRequest(
     method = HttpMethod.GET,
     service = StaticService(host = TargetHost("host"), port = 100, ssl = false),

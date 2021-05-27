@@ -23,7 +23,7 @@ import scala.concurrent.Future
 class Application extends VertxBootstrap with FutureConversions with ScalaSyntax {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  implicit var ec: VertxExecutionContext = null
+  implicit var ec: VertxExecutionContext = _
 
   var appConf: AppConf = _
   var confService: ConfService = _
@@ -68,12 +68,12 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   }
 
   def deployRegistryIfConfigured(registryType: String): Future[String] =
-    VertxDeploy.deploy(vertx, new RegistryVerticle(new RegistryType(registryType), false)).toScala()
+    VertxDeploy.deploy(vertx, new RegistryVerticle(RegistryType(registryType), false)).toScala()
 
   // deploying ApiHandler per ApiServer
   private def deployApiHandlers(conf: AppConf): Future[Unit] =
     Future.sequence {
-      (0 until getApiHandlerVerticlesNum(conf)).map { _ =>
+      (0 until getServerVerticlesNum(conf)).map { _ =>
         deployVerticle(new ApiHandlerVerticle())
       }
     }.map(_ => ())
@@ -103,8 +103,9 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       Future.successful(())
     }
 
-  def getApiHandlerVerticlesNum(conf: AppConf): Int =
-    conf.serverVerticles.getOrElse(Runtime.getRuntime.availableProcessors)
+  def getServerVerticlesNum(conf: AppConf): Int =
+    conf.serverVerticles
+      .getOrElse(2 * Runtime.getRuntime.availableProcessors)
 }
 
 object Application {

@@ -15,12 +15,12 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
 
   var targetService: ClientAndServer = _
 
-  def getHeaderValues(req: HttpRequest, headerName: String) =
+  def getHeaderAllValues(req: HttpRequest, headerName: String): Option[List[String]] =
     req.getHeaders.asScala.toList.find(_.getName.toString == headerName)
       .map(v => v.getValues.asScala.toList.map(_.toString))
 
-  def getHeaderOnlyValue(req: HttpRequest, headerName: String) = {
-    getHeaderValues(req, headerName).map { values =>
+  def getHeaderOnlyValue(req: HttpRequest, headerName: String): Option[String] = {
+    getHeaderAllValues(req, headerName).map { values =>
       assert(values.size == 1)
       values.head
     }
@@ -40,9 +40,9 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   @Test
   def shouldSetFixedPathParam(): Unit = {
     given()
-    .when()
+      .when()
       .get("/fixed-path-param/value")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     assertTargetRequest { req =>
@@ -54,9 +54,9 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   def shouldSetPathParamFromHeader(): Unit = {
     given()
       .header("userUuid", "123")
-    .when()
+      .when()
       .get("/path-param-from-header/value")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     assertTargetRequest { req =>
@@ -65,12 +65,98 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
+  def shouldSetPathParamFromQueryParam(): Unit = {
+    given()
+      .queryParam("userUuid", "123")
+      .when()
+      .get("/path-param-from-query-param/value")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getPath mustBe "/path-param-from-query-param/123"
+    }
+  }
+
+  @Test
+  def shouldSetPathParamFromCookie(): Unit = {
+    given()
+      .cookie("userUuid", "123")
+      .when()
+      .get("/path-param-from-cookie/value")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getPath mustBe "/path-param-from-cookie/123"
+    }
+  }
+
+  @Test
+  def shouldSetFixedQueryParam(): Unit = {
+    given()
+      .when()
+      .get("/fixed-query-param")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getFirstQueryStringParameter("userUuid") mustBe "123"
+      req.getPath mustBe "/fixed-query-param"
+    }
+  }
+
+  @Test
+  def shouldSetQueryParamFromHeader(): Unit = {
+    given()
+      .header("userUuid", "123")
+      .when()
+      .get("/query-param-from-header")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getFirstQueryStringParameter("userUuid") mustBe "123"
+      req.getPath mustBe "/query-param-from-header"
+    }
+  }
+
+  @Test
+  def shouldSetQueryParamFromPathParam(): Unit = {
+    given()
+      .when()
+      .get("/query-param-from-path-param/123")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getFirstQueryStringParameter("userUuid") mustBe "123"
+      req.getPath mustBe "/query-param-from-path-param"
+    }
+  }
+
+  @Test
+  def shouldSetQueryParamFromCookie(): Unit = {
+    given()
+      .cookie("userUuid", "123")
+      .when()
+      .get("/query-param-from-cookie")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getFirstQueryStringParameter("userUuid") mustBe "123"
+      req.getPath mustBe "/query-param-from-cookie"
+    }
+  }
+
+  @Test
   def shouldSetFixedBodyAttribute(): Unit = {
     given()
       .body("""{"attr":"x"}""")
-    .when()
+      .when()
       .post("/fixed-body")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     assertTargetRequest { req =>
@@ -82,9 +168,9 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   def shouldSetBodyAttributeFromPathParam(): Unit = {
     given()
       .body("""{"attr":"x"}""")
-    .when()
+      .when()
       .post("/body-from-path-param/value")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     assertTargetRequest { req =>
@@ -93,12 +179,43 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
+  def shouldSetBodyAttributeFromQueryParam(): Unit = {
+    given()
+      .body("""{"attr":"x"}""")
+      .queryParam("param", "v1", "v2", "v3")
+      .when()
+      .post("/body-from-query-param")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getBodyAsString mustBe """{"attr":["v1","v2","v3"]}"""
+    }
+  }
+
+
+  @Test
+  def shouldSetBodyAttributeFromCookie(): Unit = {
+    given()
+      .cookie("userUuid", "123")
+      .body("""{"attr":"x"}""")
+      .when()
+      .post("/body-from-cookie")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getBodyAsString mustBe """{"attr":"123"}"""
+    }
+  }
+
+  @Test
   def shouldDropBody(): Unit = {
     given()
       .body("""{"attr":"x"}""")
-    .when()
+      .when()
       .post("/body-dropped")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     assertTargetRequest { req =>
@@ -109,9 +226,9 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   @Test
   def shouldSetFixedHeader(): Unit = {
     given()
-    .when()
+      .when()
       .get("/fixed-header")
-    .`then`()
+      .`then`()
       .statusCode(200)
 
     assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
@@ -120,9 +237,33 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   @Test
   def shouldSetHeaderFromPathParam(): Unit = {
     given()
-    .when()
+      .when()
       .get("/header-from-path-param/value")
-    .`then`()
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
+  }
+
+  @Test
+  def shouldSetHeaderFromQueryParam(): Unit = {
+    given()
+      .when()
+      .queryParam("param", "value")
+      .get("/header-from-query-param")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
+  }
+
+  @Test
+  def shouldSetHeaderFromCookie(): Unit = {
+    given()
+      .when()
+      .cookie("param", "value")
+      .get("/header-from-cookie")
+      .`then`()
       .statusCode(200)
 
     assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
@@ -132,9 +273,9 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   def shouldSetHeaderFromBody(): Unit = {
     given()
       .body("""{"h": "value"}""")
-    .when()
-      .get("/header-from-body")
-    .`then`()
+      .when()
+      .post("/header-from-body")
+      .`then`()
       .statusCode(200)
 
     assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
@@ -198,7 +339,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .`then`()
       .statusCode(200)
 
-    assertTargetRequest { req => getHeaderValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
+    assertTargetRequest { req => getHeaderAllValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
   }
 
   @Test
@@ -231,6 +372,28 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .statusCode(200)
 
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-Client") mustBe Some(s"$customerId") }
+  }
+
+  @Test
+  def shouldSetHeaderFromDynamicScopeAndAllowDefiningPatternParametersWhichSpecifySizeOfStringToBeCaptured(): Unit = {
+
+    given()
+      .body(
+        s"""{"scp": [
+           |"account-X12-34-56-78",
+           |"account-USA1234-3456-5678-7890",
+           |"stuff",
+           |"account-UK7890-5678-3456-1234",
+           |"account-3456-1234-7890-5678"
+           |],"groups": "admin"}""".stripMargin)
+      .when()
+      .get("/dyn-header-can-use-pattern-parameters-with-defined-size")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderAllValues(req, "X-Account") mustBe Some(
+      List("USA:1234345656787890", "UK:7890567834561234", ":3456123478905678"))
+    }
   }
 
   @Test
@@ -294,7 +457,7 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-Client") mustBe Some(s"$swiftId.$customerId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Payment") mustBe Some(s"$paymentId") }
     assertTargetRequest { req => getHeaderOnlyValue(req, "X-SCP-Transfer") mustBe Some(s"$transferId") }
-    assertTargetRequest { req => getHeaderValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
+    assertTargetRequest { req => getHeaderAllValues(req, "X-Env") mustBe Some(List(s"$envOneId", s"$envTwoId")) }
   }
 
   def assertTargetRequest(f: HttpRequest => Unit): Unit = {
