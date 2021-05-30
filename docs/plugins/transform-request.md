@@ -49,6 +49,7 @@ Enable `transform-request` plugin by adding `plugin/transform-request` to `MODUL
   * [Drop body](#json-body-drop)
 * [Headers](#headers)
 * [Path parameters](#path-params)
+* [Conf references](#conf-ref)
 
 Plugin rule configuration has following form:
 
@@ -93,6 +94,7 @@ Supported reference types with sub-items:
 * `queryParams`
 * `cookies`
 * `authn`
+* `conf`
 
 Supported basic references types without sub-items:
 * `scheme` - original request scheme
@@ -410,6 +412,49 @@ Following configuration takes `X-USER-ID` header and uses it as `userId` path pa
   ]
 }
 ```
+
+<a id="conf-ref"></a>
+### Conf references
+
+You can use `$conf` reference type to refer to values from Pyron configuration.
+Set `PLUGIN_TRANSFORM_REQUEST_CONF_REF` environment variable to define reference to configuration that will be available at `$conf`.
+
+E.g.:
+* PLUGIN_TRANSFORM_REQUEST_CONF_REF=$ref:secrets.consul
+* Pyron configuration:
+```json
+{
+  "secrets": {
+    "consul": {
+      "token": "xyz"
+    }
+  }
+}
+```
+
+Given following plugin configuration:
+
+```json
+{
+  "method": "GET",
+  "pathPattern": "/user",
+  "requestPlugins": [
+    {
+      "name": "transform-request",
+      "conf": {
+        "headers": {
+          "set": {
+            "X-Consul-Token": "$conf.token"
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+when Pyron receives original request at `/user` path it will set `X-Consul-Token` header to `xyz` in the target request.
+
 
 <a id="transformation-details"></a>
 ### Transformation details

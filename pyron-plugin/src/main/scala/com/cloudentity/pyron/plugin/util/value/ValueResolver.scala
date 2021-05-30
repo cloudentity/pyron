@@ -4,7 +4,6 @@ import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx}
 import com.cloudentity.pyron.plugin.util.value.PatternUtil.safePatternAndParams
 import io.circe.Json
 import io.vertx.core.json.{JsonArray, JsonObject}
-
 import java.util.{List => JavaList, Map => JavaMap}
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -13,7 +12,7 @@ import scala.util.Try
 object ValueResolver extends ValueResolver
 trait ValueResolver {
 
-  def resolveString(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[String] =
+  def resolveString(req: RequestCtx, bodyOpt: Option[JsonObject], confValues: JsonObject, valueOrRef: ValueOrRef): Option[String] =
     valueOrRef match {
       case Value(value) => value.asString
       case HostRef => Option(req.original.host).filter(_.nonEmpty)
@@ -29,18 +28,19 @@ trait ValueResolver {
       case HeaderRef(header, AllHeaderRefType) => req.request.headers.get(header) // take first header value
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header) // take first header value
       case AuthnRef(path) => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asString)
+      case ConfRef(path) => extractJsonObjectAttribute(confValues, path).flatMap(_.asString)
     }
 
-  def resolveString(req: RequestCtx, valueOrRef: ValueOrRef): Option[String] =
+  def resolveString(req: RequestCtx, confValues: JsonObject, valueOrRef: ValueOrRef): Option[String] =
     valueOrRef match {
-      case BodyRef(_) => resolveString(req, req.request.bodyOpt.flatMap(buf => Try(buf.toJsonObject).toOption), valueOrRef)
-      case x => resolveString(req, None, x)
+      case BodyRef(_) => resolveString(req, req.request.bodyOpt.flatMap(buf => Try(buf.toJsonObject).toOption), confValues, valueOrRef)
+      case x => resolveString(req, None, confValues, x)
     }
 
-  def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[List[String]] =
+  def resolveListOfStrings(req: RequestCtx, bodyOpt: Option[JsonObject], confValues: JsonObject, valueOrRef: ValueOrRef): Option[List[String]] =
     valueOrRef match {
       case Value(value)                          =>
-        if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, value)
+        if (value.asObject.nonEmpty) circeJsonDynamicString(req, bodyOpt, confValues, value)
         else circeJsonToJsonValue(value).asListOfStrings
       case HostRef                               => resolveHost(req).map(List(_))
       case HostNameRef                           => resolveHostName(req).map(List(_))
@@ -55,9 +55,10 @@ trait ValueResolver {
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(List(_))
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header)
       case AuthnRef(path)                        => extractAuthnCtxAttribute(req.authnCtx, path).flatMap(_.asListOfStrings)
+      case ConfRef(path)                         => extractJsonObjectAttribute(confValues, path).flatMap(_.asListOfStrings)
     }
 
-  def resolveJson(req: RequestCtx, bodyOpt: Option[JsonObject], valueOrRef: ValueOrRef): Option[JsonValue] =
+  def resolveJson(req: RequestCtx, bodyOpt: Option[JsonObject], confValues: JsonObject, valueOrRef: ValueOrRef): Option[JsonValue] =
     valueOrRef match {
       case Value(value)                          => Some(circeJsonToJsonValue(value))
       case HostRef                               => Some(req.original.host).filter(_.nonEmpty).map(StringJsonValue)
@@ -75,6 +76,7 @@ trait ValueResolver {
       case HeaderRef(header, FirstHeaderRefType) => req.request.headers.get(header).map(StringJsonValue) // first header value
       case HeaderRef(header, AllHeaderRefType)   => req.request.headers.getValues(header) // array of all header values
                                                       .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
+      case ConfRef(path)                         => extractJsonObjectAttribute(confValues, path)
     }
 
   private def resolveHost(req: RequestCtx): Option[String] =
@@ -99,23 +101,23 @@ trait ValueResolver {
     req.original.cookies.get(cookie).map(_.value)
 
   private def resolveBody(bodyOpt: Option[JsonObject], path: Path): Option[JsonValue] =
-    bodyOpt.flatMap(extractBodyAttribute(_, path))
+    bodyOpt.flatMap(extractJsonObjectAttribute(_, path))
 
   private def resolvePathParam(req: RequestCtx, param: String): Option[String] =
     req.request.uri.pathParams.value.get(param)
 
   @tailrec
-  private def extractBodyAttribute(body: JsonObject, path: Path): Option[JsonValue] = {
+  private def extractJsonObjectAttribute(obj: JsonObject, path: Path): Option[JsonValue] = {
     path.value match {
       case Nil => None
-      case key :: Nil => extractLeafBodyAttribute(body, key)
+      case key :: Nil => extractLeafBodyAttribute(obj, key)
       case key :: tail =>
-        val value = body.getValue(key)
+        val value = obj.getValue(key)
         if (value == null) {
           None
         } else value match {
-          case v: JsonObject => extractBodyAttribute(v, Path(tail))
-          case v: JavaMap[_, _] => extractBodyAttribute(new JsonObject(v.asInstanceOf[JavaMap[String, Object]]), Path(tail))
+          case v: JsonObject => extractJsonObjectAttribute(v, Path(tail))
+          case v: JavaMap[_, _] => extractJsonObjectAttribute(new JsonObject(v.asInstanceOf[JavaMap[String, Object]]), Path(tail))
           case _ => None
         }
     }
@@ -162,7 +164,7 @@ trait ValueResolver {
     )
   }
 
-  private def circeJsonDynamicString(req: RequestCtx, bodyOpt: Option[JsonObject], json: Json): Option[List[String]] = {
+  private def circeJsonDynamicString(req: RequestCtx, bodyOpt: Option[JsonObject], confValues: JsonObject, json: Json): Option[List[String]] = {
     for {
       patternOpt <- json.hcursor.downField("pattern").focus
       patternStr <- patternOpt.asString
@@ -171,7 +173,7 @@ trait ValueResolver {
       pathOpt <- json.hcursor.downField("path").focus
       valOrRef <- pathOpt.as[ValueOrRef].toOption
       (safePattern, paramNames) = safePatternAndParams(patternStr)
-      jsonValue <- resolveJson(req, bodyOpt, valOrRef)
+      jsonValue <- resolveJson(req, bodyOpt, confValues, valOrRef)
       candidates <- jsonValue.asListOfStrings
     } yield candidates.flatMap(safePattern.findFirstMatchIn)
       .map(matched => paramNames.foldLeft(outputStr)((output, param) => {

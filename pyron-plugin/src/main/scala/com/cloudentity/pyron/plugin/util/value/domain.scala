@@ -14,6 +14,7 @@ case class QueryParamRef(param: String) extends RefType
 case class CookieRef(cookie: String) extends RefType
 case class AuthnRef(path: Path) extends RefType
 case class HeaderRef(header: String, typ: HeaderRefType) extends RefType
+case class ConfRef(path: Path) extends RefType
 
 sealed trait HeaderRefType
 case object FirstHeaderRefType extends HeaderRefType
@@ -63,6 +64,7 @@ object ValueOrRef {
       case "headers" => decodeHeadersRef(path)
       case "pathParams" => Some(PathParamRef(path.mkString(".")))
       case "queryParams" => Some(QueryParamRef(path.mkString(".")))
+      case "conf" => Some(ConfRef(Path(path)))
       case _ => None
     }
 
