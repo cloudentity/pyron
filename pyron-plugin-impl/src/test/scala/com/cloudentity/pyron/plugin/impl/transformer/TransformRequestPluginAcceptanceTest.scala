@@ -210,6 +210,20 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
+  def shouldSetBodyAttributeFromConf(): Unit = {
+    given()
+      .body("""{"attr":"x"}""")
+      .when()
+      .post("/body-from-conf")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getBodyAsString mustBe """{"attr":"value"}"""
+    }
+  }
+
+  @Test
   def shouldDropBody(): Unit = {
     given()
       .body("""{"attr":"x"}""")
@@ -275,6 +289,17 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
       .body("""{"h": "value"}""")
       .when()
       .post("/header-from-body")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req => getHeaderOnlyValue(req, "H") mustBe Some("value") }
+  }
+
+  @Test
+  def shouldSetHeaderFromConf(): Unit = {
+    given()
+      .when()
+      .get("/header-from-conf")
       .`then`()
       .statusCode(200)
 

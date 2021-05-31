@@ -9,6 +9,7 @@ import com.cloudentity.pyron.plugin.openapi._
 import com.cloudentity.pyron.plugin.util.value._
 import com.cloudentity.pyron.plugin.verticle.RequestPluginVerticle
 import io.circe.Decoder
+import io.circe.generic.semiauto._
 import io.swagger.models.Swagger
 import io.swagger.models.parameters.{Parameter, PathParameter}
 import io.vertx.core.buffer.Buffer
@@ -20,10 +21,17 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
+case class TransformRequestPluginVerticleConf(conf: Option[JsonObject])
+
 class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
   with TransformJsonBody with TransformPathParams with TransformQueryParams with TransformHeaders {
 
   override def name: PluginName = PluginName("transform-request")
+
+  var verticleConf: TransformRequestPluginVerticleConf = _
+
+  override def initService(): Unit =
+    verticleConf = decodeConfigUnsafe(deriveDecoder[TransformRequestPluginVerticleConf])
 
   override def apply(ctx: RequestCtx, conf: TransformerConf): Future[RequestCtx] = Future.successful {
     val jsonBodyOpt = parseJsonBodyIfRequired(ctx, conf)
@@ -47,17 +55,20 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
     else None
   }
 
+  private def confValues(): JsonObject =
+    verticleConf.conf.getOrElse(new JsonObject())
+
   def resolveBodyOps(ctx: RequestCtx, bodyOps: BodyOps, jsonBodyOpt: Option[JsonObject]): ResolvedBodyOps =
-    ResolvedBodyOps(bodyOps.set.map(_.mapValues(ValueResolver.resolveJson(ctx, jsonBodyOpt, _))), bodyOps.drop)
+    ResolvedBodyOps(bodyOps.set.map(_.mapValues(ValueResolver.resolveJson(ctx, jsonBodyOpt, confValues(), _))), bodyOps.drop)
 
   def resolvePathParamOps(ctx: RequestCtx, pathParamOps: PathParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedPathParamOps =
-    ResolvedPathParamOps(pathParamOps.set.map(_.mapValues(ValueResolver.resolveString(ctx, jsonBodyOpt, _))))
+    ResolvedPathParamOps(pathParamOps.set.map(_.mapValues(ValueResolver.resolveString(ctx, jsonBodyOpt, confValues(), _))))
 
   def resolveQueryParamOps(ctx: RequestCtx, queryParamOps: QueryParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedQueryParamOps =
-    ResolvedQueryParamOps(queryParamOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, _))))
+    ResolvedQueryParamOps(queryParamOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, confValues(), _))))
 
   def resolveHeaderOps(ctx: RequestCtx, headerOps: HeaderOps, jsonBodyOpt: Option[JsonObject]): ResolvedHeaderOps =
-    ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, _))))
+    ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, confValues(), _))))
 
   override def validate(conf: TransformerConf): ValidateResponse = ValidateOk
 

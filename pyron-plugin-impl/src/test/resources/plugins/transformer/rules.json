@@ -1,4 +1,10 @@
 {
+  "env": {
+    "PLUGIN_TRANSFORM_REQUEST_CONF_REF": "$ref:transform-request-conf"
+  },
+  "transform-request-conf": {
+    "param": "value"
+  },
   "rules": [
     {
       "default": {
@@ -221,6 +227,22 @@
         },
         {
           "method": "POST",
+          "pathPattern": "/body-from-conf",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$conf.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "pathPattern": "/body-dropped",
           "requestPlugins": [
             {
@@ -291,6 +313,22 @@
                 "headers": {
                   "set": {
                     "H": "$cookies.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-conf",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$conf.param"
                   }
                 }
               }

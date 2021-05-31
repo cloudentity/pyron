@@ -17,6 +17,7 @@ import io.circe.parser._
 import io.circe.{Decoder, Json}
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.json.JsonObject
 import scalaz.{-\/, \/-}
 
 import scala.concurrent.Future
@@ -163,10 +164,12 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
 }
 
 object BruteForceIdentifierReader {
+  val emptyConf = new JsonObject()
+
   def read(ctx: RequestCtx, id: IdentifierSource): Option[String] =
     id match {
       case ValueOrRefIdentifierSource(valueOrRef) =>
-        ValueResolver.resolveString(ctx, valueOrRef)
+        ValueResolver.resolveString(ctx, emptyConf, valueOrRef)
       case DeprecatedIdentifierSource(location, name) =>
         location match {
           case BodyIdentifier   => readIdentifierFromBody(ctx.request, name)
