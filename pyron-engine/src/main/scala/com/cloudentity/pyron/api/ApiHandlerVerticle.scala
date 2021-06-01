@@ -70,7 +70,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
   }
 
-  def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit] = {
+  def handle(conf: Conf.AppConf, ctx: RoutingContext): VxFuture[Unit] = {
     val vertxRequest = ctx.request()
     val vertxResponse = ctx.response()
     val tracing: TracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
@@ -79,7 +79,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     log.debug(tracing, s"Received request: $requestSignature")
     log.trace(tracing, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
-    getProgram(defaultRequestBodyMaxSize, ctx, tracing, requestSignature)
+    getProgram(conf.defaultRequestBodyMaxSize, ctx, tracing, requestSignature)
       .map(handleApiResponse(tracing, vertxResponse, _))
       .recover { case ex: Throwable =>
         log.error(tracing, s"Unexpected error, request='$requestSignature'", ex)

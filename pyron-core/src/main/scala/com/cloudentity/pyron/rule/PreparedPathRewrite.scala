@@ -31,14 +31,12 @@ object PreparedPathRewrite {
   private val PARAM_NAME_PATTERN = """[a-zA-Z_][a-zA-Z0-9_]*"""
   private val PLACEHOLDER_PATTERN = s"\\{$PARAM_NAME_PATTERN}"
 
-  // TODO: Update pathParams and get updated path rewrite efficiently
-  // TODO: it's used by RelativeUri bcs of TransformRequestPluign
   def rewritePathWithPathParams(rewritePath: String, pathParams: PathParams): String =
     pathParams.value.foldLeft(rewritePath) { case (path, (paramName, paramValue)) =>
       path.replace(s"{$paramName}", paramValue)
     }
 
-  def apply(inputPattern: String, prefix: String, outputPattern: String): PreparedPathRewrite = {
+  def prepare(inputPattern: String, prefix: String, outputPattern: String): Try[PreparedPathRewrite] = Try {
     val groupsCountPattern: String = getGroupsCountingPattern(inputPattern)
     val indexedParamNames: List[(String, Int)] = paramNamesWithGroupIndex(inputPattern, groupsCountPattern)
     val totalGroupCount = getCaptureGroupCount(groupsCountPattern) + indexedParamNames.size
@@ -82,7 +80,6 @@ object PreparedPathRewrite {
     }
 
   private[rule] def getPathParams(rewrite: PreparedPathRewrite, regexMatch: Regex.Match): PathParams = {
-    // TODO: Do we need numeric params here? Seems to work fine without them -> add some test
     val namedParams = rewrite.paramNames.map { case (name, i) => name -> regexMatch.group(i)}.toMap
     PathParams(namedParams)
   }

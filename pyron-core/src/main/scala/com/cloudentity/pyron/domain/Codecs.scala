@@ -12,7 +12,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, _}
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.http.HttpMethod
+import io.vertx.core.http.{CookieSameSite, HttpMethod}
 import io.vertx.core.json.{JsonObject => VxJsonObject}
 
 import java.time.Duration
@@ -119,6 +119,12 @@ object Codecs {
 
   implicit lazy val OriginalRequestEnc: Encoder[OriginalRequest] = deriveEncoder
   implicit lazy val OriginalRequestDec: Decoder[OriginalRequest] = deriveDecoder
+
+  implicit lazy val cookieSameSiteEnc: Encoder[CookieSameSite] = Encoder.encodeString.contramap(_.toString)
+  implicit lazy val cookieSameSiteDec: Decoder[CookieSameSite] = Decoder.decodeString.emap { str =>
+    Try { CookieSameSite.valueOf(str.toUpperCase) }
+      .toEither.left.map(v => s"Invalid SameSite value: $v")
+  }
 
   implicit lazy val targetRequestEnc: Encoder[TargetRequest] = deriveEncoder
   implicit lazy val targetRequestDec: Decoder[TargetRequest] = deriveDecoder

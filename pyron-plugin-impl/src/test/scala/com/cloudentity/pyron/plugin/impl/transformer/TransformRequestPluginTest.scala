@@ -1,6 +1,7 @@
 package com.cloudentity.pyron.plugin.impl.transformer
 
 import com.cloudentity.pyron.domain.flow.PathParams
+import com.cloudentity.pyron.domain.http.QueryParams
 import com.cloudentity.pyron.plugin.util.value._
 import com.cloudentity.pyron.test.TestRequestResponseCtx
 import com.cloudentity.tools.vertx.http.Headers
@@ -37,88 +38,118 @@ class TransformRequestPluginTest extends WordSpec with MustMatchers with TestReq
     val setJsonBody = TransformJsonBody.setJsonBody _
 
     def emptyBody = new JsonObject()
+
     "set string value in empty body" in {
-      setJsonBody(Map(Path("a") -> Option(StringJsonValue("string"))))(emptyBody) mustBe new JsonObject().put("a", "string")
+      val valAtPath = Map(Path("a") -> Option(StringJsonValue("string")))
+      setJsonBody(valAtPath)(emptyBody) mustBe emptyBody.put("a", "string")
     }
     "set string value deep in empty body" in {
-      setJsonBody(Map(Path("a", "b") -> Option(StringJsonValue("string"))))(emptyBody) mustBe new JsonObject().put("a", new JsonObject().put("b", "string"))
+      val valAtPath = Map(Path("a", "b") -> Option(StringJsonValue("string")))
+      setJsonBody(valAtPath)(emptyBody) mustBe emptyBody.put("a", emptyBody.put("b", "string"))
     }
     "set json object value in empty body" in {
       val obj = new JsonObject().put("x", "y")
-      setJsonBody(Map(Path("a") -> Option(ObjectJsonValue(obj.copy()))))(emptyBody) mustBe new JsonObject().put("a", obj.copy())
+      val valAtPath = Map(Path("a") -> Option(ObjectJsonValue(obj.copy())))
+      setJsonBody(valAtPath)(emptyBody) mustBe emptyBody.put("a", obj.copy())
     }
     "set json array value in empty body" in {
       val arr = new JsonArray().add("x")
-      setJsonBody(Map(Path("a") -> Option(ArrayJsonValue(arr.copy()))))(emptyBody) mustBe new JsonObject().put("a", arr.copy())
+      val valAtPath = Map(Path("a") -> Option(ArrayJsonValue(arr.copy())))
+      setJsonBody(valAtPath)(emptyBody) mustBe emptyBody.put("a", arr.copy())
     }
     "set null value in empty body" in {
-      setJsonBody(Map(Path("a") -> Option(NullJsonValue)))(emptyBody) mustBe new JsonObject().put("a", null.asInstanceOf[String])
+      val valAtPath = Map(Path("a") -> Option(NullJsonValue))
+      setJsonBody(valAtPath)(emptyBody) mustBe emptyBody.put("a", null.asInstanceOf[String])
     }
 
     def shallowBody = new JsonObject().put("x", "value")
+
     "set string value in shallow" in {
-      setJsonBody(Map(Path("a") -> Option(StringJsonValue("string"))))(shallowBody) mustBe new JsonObject().put("a", "string").put("x", "value")
+      val valAtPath = Map(Path("a") -> Option(StringJsonValue("string")))
+      setJsonBody(valAtPath)(shallowBody) mustBe shallowBody.put("a", "string")
     }
     "set string value deep in shallow" in {
-      setJsonBody(Map(Path("a", "b") -> Option(StringJsonValue("string"))))(shallowBody) mustBe new JsonObject().put("a", new JsonObject().put("b", "string")).put("x", "value")
+      val valAtPath = Map(Path("a", "b") -> Option(StringJsonValue("string")))
+      setJsonBody(valAtPath)(shallowBody) mustBe shallowBody.put("a", new JsonObject().put("b", "string"))
     }
     "set json object value in shallow" in {
       val obj = new JsonObject().put("x", "y")
-      setJsonBody(Map(Path("a") -> Option(ObjectJsonValue(obj.copy()))))(shallowBody) mustBe new JsonObject().put("a", obj.copy()).put("x", "value")
+      val valAtPath = Map(Path("a") -> Option(ObjectJsonValue(obj.copy())))
+      setJsonBody(valAtPath)(shallowBody) mustBe shallowBody.put("a", obj.copy())
     }
     "set json array value in shallow" in {
       val arr = new JsonArray().add("x")
-      setJsonBody(Map(Path("a") -> Option(ArrayJsonValue(arr.copy()))))(shallowBody) mustBe new JsonObject().put("a", arr.copy()).put("x", "value")
+      val valAtPath = Map(Path("a") -> Option(ArrayJsonValue(arr.copy())))
+      setJsonBody(valAtPath)(shallowBody) mustBe shallowBody.put("a", arr.copy())
     }
     "set null value in shallow" in {
-      setJsonBody(Map(Path("a") -> Option(NullJsonValue)))(shallowBody) mustBe new JsonObject().put("a", null.asInstanceOf[String]).put("x", "value")
+      val valAtPath = Map(Path("a") -> Option(NullJsonValue))
+      setJsonBody(valAtPath)(shallowBody) mustBe shallowBody.put("a", null.asInstanceOf[String])
     }
 
     "overwrite with string value in shallow" in {
-      setJsonBody(Map(Path("x") -> Option(StringJsonValue("string"))))(shallowBody) mustBe new JsonObject().put("x", "string")
+      val valAtPath = Map(Path("x") -> Option(StringJsonValue("string")))
+      setJsonBody(valAtPath)(shallowBody) mustBe emptyBody.put("x", "string")
     }
     "overwrite with json object value in shallow" in {
-      val obj = new JsonObject().put("x", "y")
-      setJsonBody(Map(Path("x") -> Option(ObjectJsonValue(obj.copy()))))(shallowBody) mustBe new JsonObject().put("x", obj.copy())
+      val obj = new JsonObject().put("u", "v")
+      val valAtPath = Map(Path("x") -> Option(ObjectJsonValue(obj.copy())))
+      setJsonBody(valAtPath)(shallowBody) mustBe emptyBody.put("x", obj.copy())
     }
     "overwrite with json array value in shallow" in {
       val arr = new JsonArray().add("x")
-      setJsonBody(Map(Path("x") -> Option(ArrayJsonValue(arr.copy()))))(shallowBody) mustBe new JsonObject().put("x", arr.copy())
+      val valAtPath = Map(Path("x") -> Option(ArrayJsonValue(arr.copy())))
+      setJsonBody(valAtPath)(shallowBody) mustBe emptyBody.put("x", arr.copy())
     }
     "overwrite with null value in shallow" in {
-      setJsonBody(Map(Path("x") -> Option(NullJsonValue)))(shallowBody) mustBe new JsonObject().put("x", null.asInstanceOf[String])
+      val valAtPath = Map(Path("x") -> Option(NullJsonValue))
+      setJsonBody(valAtPath)(shallowBody) mustBe emptyBody.put("x", null.asInstanceOf[String])
     }
     "overwrite with null in shallow if reference missing" in {
-      setJsonBody(Map(Path("x") -> None))(shallowBody) mustBe new JsonObject().put("x", null.asInstanceOf[String])
+      val valAtPath = Map(Path("x") -> None)
+      setJsonBody(valAtPath)(shallowBody) mustBe emptyBody.put("x", null.asInstanceOf[String])
     }
 
-    def complexBody = new JsonObject().put("x", "value").put("y", new JsonObject().put("z", "value"))
+    def complexBody = new JsonObject(""" { "x": "value", "y" : { "z": "value" } } """)
+
     "overwrite with string value in complex body" in {
-      setJsonBody(Map(Path("y", "z") -> Option(StringJsonValue("string"))))(complexBody) mustBe new JsonObject().put("x", "value").put("y", new JsonObject().put("z", "string"))
+      val valAtPath = Map(Path("y", "z") -> Option(StringJsonValue("string")))
+      setJsonBody(valAtPath)(complexBody) mustBe
+        new JsonObject(""" { "x": "value", "y" : { "z": "string" } } """)
     }
     "overwrite with json object value in complex body" in {
-      val obj = new JsonObject().put("x", "y")
-      setJsonBody(Map(Path("y", "z") -> Option(ObjectJsonValue(obj.copy()))))(complexBody) mustBe new JsonObject().put("x", "value").put("y", new JsonObject().put("z", obj.copy()))
+      val obj = new JsonObject().put("u", "v")
+      val valAtPath = Map(Path("y", "z") -> Option(ObjectJsonValue(obj)))
+      setJsonBody(valAtPath)(complexBody) mustBe
+        new JsonObject(""" { "x": "value", "y" : { "z": { "u" : "v" } } } """)
     }
     "overwrite with json array value in complex body" in {
-      val arr = new JsonArray().add("x")
-      setJsonBody(Map(Path("y", "z") -> Option(ArrayJsonValue(arr.copy()))))(complexBody) mustBe new JsonObject().put("x", "value").put("y", new JsonObject().put("z", arr.copy()))
+      val arr = new JsonArray().add("u")
+      val valAtPath = Map(Path("y", "z") -> Option(ArrayJsonValue(arr)))
+      setJsonBody(valAtPath)(complexBody) mustBe
+        new JsonObject(""" { "x": "value", "y" : { "z": [ "u" ] } } """)
     }
     "overwrite with null value in complex body" in {
-      setJsonBody(Map(Path("y", "z") -> Option(NullJsonValue)))(complexBody) mustBe new JsonObject().put("x", "value").put("y", new JsonObject().put("z", null.asInstanceOf[String]))
+      val valAtPath = Map(Path("y", "z") -> Option(NullJsonValue))
+      setJsonBody(valAtPath)(complexBody) mustBe
+        new JsonObject(""" { "x": "value", "y" : { "z": null } } """)
     }
     "overwrite with null in complex deep if reference missing" in {
-      setJsonBody(Map(Path("y", "z") -> None))(complexBody) mustBe new JsonObject().put("x", "value").put("y", new JsonObject().put("z", null.asInstanceOf[String]))
+      val valAtPath = Map(Path("y", "z") -> None)
+      setJsonBody(valAtPath)(complexBody) mustBe
+        new JsonObject(""" { "x": "value", "y" : { "z": null } } """)
     }
   }
 
   "TransformJsonBody.applyBodyTransformations" should {
     "return empty buffer if dropping body without set ops" in {
-      TransformJsonBody.applyBodyTransformations(ResolvedBodyOps(None, Some(true)), new JsonObject()) mustBe Buffer.buffer()
+      val bodyOps = ResolvedBodyOps(set = None, drop = Some(true))
+      TransformJsonBody.applyBodyTransformations(bodyOps, new JsonObject().put("x", "y")) mustBe Buffer.buffer()
     }
 
     "return empty buffer if dropping body with set ops" in {
-      TransformJsonBody.applyBodyTransformations(ResolvedBodyOps(Some(Map(Path("x") -> Some(StringJsonValue("a")))), Some(true)), new JsonObject()) mustBe Buffer.buffer()
+      val bodyOps = ResolvedBodyOps(set = Some(Map(Path("x") -> Some(StringJsonValue("a")))), drop = Some(true))
+      TransformJsonBody.applyBodyTransformations(bodyOps, new JsonObject().put("x", "y")) mustBe Buffer.buffer()
     }
   }
 
@@ -142,6 +173,30 @@ class TransformRequestPluginTest extends WordSpec with MustMatchers with TestReq
     }
   }
 
+  "TransformQueryParams.set" should {
+    val setQueryParams = TransformQueryParams.setQueryParams _
+
+    "set value for non-existing query param" in {
+      setQueryParams(Map("a" -> Option(List("x"))))(QueryParams.of()) mustBe QueryParams.of("a" -> "x")
+    }
+
+    "set multi-value for non-existing query param" in {
+      setQueryParams(Map("a" -> Option(List("x", "y"))))(QueryParams.of()) mustBe QueryParams.of("a" -> "x", "a" -> "y")
+    }
+
+    "set value for existing query param" in {
+      setQueryParams(Map("a" -> Option(List("x"))))(QueryParams.of("a" -> "y")) mustBe QueryParams.of("a" -> "x")
+    }
+
+    "set none value for non-existing query param" in {
+      setQueryParams(Map("a" -> None))(QueryParams.of()) mustBe QueryParams.of()
+    }
+
+    "set none value for existing header" in {
+      setQueryParams(Map("a" -> None))(QueryParams.of("a" -> "x")) mustBe QueryParams()
+    }
+  }
+
   "TransformHeaders.set" should {
     val setHeaders = TransformHeaders.setHeaders _
 
@@ -150,7 +205,7 @@ class TransformRequestPluginTest extends WordSpec with MustMatchers with TestReq
     }
 
     "set multi-value for non-existing header" in {
-      setHeaders(Map("a" -> Option(List("x", "y"))))(Headers()) mustBe Headers("a" -> List("x", "y"))
+      setHeaders(Map("a" -> Option(List("x", "y"))))(Headers()) mustBe Headers.of("a" -> "x", "a" -> "y")
     }
 
     "set value for existing header" in {
@@ -162,7 +217,7 @@ class TransformRequestPluginTest extends WordSpec with MustMatchers with TestReq
     }
 
     "set none value for existing header" in {
-      setHeaders(Map("a" -> None))(Headers.of("a" -> "x")) mustBe Headers.of()
+      setHeaders(Map("a" -> None))(Headers.of("a" -> "x")) mustBe Headers()
     }
   }
 }

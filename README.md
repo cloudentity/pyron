@@ -22,6 +22,7 @@
     * OAuth 2 with JWT access token
     * OAuth 2 with opaque token introspection
   * [Request transformation](docs/plugins/transform-request.md)
+  * [Response cookie transformation](docs/plugins/transform-response-cookie.md)
   * [CORS](docs/plugins/cors.md)
   * [Brute-force protection](docs/plugins/bruteforce.md)
   * [Rate limiting](docs/plugins/rate-limit.md)
@@ -597,8 +598,13 @@ further processing.
 | _group.domains           | Host headers Pyron matches the API group for        |
 | _group.basePath          | base path Pyron matches the API group at (optional) |
 
-Note `_` (underscore) in `_rules` and `_group`.
+API Group definition can also contain `_plugins` array to configure plugins.
 
+Note `_` (underscore) in `_rules` and `_group` and `_plugins` field names.
+Other fields names can be added to API group definition to define sub API groups, if the containing group has no rules of its own.
+Each such field name will be used as sub API group's name.
+Each such entry should be an object and will be resolved recursively as another API group definition.
+ 
 [API Groups configuration details.](docs/api-groups.md)
 
 <a id="config-service-discovery"></a>
@@ -896,6 +902,7 @@ Plugins extend request-response flow, e.g. can enforce authorization rules, modi
 
 * [Authentication](docs/plugins/authn.md)
 * [Request transformation](docs/plugins/transform-request.md)
+* [Response cookie transformation](docs/plugins/transform-response-cookie.md)
 * [CORS](docs/plugins/cors.md)
 * [Brute-force protection](docs/plugins/bruteforce.md)
 * [Rate limiting](docs/plugins/rate-limit.md)
