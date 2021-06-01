@@ -17,7 +17,7 @@ trait TestRequestResponseCtx {
     pathParams = PathParams.empty,
     queryParams = QueryParams.empty,
     headers = Headers(),
-    cookies = Map.empty,
+    cookies = Map(),
     bodyOpt = None
   )
   val emptyRequest: TargetRequest = TargetRequest(

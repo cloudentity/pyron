@@ -12,6 +12,8 @@ import io.vertx.core.http.HttpMethod
 import scalaz.Scalaz._
 import scalaz._
 
+import scala.util.Try
+
 object RulesConfReader {
 
   // list of ServiceRulesConf matches rules.json schema
@@ -144,37 +146,41 @@ object RulesConfReader {
                       endpointConf: EndpointConf
                      ): ValidationNel[String, RuleConfWithPlugins] = {
 
+    import Validation.FlatMap._
     val requestPluginsConf = composeRequestPluginsConf(addresses, defaultConf, endpointConf)
-    val responsePluginConfs = composeResponsePluginsConf(addresses, defaultConf, endpointConf)
-    composeAndValidateRequiredFields(defaultConf.rule, endpointConf.rule).map { rf =>
-      val ruleConf = getRuleConf(defaultConf, endpointConf, rf)
-      RuleConfWithPlugins(ruleConf, requestPluginsConf, responsePluginConfs)
+    val responsePluginConf = composeResponsePluginsConf(addresses, defaultConf, endpointConf)
+    composeAndValidateRequiredFields(defaultConf.rule, endpointConf.rule) flatMap { rf =>
+      getRuleConf(defaultConf, endpointConf, rf).fold(
+        err => Validation.failureNel(err.toString),
+        ruleConf => Validation.success(RuleConfWithPlugins(ruleConf, requestPluginsConf, responsePluginConf))
+      )
     }
   }
 
-  private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields): RuleConf = {
+  private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields): Try[RuleConf] = {
     val pathPrefix = endpointConf.rule.pathPrefix.orElse(defaultConf.rule.pathPrefix).getOrElse(PathPrefix(""))
     val rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath)
-    val preparedRewrite = PreparedPathRewrite(
+    PreparedPathRewrite.prepare(
       inputPattern = rf.pathPattern.value,
       prefix = pathPrefix.value,
       outputPattern = rewritePath.map(_.value).getOrElse("")
-    )
-    RuleConf(
-      endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName),
-      criteria = EndpointMatchCriteria(rf.method, preparedRewrite),
-      target = rf.service,
-      dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true),
-      reroute = endpointConf.rule.reroute.orElse(defaultConf.rule.reroute).getOrElse(false),
-      rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod),
-      rewritePath = rewritePath,
-      copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite),
-      preserveHostHeader = endpointConf.rule.preserveHostHeader.orElse(defaultConf.rule.preserveHostHeader),
-      tags = endpointConf.rule.tags.orElse(defaultConf.rule.tags).getOrElse(Nil),
-      requestBody = endpointConf.rule.requestBody.orElse(defaultConf.rule.requestBody),
-      requestBodyMaxSize = endpointConf.rule.requestBodyMaxSize.orElse(defaultConf.rule.requestBodyMaxSize),
-      call = getCall(defaultConf, endpointConf),
-      ext = composeExtRuleConf(defaultConf, endpointConf)
+    ).map(preparedRewrite =>
+      RuleConf(
+        endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName),
+        criteria = EndpointMatchCriteria(rf.method, preparedRewrite),
+        target = rf.service,
+        dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true),
+        reroute = endpointConf.rule.reroute.orElse(defaultConf.rule.reroute).getOrElse(false),
+        rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod),
+        rewritePath = rewritePath,
+        copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite),
+        preserveHostHeader = endpointConf.rule.preserveHostHeader.orElse(defaultConf.rule.preserveHostHeader),
+        tags = endpointConf.rule.tags.orElse(defaultConf.rule.tags).getOrElse(Nil),
+        requestBody = endpointConf.rule.requestBody.orElse(defaultConf.rule.requestBody),
+        requestBodyMaxSize = endpointConf.rule.requestBodyMaxSize.orElse(defaultConf.rule.requestBodyMaxSize),
+        call = getCall(defaultConf, endpointConf),
+        ext = composeExtRuleConf(defaultConf, endpointConf)
+      )
     )
   }
 

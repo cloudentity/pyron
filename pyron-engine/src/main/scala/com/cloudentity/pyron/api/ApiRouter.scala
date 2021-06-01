@@ -35,7 +35,7 @@ object ApiRouter extends FutureConversions {
     val apiHandler = VertxEndpointClient.make(vertx, classOf[ApiHandler])
     router.route("/*").handler { ctx =>
       ctx.request().pause()
-      apiHandler.handle(conf.defaultRequestBodyMaxSize, ctx)
+      apiHandler.handle(conf, ctx)
     }
 
     router.errorHandler(500, ex => log.error("Unhandled exception", ex))

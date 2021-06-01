@@ -1,7 +1,10 @@
 {
   "registry:request-plugins": {
     "transform-request": {
-      "main": "com.cloudentity.pyron.plugin.impl.transformer.TransformRequestPlugin"
+      "main": "com.cloudentity.pyron.plugin.impl.transformer.TransformRequestPlugin",
+      "verticleConfig": {
+        "conf": "${PLUGIN_TRANSFORM_REQUEST_CONF_REF}"
+      }
     }
   }
 }

@@ -90,7 +90,7 @@ object HttpConversions {
       pathParams = pathParams,
       queryParams = toQueryParams(req.params()),
       headers = toHeaders(req.headers()),
-      cookies = req.cookieMap().asScala.toMap.mapValues(cookie => cookie.getValue),
+      cookies = req.cookieMap().asScala.toMap.mapValues(Cookie(_)),
       bodyOpt = bodyOpt
     )
   }

@@ -15,16 +15,19 @@ object Conf {
   val apiGroupsConfKey = "apiGroups"
   val rulesConfKey = "rules"
 
-  case class AppConf(port: Option[Int],
-                     serverVerticles: Option[Int],
-                     alivePath: Option[String],
-                     defaultProxyRules: Option[Json],
-                     defaultProxyRulesEnabled: Option[Boolean],
-                     docsEnabled: Option[Boolean],
-                     proxyHeaders: Option[ProxyHeaderConf],
-                     accessLog: Option[AccessLogGlobalConf],
-                     defaultRequestBodyMaxSize: Option[Kilobytes],
-                     openApi: Option[OpenApiConf])
+  case class AppConf(
+    port: Option[Int],
+    serverVerticles: Option[Int],
+    alivePath: Option[String],
+    defaultProxyRules: Option[Json],
+    defaultProxyRulesEnabled: Option[Boolean],
+    docsEnabled: Option[Boolean],
+    traceIdHeaderEnabled: Option[Boolean],
+    proxyHeaders: Option[ProxyHeaderConf],
+    accessLog: Option[AccessLogGlobalConf],
+    defaultRequestBodyMaxSize: Option[Kilobytes],
+    openApi: Option[OpenApiConf]
+  )
 
   case class OpenApiConf(enabled: Option[Boolean],
                          basePath: Option[String],

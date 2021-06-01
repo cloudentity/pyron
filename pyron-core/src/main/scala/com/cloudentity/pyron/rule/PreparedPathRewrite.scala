@@ -36,7 +36,7 @@ object PreparedPathRewrite {
       path.replace(s"{$paramName}", paramValue)
     }
 
-  def apply(inputPattern: String, prefix: String, outputPattern: String): PreparedPathRewrite = {
+  def prepare(inputPattern: String, prefix: String, outputPattern: String): Try[PreparedPathRewrite] = Try {
     val groupsCountPattern: String = getGroupsCountingPattern(inputPattern)
     val indexedParamNames: List[(String, Int)] = paramNamesWithGroupIndex(inputPattern, groupsCountPattern)
     val totalGroupCount = getCaptureGroupCount(groupsCountPattern) + indexedParamNames.size

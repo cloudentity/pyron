@@ -70,7 +70,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   override def apiGroupsChanged(groups: List[ApiGroup], confs: List[ApiGroupConf]): Unit =
     resetRulesAndSmartClients(groups)
 
-  def handle(defaultRequestBodyMaxSize: Option[Kilobytes], ctx: RoutingContext): VxFuture[Unit] = {
+  def handle(conf: Conf.AppConf, ctx: RoutingContext): VxFuture[Unit] = {
     val vertxRequest = ctx.request()
     val vertxResponse = ctx.response()
     val tracing: TracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
@@ -80,7 +80,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     log.trace(tracing, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
     VxFuture.succeededFuture(
-      getProgram(defaultRequestBodyMaxSize, ctx, tracing, requestSignature) map {
+      getProgram(conf.defaultRequestBodyMaxSize, ctx, tracing, requestSignature) map {
         case Some(apiResponse) => handleApiResponse(tracing, vertxResponse, apiResponse)
         case None => ()
       } recover { case ex: Throwable =>

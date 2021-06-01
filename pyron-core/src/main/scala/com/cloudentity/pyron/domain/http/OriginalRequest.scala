@@ -1,6 +1,7 @@
 package com.cloudentity.pyron.domain.http
 
 import com.cloudentity.pyron.domain.flow.PathParams
+import com.cloudentity.pyron.domain.http.Cookie.Cookies
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 
@@ -13,5 +14,5 @@ case class OriginalRequest(method: HttpMethod,
                            pathParams: PathParams,
                            queryParams: QueryParams,
                            headers: Headers,
-                           cookies: Map[String, String],
+                           cookies: Cookies,
                            bodyOpt: Option[Buffer])

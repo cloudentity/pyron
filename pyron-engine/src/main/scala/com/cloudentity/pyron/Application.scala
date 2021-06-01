@@ -54,7 +54,7 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   override def deployServer(): VxFuture[String] = {
     for {
       _          <- deployApiHandlers(appConf)
-      _          <- deployServerInstances(appConf, getServerVerticlesNum(appConf), Future.successful(""))
+      _          <- deployServerInstance(appConf)
       _          <- deployAdminServerIfConfigured()
       _          <- deployOpenApiEndpointIfEnabled(appConf)
     } yield ""
@@ -73,14 +73,13 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   // deploying ApiHandler per ApiServer
   private def deployApiHandlers(conf: AppConf): Future[Unit] =
     Future.sequence {
-      (0 until getServerVerticlesNum(conf)).map { _ =>
+      (0 until getApiHandlerVerticlesNum(conf)).map { _ =>
         deployVerticle(new ApiHandlerVerticle())
       }
     }.map(_ => ())
 
-  def deployServerInstances(conf: AppConf, instances: Int, acc: Future[String]): Future[String] =
-    if (instances > 0) deployServerInstances(conf, instances - 1, acc.flatMap(_ => deployVerticle(new ApiServer(conf))))
-    else               acc
+  def deployServerInstance(conf: AppConf): Future[String] =
+    deployVerticle(new ApiServer(conf))
 
   private def deployVerticle(verticle: Verticle): Future[String] = {
     log.debug(s"Deploying ${verticle.getClass.getName} verticle")
@@ -88,9 +87,9 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   }
 
   private def deployAdminServerIfConfigured(): Future[Unit] =
-    confService.getConf("apiServer").toScala().map(Option.apply).flatMap {
+    confService.getConf("adminServer").toScala().map(Option.apply).flatMap {
       case Some(_) =>
-        ApiServerDeployer.deployServer(vertx).map(()).toScala()
+        ApiServerDeployer.deployServer(vertx, "adminServer").map(()).toScala()
       case None    =>
         log.debug("Admin API server configuration missing, skipping deployment")
         Future.successful(())
@@ -104,9 +103,8 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       Future.successful(())
     }
 
-  def getServerVerticlesNum(conf: AppConf): Int =
-    conf.serverVerticles
-      .getOrElse(2 * Runtime.getRuntime.availableProcessors)
+  def getApiHandlerVerticlesNum(conf: AppConf): Int =
+    conf.serverVerticles.getOrElse(Runtime.getRuntime.availableProcessors)
 }
 
 object Application {

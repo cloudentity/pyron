@@ -9,18 +9,17 @@ import com.cloudentity.pyron.domain.flow.PathParams
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
-class PreparedRewriteTest extends WordSpec with MustMatchers {
+class PreparedPathRewriteTest extends WordSpec with MustMatchers {
 
   "PreparedPathRewrite" should {
     "fail to create prepared rewrite when pattern is not a valid regex pattern" in {
-      Try(PreparedPathRewrite("/pattern/with(unbalanced(parens)/should/{param}/fail", "/api", "/resources/{param}/{1}")).isFailure mustBe true
+      PreparedPathRewrite.prepare("/pattern/with(unbalanced(parens)/should/{param}/fail", "/api", "/resources/{param}/{1}").isFailure mustBe true
     }
     "succeed in creating prepared rewrite when pattern is a valid regex pattern" in {
-      val tryPreparedRewrite = Try(PreparedPathRewrite(
+      val tryPreparedRewrite = PreparedPathRewrite.prepare(
         "/pattern/with(balanced(parens))/should/{one}/be/{two}/ok/{two}",
         "/api",
         "/resources/{two}/{one}/{1}")
-      )
       tryPreparedRewrite.isSuccess mustBe true
       val preparedRewrite = tryPreparedRewrite.get
       preparedRewrite.matchPattern mustBe "/pattern/with(balanced(parens))/should/([^/]+)/be/([^/]+)/ok/\\4"
@@ -138,24 +137,26 @@ class PreparedRewriteTest extends WordSpec with MustMatchers {
   }
 
   "produce rewritten path with resolved params, captured by the matching pattern" in {
-    val preparedRewrite = PreparedPathRewrite(
+    val preparedRewriteOpt = PreparedPathRewrite.prepare(
       "/pattern/with_(balanced_(parens))/should/{one}/be/{two}/ok/{two}",
       "/api",
-      "/resources/{two}/{one}/{1}")
+      "/resources/{two}/{one}/{1}").toOption
 
     val result = for {
+      preparedRewrite <- preparedRewriteOpt
       regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/DOS")
     } yield rewritePath(preparedRewrite.rewritePattern, regexMatch)
     result mustBe Some("/resources/DOS/UNO/balanced_parens")
   }
 
   "not produce rewritten path when the pattern does not match" in {
-    val preparedRewrite = PreparedPathRewrite(
+    val preparedRewriteOpt = PreparedPathRewrite.prepare(
       "/pattern/with_(balanced_(parens))/should/{one}/be/{two}/ok/{two}",
       "/api",
-      "/resources/{two}/{one}/{1}")
+      "/resources/{two}/{one}/{1}").toOption
 
     val result = for {
+      preparedRewrite <- preparedRewriteOpt
       regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/TRES")
     } yield rewritePath(preparedRewrite.rewritePattern, regexMatch)
     result mustBe None
