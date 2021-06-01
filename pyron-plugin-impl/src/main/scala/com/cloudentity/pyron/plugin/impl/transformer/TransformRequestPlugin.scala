@@ -30,8 +30,19 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
 
   var verticleConf: TransformRequestPluginVerticleConf = _
 
-  override def initService(): Unit =
+  override def initService(): Unit = {
+    // if PLUGIN_TRANSFORM_REQUEST_CONF_REF in plugin/transform-request.json is not set
+    // then verticleConfig.conf gets resolved to empty string "" which cause deserialization issues
+    // below Decoder[Option[JsonObject]] treats empty string as None
+    implicit val confDecoder: Decoder[Option[JsonObject]] =
+      Decoder.decodeOption[JsonObject].or {
+        Decoder.decodeString.emap {
+          case "" => Right(None)
+          case x => Left("could not decode optional JsonObject")
+        }
+      }
     verticleConf = decodeConfigUnsafe(deriveDecoder[TransformRequestPluginVerticleConf])
+  }
 
   override def apply(ctx: RequestCtx, conf: TransformerConf): Future[RequestCtx] = Future.successful {
     val jsonBodyOpt = parseJsonBodyIfRequired(ctx, conf)
