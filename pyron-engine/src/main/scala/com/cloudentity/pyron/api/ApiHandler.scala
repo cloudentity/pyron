@@ -186,7 +186,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
 
   def callTarget(tracing: TracingContext, ctx: RequestCtx, callOpts: Option[CallOpts]): Future[(ApiResponse, Boolean)] =
-    targetClient.call(tracing, ctx.request, ctx.bodyStreamOpt, callOpts).map {
+    targetClient.call(tracing, ctx.targetRequest, ctx.bodyStreamOpt, callOpts).map {
       case \/-(response) => (toApiResponse(response), false)
       case -\/(ex)       => (mapTargetClientException(tracing, ex), true)
     }
@@ -198,13 +198,20 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   }
 
   def toResponseCtx(requestCtx: RequestCtx, targetCallFailed: Boolean, response: ApiResponse): ResponseCtx = {
-    val targetResponse = if (requestCtx.isAborted() || targetCallFailed) None else Some(response)
+    val targetResponse = if (requestCtx.isAborted || targetCallFailed) None else Some(response)
     val failed         = if (targetCallFailed) Some(CallFailure) else requestCtx.failed
 
     ResponseCtx(
+      response,
       targetResponse,
-      response, requestCtx.request, requestCtx.original, requestCtx.tracingCtx,
-      requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined, failed
+      requestCtx.targetRequest,
+      requestCtx.originalRequest,
+      requestCtx.properties,
+      requestCtx.authnCtx,
+      requestCtx.tracingCtx,
+      requestCtx.accessLog,
+      requestCtx.aborted,
+      failed
     )
   }
 
@@ -401,13 +408,13 @@ object HttpConversions {
         else targetRequest
 
       RequestCtx(
-        tracingCtx = tracingCtx,
-        request = targetRequestWithDroppedBody,
+        targetRequest = targetRequestWithDroppedBody,
+        originalRequest = original,
         bodyStreamOpt = bodyStreamOpt,
-        original = original,
         proxyHeaders = proxyHeaders,
         properties = Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup),
         authnCtx = AuthnCtx(),
+        tracingCtx = tracingCtx,
         aborted = None
       )
     }

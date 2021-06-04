@@ -28,7 +28,7 @@ object PluginFunctions {
     val initial = Future.successful(responseCtx)
     plugins.foldLeft(initial) { (future, plugin) =>
       future.flatMap { ctx =>
-        plugin.apply(ctx).recover { case ex => ctx.copy(failed = Some(ResponsePluginFailure), response = recoveredResponse(ex)) }
+        plugin.apply(ctx).recover { case ex => ctx.copy(response = recoveredResponse(ex), failed = Some(ResponsePluginFailure)) }
       }
     }
   }

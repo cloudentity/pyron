@@ -172,8 +172,8 @@ object BruteForceIdentifierReader {
         ValueResolver.resolveString(ctx, emptyConf, valueOrRef)
       case DeprecatedIdentifierSource(location, name) =>
         location match {
-          case BodyIdentifier   => readIdentifierFromBody(ctx.request, name)
-          case HeaderIdentifier => ctx.request.headers.get(name)
+          case BodyIdentifier   => readIdentifierFromBody(ctx.targetRequest, name)
+          case HeaderIdentifier => ctx.targetRequest.headers.get(name)
         }
     }
 

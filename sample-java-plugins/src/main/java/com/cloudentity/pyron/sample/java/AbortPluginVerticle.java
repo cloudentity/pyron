@@ -13,8 +13,6 @@ import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
 import scala.Option;
 
-import java.util.HashMap;
-
 public class AbortPluginVerticle extends JavaRequestPluginVerticle {
   SmartHttpClient client;
 
@@ -34,7 +32,7 @@ public class AbortPluginVerticle extends JavaRequestPluginVerticle {
   public Future<RequestCtx> applyJava(RequestCtx requestCtx, JsonObject conf) {
     String path = getConfig().getString("path");
     String header = conf.getString("header");
-    Option<String> valueOpt = requestCtx.request().headers().get(header);
+    Option<String> valueOpt = requestCtx.targetRequest().headers().get(header);
 
     if (valueOpt.isDefined()) {
       return client.get(path).putHeader(header, valueOpt.get()).end().map((HttpClientResponse response) -> {

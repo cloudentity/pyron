@@ -56,7 +56,7 @@ class AcpAuthzPlugin extends RequestPluginVerticle[Unit] {
   override def apply(requestCtx: RequestCtx, conf: Unit): Future[RequestCtx] =
     requestCtx.properties.get[ApiGroup](ApiGroup.propertiesKey) match {
       case Some(group) =>
-        val originalReq = requestCtx.original
+        val originalReq = requestCtx.originalRequest
         val endpointPath = originalReq.path.value.drop(group.matchCriteria.basePath.map(_.value.length).getOrElse(0))
 
         val authzReq =

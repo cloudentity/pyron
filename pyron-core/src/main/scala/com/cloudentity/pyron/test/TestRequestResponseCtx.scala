@@ -28,26 +28,26 @@ trait TestRequestResponseCtx {
     bodyOpt = None
   )
   val emptyRequestCtx: RequestCtx = RequestCtx(
-    request = emptyRequest,
+    targetRequest = emptyRequest,
+    originalRequest = emptyOriginal,
     bodyStreamOpt = None,
-    original = emptyOriginal,
-    properties = Properties(),
-    tracingCtx = TracingContext.dummy(),
     proxyHeaders = ProxyHeaders(headers = Map(), trueClientIp = ""),
+    properties = Properties(),
     authnCtx = AuthnCtx(),
+    tracingCtx = TracingContext.dummy(),
     accessLog = AccessLogItems()
   )
 
   val emptyResponse: ApiResponse = ApiResponse(200, Buffer.buffer(), Headers())
   val emptyResponseCtx: ResponseCtx = ResponseCtx(
-    targetResponse = Some(emptyResponse),
     response = emptyResponse,
-    request = emptyRequest,
+    targetResponse = Some(emptyResponse),
+    targetRequest = emptyRequest,
     originalRequest = emptyOriginal,
-    tracingCtx = TracingContext.dummy(),
     properties = Properties(),
     authnCtx = AuthnCtx(),
+    tracingCtx = TracingContext.dummy(),
     accessLog = AccessLogItems(),
-    requestAborted = false
+    aborted = None
   )
 }

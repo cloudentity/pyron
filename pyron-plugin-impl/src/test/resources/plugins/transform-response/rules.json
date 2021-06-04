@@ -1,0 +1,427 @@
+{
+  "env": {
+    "PLUGIN_TRANSFORM_REQUEST_CONF_REF": "$ref:transform-response-conf"
+  },
+  "transform-response-conf": {
+    "param": "value"
+  },
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "POST",
+          "pathPattern": "/fixed-body",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "value"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/body-from-path-param/{param}",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$pathParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/body-from-query-param",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$queryParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/body-from-cookie",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$cookies.userUuid"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/body-from-conf",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$conf.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/body-dropped",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "drop": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/fixed-header",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "value"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-path-param/{param}",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$pathParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-query-param",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$queryParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-cookie",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$cookies.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-conf",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$conf.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/header-from-body",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$body.h"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-find-multiple-params-in-pattern-and-reorder-them-in-input",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{transactionId}/swift.{swiftId}",
+                      "output": "{swiftId}.{transactionId}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-requires-pattern-matching-on-entire-value",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{id}",
+                      "output": "{id}"
+                    },
+                    "X-Env": {
+                      "path": "$body.scp",
+                      "pattern": "env.{id}.suffix",
+                      "output": "{id}"
+                    },
+                    "X-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "payment.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-will-obtain-all-the-values-matching-the-pattern",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Env": {
+                      "path": "$body.scp",
+                      "pattern": "env.{envId}",
+                      "output": "{envId}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-match-regex-special-chars-literally",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "(payment).is$ok[{id}]?",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-match-literal-curly-braces",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Client": {
+                      "path": "$body.scp",
+                      "pattern": "customer-{{{id}}}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-use-pattern-parameters-with-defined-size",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Account": {
+                      "path": "$body.scp",
+                      "pattern": "account-{countryCode:0:3}{a:4}-{b:4}-{c:4}-{d:4}",
+                      "output": "{countryCode}:{a}{b}{c}{d}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-use-fixed-mapping-for-non-array-values",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-DSKey": {
+                      "path": "$body.groups",
+                      "pattern": "admin",
+                      "output": "elevated"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-use-dyn-mapping-for-non-array-values",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Env": {
+                      "path": "$body.env",
+                      "pattern": "env.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-with-multiple-transformations",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Scope": {
+                      "path": "$body.groups",
+                      "pattern": "admin",
+                      "output": "elevated"
+                    },
+                    "X-Client": {
+                      "path": "$body.scp",
+                      "pattern": "customer-{{{id}}}_swift_{swift}",
+                      "output": "{swift}.{id}"
+                    },
+                    "X-Env": {
+                      "path": "$body.scp",
+                      "pattern": "env.({num})",
+                      "output": "{num}"
+                    },
+                    "X-SCP-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "payment.[{id}]",
+                      "output": "{id}"
+                    },
+                    "X-SCP-Transfer": {
+                      "path": "$body.scp",
+                      "pattern": "transfer.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
