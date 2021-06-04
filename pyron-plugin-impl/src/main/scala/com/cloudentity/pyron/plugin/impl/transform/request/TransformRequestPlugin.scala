@@ -84,17 +84,3 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
   override def convertOpenApi(openApi: Swagger, rule: OpenApiRule, conf: TransformerConf): ConvertOpenApiResponse =
     TransformRequestOpenApiConverter.convertOpenApi(openApi, rule, conf)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

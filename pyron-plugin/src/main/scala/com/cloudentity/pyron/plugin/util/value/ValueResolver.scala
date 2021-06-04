@@ -89,23 +89,23 @@ object ValueResolver {
                   confValues: JsonObject,
                   valueOrRef: ValueOrRef): Option[JsonValue] = {
     valueOrRef match {
-      case Value(value) => Some(circeJsonToJsonValue(value))
-      case HostRef => resolveHost(ctx.origReq).map(StringJsonValue)
-      case HostNameRef => resolveHostName(ctx.origReq).map(StringJsonValue)
-      case HostPortRef => resolveHostPort(ctx.origReq).map(StringJsonValue)
-      case SchemeRef => resolveScheme(ctx.origReq).map(StringJsonValue)
-      case RemoteHostRef => resolveRemoteHost(ctx.origReq).map(StringJsonValue)
-      case LocalHostRef => resolveLocalHost(ctx.origReq).map(StringJsonValue)
-      case BodyRef(path) => resolveBody(bodyOpt, path)
-      case PathParamRef(param) => resolvePathParam(ctx.tgtReq, param).map(StringJsonValue)
-      case QueryParamRef(param) => resolveQueryParam(ctx.tgtReq, param) // array of all query param values
-        .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
-      case CookieRef(cookie) => resolveCookie(ctx.origReq, cookie).map(StringJsonValue)
-      case AuthnRef(path) => extractAuthnCtxAttribute(ctx.authnCtx, path)
+      case Value(value)                          => Some(circeJsonToJsonValue(value))
+      case HostRef                               => resolveHost(ctx.origReq).map(StringJsonValue)
+      case HostNameRef                           => resolveHostName(ctx.origReq).map(StringJsonValue)
+      case HostPortRef                           => resolveHostPort(ctx.origReq).map(StringJsonValue)
+      case SchemeRef                             => resolveScheme(ctx.origReq).map(StringJsonValue)
+      case RemoteHostRef                         => resolveRemoteHost(ctx.origReq).map(StringJsonValue)
+      case LocalHostRef                          => resolveLocalHost(ctx.origReq).map(StringJsonValue)
+      case BodyRef(path)                         => resolveBody(bodyOpt, path)
+      case PathParamRef(param)                   => resolvePathParam(ctx.tgtReq, param).map(StringJsonValue)
+      case QueryParamRef(param)                  => resolveQueryParam(ctx.tgtReq, param) // array of all query param values
+                                                      .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
+      case CookieRef(cookie)                     => resolveCookie(ctx.origReq, cookie).map(StringJsonValue)
+      case AuthnRef(path)                        => extractAuthnCtxAttribute(ctx.authnCtx, path)
       case HeaderRef(header, FirstHeaderRefType) => ctx.headers.get(header).map(StringJsonValue) // first header value
-      case HeaderRef(header, AllHeaderRefType) => ctx.headers.getValues(header) // array of all header values
-        .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
-      case ConfRef(path) => extractJsonObjectAttribute(confValues, path)
+      case HeaderRef(header, AllHeaderRefType)   => ctx.headers.getValues(header) // array of all header values
+                                                      .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
+      case ConfRef(path)                         => extractJsonObjectAttribute(confValues, path)
     }
   }
 
