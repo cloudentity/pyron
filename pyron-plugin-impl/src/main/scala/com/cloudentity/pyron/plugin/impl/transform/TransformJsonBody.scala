@@ -2,6 +2,7 @@ package com.cloudentity.pyron.plugin.impl.transform
 
 import com.cloudentity.pyron.domain.flow.{RequestCtx, ResponseCtx}
 import com.cloudentity.pyron.plugin.util.value._
+import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.json.JsonObject
 
@@ -19,12 +20,13 @@ object TransformJsonBody {
         ctx
     }
 
-  def transformResJsonBody(bodyOps: ResolvedBodyOps)(ctx: ResponseCtx): ResponseCtx = {
-    if (ctx.isFailed) { // do not transform a failed response
-      ctx
-    } else {
-      val transformedBody = applyBodyTransformations(bodyOps, ctx.response.body.toJsonObject)
-      ctx.modifyResponse(_.copy(body = transformedBody))
+  def transformResJsonBody(bodyOps: ResolvedBodyOps, jsonBodyOpt: Option[JsonObject])(ctx: ResponseCtx): ResponseCtx = {
+    jsonBodyOpt match {
+      case Some(jsonBody) if !ctx.isFailed => // do not transform a failed response
+        val transformedBody = applyBodyTransformations(bodyOps, jsonBody.copy())
+        ctx.modifyResponse(_.copy(body = transformedBody))
+      case None =>
+        ctx
     }
   }
 

@@ -3,7 +3,7 @@ package com.cloudentity.pyron.plugin.impl.transform.response
 import com.cloudentity.pyron.domain.flow.{PluginName, ResponseCtx}
 import com.cloudentity.pyron.plugin.config.{ValidateOk, ValidateResponse}
 import com.cloudentity.pyron.plugin.impl.transform.TransformHeaders.transformResHeaders
-import com.cloudentity.pyron.plugin.impl.transform.TransformJsonBody.transformResJsonBody
+import com.cloudentity.pyron.plugin.impl.transform.TransformJsonBody.{transformReqJsonBody, transformResJsonBody}
 import com.cloudentity.pyron.plugin.impl.transform._
 import com.cloudentity.pyron.plugin.util.value.ValueResolver
 import com.cloudentity.pyron.plugin.verticle.ResponsePluginVerticle
@@ -25,9 +25,9 @@ class TransformResponsePlugin  extends ResponsePluginVerticle[TransformerConf] {
     verticleConf = decodeConfigUnsafe(deriveDecoder[TransformResponsePluginVerticleConf])
 
   override def apply(ctx: ResponseCtx, conf: TransformerConf): Future[ResponseCtx] = Future.successful {
-    val jsonBodyOpt = parseJsonBodyIfRequired(ctx, conf)
+    val jsonBodyOpt: Option[JsonObject] = parseJsonBodyIfRequired(ctx, conf)
     ctx |>
-      transformResJsonBody(resolveBodyOps(ctx, conf.body, jsonBodyOpt)) |>
+      transformResJsonBody(resolveBodyOps(ctx, conf.body, jsonBodyOpt), jsonBodyOpt) |>
       transformResHeaders(resolveHeaderOps(ctx, conf.headers, jsonBodyOpt))
   }
 
