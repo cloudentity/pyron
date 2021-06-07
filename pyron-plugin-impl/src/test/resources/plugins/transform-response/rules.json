@@ -3,7 +3,7 @@
     "PLUGIN_TRANSFORM_RESPONSE_CONF_REF": "$ref:transform-response-conf"
   },
   "transform-response-conf": {
-    "param": "value"
+    "param": "confParamValue"
   },
   "rules": [
     {
@@ -14,6 +14,70 @@
       "endpoints": [
         {
           "method": "GET",
+          "pathPattern": "/body-from-path-param/{param}",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$pathParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/body-from-query-param",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$queryParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/body-from-cookie",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$cookies.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/body-from-conf",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$conf.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "pathPattern": "/fixed-header",
           "responsePlugins": [
             {
@@ -21,7 +85,103 @@
               "conf": {
                 "headers": {
                   "set": {
-                    "H": "new-value"
+                    "H": "value"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-different-response-header",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$headers.userUuid"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-path-param/{param}",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$pathParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-query-param",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$queryParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-cookie",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$cookies.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-response-body",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$body.h"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-conf",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$conf.param"
                   }
                 }
               }
