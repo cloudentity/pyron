@@ -187,6 +187,79 @@
               }
             }
           ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-find-multiple-params-in-pattern-and-reorder-them-in-input",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{transactionId}/swift.{swiftId}",
+                      "output": "{swiftId}.{transactionId}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-requires-pattern-matching-on-entire-value",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{id}",
+                      "output": "{id}"
+                    },
+                    "X-Env": {
+                      "path": "$body.scp",
+                      "pattern": "env.{id}.suffix",
+                      "output": "{id}"
+                    },
+                    "X-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "payment.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-will-obtain-all-the-values-matching-the-pattern",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Id": {
+                      "path": "$body.scp",
+                      "pattern": "id.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
         }
       ]
     }
