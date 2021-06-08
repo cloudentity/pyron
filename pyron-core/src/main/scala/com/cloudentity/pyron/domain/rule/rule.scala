@@ -22,6 +22,7 @@ case class RuleConf(
   dropPathPrefix: Boolean,
   rewriteMethod: Option[RewriteMethod],
   rewritePath: Option[RewritePath],
+  reroute: Option[Boolean],
   copyQueryOnRewrite: Option[Boolean],
   preserveHostHeader: Option[Boolean],
   tags: List[String],

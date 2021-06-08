@@ -61,6 +61,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       dropPathPrefix = true,
       rewriteMethod = None,
       rewritePath = None,
+      reroute = None,
       copyQueryOnRewrite = None,
       preserveHostHeader = None,
       tags = Nil,

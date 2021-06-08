@@ -1,5 +1,6 @@
 package com.cloudentity.pyron.api
 
+import com.cloudentity.pyron.api.ApiRequestHandler.RuleWithPathParams
 import com.cloudentity.pyron.api.Responses.Errors
 import com.cloudentity.pyron.api.body.{BodyBuffer, BodyLimit, RequestBodyTooLargeException, SizeLimitedBodyStream}
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
@@ -22,7 +23,7 @@ import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.config.ConfigChange
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.ReplyException
-import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
+import io.vertx.core.http.{HttpMethod, HttpServerRequest, HttpServerResponse}
 import io.vertx.core.streams.ReadStream
 import io.vertx.core.{MultiMap, http, Future => VxFuture}
 import io.vertx.ext.web.RoutingContext
@@ -49,6 +50,8 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   var targetClient: TargetClient = _
   var apiGroups: List[ApiGroup] = List()
   var rulesStore: RulesStore = _
+
+  case class MatchData(hostOpt: Option[String], method: HttpMethod, pathOpt: Option[String])
 
   override def initServiceAsyncS(): Future[Unit] = {
     registerConfChangeConsumer(onSmartClientsChanged)
@@ -82,47 +85,53 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     val vertxRequest   = ctx.request()
     val vertxResponse  = ctx.response()
     val tracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
+    val proxyHeaders   = getProxyHeaders(ctx)
 
     val requestSignature = Option(vertxRequest.host()) match {
       case Some(_) => s"${vertxRequest.method()} ${vertxRequest.uri()}"
       case None => s"${vertxRequest.method()} ${vertxRequest.absoluteURI()}"
     }
-    log.debug(tracingContext, s"Received request: $requestSignature")
     log.trace(tracingContext, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
-    val matchOpt =
+    def matchOpt(input: MatchData): Option[(ApiGroup, RuleWithPathParams)] =
       for {
-        apiGroup             <- findMatchingApiGroup(apiGroups, vertxRequest)
-        ruleWithPathParams   <- findMatchingRule(apiGroup, vertxRequest)
+        apiGroup             <- findMatchingApiGroup(apiGroups, input.hostOpt, input.pathOpt)
+        ruleWithPathParams   <- findMatchingRule(apiGroup, input.method, input.pathOpt)
       } yield (apiGroup, ruleWithPathParams)
 
-    val program: Future[ApiResponse] =
-      matchOpt match {
-        case None =>
-          Future.successful(Errors.ruleNotFound.toApiResponse())
+    def reroute(rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], finalRequestCtx: RequestCtx) = {
+      val matchData =
+        MatchData(
+          hostOpt = Option(vertxRequest.host()),
+          method = rewriteMethod.map(_.value).getOrElse(vertxRequest.method()),
+          pathOpt = rewritePath.map(_.value).orElse(Option(vertxRequest.path()))
+        )
 
+      matchOpt(matchData) match {
+        case None =>
+          Future.successful(Errors.ruleNotFound.toApiResponse(), true)
         case Some((apiGroup, ruleWithPathParams)) =>
           val rule = ruleWithPathParams.rule
           val pathParams = ruleWithPathParams.params
-          val proxyHeaders = getProxyHeaders(ctx)
+          val newOriginal = finalRequestCtx.original.copy(pathParams = pathParams, method = matchData.method, path = matchData.pathOpt.map(UriPath(_)).getOrElse(finalRequestCtx.original.path))
+          val rerouted = finalRequestCtx.modifyRequest { r =>
+            r.copy(method = rule.conf.rewriteMethod.map(_.value).getOrElse(r.method),
+              uri = chooseRelativeUri(tracingContext, apiGroup.matchCriteria.basePath.getOrElse(BasePath("")), rule.conf, newOriginal))
+          }
+          flow(ruleWithPathParams, Future.successful(rerouted)).map((_, false))
+      }
+    }
+
+    def flow(ruleWithPathParams: RuleWithPathParams, requestCtxFut: Future[RequestCtx]): Future[ApiResponse] = {
+        val rule = ruleWithPathParams.rule
 
           ApiRequestHandler.setRule(ctx, rule)
           setTracingOperationName(ctx, rule)
 
           log.debug(tracingContext, s"Found ${ruleWithPathParams.rule} for, request='$requestSignature'")
-          val defaultRequestBodyMaxSize = conf.defaultRequestBodyMaxSize
 
           for {
-
-            initRequestCtx <- toRequestCtx(
-              defaultRequestBodyMaxSize,
-              ctx,
-              tracingContext,
-              proxyHeaders,
-              rule.conf,
-              apiGroup,
-              pathParams
-            )
+            initRequestCtx <- requestCtxFut
 
             finalRequestCtx <- applyRequestPlugins(
               initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)),
@@ -138,7 +147,9 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
 
             (initResponse, fail) <- finalRequestCtx.aborted match {
                                       case None =>
-                                        callTarget(tracingContext, finalRequestCtx, rule.conf.call)
+                                        if (!rule.conf.reroute.getOrElse(false))
+                                          callTarget(tracingContext, finalRequestCtx, rule.conf.call)
+                                        else reroute(rule.conf.rewriteMethod, rule.conf.rewritePath, finalRequestCtx)
                                       case Some(response) =>
                                         Future.successful((response, false))
                                     }
@@ -150,6 +161,27 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
             _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalResponseCtx.accessLog)
             _                     = ApiRequestHandler.addProperties(ctx, finalResponseCtx.properties)
           } yield finalResponseCtx.response
+      }
+
+    val matchData = MatchData(Option(vertxRequest.host()), vertxRequest.method(), Option(vertxRequest.path()))
+
+    val program: Future[ApiResponse] =
+      matchOpt(matchData) match {
+        case None =>
+          Future.successful(Errors.ruleNotFound.toApiResponse())
+        case Some((apiGroup, ruleWithPathParams)) =>
+          val initRequestCtx =
+            toRequestCtx(
+              conf.defaultRequestBodyMaxSize,
+              ctx,
+              tracingContext,
+              proxyHeaders,
+              ruleWithPathParams.rule.conf,
+              apiGroup,
+              ruleWithPathParams.params
+            )
+
+          flow(ruleWithPathParams, initRequestCtx)
       }
 
     program.onComplete { result =>
@@ -242,20 +274,20 @@ object ApiRequestHandler {
 
   case class RuleWithPathParams(rule: Rule, params: PathParams)
 
-  def findMatchingApiGroup(apiGroups: List[ApiGroup], vertxRequest: HttpServerRequest): Option[ApiGroup] =
+  def findMatchingApiGroup(apiGroups: List[ApiGroup], hostOpt: Option[String], pathOpt: Option[String]): Option[ApiGroup] =
     apiGroups.find { group =>
-      ApiGroupMatcher.makeMatch(Option(vertxRequest.host()), Option(vertxRequest.path()).getOrElse(""), group.matchCriteria)
+      ApiGroupMatcher.makeMatch(hostOpt, pathOpt.getOrElse(""), group.matchCriteria)
     }
 
 
-  def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithPathParams] = {
+  def findMatchingRule(apiGroup: ApiGroup, method: HttpMethod, pathOpt: Option[String]): Option[RuleWithPathParams] = {
     @tailrec
     def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithPathParams] =
       rules match {
         case rule :: tail =>
           val criteria = rule.conf.criteria
-          val path = Option(vertxRequest.path()).getOrElse("")
-          RuleMatcher.makeMatch(vertxRequest.method(), path, basePath, criteria) match {
+          val path = pathOpt.getOrElse("")
+          RuleMatcher.makeMatch(method, path, basePath, criteria) match {
             case Match(rewrite) => Some(RuleWithPathParams(rule, rewrite.pathParams))
             case NoMatch => loop(basePath, tail)
           }

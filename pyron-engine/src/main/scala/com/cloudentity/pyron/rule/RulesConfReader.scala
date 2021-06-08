@@ -40,6 +40,7 @@ object RulesConfReader {
                           pathPattern: Option[PathPattern],
                           rewritePath: Option[RewritePath],
                           rewriteMethod: Option[RewriteMethod],
+                          reroute: Option[Boolean],
                           copyQueryOnRewrite: Option[Boolean],
                           preserveHostHeader: Option[Boolean],
                           pathPrefix: Option[PathPrefix],
@@ -54,7 +55,7 @@ object RulesConfReader {
                           ext: Option[ExtRuleConf]
                         )
 
-  val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+  val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
   sealed trait ReadRulesError
   case class RuleDecodingError(ex: Throwable) extends ReadRulesError
@@ -171,6 +172,7 @@ object RulesConfReader {
         dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true),
         rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod),
         rewritePath = rewritePath,
+        reroute = endpointConf.rule.reroute.orElse(defaultConf.rule.reroute),
         copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite),
         preserveHostHeader = endpointConf.rule.preserveHostHeader.orElse(defaultConf.rule.preserveHostHeader),
         tags = endpointConf.rule.tags.orElse(defaultConf.rule.tags).getOrElse(Nil),
