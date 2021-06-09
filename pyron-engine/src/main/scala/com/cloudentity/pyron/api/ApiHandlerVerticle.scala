@@ -3,7 +3,7 @@ package com.cloudentity.pyron.api
 import com.cloudentity.pyron.api.HttpConversions.toRequestCtx
 import com.cloudentity.pyron.api.ProxyHeadersHandler.getProxyHeaders
 import com.cloudentity.pyron.api.Responses.Errors
-import com.cloudentity.pyron.api.RoutingCtxData.{getFlowState, ruleCount}
+import com.cloudentity.pyron.api.RoutingCtxData.getFlowState
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
 import com.cloudentity.pyron.client.TargetClient
 import com.cloudentity.pyron.config.Conf
@@ -101,38 +101,25 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       case None => Future.successful(Some(Errors.ruleNotFound.toApiResponse()))
       case Some((appliedRule@AppliedRule(rule, rewrite), apiGroup)) =>
         log.debug(tracing, s"Found $rule for, request='$requestSignature'")
-        val isFirstOrOnlyPass = ruleCount(ctx) == 0
-        if (isFirstOrOnlyPass) setTracingOperationName(ctx, rule)
+        setTracingOperationName(ctx, rule)
         addRule(ctx, rule)
-        rerouteOrFinish(ctx, tracing, appliedRule, apiGroup, maxBodySize)
+        finish(ctx, tracing, appliedRule, apiGroup, maxBodySize)
     }
   }
 
-  private def rerouteOrFinish(ctx: RoutingContext,
-                              tracing: TracingContext,
-                              appliedRule: AppliedRule,
-                              apiGroup: ApiGroup,
-                              maxBodySize: Option[Kilobytes]
-                             ): Future[Option[ApiResponse]] = {
+  private def finish(ctx: RoutingContext,
+                     tracing: TracingContext,
+                     appliedRule: AppliedRule,
+                     apiGroup: ApiGroup,
+                     maxBodySize: Option[Kilobytes]): Future[Option[ApiResponse]] = {
     val AppliedRule(rule, rewrite) = appliedRule
-    if (rule.conf.reroute) {
-      reroute(ctx, appliedRule)
-      Future.successful(None)
-    } else {
-      val proxyHeaders = getProxyHeaders(ctx).getOrElse(ProxyHeaders(Map(), ""))
-      for {
-        finalRequestCtx <- makeRequestCtx(ctx, tracing, proxyHeaders, rule, apiGroup, rewrite, maxBodySize)
-        _ = setupRoutingCtxRequest(ctx, finalRequestCtx)
-        finalResponseCtx <- makeResponseCtx(ctx, finalRequestCtx, tracing, rule)
-        _ = setupRoutingCtxResponse(ctx, finalResponseCtx)
-      } yield Some(finalResponseCtx.response)
-    }
-  }
-
-  def reroute(ctx: RoutingContext, appliedRule: AppliedRule): Unit = {
-    appliedRule.rule.conf.rewriteMethod.fold {
-      ctx.reroute(appliedRule.appliedRewrite.targetPath)
-    } { method => ctx.reroute(method.value, appliedRule.appliedRewrite.targetPath) }
+    val proxyHeaders = getProxyHeaders(ctx).getOrElse(ProxyHeaders(Map(), ""))
+    for {
+      finalRequestCtx <- makeRequestCtx(ctx, tracing, proxyHeaders, rule, apiGroup, rewrite, maxBodySize)
+      _ = setupRoutingCtxRequest(ctx, finalRequestCtx)
+      finalResponseCtx <- makeResponseCtx(ctx, finalRequestCtx, tracing, rule)
+      _ = setupRoutingCtxResponse(ctx, finalResponseCtx)
+    } yield Some(finalResponseCtx.response)
   }
 
   def makeRequestCtx(ctx: RoutingContext,

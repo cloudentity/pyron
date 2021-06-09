@@ -233,7 +233,6 @@ class RequestPluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wit
     pathPattern = PathPattern("/x"),
     pathPrefix = PathPrefix(""),
     dropPathPrefix = false,
-    reroute = false,
     rewriteMethod = None,
     rewritePath = None,
     plugins = Nil,

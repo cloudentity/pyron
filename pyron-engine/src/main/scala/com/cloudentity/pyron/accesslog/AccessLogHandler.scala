@@ -138,7 +138,6 @@ object AccessLogHandler extends AccessLogHelper {
         case Some(DiscoverableServiceRule(name))    => (Some(name), None, None)
         case Some(StaticServiceRule(host, port, _)) => (None, Some(host), Some(port))
         case Some(ProxyServiceRule)                 => (None, None, None)
-        case Some(RerouteServiceRule(_))            => (None, None, None)
         case None                                   => (None, None, None)
       }
 

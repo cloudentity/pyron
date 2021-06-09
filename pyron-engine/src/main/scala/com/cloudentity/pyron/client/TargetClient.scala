@@ -117,8 +117,6 @@ class TargetClient(tracing: TracingManager,
         callStaticService(ctx, location, requestWithTracingHeaders, bodyStreamOpt, callOpts)
       case DiscoverableService(serviceName) =>
         callDiscoverableService(ctx, serviceName, requestWithTracingHeaders, bodyStreamOpt, callOpts)
-      case RerouteService(rewritePath) =>
-        Future.failed(new Exception(s"RerouteService cannot be called directly: $rewritePath"))
     }
 
     onCallComplete(childCtx, responseFuture)
@@ -141,7 +139,6 @@ class TargetClient(tracing: TracingManager,
   private def getOperationName(request: TargetRequest): String = request.service match {
     case StaticService(host, port, _) => s"${host.value}:$port"
     case DiscoverableService(serviceName) => serviceName.value
-    case RerouteService(rewritePath) => s"reroute:${rewritePath.value}"
   }
 
   private def onCallComplete(ctx: TracingContext, responseFuture: Future[Throwable \/ TargetResponse]): Unit = {

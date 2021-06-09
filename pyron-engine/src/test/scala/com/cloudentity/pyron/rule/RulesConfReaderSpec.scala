@@ -30,7 +30,6 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     pathPrefix = Some(PathPrefix("pathPrefix")),
     method = Some(HttpMethod.GET),
     dropPrefix = Some(true),
-    reroute = Some(false),
     requestPlugins = None,
     responsePlugins = None,
     tags = None,
@@ -54,7 +53,6 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
     pathPrefix = Some(PathPrefix("pathPrefix2")),
     method = Some(HttpMethod.POST),
     dropPrefix = Some(false),
-    reroute = Some(false),
     requestPlugins = None,
     responsePlugins = None,
     tags = None,
@@ -70,7 +68,7 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
   "RulesConfReader.composeRuleConf" should {
     val composeRuleConf = RulesConfReader.composeRuleConf _
 
-    val targetError = "either 'targetHost' and 'targetPort' or 'reroute: true' and 'rewritePath', or 'targetService' or 'targetProxy' should be set"
+    val targetError = "either 'targetHost' and 'targetPort' or 'targetService' or 'targetProxy' should be set"
     "return error when `targetHost` and `targetPort` and `targetService` and 'targetProxy' missing in default and endpoint conf" in {
       composeRuleConf(
         Map(),
@@ -178,7 +176,6 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
             fullRuleConfWoPlugins.targetSsl.getOrElse(false)
           ),
           dropPathPrefix = fullRuleConfWoPlugins.dropPrefix.get,
-          reroute = fullRuleConfWoPlugins.reroute.get,
           rewritePath = fullRuleConfWoPlugins.rewritePath,
           rewriteMethod = fullRuleConfWoPlugins.rewriteMethod,
           copyQueryOnRewrite = fullRuleConfWoPlugins.copyQueryOnRewrite,
