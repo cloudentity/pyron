@@ -1,4 +1,4 @@
-package com.cloudentity.pyron.plugin.impl.transformer
+package com.cloudentity.pyron.plugin.impl.transform.request
 
 import com.cloudentity.pyron.plugin.impl.PluginAcceptanceTest
 import io.restassured.RestAssured.given
@@ -11,7 +11,7 @@ import org.scalatest.MustMatchers
 import scala.collection.JavaConverters._
 
 class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with MustMatchers {
-  override def getMetaConfPath: String = "src/test/resources/plugins/transformer/meta-config.json"
+  override def getMetaConfPath: String = "src/test/resources/plugins/transform-request/meta-config.json"
 
   var targetService: ClientAndServer = _
 

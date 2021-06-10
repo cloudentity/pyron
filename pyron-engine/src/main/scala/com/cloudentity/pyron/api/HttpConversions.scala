@@ -22,7 +22,7 @@ object HttpConversions {
   val log: LoggingWithTracing = LoggingWithTracing.getLogger(this.getClass)
 
   def toRequestCtx(ctx: RoutingContext,
-                   tracing: TracingContext,
+                   tracingCtx: TracingContext,
                    apiGroup: ApiGroup,
                    ruleConf: RuleConf,
                    pathParams: PathParams,
@@ -34,27 +34,28 @@ object HttpConversions {
 
     getBodyFuture(req, ruleConf, defaultRequestBodyMaxSize)
       .map { case (bodyStreamOpt, bodyOpt) =>
-        val original = toOriginalRequest(req, pathParams, bodyOpt)
+        val originalRequest = toOriginalRequest(req, pathParams, bodyOpt)
         val dropBody = ruleConf.requestBody.contains(DropBody)
         val properties = Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup)
-        val request = TargetRequest(
-          method = ruleConf.rewriteMethod.map(_.value).getOrElse(original.method),
+        val targetRequest = TargetRequest(
+          method = ruleConf.rewriteMethod.map(_.value).getOrElse(originalRequest.method),
           service = TargetService(ruleConf.target, req),
-          uri = chooseRelativeUri(apiGroup.matchCriteria.basePathResolved, ruleConf, original),
-          headers = removeHeadersAsProxy(ruleConf, original.headers),
+          uri = chooseRelativeUri(apiGroup.matchCriteria.basePathResolved, ruleConf, originalRequest),
+          headers = removeHeadersAsProxy(ruleConf, originalRequest.headers),
           bodyOpt = bodyOpt
         ).modifyHeaders(hs => if (!dropBody) hs else hs.set("Content-Length", "0"))
 
         RequestCtx(
-          request,
-          bodyStreamOpt,
-          original,
-          properties,
-          tracing,
-          proxyHeaders,
-          AuthnCtx(),
+          targetRequest = targetRequest,
+          originalRequest = originalRequest,
+          bodyStreamOpt = bodyStreamOpt,
+          proxyHeaders = proxyHeaders,
+          properties = properties,
+          authnCtx = AuthnCtx(),
+          tracingCtx = tracingCtx,
           aborted = None
         )
+
       }
   }
 

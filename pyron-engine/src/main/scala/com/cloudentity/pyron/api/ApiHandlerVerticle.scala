@@ -176,7 +176,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   }
 
   def callTarget(requestCtx: RequestCtx, tracing: TracingContext, callOpts: Option[CallOpts]): Future[(ApiResponse, Boolean)] =
-    targetClient.call(tracing, requestCtx.request, requestCtx.bodyStreamOpt, callOpts).map {
+    targetClient.call(tracing, requestCtx.targetRequest, requestCtx.bodyStreamOpt, callOpts).map {
       case \/-(response) => (HttpConversions.toApiResponse(response), false)
       case -\/(ex) => (mapTargetClientException(tracing, ex), true)
     }
@@ -188,13 +188,20 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   }
 
   def toResponseCtx(requestCtx: RequestCtx, targetCallFailed: Boolean, response: ApiResponse): ResponseCtx = {
-    val targetResponse = if (requestCtx.isAborted() || targetCallFailed) None else Some(response)
-    val failed = if (targetCallFailed) Some(CallFailure) else requestCtx.failed
+    val targetResponse = if (requestCtx.isAborted || targetCallFailed) None else Some(response)
+    val failed         = if (targetCallFailed) Some(CallFailure) else requestCtx.failed
 
     ResponseCtx(
+      response,
       targetResponse,
-      response, requestCtx.request, requestCtx.original, requestCtx.tracingCtx,
-      requestCtx.properties, requestCtx.authnCtx, requestCtx.accessLog, requestCtx.aborted.isDefined, failed
+      requestCtx.targetRequest,
+      requestCtx.originalRequest,
+      requestCtx.properties,
+      requestCtx.authnCtx,
+      requestCtx.tracingCtx,
+      requestCtx.accessLog,
+      requestCtx.aborted,
+      failed
     )
   }
 

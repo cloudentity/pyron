@@ -1,6 +1,7 @@
 package com.cloudentity.pyron.plugin.util.value
 
 import com.cloudentity.pyron.domain.flow.{AuthnCtx, PathParams, RequestCtx}
+import com.cloudentity.pyron.plugin.util.value.ValueResolver.resolveString
 import com.cloudentity.pyron.test.TestRequestResponseCtx
 import com.cloudentity.tools.vertx.http.Headers
 import io.circe.Json
@@ -69,7 +70,6 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
   // resolve from body
 
   "ValueResolver.resolveString from body" should {
-    val resolveString: (RequestCtx, Option[JsonObject], JsonObject, ValueOrRef) => Option[String] = ValueResolver.resolveString
 
     "resolve shallow string" in {
       resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-string"))) mustBe Some("")
@@ -253,7 +253,6 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
   // resolve from authn
 
   "ValueResolver.resolveString from authn" should {
-    val resolveString: (RequestCtx, Option[JsonObject], JsonObject, ValueOrRef) => Option[String] = ValueResolver.resolveString
 
     "resolve shallow string" in {
       resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-string"))) mustBe Some("")
@@ -437,7 +436,6 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
   // resolve from pathParams
 
   "ValueResolver.resolveString from pathParams" should {
-    val resolveString: (RequestCtx, Option[JsonObject], JsonObject, ValueOrRef) => Option[String] = ValueResolver.resolveString
 
     "resolve existing param" in {
       resolveString(ctxWithPathParams, None, conf, PathParamRef("a")) mustBe Some("value")
@@ -474,7 +472,6 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     // resolve from headers
 
     "ValueResolver.resolveString from headers" should {
-      val resolveString: (RequestCtx, Option[JsonObject], JsonObject, ValueOrRef) => Option[String] = ValueResolver.resolveString
 
       "resolve first value of existing header if first-value ref type" in {
         resolveString(ctxWithHeaders, None, conf, HeaderRef("a", FirstHeaderRefType)) mustBe Some("x")

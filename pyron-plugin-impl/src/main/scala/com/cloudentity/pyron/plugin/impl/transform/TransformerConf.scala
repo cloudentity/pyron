@@ -1,20 +1,8 @@
-package com.cloudentity.pyron.plugin.impl.transformer
+package com.cloudentity.pyron.plugin.impl.transform
 
 import com.cloudentity.pyron.plugin.util.value._
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
-
-// root conf
-case class TransformerConf(body: BodyOps,
-                           parseJsonBody: Boolean,
-                           pathParams: PathParamOps,
-                           queryParams: QueryParamOps,
-                           headers: HeaderOps)
-// actual JSON schema
-case class TransformerConfRaw(body: Option[BodyOps],
-                              pathParams: Option[PathParamOps],
-                              queryParams: Option[QueryParamOps],
-                              headers: Option[HeaderOps])
 
 // transformations
 sealed trait TransformOps
@@ -31,6 +19,18 @@ case class ResolvedQueryParamOps(set: Option[Map[String, Option[List[String]]]])
 case class HeaderOps(set: Option[Map[String, ValueOrRef]]) extends TransformOps
 case class ResolvedHeaderOps(set: Option[Map[String, Option[List[String]]]])
 
+// root conf
+case class TransformerConf(body: BodyOps,
+                           parseJsonBody: Boolean,
+                           pathParams: PathParamOps,
+                           queryParams: QueryParamOps,
+                           headers: HeaderOps)
+
+// actual JSON schema
+case class TransformerConfRaw(body: Option[BodyOps],
+                              pathParams: Option[PathParamOps],
+                              queryParams: Option[QueryParamOps],
+                              headers: Option[HeaderOps])
 object TransformerConf {
   implicit val BodyOpsDecoder: Decoder[BodyOps] = deriveDecoder[BodyOps].emap {
     case BodyOps(Some(_), Some(true)) => Left("Can't both drop body and set body attribute")
@@ -60,3 +60,4 @@ object TransformerConf {
   }
 
 }
+

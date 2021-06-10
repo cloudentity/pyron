@@ -296,7 +296,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
 
       // then
       result.isAborted mustBe false
-      result.request.headers.getValues("header") mustBe Some(List("value"))
+      result.targetRequest.headers.getValues("header") mustBe Some(List("value"))
     }
 
     "modify target request even if authn provider succeeded" in {
@@ -317,7 +317,7 @@ class AuthnPluginSpec extends WordSpec with MustMatchers with TestRequestRespons
 
       // then
       result.isAborted mustBe false
-      result.request.headers.getValues("header") mustBe Some(List("value"))
+      result.targetRequest.headers.getValues("header") mustBe Some(List("value"))
     }
   }
 

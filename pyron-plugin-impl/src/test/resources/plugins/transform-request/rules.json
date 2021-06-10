@@ -320,22 +320,6 @@
           ]
         },
         {
-          "method": "GET",
-          "pathPattern": "/header-from-conf",
-          "requestPlugins": [
-            {
-              "name": "transform-request",
-              "conf": {
-                "headers": {
-                  "set": {
-                    "H": "$conf.param"
-                  }
-                }
-              }
-            }
-          ]
-        },
-        {
           "method": "POST",
           "pathPattern": "/header-from-body",
           "requestPlugins": [
@@ -345,6 +329,22 @@
                 "headers": {
                   "set": {
                     "H": "$body.h"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-conf",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$conf.param"
                   }
                 }
               }

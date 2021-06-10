@@ -61,7 +61,7 @@ class OAuthTokenIntrospectionAuthnProvider extends ScalaServiceVerticle with Aut
   override def authenticate(req: RequestCtx, methodConf: AuthnMethodConf): VxFuture[Option[AuthnProviderResult]] = {
     val tokenOpt: Option[String] =
       for {
-        header <- req.request.headers.get(methodConf.tokenHeader.getOrElse(myConf.token.header))
+        header <- req.targetRequest.headers.get(methodConf.tokenHeader.getOrElse(myConf.token.header))
         regexMatch <- myConf.token.regex.findFirstMatchIn(header)
         token <- Try(regexMatch.group(1)).toOption
       } yield (token.trim)

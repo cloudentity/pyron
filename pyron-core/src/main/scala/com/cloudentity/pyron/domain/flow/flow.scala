@@ -10,7 +10,6 @@ case class RewritePath(value: String) extends AnyVal
 case class RewriteMethod(value: HttpMethod) extends AnyVal
 
 case class EndpointMatchCriteria(method: HttpMethod, rewrite: PreparedPathRewrite)
-case class TargetHost(value: String) extends AnyVal
 case class ServiceClientName(value: String) extends AnyVal
 
 case class SmartHttpClientConf(value: JsonObject)

@@ -16,4 +16,3 @@ case class BasePath(value: String) extends AnyVal
 case class DomainPattern(value: String) {
   lazy val regex = new Regex("^" + value.replace("*", "[^\\.]+") + "$")
 }
-
