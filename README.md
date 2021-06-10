@@ -22,6 +22,7 @@
     * OAuth 2 with JWT access token
     * OAuth 2 with opaque token introspection
   * [Request transformation](docs/plugins/transform-request.md)
+  * [Response transformation](docs/plugins/transform-response.md)
   * [Response cookie transformation](docs/plugins/transform-response-cookie.md)
   * [CORS](docs/plugins/cors.md)
   * [Brute-force protection](docs/plugins/bruteforce.md)

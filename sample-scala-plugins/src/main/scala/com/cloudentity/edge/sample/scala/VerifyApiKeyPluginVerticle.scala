@@ -50,7 +50,7 @@ class VerifyApiKeyPluginVerticle extends RequestPluginVerticle[VerifyApiKeyConf]
 
   override def apply(requestCtx: RequestCtx, conf: VerifyApiKeyConf): Future[RequestCtx] =
     Future.successful {
-      val apiKeyValueOpt = requestCtx.request.headers.get(verticleConf.defaultApiKeyHeader)
+      val apiKeyValueOpt = requestCtx.targetRequest.headers.get(verticleConf.defaultApiKeyHeader)
 
       apiKeyValueOpt match {
         case Some(value) if (value == conf.apiKey) =>

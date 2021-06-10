@@ -16,7 +16,7 @@ class PingOriginalPlugin extends RequestPluginVerticle[Unit] with RequestPluginS
   override def name: PluginName = PluginName("pingOriginal")
 
   override def apply(ctx: RequestCtx, conf: Unit): Future[RequestCtx] = {
-    Future.successful(ctx.abort(ApiResponse(200, Buffer.buffer(ctx.original.asJson.noSpaces), Headers.of("Content-Type" -> "application/json"))))
+    Future.successful(ctx.abort(ApiResponse(200, Buffer.buffer(ctx.originalRequest.asJson.noSpaces), Headers.of("Content-Type" -> "application/json"))))
   }
 
   override def validate(conf: Unit): ValidateResponse = ValidateOk

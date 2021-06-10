@@ -31,7 +31,7 @@ class AbortPluginVerticle extends RequestPluginVerticle[AbortConf] with ConfigDe
   }
 
   override def apply(requestCtx: RequestCtx, conf: AbortConf): Future[RequestCtx] = {
-    requestCtx.request.headers.get(conf.header) match {
+    requestCtx.targetRequest.headers.get(conf.header) match {
       case Some(value) =>
         client.get(verticleConf.path)
           .putHeader(conf.header, value)

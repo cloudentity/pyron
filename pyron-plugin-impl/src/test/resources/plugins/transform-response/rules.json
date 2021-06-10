@@ -1,0 +1,267 @@
+{
+  "env": {
+    "PLUGIN_TRANSFORM_RESPONSE_CONF_REF": "$ref:transform-response-conf"
+  },
+  "transform-response-conf": {
+    "param": "confParamValue"
+  },
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/body-from-path-param/{param}",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$pathParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/body-from-query-param",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$queryParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/body-from-cookie",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$cookies.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/body-from-conf",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {
+                  "set": {
+                    "attr": "$conf.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/fixed-header",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "value"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-different-response-header",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$headers.userUuid"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-path-param/{param}",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$pathParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-query-param",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$queryParams.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-cookie",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$cookies.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-response-body",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$body.h"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-conf",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$conf.param"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-can-find-multiple-params-in-pattern-and-reorder-them-in-input",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{transactionId}/swift.{swiftId}",
+                      "output": "{swiftId}.{transactionId}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-requires-pattern-matching-on-entire-value",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Transaction": {
+                      "path": "$body.scp",
+                      "pattern": "transaction.{id}",
+                      "output": "{id}"
+                    },
+                    "X-Env": {
+                      "path": "$body.scp",
+                      "pattern": "env.{id}.suffix",
+                      "output": "{id}"
+                    },
+                    "X-Payment": {
+                      "path": "$body.scp",
+                      "pattern": "payment.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/dyn-header-will-obtain-all-the-values-matching-the-pattern",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "body": {},
+                "headers": {
+                  "set": {
+                    "X-Id": {
+                      "path": "$body.scp",
+                      "pattern": "id.{id}",
+                      "output": "{id}"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
