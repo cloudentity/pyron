@@ -45,6 +45,7 @@ object RulesConfReader {
     pathPrefix: Option[PathPrefix],
     method: Option[HttpMethod],
     dropPrefix: Option[Boolean],
+    reroute: Option[Boolean],
     requestPlugins: Option[List[PluginConf]],
     responsePlugins: Option[List[PluginConf]],
     tags: Option[List[String]],
@@ -54,7 +55,7 @@ object RulesConfReader {
     ext: Option[ExtRuleConf]
   )
 
-  val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+  val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
   sealed trait ReadRulesError
     case class RuleDecodingError(ex: Throwable) extends ReadRulesError
@@ -169,6 +170,7 @@ object RulesConfReader {
         criteria = EndpointMatchCriteria(rf.method, preparedRewrite),
         target = rf.service,
         dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true),
+        reroute = endpointConf.rule.reroute.orElse(defaultConf.rule.reroute).getOrElse(false),
         rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod),
         rewritePath = rewritePath,
         copyQueryOnRewrite = endpointConf.rule.copyQueryOnRewrite.orElse(defaultConf.rule.copyQueryOnRewrite),
@@ -240,6 +242,8 @@ object RulesConfReader {
     orElse(endpointConf.method, defaultConf.method, "missing `method`") |@|
       orElse(endpointConf.pathPattern, defaultConf.pathPattern, "missing `pathPattern`") |@|
       validateTargetServiceRule(
+        endpointConf.reroute.orElse(defaultConf.reroute).filter(_ == true)
+          .flatMap(_ => endpointConf.rewritePath.orElse(defaultConf.rewritePath)),
         endpointConf.targetHost.orElse(defaultConf.targetHost),
         endpointConf.targetPort.orElse(defaultConf.targetPort),
         endpointConf.targetSsl.orElse(defaultConf.targetSsl),
@@ -248,13 +252,15 @@ object RulesConfReader {
       )
   }.apply(RuleRequiredFields)
 
-  private def validateTargetServiceRule(hostOpt: Option[TargetHost],
+  private def validateTargetServiceRule(reroute: Option[RewritePath],
+                                        hostOpt: Option[TargetHost],
                                         portOpt: Option[Int],
                                         sslOpt: Option[Boolean],
                                         serviceNameOpt: Option[ServiceClientName],
                                         targetProxyOpt: Option[Boolean]
                                        ): ValidationNel[String, TargetServiceRule] = {
 
+    val rerouteServiceOpt = reroute.map(RerouteServiceRule)
     val discoverableServiceOpt = serviceNameOpt.map(DiscoverableServiceRule)
     val staticServiceOpt = for {
       host <- hostOpt
@@ -263,9 +269,9 @@ object RulesConfReader {
 
     val proxyServiceOpt = targetProxyOpt.collect { case true => ProxyServiceRule }
 
-    List(staticServiceOpt, discoverableServiceOpt, proxyServiceOpt).flatten match {
+    List(rerouteServiceOpt, staticServiceOpt, discoverableServiceOpt, proxyServiceOpt).flatten match {
       case service :: Nil => Success(service)
-      case _ => Validation.failureNel("either 'targetHost' and 'targetPort' or 'targetService' or 'targetProxy' should be set")
+      case _ => Validation.failureNel("either 'targetHost' and 'targetPort' or 'reroute: true' and 'rewritePath', or 'targetService' or 'targetProxy' should be set")
     }
   }
 
