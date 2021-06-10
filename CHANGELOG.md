@@ -1,4 +1,10 @@
 ## [Unreleased]
+
+### Breaking change
+moved TransformRequestPlugin
+from: com.cloudentity.pyron.plugin.impl.transformer.TransformRequestPlugin
+to: com.cloudentity.pyron.plugin.impl.transform.request.TransformRequestPlugin
+
 ### Added
 - Add Pyron capabilities to allow nginx replacement
   - support both named and numeric references in rewrite patterns
