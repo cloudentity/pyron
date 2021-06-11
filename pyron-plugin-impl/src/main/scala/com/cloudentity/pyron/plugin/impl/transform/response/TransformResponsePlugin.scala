@@ -21,8 +21,19 @@ class TransformResponsePlugin  extends ResponsePluginVerticle[TransformerConf] {
 
   var verticleConf: TransformResponsePluginVerticleConf = _
 
-  override def initService(): Unit =
+  override def initService(): Unit = {
+    // if PLUGIN_TRANSFORM_RESPONSE_CONF_REF in plugin/transform-response.json is not set
+    // then verticleConfig.conf gets resolved to empty string "" which cause deserialization issues
+    // below Decoder[Option[JsonObject]] treats empty string as None
+    implicit val confDecoder: Decoder[Option[JsonObject]] =
+    Decoder.decodeOption[JsonObject].or {
+      Decoder.decodeString.emap {
+        case "" => Right(None)
+        case x => Left("could not decode optional JsonObject")
+      }
+    }
     verticleConf = decodeConfigUnsafe(deriveDecoder[TransformResponsePluginVerticleConf])
+  }
 
   override def apply(ctx: ResponseCtx, conf: TransformerConf): Future[ResponseCtx] = Future.successful {
     val jsonBodyOpt: Option[JsonObject] = parseJsonBodyIfRequired(ctx, conf)
