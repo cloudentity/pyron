@@ -3,7 +3,6 @@ package com.cloudentity.pyron.api
 import com.cloudentity.pyron.config.Conf.ProxyHeaderConf
 import com.cloudentity.pyron.domain.flow.ProxyHeaders
 import io.vertx.core.MultiMap
-import io.vertx.core.http.HttpServerRequest
 import io.vertx.ext.web.RoutingContext
 
 import scala.util.Try
@@ -22,23 +21,24 @@ object ProxyHeadersHandler {
     val req = ctx.request()
     val headers = proxyHeaders(req.headers, req.remoteAddress().host(), Option(req.host()), req.isSSL, proxyHeaderNames.getOrElse(ProxyHeaderConf(None, None, None)))
     ctx.put(proxyHeadersKey, headers)
-    ctx.next
+    ctx.next()
   }
 
   def proxyHeaders(headers: MultiMap, remoteHost: String, host: Option[String], ssl: Boolean, proxyHeaderNames: ProxyHeaderConf): ProxyHeaders = {
-    val remoteIp      = remoteHost
-    val remoteHostOpt = host
-    val protocol      = if (ssl) "https" else "http"
-    val realIp        = Option(headers.get(proxyHeaderNames.inputTrueClientIp.getOrElse(defaultTrueClientIpHeader))) match {
-                          case Some(ip) => ip
-                          case None => Option(headers.get("X-Forwarded-For")).getOrElse(remoteIp)
-                        }
+    val remoteIp         = remoteHost
+    val remoteHostOpt    = host
+    val protocol         = if (ssl) "https" else "http"
+    val trueClientIpOpt  = Option(headers.get(proxyHeaderNames.inputTrueClientIp.getOrElse(defaultTrueClientIpHeader)))
+    val realIp           = trueClientIpOpt match {
+                             case Some(ip) => ip
+                             case None => Option(headers.get(xForwardedForHeader)).getOrElse(remoteIp)
+                           }
 
     val proxyHeaders: Map[String, List[String]] =
       if (proxyHeaderNames.enabled.getOrElse(true)) {
         Map(
           xForwardedForHeader   -> (headers.getAll(xForwardedForHeader).asScala.toList ::: List(remoteIp)),
-          xForwardedHostHeader  -> (headers.getAll(xForwardedHostHeader).asScala.toList ::: remoteHostOpt.map(List(_)).getOrElse(Nil)),
+          xForwardedHostHeader  -> (headers.getAll(xForwardedHostHeader).asScala.toList ::: remoteHostOpt.toList),
           xForwardedProtoHeader -> (headers.getAll(xForwardedProtoHeader).asScala.toList ::: List(protocol)),
           proxyHeaderNames.outputTrueClientIp.getOrElse(defaultTrueClientIpHeader) -> List(realIp)
         )

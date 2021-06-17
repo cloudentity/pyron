@@ -1,6 +1,6 @@
 package com.cloudentity.pyron.apigroup
 
-import com.cloudentity.pyron.apigroup.ApiGroupConflicts.isConflicted
+import com.cloudentity.pyron.apigroup.ApiGroupConflicts.{Conflict, isConflicted}
 import com.cloudentity.pyron.domain.flow.{BasePath, DomainPattern, GroupMatchCriteria}
 import org.junit.runner.RunWith
 import org.scalatestplus.junit.JUnitRunner
@@ -8,6 +8,40 @@ import org.scalatest.{MustMatchers, WordSpec}
 
 @RunWith(classOf[JUnitRunner])
 class ApiGroupConflictsSpec extends WordSpec with MustMatchers {
+
+  "ApiGroupConflicts.findConflicts" should {
+    "find conflicts in raw json, where one group has base path of '/' and second group starts with  '/'" in {
+
+      import ApiGroupReader._
+
+      val json =
+        """
+          |{
+          | "root": {
+          |   "_group": {
+          |     "basePath": "/"
+          |   },
+          |   "_rules": []
+          | },
+          | "groot": {
+          |   "_group": {
+          |     "basePath": "/groot"
+          |   },
+          |   "_rules": []
+          |  }
+          |}
+          |""".stripMargin
+
+      val unresolvedGroupResults = readApiGroupLevels(json).map(buildApiGroupConfsUnresolved)
+      val conflicts = unresolvedGroupResults.map(v => ApiGroupConflicts.findConflicts(v.flatMap(_.asValid)))
+      val expected = ValidResult(Nil, List(
+        Left(Conflict(List("groot"), List("root"))),
+        Left(Conflict(List("root"), List("groot")))
+      ))
+      conflicts mustBe expected
+    }
+  }
+
   "ApiGroupConflicts.isConflicted" should {
     "return true when domains empty and base-path the same" in {
       isConflicted(

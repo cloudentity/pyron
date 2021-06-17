@@ -37,8 +37,24 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
 
   @Test
   def shouldSetTargetRequestOriginalPathParamsAndQueryParamsAndMethod(): Unit = {
-    val relativeUri = FixedRelativeUri(UriPath("/service/params/value1"), QueryParams(Map("queryParam1" -> List("queryValue1"))), PathParams(Map()))
-    val original = OriginalRequest(HttpMethod.GET, UriPath(relativeUri.path), QueryParams("queryParam1" -> List("queryValue1")), Headers(), Some(Buffer.buffer()), PathParams(Map("param1" -> "value1")))
+    val relativeUri = FixedRelativeUri(
+      UriPath("/service/params/value1"),
+      QueryParams(Map("queryParam1" -> List("queryValue1"))),
+      PathParams(Map())
+    )
+    val original = OriginalRequest(
+      method = HttpMethod.GET,
+      path = UriPath(relativeUri.path),
+      scheme = "http",
+      host = "127.0.0.1:8080",
+      localHost = "127.0.0.1",
+      remoteHost = "127.0.0.1",
+      pathParams = PathParams(Map("param1" -> "value1")),
+      queryParams = QueryParams("queryParam1" -> List("queryValue1")),
+      headers = Headers(),
+      cookies = Map(),
+      bodyOpt = Some(Buffer.buffer())
+    )
 
       given()
       .when()
@@ -51,7 +67,19 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
   def shouldSetTargetRequestOriginalBody(): Unit = {
       val path = "/service/body"
       val body = """test-body"""
-      val original = OriginalRequest(HttpMethod.POST, UriPath(path), QueryParams.empty, Headers(), Some(Buffer.buffer(body)), PathParams.empty)
+      val original = OriginalRequest(
+        method = HttpMethod.POST,
+        path = UriPath(path),
+        scheme = "http",
+        host = "127.0.0.1:8080",
+        localHost = "127.0.0.1",
+        remoteHost = "127.0.0.1",
+        pathParams = PathParams.empty,
+        queryParams = QueryParams.empty,
+        headers = Headers(),
+        cookies = Map(),
+        bodyOpt = Some(Buffer.buffer(body))
+      )
 
       given().body(body)
       .when().post(path)
@@ -75,7 +103,13 @@ class OriginalRequestAcceptanceTest extends PyronAcceptanceTest with MustMatcher
     new BaseMatcher {
       override def matches(o: Any): Boolean = {
         val actual = decode[OriginalRequest](o.toString).getOrElse(throw new Exception)
-        actual.copy(headers = Headers()) == expected // checking only one header to avoid checking headers set by RestAssured
+        // FIX: next comment seems wrong, headers are set to empty, not one value
+        // checking only one header to avoid checking headers set by RestAssured
+        actual.copy(
+          headers = Headers(),
+          // skip generated numeric params
+          pathParams = PathParams(actual.pathParams.value.filterNot { case (key, _) => key.matches("[-]?\\d+") })
+        ) == expected
       }
 
       override def describeTo(description: Description): Unit =

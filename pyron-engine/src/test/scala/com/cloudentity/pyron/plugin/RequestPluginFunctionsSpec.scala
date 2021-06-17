@@ -17,16 +17,22 @@ import scala.concurrent.{Await, Future}
 
 @RunWith(classOf[JUnitRunner])
 class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestRequestResponseCtx {
+
   val host: TargetHost = TargetHost("host")
   val uri: RelativeUri = RelativeUri.of("uri").get
 
   val original: OriginalRequest = OriginalRequest(
     method = HttpMethod.GET,
     path = UriPath(uri.path),
+    scheme = "http",
+    host = "host",
+    localHost = "localHost",
+    remoteHost = "remoteHost",
+    pathParams = PathParams.empty,
     queryParams = QueryParams.empty,
     headers = Headers(),
-    bodyOpt = None,
-    pathParams = PathParams.empty
+    cookies = Map(),
+    bodyOpt = None
   )
   val requestGet: TargetRequest = TargetRequest(
     method = HttpMethod.GET,
@@ -52,8 +58,8 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
 
   val response: ApiResponse = ApiResponse(200, Buffer.buffer(), Headers())
 
-  def requestCtx(req: TargetRequest): RequestCtx =
-    emptyRequestCtx.copy(request = req)
+  def requestCtx(tgtReq: TargetRequest): RequestCtx =
+    emptyRequestCtx.copy(targetRequest = tgtReq)
 
   def failingPlugin(ex: Throwable): RequestPlugin =
     (_: RequestCtx) => Future.failed(ex)
@@ -61,8 +67,8 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
   def responsePlugin(response: ApiResponse): RequestPlugin =
     (ctx: RequestCtx) => Future.successful(ctx.abort(response))
 
-  def requestPlugin(request: TargetRequest): RequestPlugin =
-    (ctx: RequestCtx) => Future.successful(ctx.copy(request = request))
+  def requestPlugin(tgtReq: TargetRequest): RequestPlugin =
+    (ctx: RequestCtx) => Future.successful(ctx.copy(targetRequest = tgtReq))
 
   "Plugins.applyRequestPlugins" should {
     "apply all plugins when all plugins return TargetRequest" in {
@@ -74,7 +80,7 @@ class RequestPluginFunctionsSpec extends WordSpec with MustMatchers with TestReq
         PluginFunctions.applyRequestPlugins(requestCtx(requestGet), plugins)(_ => emptyResponse)
 
       //then
-      Await.result(f, 1 second).request mustBe requestDelete
+      Await.result(f, 1 second).targetRequest mustBe requestDelete
     }
 
     "break applying request plugins when applied plugin returned ApiResponse" in {

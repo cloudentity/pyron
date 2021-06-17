@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>com.cloudentity.pyron</groupId>
-    <version>1.8.0</version>
+    <version>1.9.0</version>
     <artifactId>pyron-root</artifactId>
   </parent>
 
@@ -16,7 +16,7 @@
   <properties>
     <scala.version>2.12.9</scala.version>
     <pyron.version>1.1.0-SNAPSHOT</pyron.version>
-    <vertx-tools.version>1.1.0-SNAPSHOT</vertx-tools.version>
+    <vertx-tools.version>1.7.0-SNAPSHOT</vertx-tools.version>
     <scala-maven-plugin.version>4.2.0</scala-maven-plugin.version>
   </properties>
 

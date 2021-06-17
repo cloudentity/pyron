@@ -49,7 +49,7 @@ public class VerifyApiKeyPluginVerticle extends JavaRequestPluginVerticle {
 
   @Override
   public Future<RequestCtx> applyJava(RequestCtx requestCtx, JsonObject conf) {
-    Option<String> apiKeyValueOpt = requestCtx.request().headers().get(defaultApiKeyHeader);
+    Option<String> apiKeyValueOpt = requestCtx.targetRequest().headers().get(defaultApiKeyHeader);
 
     if (apiKeyValueOpt.isDefined() && apiKeyValueOpt.get().equals(conf.getString("apiKey"))) {
       // continue request flow

@@ -15,7 +15,10 @@ class RulesReloadAcceptanceTest extends PyronAcceptanceTest with MockUtils {
         .when().get("/path")
         .`then`().statusCode(200)
 
-      vertx.eventBus().publish("reload-events-address", new JsonObject().put("rules", new JsonArray()))
+      vertx.eventBus().publish(
+        "reload-events-address",
+        new JsonObject().put("rules", new JsonArray())
+      )
 
       Thread.sleep(500)
 
@@ -30,7 +33,10 @@ class RulesReloadAcceptanceTest extends PyronAcceptanceTest with MockUtils {
       .when().get("/path")
       .`then`().statusCode(200)
 
-    vertx.eventBus().publish("reload-events-address", new JsonObject().put("rules", new JsonObject().put("service-a", new JsonArray())))
+    vertx.eventBus().publish(
+      "reload-events-address",
+      new JsonObject().put("rules", new JsonObject().put("service-a", new JsonArray()))
+    )
 
     Thread.sleep(500)
 

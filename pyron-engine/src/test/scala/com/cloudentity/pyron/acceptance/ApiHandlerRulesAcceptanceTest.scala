@@ -13,16 +13,16 @@ import org.hamcrest.core.StringContains
 import org.junit.{After, Before, Test}
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
-import org.mockserver.model.HttpRequest
+import org.mockserver.model.{HttpRequest, HttpResponse}
 
 import scala.concurrent.Future
 
 class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
-  override def getMetaConfPath() = "src/test/resources/acceptance/api-handler/meta-config-rules.json"
+  override def getMetaConfPath = "src/test/resources/acceptance/api-handler/meta-config-rules.json"
 
   def rulesTestBasePath = ""
 
-  var targetService: ClientAndServer = null
+  var targetService: ClientAndServer = _
 
   @Before
   def before(): Unit = {
@@ -87,10 +87,13 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
 
   @Test
   def shouldNotSetFormParamsAsQueryParamsIfFormContent(ctx: TestContext): Unit = {
-    targetService.when(req().withPath("/should-not-set-form-params-as-query-params-if-form-content").withMethod("POST")).callback { request =>
-      if (request.getQueryStringParameters().size() == 0) resp().withStatusCode(200)
-      else resp().withStatusCode(400)
-    }
+    targetService.when(req()
+      .withPath("/should-not-set-form-params-as-query-params-if-form-content")
+      .withMethod("POST"))
+      .callback { request =>
+        if (request.getQueryStringParameters().size() == 0) resp().withStatusCode(200)
+        else resp().withStatusCode(400)
+      }
 
     given()
       .header("Content-Type", "application/x-www-form-urlencoded")
@@ -145,8 +148,8 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
       .body(StringContains.containsString("System.Timeout"))
   }
 
-  def resp() = org.mockserver.model.HttpResponse.response()
-  def req() = org.mockserver.model.HttpRequest.request()
+  def resp(): HttpResponse = org.mockserver.model.HttpResponse.response()
+  def req(): HttpRequest = org.mockserver.model.HttpRequest.request()
 }
 
 class TimeoutPluginVerticle extends RequestPluginVerticle[Unit] {

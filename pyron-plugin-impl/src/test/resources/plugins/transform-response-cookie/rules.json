@@ -1,0 +1,27 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/transform-response-cookie",
+          "responsePlugins": [
+            {
+              "name": "transform-response-cookie",
+              "conf": {
+                "name": "foo",
+                "set": {
+                  "value": "42"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

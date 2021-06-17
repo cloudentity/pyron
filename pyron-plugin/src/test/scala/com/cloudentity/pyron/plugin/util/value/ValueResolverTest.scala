@@ -1,6 +1,7 @@
 package com.cloudentity.pyron.plugin.util.value
 
 import com.cloudentity.pyron.domain.flow.{AuthnCtx, PathParams, RequestCtx}
+import com.cloudentity.pyron.plugin.util.value.ValueResolver.resolveString
 import com.cloudentity.pyron.test.TestRequestResponseCtx
 import com.cloudentity.tools.vertx.http.Headers
 import io.circe.Json
@@ -31,6 +32,8 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
         .put("int", 1)
         .put("null", null.asInstanceOf[String])
     )
+
+  val conf: JsonObject = new JsonObject()
 
   val ctxWithBody: RequestCtx = emptyRequestCtx.modifyRequest(_.copy(bodyOpt = Some(body.toBuffer)))
 
@@ -67,63 +70,62 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
   // resolve from body
 
   "ValueResolver.resolveString from body" should {
-    val resolveString: (RequestCtx, Option[JsonObject], ValueOrRef) => Option[String] = ValueResolver.resolveString
 
     "resolve shallow string" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("shallow-string"))) mustBe Some("")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-string"))) mustBe Some("")
     }
     "resolve deep string" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "string"))) mustBe Some("")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "string"))) mustBe Some("")
     }
     "resolve shallow boolean" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("shallow-boolean"))) mustBe Some("false")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-boolean"))) mustBe Some("false")
     }
     "resolve deep boolean" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "boolean"))) mustBe Some("false")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "boolean"))) mustBe Some("false")
     }
     "resolve shallow float" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("shallow-float"))) mustBe Some("1.0")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-float"))) mustBe Some("1.0")
     }
     "resolve deep float" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "float"))) mustBe Some("1.0")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "float"))) mustBe Some("1.0")
     }
     "resolve shallow int" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("shallow-int"))) mustBe Some("1")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-int"))) mustBe Some("1")
     }
     "resolve deep int" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "int"))) mustBe Some("1")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "int"))) mustBe Some("1")
     }
     "resolve shallow double" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("shallow-float"))) mustBe Some("1.0")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-float"))) mustBe Some("1.0")
     }
     "resolve deep double" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "double"))) mustBe Some("1.0")
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "double"))) mustBe Some("1.0")
     }
 
     "fail to resolve shallow null value" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("shallow-null"))) mustBe None
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-null"))) mustBe None
     }
     "fail to resolve shallow object value" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("shallow-object"))) mustBe None
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-object"))) mustBe None
     }
     "fail to resolve shallow array value" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("shallow-array"))) mustBe None
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-array"))) mustBe None
     }
     "fail to resolve deep null value" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "null"))) mustBe None
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "null"))) mustBe None
     }
     "fail to resolve deep object value" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "object"))) mustBe None
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "object"))) mustBe None
     }
     "fail to resolve deep array value" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "array"))) mustBe None
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "array"))) mustBe None
     }
 
     "fail to resolve missing shallow value" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("x"))) mustBe None
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("x"))) mustBe None
     }
     "fail to resolve missing deep value" in {
-      resolveString(ctxWithBody, Some(body), BodyRef(Path("deep", "x"))) mustBe None
+      resolveString(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "x"))) mustBe None
     }
   }
 
@@ -131,60 +133,60 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     val resolveListOfStrings = ValueResolver.resolveListOfStrings _
 
     "resolve shallow string" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("shallow-string"))) mustBe Some(List(""))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-string"))) mustBe Some(List(""))
     }
     "resolve deep string" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "string"))) mustBe Some(List(""))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "string"))) mustBe Some(List(""))
     }
     "resolve shallow boolean" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("shallow-boolean"))) mustBe Some(List("false"))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-boolean"))) mustBe Some(List("false"))
     }
     "resolve deep boolean" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "boolean"))) mustBe Some(List("false"))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "boolean"))) mustBe Some(List("false"))
     }
     "resolve shallow float" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("shallow-float"))) mustBe Some(List("1.0"))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-float"))) mustBe Some(List("1.0"))
     }
     "resolve deep float" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "float"))) mustBe Some(List("1.0"))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "float"))) mustBe Some(List("1.0"))
     }
     "resolve shallow int" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("shallow-int"))) mustBe Some(List("1"))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-int"))) mustBe Some(List("1"))
     }
     "resolve deep int" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "int"))) mustBe Some(List("1"))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "int"))) mustBe Some(List("1"))
     }
     "resolve shallow double" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("shallow-float"))) mustBe Some(List("1.0"))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-float"))) mustBe Some(List("1.0"))
     }
     "resolve deep double" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "double"))) mustBe Some(List("1.0"))
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "double"))) mustBe Some(List("1.0"))
     }
     "resolve shallow array" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("shallow-array"))) mustBe Some(List())
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-array"))) mustBe Some(List())
     }
     "resolve deep array" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "array"))) mustBe Some(List())
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "array"))) mustBe Some(List())
     }
 
     "fail to resolve shallow null value" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("shallow-null"))) mustBe None
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-null"))) mustBe None
     }
     "fail to resolve shallow object value" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("shallow-object"))) mustBe None
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-object"))) mustBe None
     }
     "fail to resolve deep null value" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "null"))) mustBe None
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "null"))) mustBe None
     }
     "fail to resolve deep object value" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "object"))) mustBe None
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "object"))) mustBe None
     }
 
     "fail to resolve missing shallow value" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("x"))) mustBe None
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("x"))) mustBe None
     }
     "fail to resolve missing deep value" in {
-      resolveListOfStrings(ctxWithBody, Some(body), BodyRef(Path("deep", "x"))) mustBe None
+      resolveListOfStrings(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "x"))) mustBe None
     }
   }
 
@@ -192,122 +194,121 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     val resolveJson = ValueResolver.resolveJson _
 
     "resolve shallow string" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("shallow-string"))) mustBe Some(StringJsonValue(""))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-string"))) mustBe Some(StringJsonValue(""))
     }
     "resolve deep string" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("deep", "string"))) mustBe Some(StringJsonValue(""))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "string"))) mustBe Some(StringJsonValue(""))
     }
 
     "resolve shallow object" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("shallow-object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
     }
     "resolve deep object" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("deep", "object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
     }
 
     "resolve shallow array" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("shallow-array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
     }
     "resolve deep array" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("deep", "array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
     }
 
     "resolve shallow boolean" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("shallow-boolean"))) mustBe Some(BooleanJsonValue(false))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-boolean"))) mustBe Some(BooleanJsonValue(false))
     }
     "resolve deep boolean" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("deep", "boolean"))) mustBe Some(BooleanJsonValue(false))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "boolean"))) mustBe Some(BooleanJsonValue(false))
     }
 
     "resolve shallow float" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("shallow-float"))) mustBe Some(NumberJsonValue(1.0f))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-float"))) mustBe Some(NumberJsonValue(1.0f))
     }
     "resolve deep float" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("deep", "float"))) mustBe Some(NumberJsonValue(1.0f))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "float"))) mustBe Some(NumberJsonValue(1.0f))
     }
 
     "resolve shallow double" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("shallow-double"))) mustBe Some(NumberJsonValue(1.0d))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-double"))) mustBe Some(NumberJsonValue(1.0d))
     }
     "resolve deep double" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("deep", "double"))) mustBe Some(NumberJsonValue(1.0d))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "double"))) mustBe Some(NumberJsonValue(1.0d))
     }
 
     "resolve shallow int" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("shallow-int"))) mustBe Some(NumberJsonValue(1))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-int"))) mustBe Some(NumberJsonValue(1))
     }
     "resolve deep int" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("deep", "int"))) mustBe Some(NumberJsonValue(1))
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "int"))) mustBe Some(NumberJsonValue(1))
     }
 
     "resolve shallow null" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("shallow-null"))) mustBe Some(NullJsonValue)
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-null"))) mustBe Some(NullJsonValue)
     }
     "resolve deep null" in {
-      resolveJson(ctxWithBody, Some(body), BodyRef(Path("deep", "null"))) mustBe Some(NullJsonValue)
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "null"))) mustBe Some(NullJsonValue)
     }
   }
 
   // resolve from authn
 
   "ValueResolver.resolveString from authn" should {
-    val resolveString: (RequestCtx, Option[JsonObject], ValueOrRef) => Option[String] = ValueResolver.resolveString
 
     "resolve shallow string" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("shallow-string"))) mustBe Some("")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-string"))) mustBe Some("")
     }
     "resolve deep string" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "string"))) mustBe Some("")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "string"))) mustBe Some("")
     }
     "resolve shallow boolean" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("shallow-boolean"))) mustBe Some("false")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-boolean"))) mustBe Some("false")
     }
     "resolve deep boolean" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "boolean"))) mustBe Some("false")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "boolean"))) mustBe Some("false")
     }
     "resolve shallow float" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("shallow-float"))) mustBe Some("1")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-float"))) mustBe Some("1")
     }
     "resolve deep float" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "float"))) mustBe Some("1")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "float"))) mustBe Some("1")
     }
     "resolve shallow int" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("shallow-int"))) mustBe Some("1")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-int"))) mustBe Some("1")
     }
     "resolve deep int" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "int"))) mustBe Some("1")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "int"))) mustBe Some("1")
     }
     "resolve shallow double" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("shallow-float"))) mustBe Some("1")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-float"))) mustBe Some("1")
     }
     "resolve deep double" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "double"))) mustBe Some("1")
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "double"))) mustBe Some("1")
     }
 
     "fail to resolve shallow null value" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("shallow-null"))) mustBe None
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-null"))) mustBe None
     }
     "fail to resolve shallow object value" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("shallow-object"))) mustBe None
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-object"))) mustBe None
     }
     "fail to resolve shallow array value" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("shallow-array"))) mustBe None
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-array"))) mustBe None
     }
     "fail to resolve deep null value" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "null"))) mustBe None
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "null"))) mustBe None
     }
     "fail to resolve deep object value" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "object"))) mustBe None
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "object"))) mustBe None
     }
     "fail to resolve deep array value" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "array"))) mustBe None
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "array"))) mustBe None
     }
 
     "fail to resolve missing shallow value" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("x"))) mustBe None
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("x"))) mustBe None
     }
     "fail to resolve missing deep value" in {
-      resolveString(ctxWithAuthn, None, AuthnRef(Path("deep", "x"))) mustBe None
+      resolveString(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "x"))) mustBe None
     }
   }
 
@@ -315,60 +316,60 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     val resolveListOfStrings = ValueResolver.resolveListOfStrings _
 
     "resolve shallow string" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("shallow-string"))) mustBe Some(List(""))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-string"))) mustBe Some(List(""))
     }
     "resolve deep string" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("deep", "string"))) mustBe Some(List(""))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "string"))) mustBe Some(List(""))
     }
     "resolve shallow boolean" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("shallow-boolean"))) mustBe Some(List("false"))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-boolean"))) mustBe Some(List("false"))
     }
     "resolve deep boolean" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("deep", "boolean"))) mustBe Some(List("false"))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "boolean"))) mustBe Some(List("false"))
     }
     "resolve shallow float" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("shallow-float"))) mustBe Some(List("1"))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-float"))) mustBe Some(List("1"))
     }
     "resolve deep float" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("deep", "float"))) mustBe Some(List("1"))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "float"))) mustBe Some(List("1"))
     }
     "resolve shallow int" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("shallow-int"))) mustBe Some(List("1"))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-int"))) mustBe Some(List("1"))
     }
     "resolve deep int" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("deep", "int"))) mustBe Some(List("1"))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "int"))) mustBe Some(List("1"))
     }
     "resolve shallow double" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("shallow-float"))) mustBe Some(List("1"))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-float"))) mustBe Some(List("1"))
     }
     "resolve deep double" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("deep", "double"))) mustBe Some(List("1"))
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "double"))) mustBe Some(List("1"))
     }
     "resolve shallow array" in {
-      resolveListOfStrings(ctxWithAuthn, Some(body), AuthnRef(Path("shallow-array"))) mustBe Some(List())
+      resolveListOfStrings(ctxWithAuthn, Some(body), conf, AuthnRef(Path("shallow-array"))) mustBe Some(List())
     }
     "resolve deep array" in {
-      resolveListOfStrings(ctxWithAuthn, Some(body), AuthnRef(Path("deep", "array"))) mustBe Some(List())
+      resolveListOfStrings(ctxWithAuthn, Some(body), conf, AuthnRef(Path("deep", "array"))) mustBe Some(List())
     }
 
     "fail to resolve shallow null value" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("shallow-null"))) mustBe None
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-null"))) mustBe None
     }
     "fail to resolve shallow object value" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("shallow-object"))) mustBe None
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-object"))) mustBe None
     }
     "fail to resolve deep null value" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("deep", "null"))) mustBe None
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "null"))) mustBe None
     }
     "fail to resolve deep object value" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("deep", "object"))) mustBe None
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "object"))) mustBe None
     }
 
     "fail to resolve missing shallow value" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("x"))) mustBe None
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("x"))) mustBe None
     }
     "fail to resolve missing deep value" in {
-      resolveListOfStrings(ctxWithAuthn, None, AuthnRef(Path("deep", "x"))) mustBe None
+      resolveListOfStrings(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "x"))) mustBe None
     }
   }
 
@@ -376,73 +377,72 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     val resolveJson = ValueResolver.resolveJson _
 
     "resolve shallow string" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("shallow-string"))) mustBe Some(StringJsonValue(""))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-string"))) mustBe Some(StringJsonValue(""))
     }
     "resolve deep string" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("deep", "string"))) mustBe Some(StringJsonValue(""))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "string"))) mustBe Some(StringJsonValue(""))
     }
 
     "resolve shallow object" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("shallow-object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
     }
     "resolve deep object" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("deep", "object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
     }
 
     "resolve shallow array" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("shallow-array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
     }
     "resolve deep array" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("deep", "array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
     }
 
     "resolve shallow boolean" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("shallow-boolean"))) mustBe Some(BooleanJsonValue(false))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-boolean"))) mustBe Some(BooleanJsonValue(false))
     }
     "resolve deep boolean" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("deep", "boolean"))) mustBe Some(BooleanJsonValue(false))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "boolean"))) mustBe Some(BooleanJsonValue(false))
     }
 
     "resolve shallow float" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("shallow-float"))) mustBe Some(NumberJsonValue(1.0f))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-float"))) mustBe Some(NumberJsonValue(1.0f))
     }
     "resolve deep float" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("deep", "float"))) mustBe Some(NumberJsonValue(1.0f))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "float"))) mustBe Some(NumberJsonValue(1.0f))
     }
 
     "resolve shallow double" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("shallow-double"))) mustBe Some(NumberJsonValue(1.0d))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-double"))) mustBe Some(NumberJsonValue(1.0d))
     }
     "resolve deep double" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("deep", "double"))) mustBe Some(NumberJsonValue(1.0d))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "double"))) mustBe Some(NumberJsonValue(1.0d))
     }
 
     "resolve shallow int" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("shallow-int"))) mustBe Some(NumberJsonValue(1))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-int"))) mustBe Some(NumberJsonValue(1))
     }
     "resolve deep int" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("deep", "int"))) mustBe Some(NumberJsonValue(1))
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "int"))) mustBe Some(NumberJsonValue(1))
     }
 
     "resolve shallow null" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("shallow-null"))) mustBe Some(NullJsonValue)
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("shallow-null"))) mustBe Some(NullJsonValue)
     }
     "resolve deep null" in {
-      resolveJson(ctxWithAuthn, None, AuthnRef(Path("deep", "null"))) mustBe Some(NullJsonValue)
+      resolveJson(ctxWithAuthn, None, conf, AuthnRef(Path("deep", "null"))) mustBe Some(NullJsonValue)
     }
   }
 
   // resolve from pathParams
 
   "ValueResolver.resolveString from pathParams" should {
-    val resolveString: (RequestCtx, Option[JsonObject], ValueOrRef) => Option[String] = ValueResolver.resolveString
 
     "resolve existing param" in {
-      resolveString(ctxWithPathParams, None, PathParamRef("a")) mustBe Some("value")
+      resolveString(ctxWithPathParams, None, conf, PathParamRef("a")) mustBe Some("value")
     }
 
     "fail to resolve missing param" in {
-      resolveString(ctxWithPathParams, None, PathParamRef("x")) mustBe None
+      resolveString(ctxWithPathParams, None, conf, PathParamRef("x")) mustBe None
     }
   }
 
@@ -450,11 +450,11 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     val resolveListOfStrings = ValueResolver.resolveListOfStrings _
 
     "resolve existing param" in {
-      resolveListOfStrings(ctxWithPathParams, None, PathParamRef("a")) mustBe Some(List("value"))
+      resolveListOfStrings(ctxWithPathParams, None, conf, PathParamRef("a")) mustBe Some(List("value"))
     }
 
     "fail to resolve missing param" in {
-      resolveListOfStrings(ctxWithPathParams, None, PathParamRef("x")) mustBe None
+      resolveListOfStrings(ctxWithPathParams, None, conf, PathParamRef("x")) mustBe None
     }
   }
 
@@ -462,28 +462,27 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     val resolveJson = ValueResolver.resolveJson _
 
     "resolve existing param" in {
-      resolveJson(ctxWithPathParams, None, PathParamRef("a")) mustBe Some(StringJsonValue("value"))
+      resolveJson(ctxWithPathParams, None, conf, PathParamRef("a")) mustBe Some(StringJsonValue("value"))
     }
 
     "fail to resolve missing param" in {
-      resolveJson(ctxWithPathParams, None, PathParamRef("x")) mustBe None
+      resolveJson(ctxWithPathParams, None, conf, PathParamRef("x")) mustBe None
     }
 
     // resolve from headers
 
     "ValueResolver.resolveString from headers" should {
-      val resolveString: (RequestCtx, Option[JsonObject], ValueOrRef) => Option[String] = ValueResolver.resolveString
 
       "resolve first value of existing header if first-value ref type" in {
-        resolveString(ctxWithHeaders, None, HeaderRef("a", FirstHeaderRefType)) mustBe Some("x")
+        resolveString(ctxWithHeaders, None, conf, HeaderRef("a", FirstHeaderRefType)) mustBe Some("x")
       }
 
       "resolve first value of existing header if all-values ref type" in { // if we reach this case, then someone mis-configured the plugin - trying to set a list of string to attribute that expects a string (e.g. path-param)
-        resolveString(ctxWithHeaders, None, HeaderRef("a", AllHeaderRefType)) mustBe Some("x")
+        resolveString(ctxWithHeaders, None, conf, HeaderRef("a", AllHeaderRefType)) mustBe Some("x")
       }
 
       "fail to resolve missing header" in {
-        resolveString(ctxWithHeaders, None, HeaderRef("x", FirstHeaderRefType)) mustBe None
+        resolveString(ctxWithHeaders, None, conf, HeaderRef("x", FirstHeaderRefType)) mustBe None
       }
     }
 
@@ -491,15 +490,15 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
       val resolveListOfStrings = ValueResolver.resolveListOfStrings _
 
       "resolve first value of existing header if first-value ref type" in {
-        resolveListOfStrings(ctxWithHeaders, None, HeaderRef("a", FirstHeaderRefType)) mustBe Some(List("x"))
+        resolveListOfStrings(ctxWithHeaders, None, conf, HeaderRef("a", FirstHeaderRefType)) mustBe Some(List("x"))
       }
 
       "resolve first value of existing header if all-values ref type" in {
-        resolveListOfStrings(ctxWithHeaders, None, HeaderRef("a", AllHeaderRefType)) mustBe Some(List("x", "y"))
+        resolveListOfStrings(ctxWithHeaders, None, conf, HeaderRef("a", AllHeaderRefType)) mustBe Some(List("x", "y"))
       }
 
       "fail to resolve missing header" in {
-        resolveListOfStrings(ctxWithHeaders, None, HeaderRef("x", FirstHeaderRefType)) mustBe None
+        resolveListOfStrings(ctxWithHeaders, None, conf, HeaderRef("x", FirstHeaderRefType)) mustBe None
       }
     }
 
@@ -507,15 +506,15 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
       val resolveJson = ValueResolver.resolveJson _
 
       "resolve first value of existing header if first-value ref type" in {
-        resolveJson(ctxWithHeaders, None, HeaderRef("a", FirstHeaderRefType)) mustBe Some(StringJsonValue("x"))
+        resolveJson(ctxWithHeaders, None, conf, HeaderRef("a", FirstHeaderRefType)) mustBe Some(StringJsonValue("x"))
       }
 
       "resolve first value of existing header if all-values ref type" in {
-        resolveJson(ctxWithHeaders, None, HeaderRef("a", AllHeaderRefType)) mustBe Some(ArrayJsonValue(new JsonArray().add("x").add("y")))
+        resolveJson(ctxWithHeaders, None, conf, HeaderRef("a", AllHeaderRefType)) mustBe Some(ArrayJsonValue(new JsonArray().add("x").add("y")))
       }
 
       "fail to resolve missing header" in {
-        resolveJson(ctxWithHeaders, None, HeaderRef("x", FirstHeaderRefType)) mustBe None
+        resolveJson(ctxWithHeaders, None, conf, HeaderRef("x", FirstHeaderRefType)) mustBe None
       }
     }
   }

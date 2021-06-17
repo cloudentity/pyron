@@ -35,7 +35,7 @@ abstract class AbstractOAuthAuthnProvider extends ScalaServiceVerticle with Auth
   def buildAuthnCtx(ctx: TracingContext, payload: JWTClaimsSet): AuthnCtx
 
   override def authenticate(ctx: RequestCtx, methodConf: AuthnMethodConf): VxFuture[Option[AuthnProviderResult]] =
-    extractToken(ctx.request, methodConf) match {
+    extractToken(ctx.targetRequest, methodConf) match {
       case Some(token) =>
         decodeAccessToken(ctx.tracingCtx, token).map(Option.apply).toJava()
       case None =>

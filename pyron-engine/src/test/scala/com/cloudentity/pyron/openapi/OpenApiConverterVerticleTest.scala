@@ -5,7 +5,7 @@ import com.cloudentity.pyron.domain.flow.{GroupMatchCriteria, PathPattern, PathP
 import com.cloudentity.pyron.domain.openapi.{BasePath, ConverterConf, Host, OpenApiDefaultsConf, OpenApiRule}
 import com.cloudentity.pyron.util.{FutureUtils, OpenApiTestUtils}
 import com.cloudentity.tools.vertx.tracing.TracingContext
-import io.swagger.models.Scheme
+import io.swagger.models.{Scheme, Swagger}
 import io.vertx.core.http.HttpMethod
 import org.junit.runner.RunWith
 import org.scalatestplus.junit.JUnitRunner
@@ -92,9 +92,10 @@ class OpenApiConverterVerticleTest extends WordSpec with MustMatchers with Vertx
     "convert only apis defined in rules" in {
       val apiPath1 = "/test1"
       val apiPath2 = "/test2"
+      val apiPath3 = "/notexposed"
       val swaggerBasePath = "/sla"
 
-      val paths = Map(apiPath1 -> multiPath(), apiPath2 -> sampleGetPath(), "/notexposed" -> sampleGetPath())
+      val paths = Map(apiPath1 -> multiPath(), apiPath2 -> sampleGetPath(), apiPath3 -> sampleGetPath())
       val swagger = sampleSwagger(swaggerBasePath, paths)
 
       val rules = List(
@@ -139,7 +140,7 @@ class OpenApiConverterVerticleTest extends WordSpec with MustMatchers with Vertx
         )
       )
 
-      val result = await(converter.convert(TracingContext.dummy(), sampleServiceId, swagger, rules, ConverterConf(None, None)))
+      val result: Swagger = await(converter.convert(TracingContext.dummy(), sampleServiceId, swagger, rules, ConverterConf(None, None)))
       println(io.swagger.util.Json.pretty(result))
 
       result.getBasePath mustBe "/api"
@@ -152,6 +153,10 @@ class OpenApiConverterVerticleTest extends WordSpec with MustMatchers with Vertx
       val expectedPath2 = swaggerBasePath + apiPath2
       val path2 = result.getPath(expectedPath2)
       path2.getOperations.size() mustBe 1
+
+      val unexpectedPath = swaggerBasePath + apiPath3
+      val path3 = result.getPath(unexpectedPath)
+      path3 mustBe null
     }
 
     "convert api when rule with path rewrite" in {

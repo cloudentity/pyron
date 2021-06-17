@@ -148,7 +148,9 @@ class ApiGroupsStoreVerticle extends ScalaServiceVerticle with ApiGroupsStore {
         val unresolvedGroupResults: List[ReadResult[ApiGroupConfUnresolved]] =
           ApiGroupReader.buildApiGroupConfsUnresolved(groupLevel)
 
-        val validUnresolvedGroups   = unresolvedGroupResults.flatMap(_.asValid)
+        val validUnresolvedGroups = unresolvedGroupResults.flatMap(_.asValid)
+          .sortBy(_.value.matchCriteria.basePath.map(-_.value.length).getOrElse(0))
+
         val invalidUnresolvedGroups = unresolvedGroupResults.flatMap(_.asInvalid)
 
         val conflictedOrOkGroups: List[ReadResult[ApiGroupConfUnresolved]] =
