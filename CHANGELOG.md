@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.9.0] - 2021-06-11
 
 ### Breaking change
 moved TransformRequestPlugin
