@@ -17,6 +17,9 @@ to: com.cloudentity.pyron.plugin.impl.transform.request.TransformRequestPlugin
 ### Changed
 - Update version of vertx-tools dependency to 1.9.0
 
+### Fixed
+- Generating opeanapi
+
 ## [1.8.0] - 2021-05-14
 ### Added
 - Enable adding Trace-Id header to response
