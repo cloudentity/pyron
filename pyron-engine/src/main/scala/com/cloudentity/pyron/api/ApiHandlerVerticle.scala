@@ -79,9 +79,15 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     log.debug(tracing, s"Received request: $requestSignature")
     log.trace(tracing, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
+    if (conf.traceIdHeaderEnabled.contains(true)) {
+      vertxResponse.putHeader("Trace-Id", tracing.getTraceId)
+    }
+
     VxFuture.succeededFuture(
       getProgram(conf.defaultRequestBodyMaxSize, ctx, tracing, requestSignature) map {
-        case Some(apiResponse) => handleApiResponse(tracing, vertxResponse, apiResponse)
+        case Some(apiResponse) => {
+          handleApiResponse(tracing, vertxResponse, apiResponse)
+        }
         case None => ()
       } recover { case ex: Throwable =>
         log.error(tracing, s"Unexpected error, request='$requestSignature'", ex)
