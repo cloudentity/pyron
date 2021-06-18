@@ -26,6 +26,7 @@ object HttpConversions {
                    apiGroup: ApiGroup,
                    ruleConf: RuleConf,
                    pathParams: PathParams,
+                   queryParams: QueryParams,
                    proxyHeaders: ProxyHeaders,
                    defaultRequestBodyMaxSize: Option[Kilobytes])
                   (implicit ec: VertxExecutionContext): Future[RequestCtx] = {
@@ -34,7 +35,7 @@ object HttpConversions {
 
     getBodyFuture(req, ruleConf, defaultRequestBodyMaxSize)
       .map { case (bodyStreamOpt, bodyOpt) =>
-        val originalRequest = toOriginalRequest(req, pathParams, bodyOpt)
+        val originalRequest = toOriginalRequest(req, pathParams, queryParams, bodyOpt)
         val dropBody = ruleConf.requestBody.contains(DropBody)
         val properties = Properties(RoutingCtxData.propertiesKey -> ctx, ApiGroup.propertiesKey -> apiGroup)
         val targetRequest = TargetRequest(
@@ -80,6 +81,7 @@ object HttpConversions {
 
   def toOriginalRequest(req: HttpServerRequest,
                         pathParams: PathParams,
+                        queryParams: QueryParams,
                         bodyOpt: Option[Buffer]): OriginalRequest = {
     OriginalRequest(
       method = req.method(),
@@ -89,7 +91,7 @@ object HttpConversions {
       localHost = req.localAddress().host(),
       remoteHost = req.remoteAddress().host(),
       pathParams = pathParams,
-      queryParams = toQueryParams(req.params()),
+      queryParams = queryParams,
       headers = toHeaders(req.headers()),
       cookies = req.cookieMap().asScala.toMap.mapValues(Cookie(_)),
       bodyOpt = bodyOpt

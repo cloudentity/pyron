@@ -8,7 +8,7 @@ import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeLi
 import com.cloudentity.pyron.client.TargetClient
 import com.cloudentity.pyron.config.Conf
 import com.cloudentity.pyron.domain.flow.{CallFailure, ProxyHeaders, RequestCtx, ResponseCtx}
-import com.cloudentity.pyron.domain.http.{ApiResponse, CallOpts}
+import com.cloudentity.pyron.domain.http.{ApiResponse, CallOpts, QueryParams}
 import com.cloudentity.pyron.domain.rule.{Kilobytes, RuleConf}
 import com.cloudentity.pyron.plugin.PluginFunctions
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
@@ -137,7 +137,10 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
 
   def reroute(ctx: RoutingContext, appliedRule: AppliedRule): Unit = {
     appliedRule.rule.conf.rewriteMethod.fold {
-      ctx.reroute(appliedRule.appliedRewrite.targetPath)
+      val uri = Option(ctx.request().query()).filter(_.nonEmpty).fold {
+        appliedRule.appliedRewrite.targetPath
+      }{q => appliedRule.appliedRewrite.targetPath + "?" + q}
+      ctx.reroute(uri)
     } { method => ctx.reroute(method.value, appliedRule.appliedRewrite.targetPath) }
   }
 
@@ -147,12 +150,14 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
                      rule: Rule,
                      apiGroup: ApiGroup,
                      appliedRewrite: AppliedPathRewrite,
-                     maxBodySize: Option[Kilobytes]): Future[RequestCtx] =
+                     maxBodySize: Option[Kilobytes]): Future[RequestCtx] = {
+    val queryParams = QueryParams.of(ctx.request().params())
     for {
-      initReqCtx <- toRequestCtx(ctx, tracing, apiGroup, rule.conf, appliedRewrite.pathParams, proxyHeaders, maxBodySize)
+      initReqCtx <- toRequestCtx(ctx, tracing, apiGroup, rule.conf, appliedRewrite.pathParams, queryParams, proxyHeaders, maxBodySize)
       reqCtxWithProxyHeaders = initReqCtx.modifyRequest(withProxyHeaders(proxyHeaders))
       finalRequestCtx <- applyRequestPlugins(reqCtxWithProxyHeaders, rule.requestPlugins)
     } yield finalRequestCtx
+  }
 
   def makeResponseCtx(ctx: RoutingContext,
                       requestCtx: RequestCtx,

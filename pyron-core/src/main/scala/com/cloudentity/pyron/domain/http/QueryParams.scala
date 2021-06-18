@@ -1,5 +1,6 @@
 package com.cloudentity.pyron.domain.http
 
+import io.vertx.core.MultiMap
 import org.apache.http.client.utils.URLEncodedUtils
 
 import java.net.URLEncoder
@@ -88,6 +89,12 @@ object QueryParams {
         .groupBy(_.getName).mapValues(_.flatMap(v => Option(v.getValue)))
       new QueryParams(params)
     }
+
+  def of(ps: MultiMap): QueryParams = {
+    import scala.collection.JavaConverters._
+    val params = ps.names().asScala.toList.map(name => (name, ps.getAll(name).asScala.toList)).toMap
+    QueryParams(params)
+  }
 
   def of(ps: Map[String, String]): QueryParams =
     QueryParams(ps.mapValues(List(_)))
