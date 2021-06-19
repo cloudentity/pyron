@@ -13,6 +13,7 @@ to: com.cloudentity.pyron.plugin.impl.transform.request.TransformRequestPlugin
   - full support for cookie references
   - provide references for $hostName $hostPort $localHost $remoteHost
 - transform-request plugin supports $conf references
+- route filters
 
 ### Changed
 - Update version of vertx-tools dependency to 1.9.0

@@ -12,16 +12,19 @@ import com.cloudentity.tools.vertx.server.api.routes.RouteService
 import com.cloudentity.tools.vertx.tracing.TracingManager
 import io.vertx.core
 import io.vertx.core.http.HttpMethod
-import io.vertx.core.Vertx
+import io.vertx.core.{Handler, Vertx}
 import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.ext.web.Router
+import io.vertx.ext.web.{Router, RoutingContext}
 import io.vertx.ext.web.handler.StaticHandler
 import org.slf4j.LoggerFactory
 
 object ApiRouter extends FutureConversions {
   val log = LoggerFactory.getLogger(this.getClass)
 
-  def createRouter(vertx: Vertx, conf: AppConf, tracing: TracingManager): Router = {
+  type Path = String
+  type RouteFilter = (Path, Handler[RoutingContext])
+
+  def createRouter(vertx: Vertx, conf: AppConf, tracing: TracingManager, routeFilters: List[RouteFilter]): Router = {
     val apiHandler = ServiceClientFactory.make(vertx.eventBus(), classOf[ApiHandler])
     val router     = Router.router(vertx)
 
@@ -34,6 +37,8 @@ object ApiRouter extends FutureConversions {
     if (conf.docsEnabled.getOrElse(false)) {
       router.route("/docs/*").handler(StaticHandler.create())
     }
+
+    routeFilters.foreach { case (path, filter) => router.route(path).handler(filter) }
 
     router.route("/*").handler { ctx =>
       ctx.request().pause()
