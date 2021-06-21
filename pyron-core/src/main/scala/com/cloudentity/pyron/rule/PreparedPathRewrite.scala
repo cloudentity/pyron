@@ -6,7 +6,8 @@ import scala.util.Try
 import scala.util.matching.Regex
 
 
-case class PreparedPathRewrite private(matchPattern: String,
+case class PreparedPathRewrite private(originPattern: String,
+                                       matchPattern: String,
                                        pathPrefix: String,
                                        rewritePattern: String,
                                        paramNames: List[(String, Int)],
@@ -42,6 +43,7 @@ object PreparedPathRewrite {
     val totalGroupCount = getCaptureGroupCount(groupsCountPattern) + indexedParamNames.size
     val (pat, rew) = insertParamGroupsAndRefs(inputPattern, outputPattern, indexedParamNames)
     PreparedPathRewrite(
+      originPattern = inputPattern,
       matchPattern = pat,
       pathPrefix = prefix,
       rewritePattern = convertNegToPosNumericRefs(rew, totalGroupCount),
