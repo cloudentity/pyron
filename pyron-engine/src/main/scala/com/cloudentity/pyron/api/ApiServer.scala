@@ -1,5 +1,6 @@
 package com.cloudentity.pyron.api
 
+import com.cloudentity.pyron.api.ApiRouter.RouteFilter
 import com.cloudentity.pyron.config.Conf.AppConf
 import com.cloudentity.tools.vertx.http.HttpService
 import com.cloudentity.tools.vertx.scala.bus.ScalaServiceVerticle
@@ -11,7 +12,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.Future
 
-class ApiServer(conf: AppConf) extends ScalaServiceVerticle with HttpService {
+class ApiServer(conf: AppConf, routeFilters: List[RouteFilter]) extends ScalaServiceVerticle with HttpService {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   var actualPort: Int = _
@@ -21,7 +22,7 @@ class ApiServer(conf: AppConf) extends ScalaServiceVerticle with HttpService {
   override def vertxServiceAddressPrefixS: Option[String] = Some(VxApiServer.defaultVerticleId)
 
   override def initServiceAsyncS(): Future[Unit] = {
-    val router = ApiRouter.createRouter(vertx, conf, getTracing)
+    val router = ApiRouter.createRouter(vertx, conf, getTracing, routeFilters)
     val opts = new HttpServerOptions(getHttpConfig)
     asFuture[HttpServer](vertx.createHttpServer(opts).requestHandler(router).listen(_)).toScala()
       .map { server =>
