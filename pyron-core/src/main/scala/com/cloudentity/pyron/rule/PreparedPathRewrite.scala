@@ -77,13 +77,19 @@ object PreparedPathRewrite {
   } yield AppliedPathRewrite(path, targetPath, pathParams, from = rewrite)
 
   private[rule] def rewritePath(rewritePattern: String, regexMatch: Regex.Match): String =
-    (0 to regexMatch.groupCount).map(i => (i, regexMatch.group(i))).foldLeft(rewritePattern) {
+    (1 to regexMatch.groupCount).map(i => (i, regexMatch.group(i))).foldLeft(rewritePattern) {
       case (rew, (idx, value)) => rew.replace(s"{$idx}", value)
     }
 
   private[rule] def getPathParams(rewrite: PreparedPathRewrite, regexMatch: Regex.Match): PathParams = {
-    val namedParams = rewrite.paramNames.map { case (name, i) => name -> regexMatch.group(i)}.toMap
-    PathParams(namedParams)
+    val params = for {
+      i <- (2 - rewrite.groupCount) until rewrite.groupCount
+    } yield if (i > 0) {
+      rewrite.paramName(i).getOrElse(s"$i") -> regexMatch.group(i)
+    } else {
+      rewrite.paramName(i - 1).getOrElse(s"${i - 1}") -> regexMatch.group(rewrite.groupCount + i - 1)
+    }
+    PathParams(params.toMap)
   }
 
   private[rule] def getCaptureGroupCount(groupsCountPattern: String): Int =
