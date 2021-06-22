@@ -4,19 +4,17 @@ import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http.RelativeUri
 import io.vertx.core.http.HttpMethod
 
-case class OpenApiRule(
-                        method: HttpMethod,
-                        serviceId: ServiceId,
-                        group: GroupMatchCriteria,
-                        pathPattern: PathPattern,
-                        pathPrefix: PathPrefix,
-                        dropPathPrefix: Boolean,
-                        rewriteMethod: Option[RewriteMethod],
-                        rewritePath: Option[RewritePath],
-                        plugins: List[ApiGroupPluginConf],
-                        tags: List[String],
-                        operationId: Option[String]
-                      ) {
+case class OpenApiRule(method: HttpMethod,
+                       serviceId: ServiceId,
+                       group: GroupMatchCriteria,
+                       pathPattern: PathPattern,
+                       pathPrefix: PathPrefix,
+                       dropPathPrefix: Boolean,
+                       rewriteMethod: Option[RewriteMethod],
+                       rewritePath: Option[RewritePath],
+                       plugins: List[ApiGroupPluginConf],
+                       tags: List[String],
+                       operationId: Option[String]) {
 
   lazy val targetServicePath: String = rewritePath.map(_.value).getOrElse {
     if (dropPathPrefix) pathPattern.value else pathPrefix.value + pathPattern.value

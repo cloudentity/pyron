@@ -1,23 +1,20 @@
 package com.cloudentity.pyron.rule
 
-import com.cloudentity.pyron.plugin.config._
-import com.cloudentity.pyron.domain._
-import com.cloudentity.pyron.domain.flow.{PluginConf, ApiGroupPluginConf, PluginName, RequestCtx, ResponseCtx}
+import com.cloudentity.pyron.domain.flow.{ApiGroupPluginConf, RequestCtx, ResponseCtx}
 import com.cloudentity.pyron.domain.rule.RuleConfWithPlugins
 import com.cloudentity.pyron.plugin.PluginFunctions.{RequestPlugin, ResponsePlugin}
 import com.cloudentity.pyron.plugin.bus.{request, response}
 import com.cloudentity.pyron.plugin.config._
 import com.cloudentity.pyron.plugin.{RequestPluginService, ResponsePluginService, ValidatePluginService}
-import com.cloudentity.tools.vertx.bus.ServiceClientFactory
-import com.cloudentity.tools.vertx.scala.Futures
+import com.cloudentity.tools.vertx.bus.VertxEndpointClient
+import com.cloudentity.tools.vertx.scala.{Futures, VertxExecutionContext}
 import com.cloudentity.tools.vertx.tracing.TracingManager
-import com.cloudentity.tools.vertx.scala.VertxExecutionContext
 import io.vertx.core.Vertx
-import io.vertx.core.eventbus.EventBus
-
-import scala.concurrent.Future
 import scalaz.Scalaz._
 import scalaz._
+
+import java.util
+import scala.concurrent.Future
 
 object RuleBuilder {
   case class InvalidPluginConf(conf: ApiGroupPluginConf, errorMsg: String)
@@ -28,21 +25,20 @@ object RuleBuilder {
     */
   def build(vertx: Vertx, tracing: TracingManager, conf: RuleConfWithPlugins)(implicit ec: VertxExecutionContext): Future[ValidationNel[InvalidPluginConf, Rule]] =
     for {
-      requestVal  <- validatePluginConfigs(vertx.eventBus(), conf.requestPlugins.toList)
-      responseVal <- validatePluginConfigs(vertx.eventBus(), conf.responsePlugins.toList)
-    } yield (requestVal |@| responseVal).apply((_, _) => buildRule(vertx.eventBus(), tracing, conf))
+      requestVal  <- validatePluginConfigs(vertx, conf.requestPlugins.toList)
+      responseVal <- validatePluginConfigs(vertx, conf.responsePlugins.toList)
+    } yield (requestVal |@| responseVal).apply((_, _) => buildRule(vertx, tracing, conf))
 
-  def buildRule(bus: EventBus, tracing: TracingManager, conf: RuleConfWithPlugins)(implicit ec: VertxExecutionContext): Rule =
+  def buildRule(vertx: Vertx, tracing: TracingManager, conf: RuleConfWithPlugins)(implicit ec: VertxExecutionContext): Rule =
     Rule(
       conf.rule,
-      buildRequestFunctions(bus, tracing, conf.requestPlugins.toList),
-      buildResponseFunctions(bus, tracing, conf.requestPlugins.toList.reverse ::: conf.responsePlugins.toList)
+      buildRequestFunctions(vertx, tracing, conf.requestPlugins.toList),
+      buildResponseFunctions(vertx, tracing, conf.requestPlugins.toList.reverse ::: conf.responsePlugins.toList)
     )
 
-  def buildRequestFunctions(bus: EventBus, tracing: TracingManager, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): List[RequestPlugin] =
+  def buildRequestFunctions(vertx: Vertx, tracing: TracingManager, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): List[RequestPlugin] =
     confs.map { conf =>
-
-      val client = ServiceClientFactory.makeWithTracing(bus, tracing, classOf[RequestPluginService], java.util.Optional.of(conf.addressPrefixOpt.map(_.value).getOrElse(conf.name.value)))
+      val client = VertxEndpointClient.makeWithTracing(vertx, tracing, classOf[RequestPluginService], getAddressPrefix(conf))
       (ctx: RequestCtx) =>
         Futures.toScala(client.applyPlugin(ctx.tracingCtx, request.ApplyRequest(ctx, conf))).flatMap {
           case request.Continue(nextCtx) => Future.successful(nextCtx)
@@ -50,10 +46,9 @@ object RuleBuilder {
         }
     }
 
-  def buildResponseFunctions(bus: EventBus, tracing: TracingManager, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): List[ResponsePlugin] =
+  def buildResponseFunctions(vertx: Vertx, tracing: TracingManager, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): List[ResponsePlugin] =
     confs.map { conf =>
-
-      val client = ServiceClientFactory.makeWithTracing(bus, tracing, classOf[ResponsePluginService], java.util.Optional.of(conf.addressPrefixOpt.map(_.value).getOrElse(conf.name.value)))
+      val client = VertxEndpointClient.makeWithTracing(vertx, tracing, classOf[ResponsePluginService], getAddressPrefix(conf))
       (ctx: ResponseCtx) =>
         Futures.toScala(client.applyPlugin(ctx.tracingCtx, response.ApplyRequest(ctx, conf))).flatMap {
           case response.Continue(apiResponse) => Future.successful(apiResponse)
@@ -61,11 +56,11 @@ object RuleBuilder {
         }
     }
 
-  def validatePluginConfigs(bus: EventBus, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): Future[ValidationNel[InvalidPluginConf, Unit]] = {
+  def validatePluginConfigs(vertx: Vertx, confs: List[ApiGroupPluginConf])(implicit ec: VertxExecutionContext): Future[ValidationNel[InvalidPluginConf, Unit]] = {
     val validationsFut: Future[List[Validation[NonEmptyList[InvalidPluginConf], Unit]]] =
       Future.sequence {
         confs.map { conf =>
-          val client = ServiceClientFactory.make(bus, classOf[ValidatePluginService], java.util.Optional.of(conf.addressPrefixOpt.map(_.value).getOrElse(conf.name.value)))
+          val client = VertxEndpointClient.make(vertx, classOf[ValidatePluginService], getAddressPrefix(conf))
 
           Futures.toScala(client.validateConfig(ValidateRequest(conf)))
             .map[ValidationNel[InvalidPluginConf, Unit]] {
@@ -83,4 +78,8 @@ object RuleBuilder {
       }
     }
   }
+
+  def getAddressPrefix(conf: ApiGroupPluginConf): util.Optional[String] =
+    java.util.Optional.of(conf.addressPrefixOpt.map(_.value).getOrElse(conf.name.value))
+
 }

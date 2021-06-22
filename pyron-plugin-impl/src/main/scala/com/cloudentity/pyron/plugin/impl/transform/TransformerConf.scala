@@ -19,11 +19,6 @@ case class ResolvedQueryParamOps(set: Option[Map[String, Option[List[String]]]])
 case class HeaderOps(set: Option[Map[String, ValueOrRef]]) extends TransformOps
 case class ResolvedHeaderOps(set: Option[Map[String, Option[List[String]]]])
 
-// actual JSON schema
-case class TransformerConfRaw(body: Option[BodyOps],
-                              pathParams: Option[PathParamOps],
-                              queryParams: Option[QueryParamOps],
-                              headers: Option[HeaderOps])
 // root conf
 case class TransformerConf(body: BodyOps,
                            parseJsonBody: Boolean,
@@ -31,6 +26,11 @@ case class TransformerConf(body: BodyOps,
                            queryParams: QueryParamOps,
                            headers: HeaderOps)
 
+// actual JSON schema
+case class TransformerConfRaw(body: Option[BodyOps],
+                              pathParams: Option[PathParamOps],
+                              queryParams: Option[QueryParamOps],
+                              headers: Option[HeaderOps])
 object TransformerConf {
   implicit val BodyOpsDecoder: Decoder[BodyOps] = deriveDecoder[BodyOps].emap {
     case BodyOps(Some(_), Some(true)) => Left("Can't both drop body and set body attribute")

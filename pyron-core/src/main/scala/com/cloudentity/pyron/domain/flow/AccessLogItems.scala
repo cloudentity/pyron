@@ -2,6 +2,10 @@ package com.cloudentity.pyron.domain.flow
 
 import io.circe.Json
 
+object AccessLogItems {
+  def apply(cs: (String, Json)*): AccessLogItems = AccessLogItems(cs.toMap)
+}
+
 case class AccessLogItems(value: Map[String, Json]) extends AnyVal {
   def apply(v: Map[String, Json]): AccessLogItems = AccessLogItems(v)
 
@@ -22,8 +26,4 @@ case class AccessLogItems(value: Map[String, Json]) extends AnyVal {
 
   def mergeMap(other: Map[String, Json]): AccessLogItems =
     apply(value ++ other)
-}
-
-object AccessLogItems {
-  def apply(cs: (String, Json)*): AccessLogItems = AccessLogItems(cs.toMap)
 }

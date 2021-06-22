@@ -31,34 +31,34 @@ object RulesConfReader {
   case class EndpointFlowConf(disableAllPlugins: Option[Boolean], disablePlugins: Option[List[PluginName]])
 
   case class RuleRawConf(
-                          endpointName: Option[String],
-                          targetHost: Option[TargetHost],
-                          targetPort: Option[Int],
-                          targetSsl: Option[Boolean],
-                          targetService: Option[ServiceClientName],
-                          targetProxy: Option[Boolean],
-                          pathPattern: Option[PathPattern],
-                          rewritePath: Option[RewritePath],
-                          rewriteMethod: Option[RewriteMethod],
-                          copyQueryOnRewrite: Option[Boolean],
-                          preserveHostHeader: Option[Boolean],
-                          pathPrefix: Option[PathPrefix],
-                          method: Option[HttpMethod],
-                          dropPrefix: Option[Boolean],
-                          requestPlugins: Option[List[PluginConf]],
-                          responsePlugins: Option[List[PluginConf]],
-                          tags: Option[List[String]],
-                          requestBody: Option[BodyHandling],
-                          requestBodyMaxSize: Option[Kilobytes],
-                          call: Option[CallOpts],
-                          ext: Option[ExtRuleConf]
-                        )
+    endpointName: Option[String],
+    targetHost: Option[TargetHost],
+    targetPort: Option[Int],
+    targetSsl: Option[Boolean],
+    targetService: Option[ServiceClientName],
+    targetProxy: Option[Boolean],
+    pathPattern: Option[PathPattern],
+    rewritePath: Option[RewritePath],
+    rewriteMethod: Option[RewriteMethod],
+    copyQueryOnRewrite: Option[Boolean],
+    preserveHostHeader: Option[Boolean],
+    pathPrefix: Option[PathPrefix],
+    method: Option[HttpMethod],
+    dropPrefix: Option[Boolean],
+    requestPlugins: Option[List[PluginConf]],
+    responsePlugins: Option[List[PluginConf]],
+    tags: Option[List[String]],
+    requestBody: Option[BodyHandling],
+    requestBodyMaxSize: Option[Kilobytes],
+    call: Option[CallOpts],
+    ext: Option[ExtRuleConf]
+  )
 
   val emptyRuleRawConf: RuleRawConf = RuleRawConf(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
 
   sealed trait ReadRulesError
-  case class RuleDecodingError(ex: Throwable) extends ReadRulesError
-  case class RuleErrors(errorMsgs: NonEmptyList[String]) extends ReadRulesError
+    case class RuleDecodingError(ex: Throwable) extends ReadRulesError
+    case class RuleErrors(errorMsgs: NonEmptyList[String]) extends ReadRulesError
 
   case class RuleRequiredFields(method: HttpMethod, pathPattern: PathPattern, service: TargetServiceRule)
 

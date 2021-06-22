@@ -1,6 +1,7 @@
 package com.cloudentity.pyron.rule
 
 import io.circe.Json
+import com.cloudentity.pyron.domain.Codecs._
 import com.cloudentity.pyron.domain.flow.{ApiGroupPluginConf, EndpointMatchCriteria, PathPattern, PathPrefix, PluginConf, PluginName, RewriteMethod, RewritePath, ServiceClientName, StaticServiceRule, TargetHost}
 import com.cloudentity.pyron.domain.rule.{ExtRuleConf, RequestPluginsConf, ResponsePluginsConf, RuleConf}
 import com.cloudentity.pyron.rule.RulesConfReader._

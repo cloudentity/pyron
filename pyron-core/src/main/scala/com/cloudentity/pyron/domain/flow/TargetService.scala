@@ -17,6 +17,7 @@ case class StaticService(host: TargetHost, port: Int, ssl: Boolean) extends Targ
 case class DiscoverableService(serviceName: ServiceClientName) extends TargetService
 
 object TargetService {
+  private val DEFAULT_PORT = 80
   def apply(rule: TargetServiceRule, req: HttpServerRequest): TargetService =
     rule match {
       case StaticServiceRule(host, port, ssl) => StaticService(host, port, ssl)
@@ -34,15 +35,15 @@ object TargetService {
     val ssl = req.isSSL
     if (Option(req.host()).isDefined) {
       Option(req.host()).get.split(':').toList match {
-        case h :: Nil => StaticService(TargetHost(h), 80, ssl)
+        case h :: Nil => StaticService(TargetHost(h), DEFAULT_PORT, ssl)
         case h :: p :: Nil => StaticService(TargetHost(h), Integer.parseInt(p), ssl)
-        case _ => StaticService(TargetHost("malformed-host-header"), 80, ssl)
+        case _ => StaticService(TargetHost("malformed-host-header"), DEFAULT_PORT, ssl)
       }
     } else Try(new URL(req.absoluteURI())).map(url => {
-      val port = if (url.getPort == -1) 80 else url.getPort
+      val port = if (url.getPort == -1) DEFAULT_PORT else url.getPort
       StaticService(TargetHost(url.getHost), port, ssl)
     })
       // it should never fail since you can't create HttpServerRequest with invalid URI
-      .toOption.getOrElse(StaticService(TargetHost("malformed-url"), 80, ssl))
+      .toOption.getOrElse(StaticService(TargetHost("malformed-url"), DEFAULT_PORT, ssl))
   }
 }

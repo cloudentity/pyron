@@ -1,0 +1,58 @@
+package com.cloudentity.pyron.api
+
+import com.cloudentity.pyron.api.RoutingCtxData.updateFlowState
+import com.cloudentity.pyron.apigroup.ApiGroup
+import com.cloudentity.pyron.domain.flow._
+import com.cloudentity.pyron.domain.http.TargetRequest
+import com.cloudentity.pyron.rule.RuleMatcher.{Match, NoMatch}
+import com.cloudentity.pyron.rule.{ApiGroupMatcher, AppliedPathRewrite, Rule, RuleMatcher}
+import io.vertx.core.http.HttpServerRequest
+import io.vertx.ext.web.RoutingContext
+
+import scala.annotation.tailrec
+
+object ApiRequestHandler {
+
+  case class AppliedRule(rule: Rule, appliedRewrite: AppliedPathRewrite)
+
+  def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[AppliedRule] = {
+    @tailrec def loop(basePath: BasePath, rules: List[Rule]): Option[AppliedRule] = rules match {
+      case rule :: tail =>
+        val criteria = rule.conf.criteria
+        val path = Option(vertxRequest.path()).getOrElse("")
+        RuleMatcher.makeMatch(vertxRequest.method(), path, basePath, criteria) match {
+          case Match(appliedRewrite) => Some(AppliedRule(rule, appliedRewrite))
+          case NoMatch => loop(basePath, tail)
+        }
+      case Nil => None
+    }
+    loop(apiGroup.matchCriteria.basePathResolved, apiGroup.rules)
+  }
+
+  def findMatchingApiGroup(apiGroups: List[ApiGroup], vertxRequest: HttpServerRequest): Option[ApiGroup] = {
+    val path = Option(vertxRequest.path()).getOrElse("")
+    val hostOpt = Option(vertxRequest.host())
+    apiGroups.find { group => ApiGroupMatcher.makeMatch(hostOpt, path, group.matchCriteria) }
+  }
+
+  def setAuthnCtx(ctx: RoutingContext, authnCtx: AuthnCtx): Unit =
+    updateFlowState(ctx, _.copy(authnCtx = Some(authnCtx)))
+
+  def addRule(ctx: RoutingContext, rule: Rule): Unit =
+    updateFlowState(ctx, flow => flow.copy(rules = rule :: flow.rules))
+
+  def setAborted(ctx: RoutingContext, aborted: Boolean): Unit =
+    updateFlowState(ctx, _.copy(aborted = Some(aborted)))
+
+  def setFailure(ctx: RoutingContext, failure: Option[FlowFailure]): Unit =
+    updateFlowState(ctx, _.copy(failure = failure))
+
+  def addExtraAccessLogItems(ctx: RoutingContext, items: AccessLogItems): Unit =
+    updateFlowState(ctx, state => state.copy(extraAccessLogs = state.extraAccessLogs.merge(items)))
+
+  def addProperties(ctx: RoutingContext, props: Properties): Unit =
+    updateFlowState(ctx, state => state.copy(properties = Properties(state.properties.toMap ++ props.toMap)))
+
+  def withProxyHeaders(proxyHeaders: ProxyHeaders)(req: TargetRequest): TargetRequest =
+    req.withHeaderValues(proxyHeaders.headers)
+}

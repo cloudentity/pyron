@@ -13,8 +13,8 @@ import com.cloudentity.tools.vertx.server.api.tracing.RoutingWithTracingS
 import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingManager}
 import io.vertx.core.http.{HttpMethod, HttpServerRequest, HttpVersion}
 import io.vertx.core.{Handler, Vertx}
-import com.cloudentity.pyron.api.ApiHandler.FlowState
-import com.cloudentity.pyron.domain.flow.{AccessLogItems, AuthnCtx, DiscoverableServiceRule, Properties, ProxyServiceRule, ServiceClientName, StaticServiceRule, TargetHost}
+import com.cloudentity.pyron.api.FlowState
+import com.cloudentity.pyron.domain.flow._
 import io.vertx.core.net.SocketAddress
 import io.vertx.ext.web.RoutingContext
 
@@ -134,7 +134,7 @@ object AccessLogHandler extends AccessLogHelper {
 
   private def buildGatewayLog(flowState: FlowState, interrupted: Boolean) = {
     val (targetServiceNameOpt, targetHostOpt, targetPortOpt): (Option[ServiceClientName], Option[TargetHost], Option[Int]) =
-      flowState.rule.map(_.conf.target) match {
+      flowState.rules.headOption.map(_.conf.target) match {
         case Some(DiscoverableServiceRule(name))    => (Some(name), None, None)
         case Some(StaticServiceRule(host, port, _)) => (None, Some(host), Some(port))
         case Some(ProxyServiceRule)                 => (None, None, None)
@@ -142,9 +142,9 @@ object AccessLogHandler extends AccessLogHelper {
       }
 
     GatewayLog(
-      method        = flowState.rule.map(_.conf.criteria.method),
-      path          = flowState.rule.map(_.conf.criteria.rewrite.matchPattern),
-      pathPrefix    = flowState.rule.map(_.conf.criteria.rewrite.pathPrefix),
+      method        = flowState.rules.headOption.map(_.conf.criteria.method),
+      path          = flowState.rules.headOption.map(_.conf.criteria.rewrite.matchPattern),
+      pathPrefix    = flowState.rules.headOption.map(_.conf.criteria.rewrite.pathPrefix),
       aborted       = flowState.aborted.getOrElse(true),
       interrupted   = interrupted,
       failed        = flowState.failure.map(_ => true),

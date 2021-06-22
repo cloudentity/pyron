@@ -4,5 +4,5 @@ import com.cloudentity.pyron.domain.rule.Kilobytes
 
 object BodyLimit {
   def isMaxSizeExceeded(contentLengthBytes: Long, maxBodySizeOpt: Option[Kilobytes]): Boolean =
-    maxBodySizeOpt.map(contentLengthBytes > _.bytes).getOrElse(false)
+    maxBodySizeOpt.exists(contentLengthBytes > _.bytes)
 }

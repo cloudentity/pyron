@@ -1,13 +1,11 @@
 package com.cloudentity.pyron.domain
 
-import java.time.Duration
 import com.cloudentity.pyron.domain.flow._
 import com.cloudentity.pyron.domain.http._
 import com.cloudentity.pyron.domain.rule._
 import com.cloudentity.pyron.rule.PreparedPathRewrite
 import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.circe.CursorOp.DownField
-import io.circe.Decoder.Result
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -17,6 +15,7 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{CookieSameSite, HttpMethod}
 import io.vertx.core.json.{JsonObject => VxJsonObject}
 
+import java.time.Duration
 import scala.concurrent.Future
 import scala.util.Try
 import scala.util.matching.Regex
@@ -83,18 +82,16 @@ object Codecs {
   implicit lazy val PathParamNameDec: Decoder[PathParamName] = AnyValDecoder(PathParamName)
 
   implicit lazy val pluginConfEnc: Encoder[PluginConf] = deriveEncoder
-  implicit lazy val pluginConfDec: Decoder[PluginConf] = new Decoder[PluginConf] {
-    override def apply(c: HCursor): Result[PluginConf] =
-      Decoder.decodeJsonObject.apply(c).flatMap { obj =>
-        obj.apply("name").flatMap(_.asString) match {
-          case Some(name) =>
-            val conf = obj.apply("conf").getOrElse(Json.obj())
-            Right(PluginConf(PluginName(name), conf))
-          case None =>
-            Left(DecodingFailure("Missing 'name' attribute", DownField("name") :: c.history))
-        }
+  implicit lazy val pluginConfDec: Decoder[PluginConf] = (c: HCursor) =>
+    Decoder.decodeJsonObject.apply(c).flatMap { obj =>
+      obj.apply("name").flatMap(_.asString) match {
+        case Some(name) =>
+          val conf = obj.apply("conf").getOrElse(Json.obj())
+          Right(PluginConf(PluginName(name), conf))
+        case None =>
+          Left(DecodingFailure("Missing 'name' attribute", DownField("name") :: c.history))
       }
-  }
+    }
 
   implicit lazy val bufferEnc: Encoder[Buffer] = Encoder.encodeString.contramap(_.toString)
   implicit lazy val bufferDec: Decoder[Buffer] = Decoder.decodeString.map(Buffer.buffer)

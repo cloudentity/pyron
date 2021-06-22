@@ -23,7 +23,7 @@ object BodyBuffer {
           } else if (bodyBuf.canFit(buf)) {
             bodyBuf.append(buf)
           } else {
-            bodyBuf.setFull
+            bodyBuf.setFull()
             p.failure(new RequestBodyTooLargeException())
           }
         }.endHandler { _ =>
@@ -46,14 +46,14 @@ class BodyBuffer(contentLengthOpt: Option[Long], maxSize: Kilobytes) {
   val DEFAULT_INITIAL_BODY_BUFFER_SIZE = 1024
   val MAX_PREALLOCATED_BODY_BUFFER_BYTES = 65535
 
-  val initBufferSize =
+  val initBufferSize: Int =
     contentLengthOpt match {
       case Some(contentLength) if contentLength > MAX_PREALLOCATED_BODY_BUFFER_BYTES => MAX_PREALLOCATED_BODY_BUFFER_BYTES
       case Some(contentLength) => Math.min(contentLength, Integer.MAX_VALUE).toInt
       case None => DEFAULT_INITIAL_BODY_BUFFER_SIZE
     }
 
-  var buffer = Buffer.buffer(initBufferSize)
+  var buffer: Buffer = Buffer.buffer(initBufferSize)
   var full = false
 
   def canFit(buf: Buffer): Boolean =

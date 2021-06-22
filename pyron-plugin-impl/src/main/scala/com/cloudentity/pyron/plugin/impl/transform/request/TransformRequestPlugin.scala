@@ -50,6 +50,7 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
       transformReqHeaders(resolveHeaderOps(ctx, conf.headers, jsonBodyOpt))
   }
 
+  // use lazy val instead of this construct!
   // to avoid parsing body to JsonObject over and over again we do it only if JSON body reference exists or body operations are set
   def parseJsonBodyIfRequired(ctx: RequestCtx, conf: TransformerConf): Option[JsonObject] = {
     if (conf.parseJsonBody)
