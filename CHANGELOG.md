@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.9.0] - 2021-06-11
 
 ### Breaking change
 moved TransformRequestPlugin
@@ -16,6 +16,9 @@ to: com.cloudentity.pyron.plugin.impl.transform.request.TransformRequestPlugin
 
 ### Changed
 - Update version of vertx-tools dependency to 1.9.0
+
+### Fixed
+- Generating openapi - fixed api's paths(were with regex group), fixed matching api's operations  
 
 ## [1.8.0] - 2021-05-14
 ### Added

@@ -1,13 +1,16 @@
 package com.cloudentity.pyron.openapi
 
+import com.cloudentity.pyron.domain.flow.{PathParamName, PathParams, PathPattern, PathPrefix}
+
+import java.util
 import com.cloudentity.pyron.domain.openapi.OpenApi.OpenApiOperations
 import com.cloudentity.pyron.domain.openapi.OpenApiRule
 import io.swagger.models._
 import io.swagger.models.parameters._
 import io.swagger.models.properties.Property
 
-import java.util
 import scala.collection.JavaConverters._
+import scala.util.matching.Regex
 
 object OpenApiConverterUtils extends OpenApiConverterUtils
 trait OpenApiConverterUtils {
@@ -16,23 +19,29 @@ trait OpenApiConverterUtils {
     case (path, (method, operation)) => path.set(method.toString.toLowerCase, operation)
   }
 
-  def buildAbsolutePathsMap(swagger: Swagger): Map[String, OpenApiOperations] =
+  def buildAbsolutePathsMap(swagger: Swagger): Map[String, OpenApiOperations] = {
     swagger.getPaths.asScala.map {
       case (key, value) => buildAbsolutePath(swagger, key) -> value.getOperationMap.asScala.toMap
     }.toMap
+  }
 
   def buildAbsolutePath(swagger: Swagger, path: String): String =
-    Option(swagger.getBasePath).map(basePath =>
-      if (basePath.endsWith("/")) basePath.init else basePath
-    ).getOrElse("") + path
+    Option(swagger.getBasePath) match {
+      case Some(basePath) =>
+        if (basePath.endsWith("/")) basePath.dropRight(1) + path
+        else basePath + path
+      case None => path
+    }
 
-  def findOperation(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] =
+  def findOperation(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] = {
     findPath(swagger, path).flatMap(p => findOperationInPath(p, method))
+  }
 
-  def findOperationWithAbsoluteUrl(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] =
+  def findOperationWithAbsoluteUrl(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] = {
     swagger.getPaths.asScala.find { case (k, _) =>
       path == buildAbsolutePath(swagger, k)
     }.flatMap(e => findOperationInPath(e._2, method))
+  }
 
   def findPath(swagger: Swagger, targetServicePath: String): Option[Path] =
     swagger.getPaths.asScala.find(x => pathMatches(targetServicePath, x._1)).map(_._2)
@@ -40,16 +49,64 @@ trait OpenApiConverterUtils {
   def findOperationInPath(path: Path, method: HttpMethod): Option[Operation] =
     Option(path.getOperationMap.get(method))
 
-  def pathMatches(testPath: String, regexPath: String): Boolean = regexPath
-    .replaceAll("""\{\w+}""", """(\\w+)""").r
-    .findFirstIn(testPath.replaceAll("[{}]", "")).nonEmpty
+  def buildPaths(pathsMap: Map[String, OpenApiOperations]): Map[String, Path] = {
+    pathsMap.mapValues(buildPath)
+  }
 
-  def toSwaggerMethod(method: io.vertx.core.http.HttpMethod): io.swagger.models.HttpMethod =
+  def pathMatches(testPath: String, regexPath: String): Boolean = {
+    val normalizedTargetServicePath = testPath.replaceAll("\\{|\\}", "")
+    makeMatch(normalizedTargetServicePath, PathMatching.build(PathPrefix(""), PathPattern(regexPath))).isDefined
+  }
+
+  def makeMatch(path: String, matcher: PathMatching): Option[PathParams] =
+    matcher.regex.findFirstMatchIn(path).flatMap[PathParams] { mtch =>
+      if (mtch.groupCount == matcher.paramNames.size)
+        Some(
+          PathParams(
+            matcher.paramNames.map { name =>
+              name.value -> mtch.group(name.value)
+            }.toMap
+          )
+        )
+      else None
+    }
+
+  def toSwaggerMethod(method: io.vertx.core.http.HttpMethod): io.swagger.models.HttpMethod = {
     io.swagger.models.HttpMethod.valueOf(method.toString.toUpperCase)
+  }
 
   def deepCopyOperation(operation: Operation): Operation =
     SwaggerCopy.copyOperation(operation)
 
+}
+
+case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
+
+object PathMatching {
+  val namePlaceholderPattern = """\{\w+[^/]\}"""
+  val namePlaceholderRegex = namePlaceholderPattern.r
+
+  def build(pathPrefix: PathPrefix, pathPattern: PathPattern): PathMatching =
+    PathMatching(
+      regex = createPatternRegex(createRawPattern(pathPrefix, pathPattern)),
+      paramNames = extractPathParamNames(pathPattern),
+      prefix = pathPrefix,
+      originalPath = pathPattern.value
+    )
+
+  def createRawPattern(pathPrefix: PathPrefix, pathPattern: PathPattern): String =
+    pathPrefix.value + pathPattern.value
+
+  def createPatternRegex(rawPattern: String): Regex = {
+    val regex = namePlaceholderRegex.findAllIn(rawPattern).toList.foldLeft(rawPattern) { case (acc, mtch) =>
+      val name = mtch.drop(1).dropRight(1)
+      acc.replaceFirst(namePlaceholderPattern, s"(?<$name>[^/]+)")
+    }
+    s"^$regex$$".r
+  }
+
+  def extractPathParamNames(pattern: PathPattern): List[PathParamName] =
+    namePlaceholderRegex.findAllIn(pattern.value).toList.map(_.drop(1).dropRight(1)).map(PathParamName)
 }
 
 object OpenApiPluginUtils extends OpenApiPluginUtils
