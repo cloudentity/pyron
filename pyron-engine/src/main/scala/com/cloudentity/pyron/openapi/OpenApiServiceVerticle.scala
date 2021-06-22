@@ -121,17 +121,17 @@ object OpenApiRuleBuilder {
 
     serviceIdOpt.map(serviceId =>
       OpenApiRule(
-        method         = r.rule.criteria.method,
-        serviceId      = serviceId,
-        group          = groupMatchCriteria,
-        pathPrefix     = PathPrefix(r.rule.criteria.rewrite.pathPrefix),
-        pathPattern    = PathPattern(r.rule.criteria.rewrite.matchPattern),
+        method = r.rule.criteria.method,
+        serviceId = serviceId,
+        group = groupMatchCriteria,
+        pathPrefix = PathPrefix(r.rule.criteria.rewrite.pathPrefix),
+        pathPattern = PathPattern(r.rule.criteria.rewrite.originPattern),
         dropPathPrefix = r.rule.dropPathPrefix,
-        rewritePath    = r.rule.rewritePath,
-        rewriteMethod  = r.rule.rewriteMethod,
-        plugins        = r.requestPlugins.toList ::: r.responsePlugins.toList,
-        tags           = r.rule.tags,
-        operationId    = r.rule.ext.openapi.flatMap(_.operationId)
+        rewritePath = r.rule.rewritePath,
+        rewriteMethod = r.rule.rewriteMethod,
+        plugins = r.requestPlugins.toList ::: r.responsePlugins.toList,
+        tags = r.rule.tags,
+        operationId = r.rule.ext.openapi.flatMap(_.operationId)
       )
     )
   }
