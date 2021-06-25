@@ -1,6 +1,6 @@
 ## [Unreleased]
 ### Changed
-- Update version of dependency-track-maven-plugin to version 0.8.8
+- Update version of dependency-track-maven-plugin to version 0.8.6
 
 ## [1.9.0] - 2021-06-11
 
