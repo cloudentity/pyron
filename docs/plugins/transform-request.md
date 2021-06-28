@@ -213,6 +213,95 @@ then target request body would look like this, provided `X-Account-No` header ha
 }
 ```
 
+Elements of JSON arrays may also be referenced using the configuration syntax `[array_index]`. For example, suppose the incoming request body is:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ]
+}
+```
+
+To set a request body attribute based on the head element of the `accounts` array, the following configuration should be used:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "set": {
+        "primaryAccount": "$body.accounts.[0]"
+      }
+    }
+  }
+}
+```
+
+Then the target request body would be:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ],
+  "primaryAccount": {
+    "name": "Savings",
+    "balance": "20000"
+  }
+}
+```
+
+The array element can be of any type. If the array element is itself a JSON array or object, its own nested attributes may be further referenced after the initial array element reference.
+
+In the above example, if the following configuration is used instead:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "set": {
+        "primaryAccountName": "$body.accounts.[0].name"
+      }
+    }
+  }
+}
+```
+
+then the target request body would be:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ],
+  "primaryAccountName": "Savings"
+}
+```
+
+
 <a id="json-body-drop"></a>
 ##### Drop body
 
