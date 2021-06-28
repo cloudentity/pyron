@@ -6,15 +6,16 @@ import java.net.URL
 import scala.util.Try
 
 case class TargetHost(value: String) extends AnyVal
+sealed trait TargetService
+case class StaticService(host: TargetHost, port: Int, ssl: Boolean) extends TargetService
+case class DiscoverableService(serviceName: ServiceClientName) extends TargetService
+case class RerouteService(rewritePath: RewritePath) extends TargetService
 
 sealed trait TargetServiceRule
 case class StaticServiceRule(host: TargetHost, port: Int, ssl: Boolean) extends TargetServiceRule
 case class DiscoverableServiceRule(serviceName: ServiceClientName) extends TargetServiceRule
+case class RerouteServiceRule(rewritePath: RewritePath) extends TargetServiceRule
 case object ProxyServiceRule extends TargetServiceRule
-
-sealed trait TargetService
-case class StaticService(host: TargetHost, port: Int, ssl: Boolean) extends TargetService
-case class DiscoverableService(serviceName: ServiceClientName) extends TargetService
 
 object TargetService {
   private val DEFAULT_PORT = 80
@@ -23,6 +24,7 @@ object TargetService {
       case StaticServiceRule(host, port, ssl) => StaticService(host, port, ssl)
       case DiscoverableServiceRule(serviceName) => DiscoverableService(serviceName)
       case ProxyServiceRule => readStaticService(req)
+      case RerouteServiceRule(rewritePath) => RerouteService(rewritePath)
     }
 
   def Static(host: TargetHost, port: Int, ssl: Boolean): TargetService =

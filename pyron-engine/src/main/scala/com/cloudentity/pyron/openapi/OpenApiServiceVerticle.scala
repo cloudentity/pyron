@@ -127,6 +127,7 @@ object OpenApiRuleBuilder {
         pathPrefix = PathPrefix(r.rule.criteria.rewrite.pathPrefix),
         pathPattern = PathPattern(r.rule.criteria.rewrite.originPattern),
         dropPathPrefix = r.rule.dropPathPrefix,
+        reroute = r.rule.reroute,
         rewritePath = r.rule.rewritePath,
         rewriteMethod = r.rule.rewriteMethod,
         plugins = r.requestPlugins.toList ::: r.responsePlugins.toList,

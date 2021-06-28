@@ -11,6 +11,7 @@ case class PreparedPathRewrite private(originPattern: String,
                                        pathPrefix: String,
                                        rewritePattern: String,
                                        paramNames: List[(String, Int)],
+                                       rewriteMap: Map[String, Int],
                                        groupCount: Int) {
 
   val regexPattern: String = "^" + pathPrefix + matchPattern + "$" // anchor
@@ -41,13 +42,14 @@ object PreparedPathRewrite {
     val groupsCountPattern: String = getGroupsCountingPattern(inputPattern)
     val indexedParamNames: List[(String, Int)] = paramNamesWithGroupIndex(inputPattern, groupsCountPattern)
     val totalGroupCount = getCaptureGroupCount(groupsCountPattern) + indexedParamNames.size
-    val (pat, rew) = insertParamGroupsAndRefs(inputPattern, outputPattern, indexedParamNames)
+    val pat = insertParamGroupsAndRefs(inputPattern, indexedParamNames)
     PreparedPathRewrite(
       originPattern = inputPattern,
       matchPattern = pat,
       pathPrefix = prefix,
-      rewritePattern = convertNegToPosNumericRefs(rew, totalGroupCount),
+      rewritePattern = outputPattern,
       paramNames = indexedParamNames,
+      rewriteMap = getRewriteMap(outputPattern, indexedParamNames, totalGroupCount),
       groupCount = totalGroupCount
     )
   }
@@ -72,24 +74,27 @@ object PreparedPathRewrite {
 
   def applyRewrite(path: String, rewrite: PreparedPathRewrite): Option[AppliedPathRewrite] = for {
     regexMatch <- rewrite.regex.findFirstMatchIn(path)
-    targetPath = rewritePath(rewrite.rewritePattern, regexMatch)
-    pathParams = getPathParams(rewrite, regexMatch)
+    pathParams = getPathParams(rewrite.rewriteMap, regexMatch)
+    targetPath = rewritePath(pathParams, rewrite.rewritePattern)
   } yield AppliedPathRewrite(path, targetPath, pathParams, from = rewrite)
 
-  private[rule] def rewritePath(rewritePattern: String, regexMatch: Regex.Match): String =
-    (1 to regexMatch.groupCount).map(i => (i, regexMatch.group(i))).foldLeft(rewritePattern) {
-      case (rew, (idx, value)) => rew.replace(s"{$idx}", value)
+  private[rule] def rewritePath(pathParams: PathParams, rewritePattern: String): String = {
+    pathParams.value.foldLeft(rewritePattern) {
+      case (rew, (param, value)) => rew.replace(s"{$param}", value)
     }
+  }
 
-  private[rule] def getPathParams(rewrite: PreparedPathRewrite, regexMatch: Regex.Match): PathParams = {
-    val params = for {
-      i <- (2 - rewrite.groupCount) until rewrite.groupCount
-    } yield if (i > 0) {
-      rewrite.paramName(i).getOrElse(s"$i") -> regexMatch.group(i)
-    } else {
-      rewrite.paramName(i - 1).getOrElse(s"${i - 1}") -> regexMatch.group(rewrite.groupCount + i - 1)
-    }
-    PathParams(params.toMap)
+  private[rule] def getRewriteMap(rewritePattern: String, paramNames: List[(String, Int)], groupCount: Int): Map[String, Int] = {
+    val numParamsUsedInRewrite = for {
+      i <- (2 - groupCount) until groupCount
+      (groupNum, paramNum) = if (i > 0) (i, i) else (groupCount + i - 1, i - 1)
+      num <- Some(paramNum).filter(n => rewritePattern.contains(s"{$n}"))
+    } yield s"$num" -> groupNum
+    (numParamsUsedInRewrite ++ paramNames).toMap
+  }
+
+  private[rule] def getPathParams(rewriteParams: Map[String, Int], regexMatch: Regex.Match): PathParams = {
+    PathParams(rewriteParams.mapValues(regexMatch.group))
   }
 
   private[rule] def getCaptureGroupCount(groupsCountPattern: String): Int =
@@ -116,31 +121,16 @@ object PreparedPathRewrite {
   }
 
   private[rule] def insertParamGroupsAndRefs(pattern: String,
-                                             rewrite: String,
-                                             paramNamesWithGroupIndex: List[(String, Int)]): (String, String) = {
-    paramNamesWithGroupIndex.foldLeft((pattern, rewrite)) {
-      case ((p, r), (paramName, groupIndex)) =>
-        val paramPlaceholder = "{" + paramName + "}"
-        val pat = replaceFirstAndRest(
-          haystack = p,
-          needle = paramPlaceholder,
+                                             paramNamesWithGroupIndex: List[(String, Int)]): String = {
+    paramNamesWithGroupIndex.foldLeft(pattern) {
+      case (pat, (paramName, groupIndex)) =>
+        replaceFirstAndRest(
+          haystack = pat,
+          needle = "{" + paramName + "}",
           replaceFirstWith = s"([^/]+)", // insert capture group for first or only occurrence
           replaceRestWith = s"\\$groupIndex" // insert back references for repeated occurrences
         )
-        val rew = r.replace(paramPlaceholder, s"{$groupIndex}")
-        (pat, rew)
     }
-  }
-
-  private[rule] def convertNegToPosNumericRefs(rewrite: String, totalGroupsCount: Int): String = {
-    // Replace negative numeric refs, which allow to count groups from the right-side/end of the pattern
-    // with positive numeric refs pointing to the same group from the left-side/start of the pattern.
-    // Numeric refs will now match the capture group numbers of the pattern regex for easy value retrieval.
-    """\{-\d+}""".r.replaceSomeIn(rewrite, m => Try {
-      m.matched.slice(2, m.matched.length - 1).toInt
-    }.toOption.flatMap {
-      i => if (i > totalGroupsCount) None else Some(s"{${totalGroupsCount - i}}")
-    })
   }
 
   private[rule] def makeParamName(placeholder: String): String = placeholder.slice(1, placeholder.length - 1)
