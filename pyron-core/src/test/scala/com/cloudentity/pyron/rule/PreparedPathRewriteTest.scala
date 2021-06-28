@@ -6,8 +6,6 @@ import org.scalatestplus.junit.JUnitRunner
 import PreparedPathRewrite._
 import com.cloudentity.pyron.domain.flow.PathParams
 
-import scala.util.Try
-
 @RunWith(classOf[JUnitRunner])
 class PreparedPathRewriteTest extends WordSpec with MustMatchers {
 
@@ -24,7 +22,8 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
       val preparedRewrite = tryPreparedRewrite.get
       preparedRewrite.matchPattern mustBe "/pattern/with(balanced(parens))/should/([^/]+)/be/([^/]+)/ok/\\4"
       preparedRewrite.pathPrefix mustBe "/api"
-      preparedRewrite.rewritePattern mustBe "/resources/{4}/{3}/{1}"
+      preparedRewrite.rewritePattern mustBe "/resources/{two}/{one}/{1}"
+      preparedRewrite.rewriteMap mustBe Map("one" -> 3, "two" -> 4, "1" -> 1)
       preparedRewrite.paramNames mustBe List(("one", 3), ("two", 4))
     }
   }
@@ -92,22 +91,11 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
     }
   }
 
-  "convertNegToPosNumericRefs" should {
-    "replace all negative numeric references with a positive numeric references" in {
-      convertNegToPosNumericRefs("rewrite {-3} has some negative {-1} and positive {2} numeric refs {-2}", 4) mustBe
-        "rewrite {1} has some negative {3} and positive {2} numeric refs {2}"
-    }
-  }
-
   "insertParamGroupsAndRefs" should {
     val pattern = "Grand, but (how)/{com}e/I/ca(nn)ot/underst{and}/why/I/have/two/h{and}s/{and}/two/legs!"
-    val rewrite = "/hello/{and}/wel{com}e/to-the-bra{and}-new/gr{and}-coin-toss-{com}petition"
-    val (pat, rew) = insertParamGroupsAndRefs(pattern, rewrite, List(("com", 2), ("and", 5)))
+    val pat = insertParamGroupsAndRefs(pattern, List(("com", 2), ("and", 5)))
     "replace first occurrence of param with capture group and remaining occurrences with back-references" in {
       pat mustBe """Grand, but (how)/([^/]+)e/I/ca(nn)ot/underst([^/]+)/why/I/have/two/h\5s/\5/two/legs!"""
-    }
-    "replace all named param references in rewrite with numeric references" in {
-      rew mustBe """/hello/{5}/wel{2}e/to-the-bra{5}-new/gr{5}-coin-toss-{2}petition"""
     }
   }
 
@@ -145,7 +133,8 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
     val result = for {
       preparedRewrite <- preparedRewriteOpt
       regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/DOS")
-    } yield rewritePath(preparedRewrite.rewritePattern, regexMatch)
+      pathParams = getPathParams(preparedRewrite.rewriteMap, regexMatch)
+    } yield rewritePath(pathParams, preparedRewrite.rewritePattern)
     result mustBe Some("/resources/DOS/UNO/balanced_parens")
   }
 
@@ -158,7 +147,8 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
     val result = for {
       preparedRewrite <- preparedRewriteOpt
       regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/TRES")
-    } yield rewritePath(preparedRewrite.rewritePattern, regexMatch)
+      pathParams = getPathParams(preparedRewrite.rewriteMap, regexMatch)
+    } yield rewritePath(pathParams, preparedRewrite.rewritePattern)
     result mustBe None
   }
 
