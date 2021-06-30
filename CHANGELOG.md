@@ -3,7 +3,7 @@
 - Enabled extracting array elements by index in ValueResolver (used by transform-request/response plugins)
 
 ### Fixed
-- Rewriting PathParams include additional wrong parameter with name '-1'
+- Rewriting PathParams includes additional wrong parameter with name '-1'
 
 ## [1.9.0] - 2021-06-11
 
