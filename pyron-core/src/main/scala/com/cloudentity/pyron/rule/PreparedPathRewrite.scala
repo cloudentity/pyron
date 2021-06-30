@@ -87,7 +87,7 @@ object PreparedPathRewrite {
     } yield if (i > 0) {
       rewrite.paramName(i).getOrElse(s"$i") -> regexMatch.group(i)
     } else {
-      rewrite.paramName(i - 1).getOrElse(s"${i - 1}") -> regexMatch.group(rewrite.groupCount + i - 1)
+      rewrite.paramName(i + 1).getOrElse(s"${i - 1}") -> regexMatch.group(rewrite.groupCount + i - 1)
     }
     PathParams(params.toMap)
   }
