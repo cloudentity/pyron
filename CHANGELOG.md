@@ -1,4 +1,7 @@
 ## [Unreleased]
+### Added
+- Enabled extracting array elements by index in ValueResolver (used by transform-request/response plugins)
+
 ### Changed
 - Update version of dependency-track-maven-plugin to version 0.8.6
 
