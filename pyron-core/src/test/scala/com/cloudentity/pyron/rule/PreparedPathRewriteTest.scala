@@ -6,15 +6,19 @@ import org.scalatestplus.junit.JUnitRunner
 import PreparedPathRewrite._
 import com.cloudentity.pyron.domain.flow.PathParams
 
-import scala.util.Try
-
 @RunWith(classOf[JUnitRunner])
 class PreparedPathRewriteTest extends WordSpec with MustMatchers {
 
   "PreparedPathRewrite" should {
+
     "fail to create prepared rewrite when pattern is not a valid regex pattern" in {
-      PreparedPathRewrite.prepare("/pattern/with(unbalanced(parens)/should/{param}/fail", "/api", "/resources/{param}/{1}").isFailure mustBe true
+      PreparedPathRewrite.prepare(
+        "/pattern/with(unbalanced(parens)/should/{param}/fail",
+        "/api",
+        "/resources/{param}/{1}"
+      ).isFailure mustBe true
     }
+
     "succeed in creating prepared rewrite when pattern is a valid regex pattern" in {
       val tryPreparedRewrite = PreparedPathRewrite.prepare(
         "/pattern/with(balanced(parens))/should/{one}/be/{two}/ok/{two}",
@@ -24,9 +28,57 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
       val preparedRewrite = tryPreparedRewrite.get
       preparedRewrite.matchPattern mustBe "/pattern/with(balanced(parens))/should/([^/]+)/be/([^/]+)/ok/\\4"
       preparedRewrite.pathPrefix mustBe "/api"
-      preparedRewrite.rewritePattern mustBe "/resources/{4}/{3}/{1}"
-      preparedRewrite.paramNames mustBe List(("one", 3), ("two", 4))
+      preparedRewrite.rewritePattern mustBe "/resources/{two}/{one}/{1}"
+      preparedRewrite.namedParams mustBe List(("one", 3), ("two", 4))
+      preparedRewrite.numericRefs mustBe List("1" -> 1)
+      preparedRewrite.rewriteMap mustBe Map("one" -> 3, "two" -> 4, "1" -> 1)
     }
+
+    "collect only referenced (positive) numeric path params and all named params" in {
+      val tryPreparedRewrite = PreparedPathRewrite.prepare(
+        "/pattern/(A)(B)/{namedParamC}/(D)/and-the-rest-(.*)",
+        "/api",
+        "/pattern/{1}/stuff/{2}/{4}")
+      tryPreparedRewrite.isSuccess mustBe true
+      val preparedRewrite = tryPreparedRewrite.get
+      preparedRewrite.namedParams mustBe List("namedParamC" -> 3)
+      preparedRewrite.numericRefs mustBe List("1" -> 1, "2" -> 2, "4" -> 4)
+      preparedRewrite.rewriteMap mustBe Map("1" -> 1, "2" -> 2, "namedParamC" -> 3,  "4" -> 4)
+
+      preparedRewrite.applyRewrite("/api/pattern/AB/valueC/D/and-the-rest-Foo/Bar")
+        .map(_.targetPath) mustBe Some("/pattern/A/stuff/B/D")
+    }
+
+    "collect only referenced (negative) numeric path params and all named params" in {
+      val tryPreparedRewrite = PreparedPathRewrite.prepare(
+        "/pattern/(A)(B)/{namedParamC}/(D)/and-the-rest-(.*)",
+        "/api",
+        "/pattern/{-1}/stuff/{-2}/{-4}")
+      tryPreparedRewrite.isSuccess mustBe true
+      val preparedRewrite = tryPreparedRewrite.get
+      preparedRewrite.namedParams mustBe List("namedParamC" -> 3)
+      preparedRewrite.numericRefs mustBe List("-4" -> 2, "-2" -> 4, "-1" -> 5)
+      preparedRewrite.rewriteMap mustBe Map("-1" -> 5, "-2" -> 4, "namedParamC" -> 3,  "-4" -> 2)
+
+      preparedRewrite.applyRewrite("/api/pattern/AB/valueC/D/and-the-rest-Foo/Bar")
+        .map(_.targetPath) mustBe Some("/pattern/Foo/Bar/stuff/D/B")
+    }
+
+    "collect only referenced (negative and positive) numeric path params, and all named params" in {
+      val tryPreparedRewrite = PreparedPathRewrite.prepare(
+        "/pattern/(A)(B)/{namedParamC}/(D)/and-the-rest-(.*)",
+        "/api",
+        "/pattern/{1}/stuff/{3}/{-1}/and/{-2}/{-5}")
+      tryPreparedRewrite.isSuccess mustBe true
+      val preparedRewrite = tryPreparedRewrite.get
+      preparedRewrite.namedParams mustBe List("namedParamC" -> 3)
+      preparedRewrite.numericRefs mustBe List("-5" -> 1, "-2" -> 4, "-1" -> 5, "1" -> 1, "3" -> 3)
+      preparedRewrite.rewriteMap mustBe Map("1" -> 1, "-5" -> 1, "3" -> 3, "namedParamC" -> 3, "-2" -> 4,  "-1" -> 5)
+
+      preparedRewrite.applyRewrite("/api/pattern/AB/valueC/D/and-the-rest-Foo/Bar")
+        .map(_.targetPath) mustBe Some("/pattern/A/stuff/valueC/Foo/Bar/and/D/A")
+    }
+
   }
 
   "getCaptureGroupCount" should {
@@ -92,22 +144,11 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
     }
   }
 
-  "convertNegToPosNumericRefs" should {
-    "replace all negative numeric references with a positive numeric references" in {
-      convertNegToPosNumericRefs("rewrite {-3} has some negative {-1} and positive {2} numeric refs {-2}", 4) mustBe
-        "rewrite {1} has some negative {3} and positive {2} numeric refs {2}"
-    }
-  }
-
   "insertParamGroupsAndRefs" should {
     val pattern = "Grand, but (how)/{com}e/I/ca(nn)ot/underst{and}/why/I/have/two/h{and}s/{and}/two/legs!"
-    val rewrite = "/hello/{and}/wel{com}e/to-the-bra{and}-new/gr{and}-coin-toss-{com}petition"
-    val (pat, rew) = insertParamGroupsAndRefs(pattern, rewrite, List(("com", 2), ("and", 5)))
+    val pat = insertParamGroupsAndRefs(pattern, List(("com", 2), ("and", 5)))
     "replace first occurrence of param with capture group and remaining occurrences with back-references" in {
       pat mustBe """Grand, but (how)/([^/]+)e/I/ca(nn)ot/underst([^/]+)/why/I/have/two/h\5s/\5/two/legs!"""
-    }
-    "replace all named param references in rewrite with numeric references" in {
-      rew mustBe """/hello/{5}/wel{2}e/to-the-bra{5}-new/gr{5}-coin-toss-{2}petition"""
     }
   }
 
@@ -145,7 +186,8 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
     val result = for {
       preparedRewrite <- preparedRewriteOpt
       regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/DOS")
-    } yield rewritePath(preparedRewrite.rewritePattern, regexMatch)
+      pathParams = getPathParams(preparedRewrite.rewriteMap, regexMatch)
+    } yield rewritePath(pathParams, preparedRewrite.rewritePattern)
     result mustBe Some("/resources/DOS/UNO/balanced_parens")
   }
 
@@ -158,7 +200,8 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
     val result = for {
       preparedRewrite <- preparedRewriteOpt
       regexMatch <- preparedRewrite.regex.findFirstMatchIn("/api/pattern/with_balanced_parens/should/UNO/be/DOS/ok/TRES")
-    } yield rewritePath(preparedRewrite.rewritePattern, regexMatch)
+      pathParams = getPathParams(preparedRewrite.rewriteMap, regexMatch)
+    } yield rewritePath(pathParams, preparedRewrite.rewritePattern)
     result mustBe None
   }
 
