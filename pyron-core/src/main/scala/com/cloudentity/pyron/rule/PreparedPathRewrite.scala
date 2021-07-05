@@ -10,7 +10,8 @@ case class PreparedPathRewrite private(originPattern: String,
                                        matchPattern: String,
                                        pathPrefix: String,
                                        rewritePattern: String,
-                                       paramNames: List[(String, Int)],
+                                       namedParams: List[(String, Int)],
+                                       numericRefs: List[(String, Int)],
                                        rewriteMap: Map[String, Int],
                                        groupCount: Int) {
 
@@ -21,10 +22,10 @@ case class PreparedPathRewrite private(originPattern: String,
     PreparedPathRewrite.applyRewrite(path, this)
 
   def groupNum(param: String): Option[Int] =
-    PreparedPathRewrite.groupNum(param, paramNames, groupCount)
+    PreparedPathRewrite.groupNum(param, namedParams, groupCount)
 
   def paramName(num: Int): Option[String] =
-    PreparedPathRewrite.paramName(num, paramNames)
+    PreparedPathRewrite.paramName(num, namedParams)
 
 }
 
@@ -40,16 +41,18 @@ object PreparedPathRewrite {
 
   def prepare(inputPattern: String, prefix: String, outputPattern: String): Try[PreparedPathRewrite] = Try {
     val groupsCountPattern: String = getGroupsCountingPattern(inputPattern)
-    val indexedParamNames: List[(String, Int)] = paramNamesWithGroupIndex(inputPattern, groupsCountPattern)
-    val totalGroupCount = getCaptureGroupCount(groupsCountPattern) + indexedParamNames.size
-    val pat = insertParamGroupsAndRefs(inputPattern, indexedParamNames)
+    val namedParams: List[(String, Int)] = paramNamesWithGroupIndex(inputPattern, groupsCountPattern)
+    val totalGroupCount = getCaptureGroupCount(groupsCountPattern) + namedParams.size
+    val numericRefs = getNumericRefs(outputPattern, namedParams, totalGroupCount)
+    val pat = insertParamGroupsAndRefs(inputPattern, namedParams)
     PreparedPathRewrite(
       originPattern = inputPattern,
       matchPattern = pat,
       pathPrefix = prefix,
       rewritePattern = outputPattern,
-      paramNames = indexedParamNames,
-      rewriteMap = getRewriteMap(outputPattern, indexedParamNames, totalGroupCount),
+      namedParams = namedParams,
+      numericRefs = numericRefs,
+      rewriteMap = (numericRefs ++ namedParams).toMap,
       groupCount = totalGroupCount
     )
   }
@@ -84,13 +87,13 @@ object PreparedPathRewrite {
     }
   }
 
-  private[rule] def getRewriteMap(rewritePattern: String, paramNames: List[(String, Int)], groupCount: Int): Map[String, Int] = {
+  private[rule] def getNumericRefs(rewritePattern: String, paramNames: List[(String, Int)], groupCount: Int): List[(String, Int)] = {
     val numParamsUsedInRewrite = for {
       i <- (2 - groupCount) until groupCount
       (groupNum, paramNum) = if (i > 0) (i, i) else (groupCount + i - 1, i - 1)
       num <- Some(paramNum).filter(n => rewritePattern.contains(s"{$n}"))
     } yield s"$num" -> groupNum
-    (numParamsUsedInRewrite ++ paramNames).toMap
+    numParamsUsedInRewrite.toList
   }
 
   private[rule] def getPathParams(rewriteParams: Map[String, Int], regexMatch: Regex.Match): PathParams = {

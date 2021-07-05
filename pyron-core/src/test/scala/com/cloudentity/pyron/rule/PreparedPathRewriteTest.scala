@@ -10,9 +10,15 @@ import com.cloudentity.pyron.domain.flow.PathParams
 class PreparedPathRewriteTest extends WordSpec with MustMatchers {
 
   "PreparedPathRewrite" should {
+
     "fail to create prepared rewrite when pattern is not a valid regex pattern" in {
-      PreparedPathRewrite.prepare("/pattern/with(unbalanced(parens)/should/{param}/fail", "/api", "/resources/{param}/{1}").isFailure mustBe true
+      PreparedPathRewrite.prepare(
+        "/pattern/with(unbalanced(parens)/should/{param}/fail",
+        "/api",
+        "/resources/{param}/{1}"
+      ).isFailure mustBe true
     }
+
     "succeed in creating prepared rewrite when pattern is a valid regex pattern" in {
       val tryPreparedRewrite = PreparedPathRewrite.prepare(
         "/pattern/with(balanced(parens))/should/{one}/be/{two}/ok/{two}",
@@ -23,9 +29,56 @@ class PreparedPathRewriteTest extends WordSpec with MustMatchers {
       preparedRewrite.matchPattern mustBe "/pattern/with(balanced(parens))/should/([^/]+)/be/([^/]+)/ok/\\4"
       preparedRewrite.pathPrefix mustBe "/api"
       preparedRewrite.rewritePattern mustBe "/resources/{two}/{one}/{1}"
+      preparedRewrite.namedParams mustBe List(("one", 3), ("two", 4))
+      preparedRewrite.numericRefs mustBe List("1" -> 1)
       preparedRewrite.rewriteMap mustBe Map("one" -> 3, "two" -> 4, "1" -> 1)
-      preparedRewrite.paramNames mustBe List(("one", 3), ("two", 4))
     }
+
+    "collect only referenced (positive) numeric path params and all named params" in {
+      val tryPreparedRewrite = PreparedPathRewrite.prepare(
+        "/pattern/(A)(B)/{namedParamC}/(D)/and-the-rest-(.*)",
+        "/api",
+        "/pattern/{1}/stuff/{2}/{4}")
+      tryPreparedRewrite.isSuccess mustBe true
+      val preparedRewrite = tryPreparedRewrite.get
+      preparedRewrite.namedParams mustBe List("namedParamC" -> 3)
+      preparedRewrite.numericRefs mustBe List("1" -> 1, "2" -> 2, "4" -> 4)
+      preparedRewrite.rewriteMap mustBe Map("1" -> 1, "2" -> 2, "namedParamC" -> 3,  "4" -> 4)
+
+      preparedRewrite.applyRewrite("/api/pattern/AB/valueC/D/and-the-rest-Foo/Bar")
+        .map(_.targetPath) mustBe Some("/pattern/A/stuff/B/D")
+    }
+
+    "collect only referenced (negative) numeric path params and all named params" in {
+      val tryPreparedRewrite = PreparedPathRewrite.prepare(
+        "/pattern/(A)(B)/{namedParamC}/(D)/and-the-rest-(.*)",
+        "/api",
+        "/pattern/{-1}/stuff/{-2}/{-4}")
+      tryPreparedRewrite.isSuccess mustBe true
+      val preparedRewrite = tryPreparedRewrite.get
+      preparedRewrite.namedParams mustBe List("namedParamC" -> 3)
+      preparedRewrite.numericRefs mustBe List("-4" -> 2, "-2" -> 4, "-1" -> 5)
+      preparedRewrite.rewriteMap mustBe Map("-1" -> 5, "-2" -> 4, "namedParamC" -> 3,  "-4" -> 2)
+
+      preparedRewrite.applyRewrite("/api/pattern/AB/valueC/D/and-the-rest-Foo/Bar")
+        .map(_.targetPath) mustBe Some("/pattern/Foo/Bar/stuff/D/B")
+    }
+
+    "collect only referenced (negative and positive) numeric path params, and all named params" in {
+      val tryPreparedRewrite = PreparedPathRewrite.prepare(
+        "/pattern/(A)(B)/{namedParamC}/(D)/and-the-rest-(.*)",
+        "/api",
+        "/pattern/{1}/stuff/{3}/{-1}/and/{-2}/{-5}")
+      tryPreparedRewrite.isSuccess mustBe true
+      val preparedRewrite = tryPreparedRewrite.get
+      preparedRewrite.namedParams mustBe List("namedParamC" -> 3)
+      preparedRewrite.numericRefs mustBe List("-5" -> 1, "-2" -> 4, "-1" -> 5, "1" -> 1, "3" -> 3)
+      preparedRewrite.rewriteMap mustBe Map("1" -> 1, "-5" -> 1, "3" -> 3, "namedParamC" -> 3, "-2" -> 4,  "-1" -> 5)
+
+      preparedRewrite.applyRewrite("/api/pattern/AB/valueC/D/and-the-rest-Foo/Bar")
+        .map(_.targetPath) mustBe Some("/pattern/A/stuff/valueC/Foo/Bar/and/D/A")
+    }
+
   }
 
   "getCaptureGroupCount" should {
