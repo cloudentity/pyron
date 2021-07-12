@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.10.0] - 2021-07-12
 ### Added
 - Enabled extracting array elements by index in ValueResolver (used by transform-request/response plugins)
 
