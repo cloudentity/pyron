@@ -13,6 +13,7 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 import scala.util.Try
+import scala.util.matching.Regex
 
 object ValueResolver {
 
@@ -152,13 +153,51 @@ object ValueResolver {
         } else value match {
           case v: JsonObject => extractJsonObjectAttribute(v, Path(tail))
           case v: JavaMap[_, _] => extractJsonObjectAttribute(new JsonObject(v.asInstanceOf[JavaMap[String, Object]]), Path(tail))
+          case v: JsonArray => extractJsonArrayElement(v, Path(tail))
+          case v: JavaList[_] => extractJsonArrayElement(new JsonArray(v), Path(tail))
           case _ => None
         }
     }
   }
 
+  val arrayBracketRegex: Regex = """\[(\d+)]""".r
+
+  @tailrec
+  private def extractJsonArrayElement(arr: JsonArray, path: Path): Option[JsonValue] = {
+    path.value match {
+      case Nil => None
+      case arrayBracketRegex(numberPart) :: Nil if Try(numberPart.toInt).isSuccess =>
+        val idx = numberPart.toInt
+        if(idx < 0 || idx >= arr.size()) None
+        else {
+          val value = arr.getValue(idx)
+          processLeafBodyAttribute(value)
+        }
+      case arrayBracketRegex(numberPart) :: tail if Try(numberPart.toInt).isSuccess =>
+        val idx = numberPart.toInt
+        if(idx < 0 || idx >= arr.size()) None
+        else {
+          val value = arr.getValue(idx)
+          if (value == null) {
+            None
+          } else value match {
+            case v: JsonObject => extractJsonObjectAttribute(v, Path(tail))
+            case v: JavaMap[_, _] => extractJsonObjectAttribute(new JsonObject(v.asInstanceOf[JavaMap[String, Object]]), Path(tail))
+            case v: JsonArray => extractJsonArrayElement(v, Path(tail))
+            case v: JavaList[_] => extractJsonArrayElement(new JsonArray(v), Path(tail))
+            case _ => None
+          }
+        }
+      case _ => None
+    }
+  }
+
   private def extractLeafBodyAttribute(body: JsonObject, key: String): Option[JsonValue] = {
     val value = body.getValue(key)
+    processLeafBodyAttribute(value)
+  }
+
+  private def processLeafBodyAttribute(value: AnyRef): Option[JsonValue] = {
     if (value == null) {
       Some(NullJsonValue)
     } else if (value == true || value == false) {

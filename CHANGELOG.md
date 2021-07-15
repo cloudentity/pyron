@@ -1,3 +1,10 @@
+## [1.10.0] - 2021-07-12
+### Added
+- Enabled extracting array elements by index in ValueResolver (used by transform-request/response plugins)
+
+### Changed
+- Update version of dependency-track-maven-plugin to version 0.8.6
+
 ## [1.9.0] - 2021-06-11
 
 ### Breaking change
@@ -13,9 +20,13 @@ to: com.cloudentity.pyron.plugin.impl.transform.request.TransformRequestPlugin
   - full support for cookie references
   - provide references for $hostName $hostPort $localHost $remoteHost
 - transform-request plugin supports $conf references
+- route filters
 
 ### Changed
 - Update version of vertx-tools dependency to 1.9.0
+
+### Fixed
+- Generating openapi - fixed api's paths(were with regex group), fixed matching api's operations  
 
 ## [1.8.0] - 2021-05-14
 ### Added

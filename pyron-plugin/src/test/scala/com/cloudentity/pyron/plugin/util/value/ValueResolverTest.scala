@@ -32,6 +32,38 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
         .put("int", 1)
         .put("null", null.asInstanceOf[String])
     )
+    .put("deep-array",
+      new JsonArray()
+        .add(new JsonObject()
+          .put("string-0", "")
+          .put("object-0", new JsonObject())
+          .put("array-0", new JsonArray())
+          .put("boolean-0", false)
+          .put("float-0", 1.0f)
+          .put("double-0", 1.0d)
+          .put("int-0", 1)
+          .put("null-0", null.asInstanceOf[String])
+        )
+        .add(new JsonObject()
+          .put("string-1", "")
+          .put("object-1", new JsonObject())
+          .put("array-1", new JsonArray())
+          .put("boolean-1", false)
+          .put("float-1", 1.0f)
+          .put("double-1", 1.0d)
+          .put("int-1", 1)
+          .put("null-1", null.asInstanceOf[String])
+        )
+        .add(new JsonArray()
+          .add("deep-string-array-elt")
+        )
+        .add("string-array-elt")
+        .add(false)
+        .add(1.0f)
+        .add(1.0d)
+        .add(1)
+        .add(null.asInstanceOf[String])
+      )
 
   val conf: JsonObject = new JsonObject()
 
@@ -199,12 +231,27 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     "resolve deep string" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "string"))) mustBe Some(StringJsonValue(""))
     }
+    "resolve deep string in array 0th elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[0]", "string-0"))) mustBe Some(StringJsonValue(""))
+    }
+    "resolve deep string in array 1st elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[1]", "string-1"))) mustBe Some(StringJsonValue(""))
+    }
+    "resolve string leaf array elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[3]"))) mustBe Some(StringJsonValue("string-array-elt"))
+    }
 
     "resolve shallow object" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
     }
     "resolve deep object" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "object"))) mustBe Some(ObjectJsonValue(new JsonObject()))
+    }
+    "resolve deep object in array 0th elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[0]", "object-0"))) mustBe Some(ObjectJsonValue(new JsonObject()))
+    }
+    "resolve deep object in array 1st elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[1]", "object-1"))) mustBe Some(ObjectJsonValue(new JsonObject()))
     }
 
     "resolve shallow array" in {
@@ -213,12 +260,33 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     "resolve deep array" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "array"))) mustBe Some(ArrayJsonValue(new JsonArray()))
     }
+    "resolve deep array in array 0th elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[0]", "array-0"))) mustBe Some(ArrayJsonValue(new JsonArray()))
+    }
+    "resolve deep array in array 1st elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[1]", "array-1"))) mustBe Some(ArrayJsonValue(new JsonArray()))
+    }
+    "resolve array leaf array elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[2]"))) mustBe Some(ArrayJsonValue(new JsonArray().add("deep-string-array-elt")))
+    }
+    "resolve string leaf array elt in nested array" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[2]", "[0]"))) mustBe Some(StringJsonValue("deep-string-array-elt"))
+    }
 
     "resolve shallow boolean" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-boolean"))) mustBe Some(BooleanJsonValue(false))
     }
     "resolve deep boolean" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "boolean"))) mustBe Some(BooleanJsonValue(false))
+    }
+    "resolve deep boolean in array 0th elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[0]", "boolean-0"))) mustBe Some(BooleanJsonValue(false))
+    }
+    "resolve deep boolean in array 1st elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[1]", "boolean-1"))) mustBe Some(BooleanJsonValue(false))
+    }
+    "resolve boolean leaf array elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[4]"))) mustBe Some(BooleanJsonValue(false))
     }
 
     "resolve shallow float" in {
@@ -227,12 +295,30 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     "resolve deep float" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "float"))) mustBe Some(NumberJsonValue(1.0f))
     }
+    "resolve deep float in array 0th elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[0]", "float-0"))) mustBe Some(NumberJsonValue(1.0f))
+    }
+    "resolve deep float in array 1st elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[1]", "float-1"))) mustBe Some(NumberJsonValue(1.0f))
+    }
+    "resolve float leaf array elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[5]"))) mustBe Some(NumberJsonValue(1.0f))
+    }
 
     "resolve shallow double" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-double"))) mustBe Some(NumberJsonValue(1.0d))
     }
     "resolve deep double" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "double"))) mustBe Some(NumberJsonValue(1.0d))
+    }
+    "resolve deep double in array 0th elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[0]", "double-0"))) mustBe Some(NumberJsonValue(1.0d))
+    }
+    "resolve deep double in array 1st elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[1]", "double-1"))) mustBe Some(NumberJsonValue(1.0d))
+    }
+    "resolve double leaf array elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[6]"))) mustBe Some(NumberJsonValue(1.0d))
     }
 
     "resolve shallow int" in {
@@ -241,12 +327,43 @@ class ValueResolverTest extends WordSpec with MustMatchers with TestRequestRespo
     "resolve deep int" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "int"))) mustBe Some(NumberJsonValue(1))
     }
+    "resolve deep int in array 0th elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[0]", "int-0"))) mustBe Some(NumberJsonValue(1))
+    }
+    "resolve deep int in array 1st elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[1]", "int-1"))) mustBe Some(NumberJsonValue(1))
+    }
+    "resolve int leaf array elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[7]"))) mustBe Some(NumberJsonValue(1))
+    }
 
     "resolve shallow null" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("shallow-null"))) mustBe Some(NullJsonValue)
     }
     "resolve deep null" in {
       resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep", "null"))) mustBe Some(NullJsonValue)
+    }
+    "resolve deep null in array 0th elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[0]", "null-0"))) mustBe Some(NullJsonValue)
+    }
+    "resolve deep null in array 1st elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[1]", "null-1"))) mustBe Some(NullJsonValue)
+    }
+    "resolve null leaf array elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[8]"))) mustBe Some(NullJsonValue)
+    }
+
+    "resolve missing array leaf elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[50]"))) mustBe None
+    }
+    "resolve missing array nested elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[50]", "name"))) mustBe None
+    }
+    "resolve missing negative array leaf elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[-1]"))) mustBe None
+    }
+    "resolve missing negative array nested elt" in {
+      resolveJson(ctxWithBody, Some(body), conf, BodyRef(Path("deep-array", "[-1]", "name"))) mustBe None
     }
   }
 
