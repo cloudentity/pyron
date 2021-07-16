@@ -80,7 +80,11 @@ object ValueOrRef {
 
 case class Path(value: List[String])
 object Path {
-  implicit val PathDecoder: KeyDecoder[Path] = key => Some(Path(key.split('.').toList))
+  implicit val PathKeyDecoder: KeyDecoder[Path] = key => Some(Path(key.split('.').toList))
+
+  implicit val PathDecoder: Decoder[Path] = Decoder.decodeString.emap(key =>
+    Right(Path(key.split('.').toList))
+  )
 
   def apply(xs: String*): Path = Path(xs.toList)
 }

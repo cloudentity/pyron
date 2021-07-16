@@ -1,3 +1,7 @@
+## [Unreleased]
+### Added
+- Added `remove` section to transform-request/response plugins to remove specific body entries
+
 ## [1.10.0] - 2021-07-12
 ### Added
 - Enabled extracting array elements by index in ValueResolver (used by transform-request/response plugins)
