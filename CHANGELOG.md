@@ -1,3 +1,10 @@
+## [Unreleased]
+### Changed
+- Move owasp profile location to limit bom to pyron app (from pyron root), change generation to single BOM and bump plugin version
+
+### Security
+- [CVE-2021-27568](https://nvd.nist.gov/vuln/detail/CVE-2021-27568) - Fixed by upgrading com.nimbusds.nimbus-jose-jwt to 8.22.1
+
 ## [1.10.0] - 2021-07-12
 ### Added
 - Enabled extracting array elements by index in ValueResolver (used by transform-request/response plugins)
