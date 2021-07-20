@@ -1,4 +1,7 @@
 ## [Unreleased]
+### Added
+- Added `remove` section to transform-request/response plugins to remove specific body entries
+
 ### Changed
 - Move owasp profile location to limit bom to pyron app (from pyron root), change generation to single BOM and bump plugin version
 
