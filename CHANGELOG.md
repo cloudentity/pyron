@@ -1,6 +1,15 @@
 ## [Unreleased]
+### Added
+- Added `remove` section to transform-request/response plugins to remove specific body entries
+
+### Changed
+- Move owasp profile location to limit bom to pyron app (from pyron root), change generation to single BOM and bump plugin version
+
 ### Fixed
-- Generate open API with path params taken from rule definition 
+- Generate open API with path params taken from rule definition
+
+### Security
+- [CVE-2021-27568](https://nvd.nist.gov/vuln/detail/CVE-2021-27568) - Fixed by upgrading com.nimbusds.nimbus-jose-jwt to 8.22.1
 
 ## [1.10.0] - 2021-07-12
 ### Added
