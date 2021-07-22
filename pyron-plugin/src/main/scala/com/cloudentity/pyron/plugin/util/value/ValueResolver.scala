@@ -193,8 +193,11 @@ object ValueResolver {
   }
 
   private def extractLeafBodyAttribute(body: JsonObject, key: String): Option[JsonValue] = {
-    val value = body.getValue(key)
-    processLeafBodyAttribute(value)
+    if(!body.containsKey(key)) None
+    else {
+      val value = body.getValue(key)
+      processLeafBodyAttribute(value)
+    }
   }
 
   private def processLeafBodyAttribute(value: AnyRef): Option[JsonValue] = {
