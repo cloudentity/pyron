@@ -39,9 +39,11 @@ trait OpenApiConverterUtils {
   def onlyPathParamsDefinedInRulePath(rulePath: String, pp: PathParams, operation: Operation): Option[Operation] = {
     val paramsInRulePath: Map[String, String] = pp.value.filter(param => isPathParam(rulePath, param._2))
     val woHardcodedPathParams = operation.getParameters().asScala.filter(p => !p.getIn.equals("path") || paramsInRulePath.keySet.contains(p.getName)).asJava
-    operation.setParameters(woHardcodedPathParams)
 
-    Option(operation)
+    val operationCopy = deepCopyOperation(operation)
+    operationCopy.setParameters(woHardcodedPathParams)
+
+    Option(operationCopy)
   }
 
   def adjustPathParams(operation: Operation, swagger: Swagger, apiGwPath: String): Operation = {
