@@ -5,7 +5,7 @@
 
 ### Changed
 - Move owasp profile location to limit bom to pyron app (from pyron root), change generation to single BOM and bump plugin version
-- Extensions for 'transform-response' plugin: ability to transform empty API response body, httpStatus transformation 
+- Extensions for 'transform-response' plugin: ability to transform empty API response body, httpStatus transformation
 
 ### Security
 - [CVE-2021-27568](https://nvd.nist.gov/vuln/detail/CVE-2021-27568) - Fixed by upgrading com.nimbusds.nimbus-jose-jwt to 8.22.1
