@@ -7,7 +7,7 @@ import com.cloudentity.pyron.plugin.impl.transform.TransformHeaders.transformReq
 import com.cloudentity.pyron.plugin.impl.transform.TransformJsonBody.transformReqJsonBody
 import com.cloudentity.pyron.plugin.impl.transform._
 import com.cloudentity.pyron.plugin.openapi._
-import com.cloudentity.pyron.plugin.util.value.ValueResolver
+import com.cloudentity.pyron.plugin.util.value.{Path, ValueResolver}
 import com.cloudentity.pyron.plugin.util.value.ValueResolver.resolveJson
 import com.cloudentity.pyron.plugin.verticle.RequestPluginVerticle
 import io.circe.Decoder
@@ -66,7 +66,7 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
     verticleConf.conf.getOrElse(new JsonObject())
 
   def resolveBodyOps(ctx: RequestCtx, bodyOps: BodyOps, jsonBodyOpt: Option[JsonObject]): ResolvedBodyOps =
-    ResolvedBodyOps(bodyOps.set.map(_.mapValues(resolveJson(ctx, jsonBodyOpt, confValues(), _))), bodyOps.drop)
+    ResolvedBodyOps(bodyOps.set.map(_.mapValues(resolveJson(ctx, jsonBodyOpt, confValues(), _))), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
 
   def resolvePathParamOps(ctx: RequestCtx, pathParamOps: PathParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedPathParamOps =
     ResolvedPathParamOps(pathParamOps.set.map(_.mapValues(ValueResolver.resolveString(ctx, jsonBodyOpt, confValues(), _))))
