@@ -459,4 +459,4 @@ Currently you can only check if given value can be found in an array of static v
 }
 ```
 
-According to above configuration, `response-plugin` will be applied only if response status code is equal to 200.
+According to above configuration, `transform-response` will be applied only if response status code is equal to 200.
