@@ -75,7 +75,6 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
     tracingCtx.setOperationName(s"${name.value} request plugin")
     getConfFromCacheOrDecode(req.conf.conf) match {
       case Right(conf) =>
-        confCache = confCache.updated(req.conf.conf, conf)
         tryApply(req.ctx, tracingCtx, conf)
       case Left(ex) =>
         log.error(tracingCtx, s"Error on decoding plugin config for ${req}", ex)
@@ -107,7 +106,6 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
     tracingCtx.setOperationName(s"${name.value} response plugin")
     getFromCacheOrDecode(resp.conf.conf, resp.conf.applyIf) match {
       case Right((conf, applyIf)) =>
-        confCache = confCache.updated(resp.conf.conf, conf)
         if (ApplyIf.evaluate(applyIf, resp.ctx)) tryApply(resp.ctx, tracingCtx, conf)
         else Future.successful(response.Continue(resp.ctx))
       case Left(ex) =>
@@ -136,16 +134,23 @@ abstract class RequestResponsePluginVerticle[C] extends ScalaServiceVerticle wit
   }
 
   protected def getConfFromCacheOrDecode(conf: Json): Either[Throwable, C] =
-    confCache.get(conf).map(Right(_)).getOrElse(decodeRuleConf(conf))
+    confCache.get(conf).map(Right(_))
+      .getOrElse(decodeRuleConf(conf).map(tapCacheUpdate(x => confCache = confCache.updated(conf, x))))
 
-  protected def getIfFromCacheOrDecode(applyIf: Json): Either[Throwable, ApplyIf] =
-    applyIfCache.get(applyIf).map(Right(_)).getOrElse(decodeApplyIf(applyIf))
+  protected def getApplyIfFromCacheOrDecode(applyIf: Json): Either[Throwable, ApplyIf] =
+    applyIfCache.get(applyIf).map(Right(_))
+      .getOrElse(decodeApplyIf(applyIf).map(tapCacheUpdate(c => applyIfCache = applyIfCache.updated(applyIf, c))))
 
   protected def getFromCacheOrDecode(confRaw: Json, applyIfRawOpt: Option[Json]): Either[Throwable, (C, ApplyIf)] =
     for {
       conf     <- getConfFromCacheOrDecode(confRaw)
-      applyIf  <- applyIfRawOpt.map(getIfFromCacheOrDecode).getOrElse(Right(ApplyIf.Always))
+      applyIf  <- applyIfRawOpt.map(getApplyIfFromCacheOrDecode).getOrElse(Right(ApplyIf.Always))
     } yield (conf, applyIf)
+
+  private def tapCacheUpdate[A](updateCache: A => Unit)(a: A): A = {
+    updateCache(a)
+    a
+  }
 
   protected def decodeApplyIf(applyIf: Json): Either[Throwable, ApplyIf] = ApplyIf.ApplyIfDecoder.decodeJson(applyIf)
 
