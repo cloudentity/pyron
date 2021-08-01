@@ -442,7 +442,7 @@ Currently you can only check if given value can be found in an array of static v
 
 ```json
 {
-  "name": "response-plugin",
+  "name": "transform-response",
   "conf": {
     "headers": {
       "set": {
