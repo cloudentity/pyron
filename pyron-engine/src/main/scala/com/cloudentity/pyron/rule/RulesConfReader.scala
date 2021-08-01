@@ -217,7 +217,7 @@ object RulesConfReader {
   }
 
   def toApiGroupPluginConf(addresses: Map[PluginName, PluginAddressPrefix])(conf: PluginConf): ApiGroupPluginConf =
-    ApiGroupPluginConf(conf.name, conf.conf, addresses.get(conf.name))
+    ApiGroupPluginConf(conf.name, conf.conf, conf.applyIf, addresses.get(conf.name))
 
   def composeFlow(f: ServiceConf => Option[ServiceFlowConf], g: EndpointConf => Option[EndpointFlowConf])(sc: ServiceConf, ec: EndpointConf): List[PluginConf] =
     composePluginConfs(f(sc).getOrElse(ServiceFlowConf(Nil)), g(ec).getOrElse(EndpointFlowConf(None, None)))

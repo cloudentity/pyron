@@ -88,8 +88,8 @@ Supported subjects with operations:
 * `queryParams` - set
 
 Supported reference types with sub-items:
-* `body`
-* `headers`
+* `body` (alternatively `req.body`)
+* `headers` (alternatively `req.headers`)
 * `pathParams`
 * `queryParams`
 * `cookies`

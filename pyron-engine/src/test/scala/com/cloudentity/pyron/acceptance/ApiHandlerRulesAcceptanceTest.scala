@@ -1,9 +1,9 @@
 package com.cloudentity.pyron.acceptance
 
 import com.cloudentity.pyron.PyronAcceptanceTest
-import com.cloudentity.pyron.domain.flow.{PluginName, RequestCtx}
+import com.cloudentity.pyron.domain.flow.{PluginName, RequestCtx, ResponseCtx}
 import com.cloudentity.pyron.plugin.config.ValidateResponse
-import com.cloudentity.pyron.plugin.verticle.RequestPluginVerticle
+import com.cloudentity.pyron.plugin.verticle.{RequestPluginVerticle, ResponsePluginVerticle}
 import com.cloudentity.pyron.util.MockUtils
 import io.circe.Decoder
 import io.restassured.RestAssured._
@@ -148,6 +148,19 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
       .body(StringContains.containsString("System.Timeout"))
   }
 
+  @Test
+  def shouldSkipResponsePluginWhenApplyIfIsFalse(ctx: TestContext): Unit = {
+    targetService.when(req().withPath("/should-skip-plugin-when-apply-if-false")).callback { request: HttpRequest =>
+      resp().withStatusCode(200)
+    }
+
+    given()
+    .when()
+      .get(rulesTestBasePath + "/should-skip-plugin-when-apply-if-false")
+    .`then`()
+      .statusCode(200)
+  }
+
   def resp(): HttpResponse = org.mockserver.model.HttpResponse.response()
   def req(): HttpRequest = org.mockserver.model.HttpRequest.request()
 }
@@ -157,6 +170,16 @@ class TimeoutPluginVerticle extends RequestPluginVerticle[Unit] {
 
   override def apply(requestCtx: RequestCtx, conf: Unit): Future[RequestCtx] =
     Future.failed(new ReplyException(ReplyFailure.TIMEOUT, "Timed out"))
+
+  override def validate(conf: Unit): ValidateResponse = ValidateResponse.ok()
+  override def confDecoder: Decoder[Unit] = Decoder.decodeUnit
+}
+
+class FailPluginVerticle extends ResponsePluginVerticle[Unit] {
+  override def name: PluginName = PluginName("fail")
+
+  override def apply(responseCtx: ResponseCtx, conf: Unit): Future[ResponseCtx] =
+    Future.failed(new RuntimeException)
 
   override def validate(conf: Unit): ValidateResponse = ValidateResponse.ok()
   override def confDecoder: Decoder[Unit] = Decoder.decodeUnit

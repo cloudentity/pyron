@@ -3,19 +3,20 @@ package com.cloudentity.pyron.plugin.impl.transform.response
 import com.cloudentity.pyron.domain.flow.{PluginName, ResponseCtx}
 import com.cloudentity.pyron.plugin.config.{ValidateOk, ValidateResponse}
 import com.cloudentity.pyron.plugin.impl.transform.TransformHeaders.transformResHeaders
-import com.cloudentity.pyron.plugin.impl.transform.TransformJsonBody.{transformReqJsonBody, transformResJsonBody}
+import com.cloudentity.pyron.plugin.impl.transform.TransformJsonBody.transformResJsonBody
 import com.cloudentity.pyron.plugin.impl.transform._
-import com.cloudentity.pyron.plugin.util.value.{Path, ValueResolver}
+import com.cloudentity.pyron.plugin.util.value.ValueResolver
 import com.cloudentity.pyron.plugin.verticle.ResponsePluginVerticle
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
 import io.vertx.core.json.JsonObject
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 case class TransformResponsePluginVerticleConf(conf: Option[JsonObject])
 
-class TransformResponsePlugin  extends ResponsePluginVerticle[TransformerConf] {
+class TransformResponsePlugin  extends ResponsePluginVerticle[ResponseTransformerConf] {
 
   override def name: PluginName = PluginName("transform-response")
 
@@ -35,21 +36,33 @@ class TransformResponsePlugin  extends ResponsePluginVerticle[TransformerConf] {
     verticleConf = decodeConfigUnsafe(deriveDecoder[TransformResponsePluginVerticleConf])
   }
 
-  override def apply(ctx: ResponseCtx, conf: TransformerConf): Future[ResponseCtx] = Future.successful {
-    val jsonBodyOpt: Option[JsonObject] = parseJsonBodyIfRequired(ctx, conf)
+  override def apply(ctx: ResponseCtx, conf: ResponseTransformerConf): Future[ResponseCtx] = Future.successful {
+    val respJsonBodyOpt: Option[JsonObject] = parseResponseJsonBodyIfRequired(ctx, conf)
+    val reqJsonBodyOpt: Option[JsonObject] = parseRequestJsonBodyIfRequired(ctx, conf)
     ctx |>
-      transformResJsonBody(resolveBodyOps(ctx, conf.body, jsonBodyOpt), jsonBodyOpt) |>
-      transformResHeaders(resolveHeaderOps(ctx, conf.headers, jsonBodyOpt))
+      transformResJsonBody(resolveBodyOps(ctx, conf.body, reqJsonBodyOpt, respJsonBodyOpt), respJsonBodyOpt) |>
+      transformResHeaders(resolveHeaderOps(ctx, conf.headers, reqJsonBodyOpt, respJsonBodyOpt))
   }
 
-  // to avoid parsing body to JsonObject over and over again we do it only if JSON body reference exists or body operations are set
-  def parseJsonBodyIfRequired(ctx: ResponseCtx, conf: TransformerConf): Option[JsonObject] = {
-    if (conf.parseJsonBody) {
+  // to avoid parsing request body to JsonObject over and over again we do it only if JSON body reference exists or body operations are set
+  def parseRequestJsonBodyIfRequired(ctx: ResponseCtx, conf: ResponseTransformerConf): Option[JsonObject] = {
+    if (conf.parseRequestJsonBody)
+      Try(ctx.targetRequest.bodyOpt.map(_.toJsonObject)) match {
+        case Success(jsonBodyOpt) => jsonBodyOpt
+        case Failure(ex) =>
+          log.error(ctx.tracingCtx, "Could not parse JSON request body", ex)
+          None
+      }
+    else None
+  }
+  // to avoid parsing response body to JsonObject over and over again we do it only if JSON body reference exists or body operations are set
+  def parseResponseJsonBodyIfRequired(ctx: ResponseCtx, conf: ResponseTransformerConf): Option[JsonObject] = {
+    if (conf.parseResponseJsonBody) {
       try {
         Some(ctx.response.body.toJsonObject)
       } catch {
         case ex: Throwable =>
-          log.error(ctx.tracingCtx, "Could not parse JSON body", ex)
+          log.error(ctx.tracingCtx, "Could not parse JSON response body", ex)
           None
       }
     }
@@ -59,13 +72,13 @@ class TransformResponsePlugin  extends ResponsePluginVerticle[TransformerConf] {
   private def confValues(): JsonObject =
     verticleConf.conf.getOrElse(new JsonObject())
 
-  def resolveBodyOps(ctx: ResponseCtx, bodyOps: BodyOps, jsonBodyOpt: Option[JsonObject]): ResolvedBodyOps =
-    ResolvedBodyOps(bodyOps.set.map(_.mapValues(ValueResolver.resolveJson(ctx, jsonBodyOpt, confValues(), _))), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
+  def resolveBodyOps(ctx: ResponseCtx, bodyOps: BodyOps, reqJsonBodyOpt: Option[JsonObject], respJsonBodyOpt: Option[JsonObject]): ResolvedBodyOps =
+    ResolvedBodyOps(bodyOps.set.map(_.mapValues(ValueResolver.resolveJson(ctx, reqJsonBodyOpt, respJsonBodyOpt, confValues(), _))), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
 
-  def resolveHeaderOps(ctx: ResponseCtx, headerOps: HeaderOps, jsonBodyOpt: Option[JsonObject]): ResolvedHeaderOps =
-    ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, confValues(), _))))
+  def resolveHeaderOps(ctx: ResponseCtx, headerOps: HeaderOps, reqJsonBodyOpt: Option[JsonObject], respJsonBodyOpt: Option[JsonObject]): ResolvedHeaderOps =
+    ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, reqJsonBodyOpt, respJsonBodyOpt, confValues(), _))))
 
-  override def validate(conf: TransformerConf): ValidateResponse = ValidateOk
+  override def validate(conf: ResponseTransformerConf): ValidateResponse = ValidateOk
 
-  override def confDecoder: Decoder[TransformerConf] = TransformerConf.TransformerConfDecoder
+  override def confDecoder: Decoder[ResponseTransformerConf] = ResponseTransformerConf.TransformerConfDecoder
 }

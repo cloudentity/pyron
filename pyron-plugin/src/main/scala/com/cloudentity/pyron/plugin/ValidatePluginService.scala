@@ -5,6 +5,9 @@ import com.cloudentity.tools.vertx.bus.VertxEndpoint
 import io.vertx.core.Future
 
 trait ValidatePluginService {
-  @VertxEndpoint(address = ":plugin.validate")
+  @VertxEndpoint
   def validateConfig(req: ValidateRequest): Future[ValidateResponse]
+
+  @VertxEndpoint
+  def validateApplyIf(req: ValidateRequest): Future[ValidateResponse]
 }
