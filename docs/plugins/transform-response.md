@@ -15,6 +15,9 @@ Additional references with sub-items:
 Additional references without sub-items:
 * `resp.status`
 
+Additional transformation:
+* `status` - optional attribute to set http response to the configured value 
+
 Other references are still accessible, and will resolve against the original request, the same way as for `transform-request` plugin.
 
 Use "transform-response" for plugin name, and put the configuration inside `responsePlugins` array.
@@ -48,7 +51,8 @@ Example usage:
                   "set": {
                     "withdraw.allowDebit": true
                   }
-                }
+                },
+                "status": 200
               }
             }
           ]

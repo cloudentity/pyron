@@ -4,6 +4,7 @@ import com.cloudentity.pyron.domain.flow.{PluginName, ResponseCtx}
 import com.cloudentity.pyron.plugin.config.{ValidateOk, ValidateResponse}
 import com.cloudentity.pyron.plugin.impl.transform.TransformHeaders.transformResHeaders
 import com.cloudentity.pyron.plugin.impl.transform.TransformJsonBody.transformResJsonBody
+import com.cloudentity.pyron.plugin.impl.transform.TransformHttpStatus.transformHttpStatus
 import com.cloudentity.pyron.plugin.impl.transform._
 import com.cloudentity.pyron.plugin.util.value.ValueResolver
 import com.cloudentity.pyron.plugin.verticle.ResponsePluginVerticle
@@ -41,7 +42,8 @@ class TransformResponsePlugin  extends ResponsePluginVerticle[ResponseTransforme
     val reqJsonBodyOpt: Option[JsonObject] = parseRequestJsonBodyIfRequired(ctx, conf)
     ctx |>
       transformResJsonBody(resolveBodyOps(ctx, conf.body, reqJsonBodyOpt, respJsonBodyOpt), respJsonBodyOpt) |>
-      transformResHeaders(resolveHeaderOps(ctx, conf.headers, reqJsonBodyOpt, respJsonBodyOpt))
+      transformResHeaders(resolveHeaderOps(ctx, conf.headers, reqJsonBodyOpt, respJsonBodyOpt))|>
+      transformHttpStatus(conf.status)
   }
 
   // to avoid parsing request body to JsonObject over and over again we do it only if JSON body reference exists or body operations are set
@@ -57,7 +59,8 @@ class TransformResponsePlugin  extends ResponsePluginVerticle[ResponseTransforme
   }
   // to avoid parsing response body to JsonObject over and over again we do it only if JSON body reference exists or body operations are set
   def parseResponseJsonBodyIfRequired(ctx: ResponseCtx, conf: ResponseTransformerConf): Option[JsonObject] = {
-    if (conf.parseResponseJsonBody) {
+    if(emptyApiResponseBody(ctx)) Some(new JsonObject())
+    else if (conf.parseResponseJsonBody) {
       try {
         Some(ctx.response.body.toJsonObject)
       } catch {
@@ -68,6 +71,8 @@ class TransformResponsePlugin  extends ResponsePluginVerticle[ResponseTransforme
     }
     else None
   }
+
+  def emptyApiResponseBody(ctx: ResponseCtx): Boolean = ctx.response.body.toString().isEmpty
 
   private def confValues(): JsonObject =
     verticleConf.conf.getOrElse(new JsonObject())

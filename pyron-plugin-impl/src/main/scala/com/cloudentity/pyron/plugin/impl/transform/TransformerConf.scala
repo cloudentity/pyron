@@ -25,7 +25,8 @@ case class RequestTransformerConfRaw(body: Option[BodyOps],
                               queryParams: Option[QueryParamOps],
                               headers: Option[HeaderOps])
 case class ResponseTransformerConfRaw(body: Option[BodyOps],
-                              headers: Option[HeaderOps])
+                              headers: Option[HeaderOps],
+                              status: Option[Int])
 // root conf
 case class RequestTransformerConf(body: BodyOps,
                                    parseRequestJsonBody: Boolean,
@@ -35,7 +36,8 @@ case class RequestTransformerConf(body: BodyOps,
 case class ResponseTransformerConf(body: BodyOps,
                            parseRequestJsonBody: Boolean,
                            parseResponseJsonBody: Boolean,
-                           headers: HeaderOps)
+                           headers: HeaderOps,
+                           status: Option[Int])
 
 object Ops {
   implicit val BodyOpsDecoder: Decoder[BodyOps] = deriveDecoder[BodyOps].emap {
@@ -79,8 +81,8 @@ object ResponseTransformerConf {
         body = rawConf.body.getOrElse(BodyOps(None, None, None, None)),
         parseRequestJsonBody = RequestTransformerConf.jsonRequestBodyRefExists(rawConf.body, None, rawConf.headers),
         parseResponseJsonBody = rawConf.body.nonEmpty || jsonResponseBodyRefExists(rawConf),
-        headers = rawConf.headers.getOrElse(HeaderOps(None))
-      )
+        headers = rawConf.headers.getOrElse(HeaderOps(None)),
+        status = rawConf.status)
   }
 
   private def jsonResponseBodyRefExists(conf: ResponseTransformerConfRaw): Boolean = {
