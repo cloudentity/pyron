@@ -86,6 +86,22 @@ class TransformJsonBodyTest extends WordSpec with MustMatchers with TestRequestR
       val valAtPath = Map(Path("x") -> None)
       setJsonBody(valAtPath, Nil)(shallowBody) mustBe emptyBody.put("x", null.asInstanceOf[String])
     }
+    "add null in shallow if reference missing" in {
+      val valAtPath = Map(Path("z") -> None)
+      setJsonBody(valAtPath, Nil)(shallowBody) mustBe shallowBody.put("z", null.asInstanceOf[String])
+    }
+    "retain null value in shallow even if nullIfAbsent is false" in {
+      val valAtPath = Map(Path("x") -> Option(NullJsonValue))
+      setJsonBody(valAtPath, Nil, false)(shallowBody) mustBe emptyBody.put("x", null.asInstanceOf[String])
+    }
+    "remove existing value in shallow if reference missing if nullIfAbsent is false" in {
+      val valAtPath = Map(Path("x") -> None)
+      setJsonBody(valAtPath, Nil, false)(shallowBody) mustBe emptyBody
+    }
+    "omit key in shallow if reference missing if nullIfAbsent is false" in {
+      val valAtPath = Map(Path("z") -> None)
+      setJsonBody(valAtPath, Nil, false)(shallowBody) mustBe shallowBody
+    }
 
     "remove existing value" in {
       val removePath = List(Path("x"))
@@ -200,12 +216,12 @@ class TransformJsonBodyTest extends WordSpec with MustMatchers with TestRequestR
 
   "TransformJsonBody.applyBodyTransformations" should {
     "return empty buffer if dropping body without set ops" in {
-      val bodyOps = ResolvedBodyOps(set = None, remove = None, drop = Some(true))
+      val bodyOps = ResolvedBodyOps(set = None, remove = None, drop = Some(true), nullIfAbsent = None)
       applyBodyTransformations(bodyOps, new JsonObject().put("x", "y")) mustBe Buffer.buffer()
     }
 
     "return empty buffer if dropping body with set ops" in {
-      val bodyOps = ResolvedBodyOps(set = Some(Map(Path("x") -> Some(StringJsonValue("a")))), remove = None, drop = Some(true))
+      val bodyOps = ResolvedBodyOps(set = Some(Map(Path("x") -> Some(StringJsonValue("a")))), remove = None, drop = Some(true), nullIfAbsent = None)
       applyBodyTransformations(bodyOps, new JsonObject().put("x", "y")) mustBe Buffer.buffer()
     }
   }

@@ -5,10 +5,18 @@
 For modifying outgoing cookies encoded in `Set-Cookie` headers, please use [`transform-response-cookie` plugin](transform-response-cookie.md).
 
 Enable `transform-response` plugin by adding `plugin/transform-response` to `MODULES` environment variable.
-This plugin works in a very similar way to the `transform-request` plugin, except that modifications are applied to the response.
+This plugin works in a very similar way to the `transform-request` plugin, except that modifications are applied to the response
+and you can reference response attribute.
 
-Note that, `$body` and `$headers` references will point to the `body` and `headers` of the response instead of request.
-We can both reference and update `body` and `headers` of the response.
+Additional references with sub-items:
+* `resp.body`
+* `resp.headers`
+
+Additional references without sub-items:
+* `resp.status`
+
+Additional transformation:
+* `status` - optional attribute to set http response to the configured value 
 
 Other references are still accessible, and will resolve against the original request, the same way as for `transform-request` plugin.
 
@@ -36,14 +44,15 @@ Example usage:
               "conf": {
                 "headers": {
                   "set": {
-                    "X-USER-ID": "$headers.userUUid"
+                    "X-USER-ID": "$resp.headers.userUUid"
                   }
                 },
                 "body": {
                   "set": {
                     "withdraw.allowDebit": true
                   }
-                }
+                },
+                "status": 200
               }
             }
           ]

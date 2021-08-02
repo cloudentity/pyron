@@ -101,7 +101,7 @@
               "conf": {
                 "headers": {
                   "set": {
-                    "H": "$headers.userUuid"
+                    "H": "$resp.headers.userUuid"
                   }
                 }
               }
@@ -165,7 +165,7 @@
               "conf": {
                 "headers": {
                   "set": {
-                    "H": "$body.h"
+                    "H": "$resp.body.h"
                   }
                 }
               }
@@ -199,7 +199,7 @@
                 "headers": {
                   "set": {
                     "X-Transaction": {
-                      "path": "$body.scp",
+                      "path": "$resp.body.scp",
                       "pattern": "transaction.{transactionId}/swift.{swiftId}",
                       "output": "{swiftId}.{transactionId}"
                     }
@@ -220,17 +220,17 @@
                 "headers": {
                   "set": {
                     "X-Transaction": {
-                      "path": "$body.scp",
+                      "path": "$resp.body.scp",
                       "pattern": "transaction.{id}",
                       "output": "{id}"
                     },
                     "X-Env": {
-                      "path": "$body.scp",
+                      "path": "$resp.body.scp",
                       "pattern": "env.{id}.suffix",
                       "output": "{id}"
                     },
                     "X-Payment": {
-                      "path": "$body.scp",
+                      "path": "$resp.body.scp",
                       "pattern": "payment.{id}",
                       "output": "{id}"
                     }
@@ -251,10 +251,26 @@
                 "headers": {
                   "set": {
                     "X-Id": {
-                      "path": "$body.scp",
+                      "path": "$resp.body.scp",
                       "pattern": "id.{id}",
                       "output": "{id}"
                     }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-status",
+          "responsePlugins": [
+            {
+              "name": "transform-response",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$resp.status"
                   }
                 }
               }

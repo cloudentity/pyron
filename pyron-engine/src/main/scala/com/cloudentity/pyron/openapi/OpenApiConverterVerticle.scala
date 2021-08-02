@@ -67,11 +67,10 @@ class OpenApiConverterVerticle extends ScalaServiceVerticle with OpenApiConverte
       val apiGwPath = rule.apiGwPath
       val targetMethod = toSwaggerMethod(rule.rewriteMethod.map(_.value).getOrElse(rule.method))
       val apiGwMethod = toSwaggerMethod(rule.method)
+
       findOperation(swagger, targetServicePath, targetMethod) match {
         case Some(operation) =>
-          val withHardcodedParamsOperation = adjustPathParams(operation, swagger, targetServicePath)
-          val outOperation = deepCopyOperation(withHardcodedParamsOperation)
-
+          val outOperation = deepCopyOperation(operation)
           val operationId = rule.operationId.getOrElse(operation.getOperationId)
           outOperation.setOperationId(operationId)
 

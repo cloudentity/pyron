@@ -34,7 +34,7 @@ trait AuthnPluginOpenApiTestTools extends OpenApiTestUtils {
   }
 
   def apiRule(endpoint: SimpleTestEndpoint, endpointConf: AuthnPluginConf): OpenApiRule = {
-    val jsonPluginConf =  ApiGroupPluginConf(PluginName("authn"), endpointConf.asJson, None)
+    val jsonPluginConf =  ApiGroupPluginConf(PluginName("authn"), endpointConf.asJson, None, None)
     OpenApiRule(
       endpoint.method,
       StaticServiceId(TargetHost(""), 80, ssl = false),

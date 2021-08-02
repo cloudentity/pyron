@@ -13,6 +13,8 @@ import scala.util.{Success, Try}
 
 object TransformJsonBody {
 
+  val nullIfAbsentDefaultValue = true
+
   def transformReqJsonBody(bodyOps: ResolvedBodyOps, jsonBodyOpt: Option[JsonObject])(ctx: RequestCtx): RequestCtx =
     jsonBodyOpt match {
       case Some(jsonBody) =>
@@ -34,16 +36,20 @@ object TransformJsonBody {
 
   def applyBodyTransformations(bodyOps: ResolvedBodyOps, jsonBody: JsonObject): Buffer =
     if (bodyOps.drop.contains(true)) Buffer.buffer()
-    else setJsonBody(bodyOps.set.getOrElse(Map()), bodyOps.remove.getOrElse(Nil))(jsonBody).toBuffer
+    else setJsonBody(bodyOps.set.getOrElse(Map()), bodyOps.remove.getOrElse(Nil), bodyOps.nullIfAbsent.getOrElse(nullIfAbsentDefaultValue))(jsonBody).toBuffer
 
   val arrayBracketRegex: Regex = """\[(\d+)]""".r
 
-  def setJsonBody(set: Map[Path, Option[JsonValue]], remove: List[Path])(body: JsonObject): JsonObject = {
+  def setJsonBody(set: Map[Path, Option[JsonValue]], remove: List[Path], nullIfAbsent: Boolean = nullIfAbsentDefaultValue)(body: JsonObject): JsonObject = {
     @tailrec
     def mutateBodyAttribute(body: JsonObject, bodyPath: List[String], resolvedValue: Option[JsonValue]): Unit =
       bodyPath match {
         case key :: Nil =>
-          body.put(key, resolvedValue.map(_.rawValue).orNull)
+          if(nullIfAbsent) body.put(key, resolvedValue.map(_.rawValue).orNull)
+          else resolvedValue match {
+            case Some(jsonValue) => body.put(key, jsonValue.rawValue)
+            case None => body.remove(key)
+          }
         case key :: tail =>
           mutateBodyAttribute(getOrSetAndGetEmpty(body, key), tail, resolvedValue)
         case Nil => ()
