@@ -203,4 +203,14 @@ class TransformResponsePluginAcceptanceTest extends PluginAcceptanceTest with Mu
       .get("/dyn-header-will-obtain-all-the-values-matching-the-pattern")
       .getHeaders.getValues("X-Id") mustBe asJavaArray(List(s"$idOne", s"$idTwo"))
   }
+
+  @Test
+  def shouldSetHeaderFromStatusCode(): Unit = {
+    given()
+      .when()
+      .get("/header-from-status")
+      .`then`()
+      .header("H", "200")
+      .statusCode(200)
+  }
 }

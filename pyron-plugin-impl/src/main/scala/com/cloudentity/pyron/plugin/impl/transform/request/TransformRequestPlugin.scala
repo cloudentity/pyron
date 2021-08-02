@@ -20,7 +20,7 @@ import scala.util.{Failure, Success, Try}
 
 case class TransformRequestPluginVerticleConf(conf: Option[JsonObject])
 
-class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
+class TransformRequestPlugin extends RequestPluginVerticle[RequestTransformerConf]
   with TransformPathParams with TransformQueryParams {
 
   override def name: PluginName = PluginName("transform-request")
@@ -41,7 +41,7 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
     verticleConf = decodeConfigUnsafe(deriveDecoder[TransformRequestPluginVerticleConf])
   }
 
-  override def apply(ctx: RequestCtx, conf: TransformerConf): Future[RequestCtx] = Future.successful {
+  override def apply(ctx: RequestCtx, conf: RequestTransformerConf): Future[RequestCtx] = Future.successful {
     val jsonBodyOpt = parseJsonBodyIfRequired(ctx, conf)
     ctx |>
       transformPathParams(resolvePathParamOps(ctx, conf.pathParams, jsonBodyOpt)) |>
@@ -51,8 +51,8 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
   }
 
   // to avoid parsing body to JsonObject over and over again we do it only if JSON body reference exists or body operations are set
-  def parseJsonBodyIfRequired(ctx: RequestCtx, conf: TransformerConf): Option[JsonObject] = {
-    if (conf.parseJsonBody)
+  def parseJsonBodyIfRequired(ctx: RequestCtx, conf: RequestTransformerConf): Option[JsonObject] = {
+    if (conf.parseRequestJsonBody)
       Try(ctx.targetRequest.bodyOpt.map(_.toJsonObject)) match {
         case Success(jsonBodyOpt) => jsonBodyOpt
         case Failure(ex) =>
@@ -66,21 +66,21 @@ class TransformRequestPlugin extends RequestPluginVerticle[TransformerConf]
     verticleConf.conf.getOrElse(new JsonObject())
 
   def resolveBodyOps(ctx: RequestCtx, bodyOps: BodyOps, jsonBodyOpt: Option[JsonObject]): ResolvedBodyOps =
-    ResolvedBodyOps(bodyOps.set.map(_.mapValues(resolveJson(ctx, jsonBodyOpt, confValues(), _))), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
+    ResolvedBodyOps(bodyOps.set.map(_.mapValues(resolveJson(ctx, jsonBodyOpt, None, confValues(), _))), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
 
   def resolvePathParamOps(ctx: RequestCtx, pathParamOps: PathParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedPathParamOps =
-    ResolvedPathParamOps(pathParamOps.set.map(_.mapValues(ValueResolver.resolveString(ctx, jsonBodyOpt, confValues(), _))))
+    ResolvedPathParamOps(pathParamOps.set.map(_.mapValues(ValueResolver.resolveString(ctx, jsonBodyOpt, None, confValues(), _))))
 
   def resolveQueryParamOps(ctx: RequestCtx, queryParamOps: QueryParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedQueryParamOps =
-    ResolvedQueryParamOps(queryParamOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, confValues(), _))))
+    ResolvedQueryParamOps(queryParamOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, None, confValues(), _))))
 
   def resolveHeaderOps(ctx: RequestCtx, headerOps: HeaderOps, jsonBodyOpt: Option[JsonObject]): ResolvedHeaderOps =
-    ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, confValues(), _))))
+    ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, jsonBodyOpt, None, confValues(), _))))
 
-  override def validate(conf: TransformerConf): ValidateResponse = ValidateOk
+  override def validate(conf: RequestTransformerConf): ValidateResponse = ValidateOk
 
-  override def confDecoder: Decoder[TransformerConf] = TransformerConf.TransformerConfDecoder
+  override def confDecoder: Decoder[RequestTransformerConf] = RequestTransformerConf.TransformerConfDecoder
 
-  override def convertOpenApi(openApi: Swagger, rule: OpenApiRule, conf: TransformerConf): ConvertOpenApiResponse =
+  override def convertOpenApi(openApi: Swagger, rule: OpenApiRule, conf: RequestTransformerConf): ConvertOpenApiResponse =
     TransformRequestOpenApiConverter.convertOpenApi(openApi, rule, conf)
 }

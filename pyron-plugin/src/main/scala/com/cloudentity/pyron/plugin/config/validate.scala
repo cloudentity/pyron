@@ -4,7 +4,14 @@ import com.cloudentity.pyron.domain.flow.ApiGroupPluginConf
 
 case class ValidateRequest(conf: ApiGroupPluginConf)
 
-sealed trait ValidateResponse
+sealed trait ValidateResponse {
+  def koMsg: Option[String] =
+    this match {
+      case ValidateOk           => None
+      case ValidateFailure(msg) => Some(msg)
+      case ValidateError(msg)   => Some(msg)
+    }
+}
   case object ValidateOk extends ValidateResponse
   case class ValidateFailure(msg: String) extends ValidateResponse
   case class ValidateError(msg: String) extends ValidateResponse
