@@ -11,6 +11,7 @@
 
 ### Fixed
 - Generate open API with path params taken from rule definition
+- Returned API list to ACP do not contains regex expressions
 
 ### Security
 - [CVE-2021-27568](https://nvd.nist.gov/vuln/detail/CVE-2021-27568) - Fixed by upgrading com.nimbusds.nimbus-jose-jwt to 8.22.1
