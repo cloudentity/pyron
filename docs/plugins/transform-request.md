@@ -46,6 +46,7 @@ Enable `transform-request` plugin by adding `plugin/transform-request` to `MODUL
 * [JSON body](#json-body)
   * [Set body attribute to static value](#json-body-static)
   * [Set body attribute to request attribute](#json-body-ref)
+  * [Remove a body attribute](#json-body-remove)
   * [Drop body](#json-body-drop)
 * [Headers](#headers)
 * [Path parameters](#path-params)
@@ -82,7 +83,7 @@ e.g.
 }
 ```
 Supported subjects with operations:
-* `body` - set, drop
+* `body` - set, remove, drop
 * `headers` - set
 * `pathParams` - set
 * `queryParams` - set
@@ -213,7 +214,7 @@ then target request body would look like this, provided `X-Account-No` header ha
 }
 ```
 
-Elements of JSON arrays may also be referenced using the configuration syntax `[array_index]`. For example, suppose the incoming request body is:
+Elements of JSON arrays may also be referenced using the configuration syntax `.[array_index]`. For example, suppose the incoming request body is:
 
 ```json
 {
@@ -298,6 +299,67 @@ then the target request body would be:
     }
   ],
   "primaryAccountName": "Savings"
+}
+```
+
+<a id="json-body-remove"></a>
+##### Remove a body attribute
+
+Individual elements can be removed from the request body. Use the `.` and `.[array_index]` configuration syntax, as in the `set` directive, to reference elements of a JSON path to be removed (no leading `$body.` is needed, however).
+
+For example, suppose the request body is:
+
+```json
+{
+  "accountNo": "xyz",
+  "routingNo": "123",
+  "withdraw": {
+    "amount": 1000,
+    "allowDebit": true
+  },
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ]
+}
+```
+
+If the following configuration is used:
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "remove": [
+        "routingNo",
+        "withdraw.allowDebit",
+        "accounts.[1]"
+      ]
+    }
+  }
+}
+```
+
+then the target request body will be:
+
+```json
+{
+  "accountNo": "xyz",
+  "withdraw": {
+    "amount": 1000
+  },
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    }
+  ]
 }
 ```
 
