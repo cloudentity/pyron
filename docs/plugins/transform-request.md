@@ -302,6 +302,72 @@ then the target request body would be:
 }
 ```
 
+Suppose a value referenced by `set` is not found in the request body. Using the above example, consider the following configuration (note that, with only 2 total array elements, the element of index 2 does not exist):
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "set": {
+        "tertiaryAccountName": "$body.accounts.[2].name"
+      }
+    }
+  }
+}
+```
+
+By default, the JSON value `null` is set:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ],
+  "tertiaryAccountName": null
+}
+```
+
+If the configuration flag `nullIfAbsent` is set to `false` in the body config, then any values mapped by `set` which are not found will be omitted from the result, rather than set to `null`:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "nullIfAbsent": false,
+      "set": {
+        "tertiaryAccountName": "$body.accounts.[2].name"
+      }
+    }
+  }
+}
+```
+
+Note that, now that `nullIfAbsent` is set to `false` in the configuration, the key `tertiaryAccountName` is omitted from the target request body:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ]
+}
+```
+
 <a id="json-body-remove"></a>
 ##### Remove a body attribute
 
@@ -362,7 +428,6 @@ then the target request body will be:
   ]
 }
 ```
-
 
 <a id="json-body-drop"></a>
 ##### Drop body
