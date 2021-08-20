@@ -1,0 +1,78 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "request": {
+        "preFlow": {
+          "plugins": [
+            {
+              "name": "echo"
+            }
+          ]
+        }
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/echotest"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/echotest2",
+          "requestPlugins": [
+            {
+              "name": "echo",
+              "conf": {
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/echotest3",
+          "requestPlugins": [
+            {
+              "name": "echo",
+              "conf": {
+                "headers": false,
+                "uri": true,
+                "queryParams": true,
+                "method": true,
+                "headersList": ["test-header"]
+              }
+            }
+          ],
+          "request": {
+            "preFlow": {
+              "disablePlugins": ["echo"]
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/echotest4",
+          "requestPlugins": [
+            {
+              "name": "echo",
+              "conf": {
+                "headers": false,
+                "uri": true,
+                "queryParams": true,
+                "method": true,
+                "headersList": ["test-header"]
+              }
+            }
+          ],
+          "request": {
+            "preFlow": {
+              "disablePlugins": ["echo"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

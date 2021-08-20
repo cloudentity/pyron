@@ -1,5 +1,6 @@
 ## [Unreleased]
 ### Added
+- Added `echo` plugin
 - Added `remove` section to transform-request/response plugins to remove specific body entries
 - Added `nullIfAbsent` flag (true by default) to transform-request/response plugins to allow disabling setting explicit null if mapped value not found
 - Conditional plugin application for response plugins

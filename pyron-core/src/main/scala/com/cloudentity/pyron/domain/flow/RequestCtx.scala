@@ -21,6 +21,7 @@ case class RequestCtx(targetRequest: TargetRequest,
                       aborted: Option[ApiResponse] = None,
                       failed: Option[FlowFailure] = None) {
 
+
   def modifyHeaders(f: Headers => Headers): RequestCtx =
     modifyRequest(v => v.copy(headers = f(v.headers)))
 
