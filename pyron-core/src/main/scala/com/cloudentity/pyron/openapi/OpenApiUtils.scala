@@ -33,6 +33,29 @@ trait OpenApiConverterUtils {
       case None => path
     }
 
+  def isPathParam(apiPath: String, paramValue: String)  =
+    apiPath.split("/").find(pathPart => pathPart.equals(s"{$paramValue}")).toList.nonEmpty
+
+  def onlyPathParamsDefinedInRulePath(rulePath: String, pp: PathParams, operation: Operation): Option[Operation] = {
+    val paramsInRulePath: Map[String, String] = pp.value.filter(param => isPathParam(rulePath, param._2))
+    val woHardcodedPathParams = operation.getParameters().asScala.filter(p => !p.getIn.equals("path") || paramsInRulePath.keySet.contains(p.getName)).asJava
+
+    val operationCopy = deepCopyOperation(operation)
+    operationCopy.setParameters(woHardcodedPathParams)
+
+    Option(operationCopy)
+  }
+
+  def adjustPathParams(operation: Operation, swagger: Swagger, apiGwPath: String): Operation = {
+    val maybeOperation: Option[Operation] = for {
+      path <- findSwaggerPath(apiGwPath, swagger)
+      pp <- matchWithPathParams(apiGwPath, path._1)
+      adjustedOperationParams <- onlyPathParamsDefinedInRulePath(apiGwPath, pp, operation)
+    } yield adjustedOperationParams
+
+    maybeOperation.getOrElse(operation)
+  }
+
   def findOperation(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] = {
     findPath(swagger, path).flatMap(p => findOperationInPath(p, method))
   }
@@ -53,9 +76,16 @@ trait OpenApiConverterUtils {
     pathsMap.mapValues(buildPath)
   }
 
-  def pathMatches(testPath: String, regexPath: String): Boolean = {
-    val normalizedTargetServicePath = testPath.replaceAll("\\{|\\}", "")
-    makeMatch(normalizedTargetServicePath, PathMatching.build(PathPrefix(""), PathPattern(regexPath))).isDefined
+  def pathMatches(testPath: String, regexPath: String): Boolean =
+    matchWithPathParams(testPath, regexPath).isDefined
+
+  def findSwaggerPath(apiGwPath: String, swagger: Swagger) = {
+    swagger.getPaths.asScala.find(x => matchWithPathParams(apiGwPath, x._1).isDefined)
+  }
+
+  def matchWithPathParams(targetServicePath: String, swaggerRegexPath: String): Option[PathParams] = {
+    val normalizedTargetServicePath = targetServicePath.replaceAll("\\{|\\}", "")
+    makeMatch(normalizedTargetServicePath, PathMatching.build(PathPrefix(""), PathPattern(swaggerRegexPath)))
   }
 
   def makeMatch(path: String, matcher: PathMatching): Option[PathParams] =

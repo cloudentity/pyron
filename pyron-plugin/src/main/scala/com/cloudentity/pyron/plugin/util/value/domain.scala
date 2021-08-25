@@ -8,12 +8,14 @@ import scala.collection.JavaConverters._
 sealed trait ValueOrRef
 case class Value(value: Json) extends ValueOrRef
 sealed trait RefType extends ValueOrRef
-case class BodyRef(path: Path) extends RefType
+case class RequestBodyRef(path: Path) extends RefType
+case class ResponseBodyRef(path: Path) extends RefType
 case class PathParamRef(param: String) extends RefType
 case class QueryParamRef(param: String) extends RefType
 case class CookieRef(cookie: String) extends RefType
 case class AuthnRef(path: Path) extends RefType
-case class HeaderRef(header: String, typ: HeaderRefType) extends RefType
+case class RequestHeaderRef(header: String, typ: HeaderRefType) extends RefType
+case class ResponseHeaderRef(header: String, typ: HeaderRefType) extends RefType
 case class ConfRef(path: Path) extends RefType
 
 sealed trait HeaderRefType
@@ -28,6 +30,7 @@ case object SchemeRef extends RefType
 
 case object LocalHostRef extends RefType
 case object RemoteHostRef extends RefType
+case object HttpStatusRef extends RefType
 
 object ValueOrRef {
 
@@ -40,6 +43,8 @@ object ValueOrRef {
   private def decodeReference(string: String): Either[String, RefType] =
     string.drop(1).split('.').toList match {
       case Nil => Left("reference cannot be empty")
+      case "req" :: refType :: path => decodeRefWithPath(s"req.$refType", path).map(Right(_)).getOrElse(Left(s"invalid reference: $string"))
+      case "resp" :: refType :: path => decodeRefWithPath(s"resp.$refType", path).map(Right(_)).getOrElse(Left(s"invalid reference: $string"))
       case refType :: path => decodeRefWithPath(refType, path)
         .orElse(if (path.isEmpty) decodeRefWithNoPath(refType) else None)
         .map(Right(_)).getOrElse(Left(s"invalid reference: $string"))
@@ -59,28 +64,37 @@ object ValueOrRef {
   private def decodeRefWithPath(refType: String, path: List[String]): Option[RefType] =
     refType match {
       case "authn" => Some(AuthnRef(Path(path)))
-      case "body" => Some(BodyRef(Path(path)))
+      case "body" => Some(RequestBodyRef(Path(path)))
+      case "req.body" => Some(RequestBodyRef(Path(path)))
+      case "resp.body" => Some(ResponseBodyRef(Path(path)))
+      case "resp.status" => Some(HttpStatusRef)
       case "cookies" => Some(CookieRef(path.mkString(".")))
-      case "headers" => decodeHeadersRef(path)
+      case "headers" => decodeHeadersRef(path, RequestHeaderRef.apply _)
+      case "req.headers" => decodeHeadersRef(path, RequestHeaderRef.apply _)
+      case "resp.headers" => decodeHeadersRef(path, ResponseHeaderRef.apply _)
       case "pathParams" => Some(PathParamRef(path.mkString(".")))
       case "queryParams" => Some(QueryParamRef(path.mkString(".")))
       case "conf" => Some(ConfRef(Path(path)))
       case _ => None
     }
 
-  private def decodeHeadersRef(path: List[String]): Option[HeaderRef] = Some {
+  private def decodeHeadersRef[A](path: List[String], f: (String, HeaderRefType) => A): Option[A] = Some {
     path match {
       case header :: "*" :: Nil =>
-        HeaderRef(header, AllHeaderRefType)
+        f(header, AllHeaderRefType)
       case path =>
-        HeaderRef(path.mkString("."), FirstHeaderRefType)
+        f(path.mkString("."), FirstHeaderRefType)
     }
   }
 }
 
 case class Path(value: List[String])
 object Path {
-  implicit val PathDecoder: KeyDecoder[Path] = key => Some(Path(key.split('.').toList))
+  implicit val PathKeyDecoder: KeyDecoder[Path] = key => Some(Path(key.split('.').toList))
+
+  implicit val PathDecoder: Decoder[Path] = Decoder.decodeString.emap(key =>
+    Right(Path(key.split('.').toList))
+  )
 
   def apply(xs: String*): Path = Path(xs.toList)
 }

@@ -47,6 +47,7 @@ class RuleBuilderSpec extends WordSpec with MustMatchers with VertxSpec {
       "x" -> Json.fromString("x"),
       "y" -> Json.fromString("y")
     )),
+    applyIf = None,
     addressPrefixOpt = None
   )
 

@@ -67,12 +67,19 @@ object RuleBuilder {
         confs.map { conf =>
           val client = ServiceClientFactory.make(bus, classOf[ValidatePluginService], java.util.Optional.of(conf.addressPrefixOpt.map(_.value).getOrElse(conf.name.value)))
 
-          Futures.toScala(client.validateConfig(ValidateRequest(conf)))
-            .map[ValidationNel[InvalidPluginConf, Unit]] {
-              case ValidateOk           => Success(())
-              case ValidateFailure(msg) => Failure(NonEmptyList(InvalidPluginConf(conf, msg)))
-              case ValidateError(msg)   => Failure(NonEmptyList(InvalidPluginConf(conf, msg)))
+          val validationResponses: Future[(ValidateResponse, ValidateResponse)] =
+            for {
+              validateConfig <- Futures.toScala(client.validateConfig(ValidateRequest(conf)))
+              validateIf     <- Futures.toScala(client.validateApplyIf(ValidateRequest(conf)))
+            } yield (validateConfig, validateIf)
+
+          validationResponses.map[ValidationNel[InvalidPluginConf, Unit]] { case (validateConfig, validateIf) =>
+            val errors = List(validateConfig.koMsg, validateIf.koMsg).flatten
+            errors match {
+              case Nil => Success(())
+              case head :: tail => Failure(NonEmptyList(InvalidPluginConf(conf, head), tail.map(el => InvalidPluginConf(conf, el)):_*))
             }
+          }
         }
       }
 

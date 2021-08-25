@@ -1,3 +1,25 @@
+## [1.11.0] - 2021-08-19
+### Added
+- Added `echo` plugin
+- Added `remove` section to transform-request/response plugins to remove specific body entries
+- Added `nullIfAbsent` flag (true by default) to transform-request/response plugins to allow disabling setting explicit null if mapped value not found
+- Conditional plugin application for response plugins
+- Response status code can be referenced in transform-response plugin and plugin apply-condition
+
+### Changed
+- Move owasp profile location to limit bom to pyron app (from pyron root), change generation to single BOM and bump plugin version
+- Extensions for 'transform-response' plugin: ability to transform empty API response body, httpStatus transformation
+
+### Fixed
+- Generate open API with path params taken from rule definition
+- Returned API list to ACP without regex expressions
+
+### Security
+- [CVE-2021-27568](https://nvd.nist.gov/vuln/detail/CVE-2021-27568) - Fixed by upgrading com.nimbusds.nimbus-jose-jwt to 8.22.1
+
+### Breaking change
+- `$body` and `$headers` references in transform-response plugin get value from request instead of response (use `$resp.body`, `$resp.headers`)
+
 ## [1.10.0] - 2021-07-12
 ### Added
 - Enabled extracting array elements by index in ValueResolver (used by transform-request/response plugins)
