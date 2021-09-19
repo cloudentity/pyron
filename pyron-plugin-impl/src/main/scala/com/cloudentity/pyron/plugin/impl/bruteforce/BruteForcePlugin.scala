@@ -112,10 +112,10 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
   }
 
   private def loadAttempts(ctx: RequestCtx, identifier: String, counterName: String):Operation[BruteForceResult, List[Attempt]] =
-    cache.get(ctx.tracingCtx, counterName, identifier).toOperation[BruteForceResult].map(_.getOrElse(Nil))
+    cache.get(ctx.tracingCtx, counterName, identifier.toLowerCase).toOperation[BruteForceResult].map(_.getOrElse(Nil))
 
   private def tryLockWithLeaseTime(ctx: TracingContext, counterName: String, identifier: String, leaseTime: Duration): Operation[BruteForceResult, Boolean] =
-    cache.lock(ctx, counterName, identifier, leaseTime).toOperation[BruteForceResult].recover(ex => -\/(FailureWithoutLock(ex)))
+    cache.lock(ctx, counterName, identifier.toLowerCase, leaseTime).toOperation[BruteForceResult].recover(ex => -\/(FailureWithoutLock(ex)))
 
   override def apply(ctx: ResponseCtx, conf: BruteForceConfig): Future[ResponseCtx] =
     ctx.getPluginState() match {
@@ -138,7 +138,7 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
       if (conf.successCodes.contains(resp.statusCode)) {
         log.debug(ctx, s"Response successful for $counterName.$identifier")
 
-        if (attempts.nonEmpty) cache.clear(ctx, counterName, identifier).toScala()
+        if (attempts.nonEmpty) cache.clear(ctx, counterName, identifier.toLowerCase).toScala()
         else Future.successful(())
       } else if (conf.errorCodes.contains(resp.statusCode)) {
         log.debug(ctx, s"Response failure for $counterName.$identifier")
@@ -154,12 +154,12 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
   private def updateAttempts(ctx: TracingContext, attempt: Attempt, counterName: String, identifier: String, attempts: List[Attempt], conf: BruteForceConfig): Future[Unit] = {
     val pastBlockTime = Instant.now.minusSeconds(conf.blockFor)
     val relevantAttempts = attempts.filter(_.timestamp.isAfter(pastBlockTime))
-    cache.set(ctx, counterName, identifier,  attempt :: relevantAttempts, (conf.blockSpan + conf.blockFor) seconds)
+    cache.set(ctx, counterName, identifier.toLowerCase,  attempt :: relevantAttempts, (conf.blockSpan + conf.blockFor) seconds)
   }.toScala
 
   private def unlockCache(ctx: TracingContext, counterName: String, identifier: String): Future[Unit] = {
     log.debug(ctx, s"Unlocking cache: $counterName.$identifier")
-    cache.unlock(ctx, counterName, identifier).toScala()
+    cache.unlock(ctx, counterName, identifier.toLowerCase).toScala()
   }
 }
 

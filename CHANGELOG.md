@@ -1,3 +1,8 @@
+## [1.9.1]
+
+### Fixed
+- Lowercase identifiers for bruteCache plugin
+
 ## [1.9.0] - 2021-06-11
 
 ### Breaking change
