@@ -24,15 +24,15 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 case class BruteForceConfig(
-  maxAttempts: Int,
-  blockSpan: Int,
-  blockFor: Int,
-  successCodes: List[Int],
-  errorCodes: List[Int],
-  identifier: IdentifierSource,
-  lockedResponse: Json,
-  counterName: String
-)
+                             maxAttempts: Int,
+                             blockSpan: Int,
+                             blockFor: Int,
+                             successCodes: List[Int],
+                             errorCodes: List[Int],
+                             identifier: IdentifierSource,
+                             lockedResponse: Json,
+                             counterName: String
+                           )
 
 case class BruteForcePluginConfig(cacheTimeoutMs: Option[Int], leaseDurationMs: Option[Int])
 case class BruteForcePluginState(attempts: List[Attempt], identifier: String)
@@ -56,9 +56,9 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
   def blockedResponse(body: Json) = ApiResponse(423, Buffer.buffer(body.noSpaces), Headers.of("Content-Type" -> "application/json"))
 
   sealed trait BruteForceResult
-    case object LockAlreadyAcquired extends BruteForceResult
-    case object BruteForceBlocked extends BruteForceResult
-    case class FailureWithoutLock(ex: Throwable) extends BruteForceResult
+  case object LockAlreadyAcquired extends BruteForceResult
+  case object BruteForceBlocked extends BruteForceResult
+  case class FailureWithoutLock(ex: Throwable) extends BruteForceResult
 
   override def apply(ctx: RequestCtx, conf: BruteForceConfig): Future[RequestCtx] = {
     BruteForceIdentifierReader.read(ctx, conf.identifier) match {
@@ -70,7 +70,7 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
           for {
             lockAcquired <- tryLockWithLeaseTime(ctx.tracingCtx, counterName, identifier, cacheLockLeaseDuration)
             _            <- if (lockAcquired) Operation.success[BruteForceResult, Unit](())
-                            else              Operation.error[BruteForceResult, Unit](LockAlreadyAcquired)
+            else              Operation.error[BruteForceResult, Unit](LockAlreadyAcquired)
             _             = log.debug(ctx.tracingCtx, s"Lock $counterName.$identifier acquired")
 
             attempts     <- loadAttempts(ctx, identifier, counterName)
@@ -78,7 +78,7 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
             blocked       = BruteForceEvaluator.isBlocked(Instant.now(), attempts)
 
             _            <- if (!blocked) Operation.success[BruteForceResult, Unit](())
-                            else          Operation.error[BruteForceResult, Unit](BruteForceBlocked)
+            else          Operation.error[BruteForceResult, Unit](BruteForceBlocked)
           } yield {
             ctx.withPluginState(BruteForcePluginState(attempts, identifier))
           }
@@ -112,10 +112,10 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
   }
 
   private def loadAttempts(ctx: RequestCtx, identifier: String, counterName: String):Operation[BruteForceResult, List[Attempt]] =
-    cache.get(ctx.tracingCtx, counterName, identifier).toOperation[BruteForceResult].map(_.getOrElse(Nil))
+    cache.get(ctx.tracingCtx, counterName, identifier.toLowerCase).toOperation[BruteForceResult].map(_.getOrElse(Nil))
 
   private def tryLockWithLeaseTime(ctx: TracingContext, counterName: String, identifier: String, leaseTime: Duration): Operation[BruteForceResult, Boolean] =
-    cache.lock(ctx, counterName, identifier, leaseTime).toOperation[BruteForceResult].recover(ex => -\/(FailureWithoutLock(ex)))
+    cache.lock(ctx, counterName, identifier.toLowerCase, leaseTime).toOperation[BruteForceResult].recover(ex => -\/(FailureWithoutLock(ex)))
 
   override def apply(ctx: ResponseCtx, conf: BruteForceConfig): Future[ResponseCtx] =
     ctx.getPluginState() match {
@@ -132,34 +132,34 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
         Future.successful(ctx)
     }
 
-    private def clearOrUpdateAttempts(ctx: TracingContext, resp: ApiResponse, attempts: List[Attempt], conf: BruteForceConfig, identifier: String): Future[Unit] = {
-      val counterName = conf.counterName
+  private def clearOrUpdateAttempts(ctx: TracingContext, resp: ApiResponse, attempts: List[Attempt], conf: BruteForceConfig, identifier: String): Future[Unit] = {
+    val counterName = conf.counterName
 
-      if (conf.successCodes.contains(resp.statusCode)) {
-        log.debug(ctx, s"Response successful for $counterName.$identifier")
+    if (conf.successCodes.contains(resp.statusCode)) {
+      log.debug(ctx, s"Response successful for $counterName.$identifier")
 
-        if (attempts.nonEmpty) cache.clear(ctx, counterName, identifier).toScala()
-        else Future.successful(())
-      } else if (conf.errorCodes.contains(resp.statusCode)) {
-        log.debug(ctx, s"Response failure for $counterName.$identifier")
+      if (attempts.nonEmpty) cache.clear(ctx, counterName, identifier.toLowerCase).toScala()
+      else Future.successful(())
+    } else if (conf.errorCodes.contains(resp.statusCode)) {
+      log.debug(ctx, s"Response failure for $counterName.$identifier")
 
-        val now = Instant.now
-        val shouldBlock = BruteForceEvaluator.shouldBlockNextAttempt(now, attempts, conf.maxAttempts, conf.blockSpan)
-        updateAttempts(ctx, Attempt(shouldBlock, now, conf.blockFor), counterName, identifier, attempts, conf)
-      } else {
-        Future.successful(())
-      }
+      val now = Instant.now
+      val shouldBlock = BruteForceEvaluator.shouldBlockNextAttempt(now, attempts, conf.maxAttempts, conf.blockSpan)
+      updateAttempts(ctx, Attempt(shouldBlock, now, conf.blockFor), counterName, identifier, attempts, conf)
+    } else {
+      Future.successful(())
     }
+  }
 
   private def updateAttempts(ctx: TracingContext, attempt: Attempt, counterName: String, identifier: String, attempts: List[Attempt], conf: BruteForceConfig): Future[Unit] = {
     val pastBlockTime = Instant.now.minusSeconds(conf.blockFor)
     val relevantAttempts = attempts.filter(_.timestamp.isAfter(pastBlockTime))
-    cache.set(ctx, counterName, identifier,  attempt :: relevantAttempts, (conf.blockSpan + conf.blockFor) seconds)
+    cache.set(ctx, counterName, identifier.toLowerCase,  attempt :: relevantAttempts, (conf.blockSpan + conf.blockFor) seconds)
   }.toScala
 
   private def unlockCache(ctx: TracingContext, counterName: String, identifier: String): Future[Unit] = {
     log.debug(ctx, s"Unlocking cache: $counterName.$identifier")
-    cache.unlock(ctx, counterName, identifier).toScala()
+    cache.unlock(ctx, counterName, identifier.toLowerCase).toScala()
   }
 }
 
