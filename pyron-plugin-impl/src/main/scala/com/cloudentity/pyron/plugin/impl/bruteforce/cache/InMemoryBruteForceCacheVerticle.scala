@@ -61,11 +61,11 @@ class InMemoryBruteForceCacheVerticle extends ScalaServiceVerticle with BruteFor
 
   override def set(ctx: TracingContext, counter: String, identifier: String, attempts: List[Attempt], ttl: Duration): VxFuture[Unit] = {
     counters.get(counter) match {
-      case Some(entries) => counters = counters.updated(counter, entries.updated(identifier, attempts))
-      case None          => counters = counters.updated(counter, Map(identifier -> attempts))
+      case Some(entries) => counters = counters.updated(counter, entries.updated(identifier.toLowerCase, attempts))
+      case None          => counters = counters.updated(counter, Map(identifier.toLowerCase -> attempts))
     }
 
-    attempts.headOption.foreach(attempt => attemptCleanUps.enqueue(Cleanup(counter, identifier, attempt, attempt.timestamp.toEpochMilli + ttl.toMillis)))
+    attempts.headOption.foreach(attempt => attemptCleanUps.enqueue(Cleanup(counter, identifier.toLowerCase, attempt, attempt.timestamp.toEpochMilli + ttl.toMillis)))
 
     VxFuture.succeededFuture(())
   }

@@ -1,3 +1,7 @@
+## [Unreleased]
+### Fixed
+- Lowercase identifiers for bruteCache plugin
+
 ## [1.11.0] - 2021-08-19
 ### Added
 - Added `echo` plugin
