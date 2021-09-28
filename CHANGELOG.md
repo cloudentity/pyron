@@ -1,6 +1,6 @@
 ## [Unreleased]
 ### Fixed
-- Lowercase identifiers for bruteCache plugin
+- Bruteforce plugin identifier case sensitivity is configurable at plugin level. Default is for identifiers to be case insensitive but can be overriden
 
 ## [1.11.0] - 2021-08-19
 ### Added
