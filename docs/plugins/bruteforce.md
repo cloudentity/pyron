@@ -60,6 +60,7 @@ Configuration attributes:
 | blockSpan       | length of time (sec) a failed attempt is remembered                                                                               |
 | blockFor        | length of time (sec) the entity will be locked out                                                                                |
 | lockedResponse  | JSON body returned if API is locked                                                                                               |
+| identifierCaseSensitive  | Indicates whether the value of identifier used to track the counter is case sensitive. Default(or if not set) value is `false` (i.e the identifier value counter is tracked in a case insensitive manner)                                                                                             |
 
 ### Example
 
