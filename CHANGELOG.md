@@ -1,3 +1,7 @@
+## [Unreleased]
+### Added
+- Added `setWithDefault` to transform-request/response plugins for setting default values
+
 ## [1.12.0] - 2021-09-29
 ### Fixed
 - Bruteforce plugin identifier case sensitivity is configurable at plugin level. Default is for identifiers to be case insensitive but can be overriden

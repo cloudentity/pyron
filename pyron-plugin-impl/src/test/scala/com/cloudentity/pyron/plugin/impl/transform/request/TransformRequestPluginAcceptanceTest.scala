@@ -224,6 +224,85 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
   }
 
   @Test
+  def shouldSetBodyAttributeFromBodyAllAbsent(): Unit = {
+    val input = """{}"""
+    val expectedOutput = compactJsonObject(
+      """{
+       |  "attr1": "itHadBeenAbsent",
+       |  "attr3": ["itHadBeenAbsent"]
+       |}""".stripMargin)
+
+    given()
+      .body(input)
+      .when()
+      .post("/body-set-with-default")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getBodyAsString mustBe expectedOutput
+    }
+  }
+
+  @Test
+  def shouldSetBodyAttributeFromBodyAllNull(): Unit = {
+    val input ="""{
+        |  "attr1": null,
+        |  "attr2": null,
+        |  "attr3": null,
+        |  "attr4": null
+        |}""".stripMargin
+
+    val expectedOutput = compactJsonObject(
+      """{
+        |  "attr1": "itHadBeenNull",
+        |  "attr2": null,
+        |  "attr4": {
+        |    "subValue": "itHadBeenNull"
+        |  }
+        |}""".stripMargin)
+
+    given()
+      .body(input)
+      .when()
+      .post("/body-set-with-default")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getBodyAsString mustBe expectedOutput
+    }
+  }
+
+  @Test
+  def shouldSetBodyAttributeFromBodyAllPresent(): Unit = {
+    val input ="""{
+        |  "attr1": "value1",
+        |  "attr2": "value2",
+        |  "attr3": "value3",
+        |  "attr4": "value4"
+        |}""".stripMargin
+    val expectedOutput = compactJsonObject(
+      """{
+        |  "attr1": "value1",
+        |  "attr2": "value2",
+        |  "attr3": "value3",
+        |  "attr4": "value4"
+        |}""".stripMargin)
+
+    given()
+      .body(input)
+      .when()
+      .post("/body-set-with-default")
+      .`then`()
+      .statusCode(200)
+
+    assertTargetRequest { req =>
+      req.getBodyAsString mustBe expectedOutput
+    }
+  }
+
+  @Test
   def shouldDropBody(): Unit = {
     given()
       .body("""{"attr":"x"}""")
@@ -489,4 +568,6 @@ class TransformRequestPluginAcceptanceTest extends PluginAcceptanceTest with Mus
     targetService.retrieveRecordedRequests(null).length mustBe 1
     f(targetService.retrieveRecordedRequests(null)(0))
   }
+
+  def compactJsonObject(input: String): String = new io.vertx.core.json.JsonObject(input).toString
 }

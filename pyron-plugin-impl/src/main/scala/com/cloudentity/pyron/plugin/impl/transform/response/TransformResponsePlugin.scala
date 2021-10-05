@@ -6,7 +6,7 @@ import com.cloudentity.pyron.plugin.impl.transform.TransformHeaders.transformRes
 import com.cloudentity.pyron.plugin.impl.transform.TransformJsonBody.transformResJsonBody
 import com.cloudentity.pyron.plugin.impl.transform.TransformHttpStatus.transformHttpStatus
 import com.cloudentity.pyron.plugin.impl.transform._
-import com.cloudentity.pyron.plugin.util.value.ValueResolver
+import com.cloudentity.pyron.plugin.util.value.{JsonValueIgnoreNullIfDefault, Path, ValueResolver}
 import com.cloudentity.pyron.plugin.verticle.ResponsePluginVerticle
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
@@ -78,7 +78,14 @@ class TransformResponsePlugin  extends ResponsePluginVerticle[ResponseTransforme
     verticleConf.conf.getOrElse(new JsonObject())
 
   def resolveBodyOps(ctx: ResponseCtx, bodyOps: BodyOps, reqJsonBodyOpt: Option[JsonObject], respJsonBodyOpt: Option[JsonObject]): ResolvedBodyOps =
-    ResolvedBodyOps(bodyOps.set.map(_.mapValues(ValueResolver.resolveJson(ctx, reqJsonBodyOpt, respJsonBodyOpt, confValues(), _))), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
+    ResolvedBodyOps(resolveSetWithDefaultEntry(ctx, bodyOps, reqJsonBodyOpt, respJsonBodyOpt), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
+
+  def resolveSetWithDefaultEntry(ctx: ResponseCtx, bodyOps: BodyOps, reqJsonBodyOpt: Option[JsonObject], respJsonBodyOpt: Option[JsonObject]): Map[Path, JsonValueIgnoreNullIfDefault] = {
+    val setValues = bodyOps.set.getOrElse(Map.empty).mapValues(input => JsonValueIgnoreNullIfDefault(ValueResolver.resolveJson(ctx, reqJsonBodyOpt, respJsonBodyOpt, confValues(), input)))
+    val setValuesWithDefaults = bodyOps.setWithDefault.getOrElse(Map.empty).mapValues(input => input.resolveValue(ValueResolver.resolveJson(ctx, reqJsonBodyOpt, respJsonBodyOpt, confValues(), input.sourcePath)))
+
+    setValues ++ setValuesWithDefaults
+  }
 
   def resolveHeaderOps(ctx: ResponseCtx, headerOps: HeaderOps, reqJsonBodyOpt: Option[JsonObject], respJsonBodyOpt: Option[JsonObject]): ResolvedHeaderOps =
     ResolvedHeaderOps(headerOps.set.map(_.mapValues(ValueResolver.resolveListOfStrings(ctx, reqJsonBodyOpt, respJsonBodyOpt, confValues(), _))))
