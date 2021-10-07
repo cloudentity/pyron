@@ -1,6 +1,6 @@
 ## [Unreleased]
 ### Added
-- Added `setWithDefault` to transform-request/response plugins for setting default values
+- Added `setWithDefault` to transform-request/response plugins for setting default values, and documentation
 
 ## [1.12.0] - 2021-09-29
 ### Fixed
