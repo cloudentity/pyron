@@ -1,6 +1,6 @@
 package com.cloudentity.pyron.plugin.util.value
 
-import io.circe.{Decoder, Json, KeyDecoder}
+import io.circe.{Decoder, DecodingFailure, HCursor, Json, KeyDecoder}
 import io.vertx.core.json.{JsonArray, JsonObject}
 
 import scala.collection.JavaConverters._
@@ -99,6 +99,43 @@ object Path {
   def apply(xs: String*): Path = Path(xs.toList)
 }
 
+sealed trait ValueOrRemove
+object ValueOrRemove {
+  implicit val valueOrRemoveDecoder: Decoder[ValueOrRemove] = (c: HCursor) => for {
+    removeOpt <- c.get[Option[Boolean]]("remove")
+    valueOpt <- c.get[Option[Json]]("value")
+    result <- (removeOpt, valueOpt) match {
+      case (Some(true), None) => Right(RemoveContent)
+      case (None, Some(json)) => Right(ValueContent(json))
+      case _ => Left(DecodingFailure("""Need to set either {"remove": true} or {"value": <someJsonValue>} for config""", Nil))
+    }
+  } yield result
+}
+case object RemoveContent extends ValueOrRemove
+case class ValueContent(value: Json) extends ValueOrRemove
+
+case class SetWithDefaultEntry(sourcePath: ValueOrRef, ifNull: ValueOrRemove, ifAbsent: ValueOrRemove) {
+  def resolveValue(foundValue: Option[JsonValue]): JsonValueIgnoreNullIfDefault = {
+    val jsonValue = (foundValue, ifNull, ifAbsent) match {
+      case (Some(NullJsonValue), RemoveContent, _) => None
+      case (Some(NullJsonValue), ValueContent(defaultValue), _) => Some(JsonValue(defaultValue))
+      case (Some(value), _, _) => Some(value)
+      case (None, _, RemoveContent) => None
+      case (None, _, ValueContent(defaultValue)) => Some(JsonValue(defaultValue))
+    }
+    JsonValueIgnoreNullIfDefault(jsonValue, ignoreNullIfAbsent = true)
+  }
+}
+object SetWithDefaultEntry {
+  val defaultIfNull = ValueContent(Json.Null)
+  val defaultIfAbsent = RemoveContent
+  implicit val setWithDefaultEntryDecoder: Decoder[SetWithDefaultEntry] = (c: HCursor) => for {
+    sourcePath <- c.get[ValueOrRef]("sourcePath")
+    ifNull <- c.getOrElse[ValueOrRemove]("ifNull")(defaultIfNull)
+    ifAbsent <- c.getOrElse[ValueOrRemove]("ifAbsent")(defaultIfAbsent)
+  } yield SetWithDefaultEntry(sourcePath = sourcePath, ifNull = ifNull, ifAbsent = ifAbsent)
+}
+
 sealed trait JsonValue { // for the sake of performance we use vertx Json for body manipulation
   def asString: Option[String] =
     this match {
@@ -127,6 +164,19 @@ sealed trait JsonValue { // for the sake of performance we use vertx Json for bo
       case NumberJsonValue(value) => value
     }
 }
+object JsonValue {
+  def apply(json: Json): JsonValue = {
+    import io.circe.syntax._
+    json.fold[JsonValue](
+      NullJsonValue,
+      bool   => BooleanJsonValue(bool),
+      num    => NumberJsonValue(num.toInt.getOrElse(num.toDouble).asInstanceOf[Number]),
+      string => StringJsonValue(string),
+      array  => ArrayJsonValue(new JsonArray(array.asJson.noSpaces)),
+      obj    => ObjectJsonValue(new JsonObject(obj.asJson.noSpaces))
+    )
+  }
+}
 
 case object NullJsonValue extends JsonValue
 case class StringJsonValue(value: String) extends JsonValue
@@ -134,3 +184,5 @@ case class ObjectJsonValue(value: JsonObject) extends JsonValue
 case class ArrayJsonValue(value: JsonArray) extends JsonValue
 case class BooleanJsonValue(value: Boolean) extends JsonValue
 case class NumberJsonValue(value: Number) extends JsonValue
+
+case class JsonValueIgnoreNullIfDefault(jsonValue: Option[JsonValue], ignoreNullIfAbsent: Boolean = false)

@@ -2,7 +2,6 @@ package com.cloudentity.pyron.plugin.impl.transform
 
 import com.cloudentity.pyron.domain.flow.{RequestCtx, ResponseCtx}
 import com.cloudentity.pyron.plugin.util.value._
-import com.cloudentity.tools.vertx.tracing.TracingContext
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.json.JsonObject
 import io.vertx.core.json.JsonArray
@@ -36,17 +35,17 @@ object TransformJsonBody {
 
   def applyBodyTransformations(bodyOps: ResolvedBodyOps, jsonBody: JsonObject): Buffer =
     if (bodyOps.drop.contains(true)) Buffer.buffer()
-    else setJsonBody(bodyOps.set.getOrElse(Map()), bodyOps.remove.getOrElse(Nil), bodyOps.nullIfAbsent.getOrElse(nullIfAbsentDefaultValue))(jsonBody).toBuffer
+    else setJsonBody(bodyOps.set, bodyOps.remove.getOrElse(Nil), bodyOps.nullIfAbsent.getOrElse(nullIfAbsentDefaultValue))(jsonBody).toBuffer
 
   val arrayBracketRegex: Regex = """\[(\d+)]""".r
 
-  def setJsonBody(set: Map[Path, Option[JsonValue]], remove: List[Path], nullIfAbsent: Boolean = nullIfAbsentDefaultValue)(body: JsonObject): JsonObject = {
+  def setJsonBody(set: Map[Path, JsonValueIgnoreNullIfDefault], remove: List[Path], nullIfAbsent: Boolean = nullIfAbsentDefaultValue)(body: JsonObject): JsonObject = {
     @tailrec
-    def mutateBodyAttribute(body: JsonObject, bodyPath: List[String], resolvedValue: Option[JsonValue]): Unit =
+    def mutateBodyAttribute(body: JsonObject, bodyPath: List[String], resolvedValue: JsonValueIgnoreNullIfDefault): Unit =
       bodyPath match {
         case key :: Nil =>
-          if(nullIfAbsent) body.put(key, resolvedValue.map(_.rawValue).orNull)
-          else resolvedValue match {
+          if(nullIfAbsent && !resolvedValue.ignoreNullIfAbsent) body.put(key, resolvedValue.jsonValue.map(_.rawValue).orNull)
+          else resolvedValue.jsonValue match {
             case Some(jsonValue) => body.put(key, jsonValue.rawValue)
             case None => body.remove(key)
           }
