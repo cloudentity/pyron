@@ -46,6 +46,7 @@ Enable `transform-request` plugin by adding `plugin/transform-request` to `MODUL
 * [JSON body](#json-body)
   * [Set body attribute to static value](#json-body-static)
   * [Set body attribute to request attribute](#json-body-ref)
+  * [Set body attribute to request attribute with default value](#json-body-with-default-ref)
   * [Remove a body attribute](#json-body-remove)
   * [Drop body](#json-body-drop)
 * [Headers](#headers)
@@ -59,8 +60,8 @@ Plugin rule configuration has following form:
   "name": "transform-request",
   "conf": {
     "{subject}": {
-        "{operation}": {
-          "{attribute-identifier}": "{attribute-value-or-reference}"
+      "{operation}": {
+        "{attribute-identifier}": "{attribute-value-or-reference}"
       }
     }
   }
@@ -83,7 +84,7 @@ e.g.
 }
 ```
 Supported subjects with operations:
-* `body` - set, remove, drop
+* `body` - set, setWithDefault, remove, drop
 * `headers` - set
 * `pathParams` - set
 * `queryParams` - set
@@ -367,6 +368,142 @@ Note that, now that `nullIfAbsent` is set to `false` in the configuration, the k
   ]
 }
 ```
+
+<a id="json-body-with-default-ref"></a>
+##### Set body attribute to request attribute with default value
+
+Similar to the `set` configuration block, the `setWithDefault` configuration allows adding or modifying values in the request body. However, it adds options for setting a default value, in case the referenced attribute is not found or has a null value.
+
+The `setWithDefault` configuration block has the following format:
+
+```json
+{
+  "{attribute-identifier}": {
+    "sourcePath": "{attribute-value-or-reference}",
+    "ifNull": {value-or-remove},
+    "ifAbsent": {value-or-remove}
+  }
+}
+```
+
+where `{value-or-remove}` is a JSON object in either of the following formats:
+
+```json
+{"value": some-json-value}
+```
+
+OR
+
+```json
+{"remove": true}
+```
+
+`ifNull` and `ifAbsent` are both optional:
+* `ifNull`: What to do if the referenced attribute is explicitly set to `null`. Default config value: `{"value": null}` - retains null value if found
+* `ifAbsent`: What to do if the referenced attribute key is not found at all. Default config value: `{"remove": true}` - retains omitted value if not found
+
+Suppose that a downstream service requires an account name in the request body for each transaction, and a default value of "defaultAccount" is acceptable for clients. Then the following config is applicable:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "setWithDefault": {
+        "accountName": {
+          "sourcePath": "$body.accountName",
+          "ifNull": {"value": "defaultAccount"},
+          "ifAbsent": {"value": "defaultAccount"}
+        }
+      }
+    }
+  }
+}
+```
+
+If the value is supplied, it will be used:
+
+```json
+{
+  "accountName": "Checking",
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+However, if the value is not supplied, or is null, the default will be used. In other words, for either of the following request bodies:
+
+```json
+{
+  "accountName": null,
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+```json
+{
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+the request will be translated into:
+
+```json
+{
+  "accountName": "defaultAccount",
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+Note that the value for the "value" field can be any valid JSON.
+
+In some cases, it may be desirable to remove a JSON key-value pair completely if it has a null value. In such a case, for example, the following config may be used:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "setWithDefault": {
+        "accountName": {
+          "sourcePath": "$body.accountName",
+          "ifNull": {"remove": true}
+        }
+      }
+    }
+  }
+}
+```
+
+Then for the following request body:
+
+```json
+{
+  "accountName": null,
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+the transformed body will be:
+
+```json
+{
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+Note that, because the null-value case is handled explicitly, the `nullIfAbsent` configuration is ignored for the `setWithDefault` block.
 
 <a id="json-body-remove"></a>
 ##### Remove a body attribute
