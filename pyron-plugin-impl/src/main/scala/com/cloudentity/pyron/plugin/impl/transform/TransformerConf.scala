@@ -7,8 +7,8 @@ import io.circe.generic.semiauto.deriveDecoder
 // transformations
 sealed trait TransformOps
 
-case class BodyOps(set: Option[Map[Path, ValueOrRef]], remove: Option[List[Path]], drop: Option[Boolean], nullIfAbsent: Option[Boolean]) extends TransformOps
-case class ResolvedBodyOps(set: Option[Map[Path, Option[JsonValue]]], remove: Option[List[Path]], drop: Option[Boolean], nullIfAbsent: Option[Boolean])
+case class BodyOps(set: Option[Map[Path, ValueOrRef]], setWithDefault: Option[Map[Path, SetWithDefaultEntry]], remove: Option[List[Path]], drop: Option[Boolean], nullIfAbsent: Option[Boolean]) extends TransformOps
+case class ResolvedBodyOps(set: Map[Path, JsonValueIgnoreNullIfDefault], remove: Option[List[Path]], drop: Option[Boolean], nullIfAbsent: Option[Boolean])
 
 case class PathParamOps(set: Option[Map[String, ValueOrRef]]) extends TransformOps
 case class ResolvedPathParamOps(set: Option[Map[String, Option[String]]])
@@ -41,7 +41,8 @@ case class ResponseTransformerConf(body: BodyOps,
 
 object Ops {
   implicit val BodyOpsDecoder: Decoder[BodyOps] = deriveDecoder[BodyOps].emap {
-    case BodyOps(Some(_), _, Some(true), _) => Left("Can't both drop body and set body attribute")
+    case BodyOps(Some(_), _, _, Some(true), _) => Left("Can't both drop body and set body attribute")
+    case BodyOps(_, Some(_), _, Some(true), _) => Left("Can't both drop body and set body attribute")
     case ops => Right(ops)
   }
   implicit val PathParamOpsDecoder: Decoder[PathParamOps] = deriveDecoder
@@ -55,7 +56,7 @@ object RequestTransformerConf {
   implicit val TransformerConfDecoder: Decoder[RequestTransformerConf] = deriveDecoder[RequestTransformerConfRaw].map {
     rawConf =>
       RequestTransformerConf(
-        body = rawConf.body.getOrElse(BodyOps(None, None, None, None)),
+        body = rawConf.body.getOrElse(BodyOps(None, None, None, None, None)),
         parseRequestJsonBody = rawConf.body.nonEmpty || jsonRequestBodyRefExists(rawConf.body, rawConf.pathParams, rawConf.headers),
         pathParams = rawConf.pathParams.getOrElse(PathParamOps(None)),
         queryParams = rawConf.queryParams.getOrElse(QueryParamOps(None)),
@@ -78,7 +79,7 @@ object ResponseTransformerConf {
   implicit val TransformerConfDecoder: Decoder[ResponseTransformerConf] = deriveDecoder[ResponseTransformerConfRaw].map {
     rawConf =>
       ResponseTransformerConf(
-        body = rawConf.body.getOrElse(BodyOps(None, None, None, None)),
+        body = rawConf.body.getOrElse(BodyOps(None, None, None, None, None)),
         parseRequestJsonBody = RequestTransformerConf.jsonRequestBodyRefExists(rawConf.body, None, rawConf.headers),
         parseResponseJsonBody = rawConf.body.nonEmpty || jsonResponseBodyRefExists(rawConf),
         headers = rawConf.headers.getOrElse(HeaderOps(None)),

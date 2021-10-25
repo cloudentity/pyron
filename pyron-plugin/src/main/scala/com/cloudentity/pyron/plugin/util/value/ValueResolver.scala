@@ -75,7 +75,7 @@ object ValueResolver {
     valueOrRef match {
       case Value(value) =>
         if (value.asObject.nonEmpty) circeJsonDynamicString(ctx, reqBodyOpt, respBodyOpt, confValues, value)
-        else circeJsonToJsonValue(value).asListOfStrings
+        else JsonValue(value).asListOfStrings
       case HostRef                               => resolveHost(ctx.origReq).map(List(_))
       case HostNameRef                           => resolveHostName(ctx.origReq).map(List(_))
       case HostPortRef                           => resolveHostPort(ctx.origReq).map(List(_))
@@ -103,7 +103,7 @@ object ValueResolver {
                   confValues: JsonObject,
                   valueOrRef: ValueOrRef): Option[JsonValue] = {
     valueOrRef match {
-      case Value(value)                          => Some(circeJsonToJsonValue(value))
+      case Value(value)                          => Some(JsonValue(value))
       case HostRef                               => resolveHost(ctx.origReq).map(StringJsonValue)
       case HostNameRef                           => resolveHostName(ctx.origReq).map(StringJsonValue)
       case HostPortRef                           => resolveHostPort(ctx.origReq).map(StringJsonValue)
@@ -238,25 +238,13 @@ object ValueResolver {
     path.value match {
       case Nil => None
       case key :: Nil =>
-        authn.get(key).map(circeJsonToJsonValue)
+        authn.get(key).map(JsonValue(_))
       case key :: tail => for {
         value <- authn.get(key)
         obj <- value.asObject
         attr <- extractAuthnCtxAttribute(AuthnCtx(obj.toMap), Path(tail))
       } yield attr
     }
-
-  private def circeJsonToJsonValue(json: Json): JsonValue = {
-    import io.circe.syntax._
-    json.fold[JsonValue](
-      NullJsonValue,
-      bool   => BooleanJsonValue(bool),
-      num    => NumberJsonValue(num.toInt.getOrElse(num.toDouble).asInstanceOf[Number]),
-      string => StringJsonValue(string),
-      array  => ArrayJsonValue(new JsonArray(array.asJson.noSpaces)),
-      obj    => ObjectJsonValue(new JsonObject(obj.asJson.noSpaces))
-    )
-  }
 
   private def circeJsonDynamicString(ctx: ResolveCtx, reqBodyOpt: Option[JsonObject], respBodyOpt: Option[JsonObject], confValues: JsonObject, json: Json): Option[List[String]] = {
     for {

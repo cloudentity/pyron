@@ -7,8 +7,7 @@ import com.cloudentity.pyron.plugin.impl.transform.TransformHeaders.transformReq
 import com.cloudentity.pyron.plugin.impl.transform.TransformJsonBody.transformReqJsonBody
 import com.cloudentity.pyron.plugin.impl.transform._
 import com.cloudentity.pyron.plugin.openapi._
-import com.cloudentity.pyron.plugin.util.value.{Path, ValueResolver}
-import com.cloudentity.pyron.plugin.util.value.ValueResolver.resolveJson
+import com.cloudentity.pyron.plugin.util.value.{JsonValueIgnoreNullIfDefault, Path, ValueResolver}
 import com.cloudentity.pyron.plugin.verticle.RequestPluginVerticle
 import io.circe.Decoder
 import io.circe.generic.semiauto._
@@ -66,7 +65,14 @@ class TransformRequestPlugin extends RequestPluginVerticle[RequestTransformerCon
     verticleConf.conf.getOrElse(new JsonObject())
 
   def resolveBodyOps(ctx: RequestCtx, bodyOps: BodyOps, jsonBodyOpt: Option[JsonObject]): ResolvedBodyOps =
-    ResolvedBodyOps(bodyOps.set.map(_.mapValues(resolveJson(ctx, jsonBodyOpt, None, confValues(), _))), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
+    ResolvedBodyOps(resolveSetWithDefaultEntry(ctx, bodyOps, jsonBodyOpt), bodyOps.remove, bodyOps.drop, bodyOps.nullIfAbsent)
+
+  def resolveSetWithDefaultEntry(ctx: RequestCtx, bodyOps: BodyOps, reqJsonBodyOpt: Option[JsonObject]): Map[Path, JsonValueIgnoreNullIfDefault] = {
+    val setValues = bodyOps.set.getOrElse(Map.empty).mapValues(input => JsonValueIgnoreNullIfDefault(ValueResolver.resolveJson(ctx, reqJsonBodyOpt, None, confValues(), input)))
+    val setValuesWithDefaults = bodyOps.setWithDefault.getOrElse(Map.empty).mapValues(input => input.resolveValue(ValueResolver.resolveJson(ctx, reqJsonBodyOpt, None, confValues(), input.sourcePath)))
+
+    setValues ++ setValuesWithDefaults
+  }
 
   def resolvePathParamOps(ctx: RequestCtx, pathParamOps: PathParamOps, jsonBodyOpt: Option[JsonObject]): ResolvedPathParamOps =
     ResolvedPathParamOps(pathParamOps.set.map(_.mapValues(ValueResolver.resolveString(ctx, jsonBodyOpt, None, confValues(), _))))
