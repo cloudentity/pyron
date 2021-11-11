@@ -1,3 +1,8 @@
+## [Unreleased]
+### Changed
+- Updated base docker image to openjdk:8u312-jre
+- Cloudentity user ID to 9999
+
 ## [1.13.0] - 2021-10-19
 ### Added
 - Added `setWithDefault` to transform-request/response plugins for setting default values, and documentation

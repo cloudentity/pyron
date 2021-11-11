@@ -1,4 +1,4 @@
-FROM openjdk:8u212-jre-alpine3.9
+FROM openjdk:8u312-jre
 LABEL maintainer="Cloudentity <contact@cloudentity.com>"
 
 ARG version
@@ -40,7 +40,7 @@ ENV GC_PRINT_OPTS="-XX:+PrintGCDetails -XX:+PrintGCDateStamps \
 	NETWORK_OPTS=-Djava.net.preferIPv4Stack=true
 
 RUN addgroup -S cloudentity && \
-	adduser -S -G cloudentity cloudentity \
+	adduser -u 9999 -S -G cloudentity cloudentity \
 	&& apk add --no-cache \
 	su-exec=${SU_EXEC_VERSION} curl=${CURL_VERSION}
 
