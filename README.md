@@ -165,7 +165,7 @@ $ make docker
 
 Configure routing rules in `rules.json` and environment variables in `envs` file if required.
 
-By default, Pyron runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change it.
+By default, Pyron runs on 8080 port. Set `PORT` env variable to change it.
 
 <a id="run-standalone"></a>
 ### Standalone
