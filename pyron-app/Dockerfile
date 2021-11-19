@@ -39,8 +39,8 @@ ENV GC_PRINT_OPTS="-XX:+PrintGCDetails -XX:+PrintGCDateStamps \
 	-Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT" \
 	NETWORK_OPTS=-Djava.net.preferIPv4Stack=true
 
-RUN groupadd -r cloudentity && useradd -u 9999 \
-	--no-log-init -r -g cloudentity cloudentity
+RUN groupadd --system cloudentity && useradd --uid 9999 \
+	--no-log-init --system --gid cloudentity cloudentity
 
 RUN mkdir /logs /.vertx /file-uploads /plugin-jars && \
 	chown -R cloudentity:cloudentity /logs /.vertx /file-uploads /plugin-jars
