@@ -1,4 +1,4 @@
-FROM openjdk:8u212-jre-alpine3.9
+FROM openjdk:8u312-jre
 LABEL maintainer="Cloudentity <contact@cloudentity.com>"
 
 ARG version
@@ -39,10 +39,8 @@ ENV GC_PRINT_OPTS="-XX:+PrintGCDetails -XX:+PrintGCDateStamps \
 	-Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT" \
 	NETWORK_OPTS=-Djava.net.preferIPv4Stack=true
 
-RUN addgroup -S cloudentity && \
-	adduser -S -G cloudentity cloudentity \
-	&& apk add --no-cache \
-	su-exec=${SU_EXEC_VERSION} curl=${CURL_VERSION}
+RUN groupadd --system cloudentity && useradd --uid 9999 \
+	--no-log-init --system --gid cloudentity cloudentity
 
 RUN mkdir /logs /.vertx /file-uploads /plugin-jars && \
 	chown -R cloudentity:cloudentity /logs /.vertx /file-uploads /plugin-jars
@@ -54,6 +52,8 @@ COPY --chown=cloudentity:cloudentity target/pyron-app-${version}-fat.jar /app.ja
 COPY --chown=cloudentity:cloudentity src/main/docker/meta-config.json \
 									 src/main/docker/system.json \
 									 src/main/docker/rules.json /configs/
+
+USER cloudentity
 
 HEALTHCHECK --interval=10s --timeout=3s CMD /healthcheck.sh
 
