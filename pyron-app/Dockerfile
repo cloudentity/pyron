@@ -15,14 +15,14 @@ ENV GC_LOG_FILE_COUNT=1 \
 
 ENV GC_PRINT_OPTS="-XX:+PrintGCDetails -XX:+PrintGCDateStamps \
 	-XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution \
-	-Xloggc:/logs/gc.log -XX:+UseGCLogFileRotation \
+	-Xloggc:/tmp/gc.log -XX:+UseGCLogFileRotation \
 	-XX:NumberOfGCLogFiles=$GC_LOG_FILE_COUNT \
 	-XX:GCLogFileSize=$GC_LOG_FILE_SIZE" \
 	GC_EXTENDED_PRINT_OPTS=-XX:+PrintGCApplicationStoppedTime \
 	GC_OPTS=-XX:+UseParallelOldGC \
 	ERROR_OPTS="-XX:+CrashOnOutOfMemoryError -XX:+ExitOnOutOfMemoryError \
-	-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs/ \
-	-XX:ErrorFile=/logs/error.log" \
+	-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/ \
+	-XX:ErrorFile=/tmp/error.log" \
 	MEM_OPTS="-XX:InitialRAMPercentage=$MEM_PERCENT \
 	-XX:MaxRAMPercentage=$MEM_PERCENT -XX:MinRAMPercentage=$MEM_PERCENT" \
 	NON_HEAP_MEM_OPTS="-XX:CompressedClassSpaceSize=12m \
@@ -42,8 +42,8 @@ ENV GC_PRINT_OPTS="-XX:+PrintGCDetails -XX:+PrintGCDateStamps \
 RUN groupadd --system cloudentity && useradd --uid 9999 \
 	--no-log-init --system --gid cloudentity cloudentity
 
-RUN mkdir /logs /.vertx /file-uploads /plugin-jars && \
-	chown -R cloudentity:cloudentity /logs /.vertx /file-uploads /plugin-jars
+RUN mkdir /.vertx /file-uploads /plugin-jars && \
+	chown -R cloudentity:cloudentity /.vertx /file-uploads /plugin-jars
 
 COPY --chown=cloudentity:cloudentity src/main/docker/docker-entrypoint.sh \
 									 src/main/docker/healthcheck.sh \
