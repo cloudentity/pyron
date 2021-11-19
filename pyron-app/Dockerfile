@@ -1,4 +1,4 @@
-FROM openjdk:8u212-jre-alpine3.9
+FROM openjdk:8u312-jre
 LABEL maintainer="Cloudentity <contact@cloudentity.com>"
 
 ARG version
@@ -15,14 +15,14 @@ ENV GC_LOG_FILE_COUNT=1 \
 
 ENV GC_PRINT_OPTS="-XX:+PrintGCDetails -XX:+PrintGCDateStamps \
 	-XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution \
-	-Xloggc:/logs/gc.log -XX:+UseGCLogFileRotation \
+	-Xloggc:/tmp/gc.log -XX:+UseGCLogFileRotation \
 	-XX:NumberOfGCLogFiles=$GC_LOG_FILE_COUNT \
 	-XX:GCLogFileSize=$GC_LOG_FILE_SIZE" \
 	GC_EXTENDED_PRINT_OPTS=-XX:+PrintGCApplicationStoppedTime \
 	GC_OPTS=-XX:+UseParallelOldGC \
 	ERROR_OPTS="-XX:+CrashOnOutOfMemoryError -XX:+ExitOnOutOfMemoryError \
-	-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs/ \
-	-XX:ErrorFile=/logs/error.log" \
+	-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/ \
+	-XX:ErrorFile=/tmp/error.log" \
 	MEM_OPTS="-XX:InitialRAMPercentage=$MEM_PERCENT \
 	-XX:MaxRAMPercentage=$MEM_PERCENT -XX:MinRAMPercentage=$MEM_PERCENT" \
 	NON_HEAP_MEM_OPTS="-XX:CompressedClassSpaceSize=12m \
@@ -39,13 +39,11 @@ ENV GC_PRINT_OPTS="-XX:+PrintGCDetails -XX:+PrintGCDateStamps \
 	-Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT" \
 	NETWORK_OPTS=-Djava.net.preferIPv4Stack=true
 
-RUN addgroup -S cloudentity && \
-	adduser -S -G cloudentity cloudentity \
-	&& apk add --no-cache \
-	su-exec=${SU_EXEC_VERSION} curl=${CURL_VERSION}
+RUN groupadd --system cloudentity && useradd --uid 9999 \
+	--no-log-init --system --gid cloudentity cloudentity
 
-RUN mkdir /logs /.vertx /file-uploads /plugin-jars && \
-	chown -R cloudentity:cloudentity /logs /.vertx /file-uploads /plugin-jars
+RUN mkdir /.vertx /file-uploads /plugin-jars && \
+	chown -R cloudentity:cloudentity /.vertx /file-uploads /plugin-jars
 
 COPY --chown=cloudentity:cloudentity src/main/docker/docker-entrypoint.sh \
 									 src/main/docker/healthcheck.sh \
@@ -54,6 +52,8 @@ COPY --chown=cloudentity:cloudentity target/pyron-app-${version}-fat.jar /app.ja
 COPY --chown=cloudentity:cloudentity src/main/docker/meta-config.json \
 									 src/main/docker/system.json \
 									 src/main/docker/rules.json /configs/
+
+USER cloudentity
 
 HEALTHCHECK --interval=10s --timeout=3s CMD /healthcheck.sh
 

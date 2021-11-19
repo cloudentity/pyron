@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <groupId>com.cloudentity.pyron</groupId>
   <artifactId>pyron-root</artifactId>
-  <version>1.13.0</version>
+  <version>1.14.0</version>
   <modelVersion>4.0.0</modelVersion>
   <packaging>pom</packaging>
 
