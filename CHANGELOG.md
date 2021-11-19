@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.14.0] - 2021-11-19
 ### Changed
 - Updated base docker image to openjdk:8u312-jre
 - Cloudentity user ID to 9999
