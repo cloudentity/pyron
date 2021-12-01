@@ -10,12 +10,12 @@
 -->
 
 ## Type of changes
-
-[] Bugfix (non-breaking change which fixes an issue)
-[] New feature (non-breaking change which adds functionality)
-[] Tests (extending the test suite)
-[] Refactor (internal improvement that doesn't change product functionality)
-[] Other (if none of the other choices apply)
+<!-- [Place an '[X]' (no spaces) in all applicable fields.] -->
+- [ ] Bugfix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Tests (extending the test suite)
+- [ ] Refactor (internal improvement that doesn't change product functionality)
+- [ ] Other (if none of the other choices apply)
 
 ## Implementation details
 
