@@ -31,7 +31,12 @@ object ProxyHeadersHandler {
     val trueClientIpOpt  = Option(headers.get(proxyHeaderNames.inputTrueClientIp.getOrElse(defaultTrueClientIpHeader)))
     val realIp           = trueClientIpOpt match {
                              case Some(ip) => ip
-                             case None => Option(headers.get(xForwardedForHeader)).getOrElse(remoteIp)
+                             case None =>
+                               Option(headers.get(xForwardedForHeader))
+                                  // covers case when X-Forwarded-For values are comma-separated in single header value (like in nginx)
+                                  // e.g. given 'X-Forwarded-For: 203.0.113.195, 70.41.3.18, 150.172.238.178' extracts '203.0.113.195'
+                                 .flatMap(_.split(",").headOption).map(_.trim)
+                                 .getOrElse(remoteIp)
                            }
 
     val proxyHeaders: Map[String, List[String]] =
