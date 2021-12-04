@@ -4,6 +4,10 @@
 - Cloudentity user ID to 9999
 - Added possibility set the application port using $PORT env variable
 
+### Fixed
+- Comma-separated X-Forwarded-For values in single header recognized and set as proper X-Real-IP
+
+
 ## [1.13.0] - 2021-10-19
 ### Added
 - Added `setWithDefault` to transform-request/response plugins for setting default values, and documentation
