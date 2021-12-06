@@ -176,4 +176,51 @@ class ProxyHeadersHandlerAcceptanceTest  extends PyronAcceptanceTest with MustMa
 
     ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
   }
+
+  @Test
+  def shouldExtractTrueClientIpWhenXRealIpValuesAreCommaSeparated(): Unit = {
+    // given
+    val headerNames = ProxyHeaderConf(None, None, None)
+    val trueIp = "203.0.113.195"
+    val headers =
+      MultiMap.caseInsensitiveMultiMap
+        .add(xForwardedForHeader, s"70.41.3.18, 150.172.238.178")
+        .add(xForwardedForHeader, "55.65.3.17")
+        .add(defaultTrueClientIpHeader, s"$trueIp, 70.41.3.18, 150.172.238.178")
+        .add(defaultTrueClientIpHeader, "55.65.3.17")
+
+    // when then
+    val expectedHeaders = Map(
+      xForwardedForHeader       -> List(s"70.41.3.18, 150.172.238.178", "55.65.3.17", remoteIp),
+      xForwardedHostHeader      -> List(remoteHost),
+      xForwardedProtoHeader     -> List("http"),
+      defaultTrueClientIpHeader -> List(s"$trueIp, 70.41.3.18, 150.172.238.178", "55.65.3.17")
+    )
+    val expectedTrueClientIp = trueIp
+
+    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
+  }
+
+  @Test
+  def shouldNotChangeXRealIpValueIfAlreadySet(): Unit = {
+    // given
+    val headerNames = ProxyHeaderConf(None, None, None)
+    val trueIp = "203.0.113.195"
+    val headers =
+      MultiMap.caseInsensitiveMultiMap
+        .add(xForwardedForHeader, "70.41.3.18")
+        .add(defaultTrueClientIpHeader, s"$trueIp, 70.41.3.18, 150.172.238.178")
+        .add(defaultTrueClientIpHeader, "55.65.3.17")
+
+    // when then
+    val expectedHeaders = Map(
+      xForwardedForHeader       -> List(s"70.41.3.18", remoteIp),
+      xForwardedHostHeader      -> List(remoteHost),
+      xForwardedProtoHeader     -> List("http"),
+      defaultTrueClientIpHeader -> List(s"$trueIp, 70.41.3.18, 150.172.238.178", "55.65.3.17")
+    )
+    val expectedTrueClientIp = trueIp
+
+    ProxyHeadersHandler.proxyHeaders(headers, remoteIp, Option(remoteHost), ssl = false, headerNames) mustBe ProxyHeaders(expectedHeaders, expectedTrueClientIp)
+  }
 }
