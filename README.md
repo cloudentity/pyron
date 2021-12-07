@@ -888,7 +888,7 @@ Pyron applies following request headers modification (unless disabled):
 * Add `remote-address.protocol` to `X-Forwarded-Proto` headers
 * If `Host` header is set then add it to `X-Forwarded-Host` headers
 * If True Client IP header is missing then set it to first `X-Forwarded-For` value
-* Set True Client IP header to upstream service
+* Set True Client IP header to upstream service if not set already
 
 | Env variable                      | Description                                            |
 |:----------------------------------|:-------------------------------------------------------|
