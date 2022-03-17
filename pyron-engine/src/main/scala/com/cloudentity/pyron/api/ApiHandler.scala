@@ -1,6 +1,5 @@
 package com.cloudentity.pyron.api
 
-import com.cloudentity.pyron.api.ApiRequestHandler.RuleWithPathParams
 import com.cloudentity.pyron.api.Responses.Errors
 import com.cloudentity.pyron.api.body.{BodyBuffer, BodyLimit, RequestBodyTooLargeException, SizeLimitedBodyStream}
 import com.cloudentity.pyron.apigroup.{ApiGroup, ApiGroupConf, ApiGroupsChangeListener, ApiGroupsStore}
@@ -51,7 +50,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   var apiGroups: List[ApiGroup] = List()
   var rulesStore: RulesStore = _
 
-  case class MatchData(hostOpt: Option[String], method: HttpMethod, pathOpt: Option[String])
+  case class RuleMatchInput(hostOpt: Option[String], method: HttpMethod, pathOpt: Option[String])
 
   override def initServiceAsyncS(): Future[Unit] = {
     registerConfChangeConsumer(onSmartClientsChanged)
@@ -93,15 +92,16 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     }
     log.trace(tracingContext, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
-    def matchOpt(input: MatchData): Option[(ApiGroup, RuleWithPathParams)] =
+    def matchOpt(input: RuleMatchInput): Option[(ApiGroup, RuleWithPathParams)] =
       for {
         apiGroup             <- findMatchingApiGroup(apiGroups, input.hostOpt, input.pathOpt)
         ruleWithPathParams   <- findMatchingRule(apiGroup, input.method, input.pathOpt)
       } yield (apiGroup, ruleWithPathParams)
 
-    def reroute(rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], finalRequestCtx: RequestCtx) = {
+    type Failed = Boolean
+    def reroute(rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], finalRequestCtx: RequestCtx): Future[(ApiResponse, Failed)] = {
       val matchData =
-        MatchData(
+        RuleMatchInput(
           hostOpt = Option(vertxRequest.host()),
           method = rewriteMethod.map(_.value).getOrElse(vertxRequest.method()),
           pathOpt = rewritePath.map(_.value).orElse(Option(vertxRequest.path()))
@@ -113,7 +113,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
         case Some((apiGroup, ruleWithPathParams)) =>
           val rule = ruleWithPathParams.rule
           val pathParams = ruleWithPathParams.params
-          val newOriginal = finalRequestCtx.original.copy(pathParams = pathParams, method = matchData.method, path = matchData.pathOpt.map(UriPath(_)).getOrElse(finalRequestCtx.original.path))
+          val newOriginal = finalRequestCtx.originalRequest.copy(pathParams = pathParams, method = matchData.method, path = matchData.pathOpt.map(UriPath(_)).getOrElse(finalRequestCtx.originalRequest.path))
           val rerouted = finalRequestCtx.modifyRequest { r =>
             r.copy(method = rule.conf.rewriteMethod.map(_.value).getOrElse(r.method),
               uri = chooseRelativeUri(tracingContext, apiGroup.matchCriteria.basePath.getOrElse(BasePath("")), rule.conf, newOriginal))
@@ -163,7 +163,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
           } yield finalResponseCtx.response
       }
 
-    val matchData = MatchData(Option(vertxRequest.host()), vertxRequest.method(), Option(vertxRequest.path()))
+    val matchData = RuleMatchInput(Option(vertxRequest.host()), vertxRequest.method(), Option(vertxRequest.path()))
 
     val program: Future[ApiResponse] =
       matchOpt(matchData) match {
