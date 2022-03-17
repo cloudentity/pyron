@@ -52,6 +52,97 @@
         },
         {
           "method": "GET",
+          "pathPattern": "/brute-force-4-attempt-case-insensitive",
+          "requestPlugins": [
+            {
+              "name": "bruteForce",
+              "conf": {
+                "maxAttempts": 2,
+                "blockSpan": 10,
+                "blockFor": 10,
+                "successCodes": [200],
+                "errorCodes": [401],
+                "identifier": {
+                  "location": "header",
+                  "name": "ID"
+                },
+                "lockedResponse": {},
+                "counterName": "brute-force-4-attempt-case-insensitive"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/brute-force-4-attempt-case-insensitive-explicit-override",
+          "requestPlugins": [
+            {
+              "name": "bruteForce",
+              "conf": {
+                "maxAttempts": 2,
+                "blockSpan": 10,
+                "blockFor": 10,
+                "successCodes": [200],
+                "errorCodes": [401],
+                "identifier": {
+                  "location": "header",
+                  "name": "ID"
+                },
+                "lockedResponse": {},
+                "identifierCaseSensitive": false,
+                "counterName": "brute-force-4-attempt-case-insensitive-explicit-override"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/brute-force-5-attempt-case-sensitive",
+          "requestPlugins": [
+            {
+              "name": "bruteForce",
+              "conf": {
+                "maxAttempts": 2,
+                "blockSpan": 10,
+                "blockFor": 10,
+                "successCodes": [200],
+                "errorCodes": [401],
+                "identifier": {
+                  "location": "header",
+                  "name": "ID"
+                },
+                "lockedResponse": {},
+                "identifierCaseSensitive": true,
+                "counterName": "brute-force-5-attempt-case-sensitive"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/brute-force-5-attempt-case-sensitive-reset",
+          "requestPlugins": [
+            {
+              "name": "bruteForce",
+              "conf": {
+                "maxAttempts": 3,
+                "blockSpan": 10,
+                "blockFor": 10,
+                "successCodes": [200],
+                "errorCodes": [401],
+                "identifier": {
+                  "location": "header",
+                  "name": "ID"
+                },
+                "lockedResponse": {},
+                "identifierCaseSensitive": true,
+                "counterName": "brute-force-5-attempt-case-sensitive-reset"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "pathPattern": "/brute-force-reset",
           "requestPlugins": [
             {

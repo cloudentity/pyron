@@ -98,7 +98,7 @@ class CorsPlugin extends RequestResponsePluginVerticle[CorsPluginConf] with Conf
    */
   override def apply(ctx: ResponseCtx, conf: CorsPluginConf): Future[ResponseCtx] = Future.successful {
     val corsHeaders = conf.mergeWith(verticleCorsPluginConf).withDefaults
-      .toHeaders(ctx.request.headers.get("origin").getOrElse(""))
+      .toHeaders(ctx.targetRequest.headers.get("origin").getOrElse(""))
     ctx.modifyResponse(_.modifyHeaders(_.setHeaders(corsHeaders)))
   }
 
@@ -106,7 +106,7 @@ class CorsPlugin extends RequestResponsePluginVerticle[CorsPluginConf] with Conf
    * As a request plugin aborts processing with 200 OK status for OPTIONS requests.
    */
   override def apply(ctx: RequestCtx, conf: CorsPluginConf) = Future.successful {
-    if (ctx.request.method == HttpMethod.OPTIONS) {
+    if (ctx.targetRequest.method == HttpMethod.OPTIONS) {
       ctx.abort(ApiResponse(200, Buffer.buffer(), Headers()))
     } else {
       ctx
@@ -124,7 +124,7 @@ class CorsPlugin extends RequestResponsePluginVerticle[CorsPluginConf] with Conf
 
 
     val addressPrefix = if (vertxServiceAddressPrefix().isPresent) Some(PluginAddressPrefix(vertxServiceAddressPrefix.get())) else None
-    val preRequestPlugin = ApiGroupPluginConf(PluginName("cors"), confEncoder(conf), addressPrefix)
+    val preRequestPlugin = ApiGroupPluginConf(PluginName("cors"), confEncoder(conf), None, addressPrefix)
 
     ExtendRules(append = List(RuleConfWithPlugins(
       rule = ruleConfWithOptions,

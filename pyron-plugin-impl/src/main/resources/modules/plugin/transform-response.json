@@ -1,0 +1,10 @@
+{
+  "registry:response-plugins": {
+    "transform-response": {
+      "main": "com.cloudentity.pyron.plugin.impl.transform.response.TransformResponsePlugin",
+      "verticleConfig": {
+        "conf": "${PLUGIN_TRANSFORM_RESPONSE_CONF_REF}"
+      }
+    }
+  }
+}

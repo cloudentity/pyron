@@ -36,6 +36,77 @@ class BruteForcePluginTest extends PluginAcceptanceTest with MustMatchers  {
     }
 
   @Test
+  def shouldBlockAfterFirstWrongAttemptIfMaxAttemptsForCaseInSensitiveIdentifier(): Unit = {
+    callWithExpectedStatusAndTargetStatus("/brute-force-4-attempt-case-insensitive", 401, 401)
+    callWithExpectedStatusAndTargetStatus("/brute-force-4-attempt-case-insensitive", 401, 401, "ID")
+    callWithExpectedStatusAndTargetStatus("/brute-force-4-attempt-case-insensitive", 423, 401, "id")
+    callWithExpectedStatusAndTargetStatus("/brute-force-4-attempt-case-insensitive", 423, 401, "ID")
+  }
+
+  @Test
+  def shouldBlockAfterFirstWrongAttemptIfMaxAttemptsForCaseInSensitiveIdentifierExplicitConfig(): Unit = {
+    callWithExpectedStatusAndTargetStatus("/brute-force-4-attempt-case-insensitive-explicit-override", 401, 401)
+    callWithExpectedStatusAndTargetStatus("/brute-force-4-attempt-case-insensitive-explicit-override", 401, 401, "ID")
+    callWithExpectedStatusAndTargetStatus("/brute-force-4-attempt-case-insensitive-explicit-override", 423, 401, "id")
+    callWithExpectedStatusAndTargetStatus("/brute-force-4-attempt-case-insensitive-explicit-override", 423, 401, "ID")
+  }
+
+  @Test
+  def shouldBlockAfterDefinedWrongAttemptIfMaxAttemptsForCaseSensitiveIdentifier(): Unit = {
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive", 401, 401, "id")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive", 401, 401, "ID")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive", 401, 401, "id")
+
+    //should lock only after explicit failures on "id"
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive", 423, 401, "id")
+
+    //"ID" should not be locked
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive", 401, 401, "ID")
+
+    //Now "ID should be locked"
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive", 423, 401, "ID")
+  }
+
+  @Test
+  def shouldResetOnlyForCaseSensitiveIdentifierMatch(): Unit = {
+    // make 2 lock attempts
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "id")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "id")
+    //reset lock
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 200, 200, "id")
+    // make 3 more lock attempts
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "id")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "id")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "id")
+
+    // ensure id is locked now and not reset
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 423, 200, "id")
+
+
+    // make 3 more lock attempts with different cases
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "another-ID")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "another-ID")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "another-Id")
+
+    //reset lock for "another-Id"
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 200, 200, "another-Id")
+
+    // make 3 more lock attempts with different cases
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "another-ID")
+    // ensure id is locked now and not reset
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 423, 200, "another-ID")
+
+    // Check if "another-Id" has 3 more attempts after reset
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "another-Id")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "another-Id")
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 401, 401, "another-Id")
+
+    // ensure "another-Id" is locked now
+    callWithExpectedStatusAndTargetStatus("/brute-force-5-attempt-case-sensitive-reset", 423, 401, "another-Id")
+
+  }
+
+  @Test
   def shouldUnlockWhenTargetServiceNotAvailable(): Unit = {
     targetService.stop()
     callWithExpectedStatusAndTargetStatus("/brute-force-3-attempt", 500, 401)
@@ -61,10 +132,10 @@ class BruteForcePluginTest extends PluginAcceptanceTest with MustMatchers  {
       callWithExpectedStatusAndTargetStatus("/brute-force-reset", 423, 200)
     }
 
-  def callWithExpectedStatusAndTargetStatus(path: String, expectedStatus: Int, targetStatus: Int) = {
+  def callWithExpectedStatusAndTargetStatus(path: String, expectedStatus: Int, targetStatus: Int, identifierValue: String = "id") = {
       given()
         .header("TARGET_STATUS", targetStatus)
-        .header("ID", "id")
+        .header("ID", identifierValue)
       .when()
         .get(path)
       .`then`()

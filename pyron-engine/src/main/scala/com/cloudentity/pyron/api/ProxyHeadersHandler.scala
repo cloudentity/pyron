@@ -28,11 +28,14 @@ object ProxyHeadersHandler {
     val remoteIp         = remoteHost
     val remoteHostOpt    = host
     val protocol         = if (ssl) "https" else "http"
-    val trueClientIpOpt  = Option(headers.get(proxyHeaderNames.inputTrueClientIp.getOrElse(defaultTrueClientIpHeader)))
-    val realIp           = trueClientIpOpt match {
-                             case Some(ip) => ip
-                             case None => Option(headers.get(xForwardedForHeader)).getOrElse(remoteIp)
-                           }
+
+    val realIpInHeader   = proxyHeaderNames.inputTrueClientIp.getOrElse(defaultTrueClientIpHeader)
+    val realIpOutHeader  = proxyHeaderNames.outputTrueClientIp.getOrElse(defaultTrueClientIpHeader)
+    val realIpHeaderVals = headers.getAll(realIpInHeader).asScala.toList
+
+    val realIp           = getFirstValueWithCommaSeparator(headers, realIpInHeader)
+                             .orElse(getFirstValueWithCommaSeparator(headers, xForwardedForHeader))
+                             .getOrElse(remoteIp)
 
     val proxyHeaders: Map[String, List[String]] =
       if (proxyHeaderNames.enabled.getOrElse(true)) {
@@ -40,7 +43,7 @@ object ProxyHeadersHandler {
           xForwardedForHeader   -> (headers.getAll(xForwardedForHeader).asScala.toList ::: List(remoteIp)),
           xForwardedHostHeader  -> (headers.getAll(xForwardedHostHeader).asScala.toList ::: remoteHostOpt.toList),
           xForwardedProtoHeader -> (headers.getAll(xForwardedProtoHeader).asScala.toList ::: List(protocol)),
-          proxyHeaderNames.outputTrueClientIp.getOrElse(defaultTrueClientIpHeader) -> List(realIp)
+          realIpOutHeader       -> realIpHeaderVals.headOption.fold(List(realIp))(_ => realIpHeaderVals)
         )
       } else Map()
 
@@ -49,6 +52,11 @@ object ProxyHeadersHandler {
       trueClientIp = realIp
     )
   }
+
+  // gets first header value taking into account that a single header can contain multiple comma-separated values (like in nging),
+  // e.g. given 'X-Forwarded-For: 203.0.113.195, 70.41.3.18' 'X-Forwarded-For: 150.172.238.178' extracts '203.0.113.195'
+  private def getFirstValueWithCommaSeparator(headers: MultiMap, headerName: String): Option[String] =
+    headers.getAll(headerName).asScala.toList.flatMap(_.split(",")).map(_.trim).headOption
 
   def getProxyHeaders(ctx: RoutingContext): Option[ProxyHeaders] =
     Try(ctx.get[ProxyHeaders](proxyHeadersKey)).toOption.flatMap(Option.apply)

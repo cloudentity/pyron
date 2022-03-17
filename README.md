@@ -22,6 +22,7 @@
     * OAuth 2 with JWT access token
     * OAuth 2 with opaque token introspection
   * [Request transformation](docs/plugins/transform-request.md)
+  * [Response transformation](docs/plugins/transform-response.md)
   * [Response cookie transformation](docs/plugins/transform-response-cookie.md)
   * [CORS](docs/plugins/cors.md)
   * [Brute-force protection](docs/plugins/bruteforce.md)
@@ -164,7 +165,7 @@ $ make docker
 
 Configure routing rules in `rules.json` and environment variables in `envs` file if required.
 
-By default, Pyron runs on 8080 port. Set `HTTP_SERVER_PORT` env variable to change it.
+By default, Pyron runs on 8080 port. Set `PORT` env variable to change it.
 
 <a id="run-standalone"></a>
 ### Standalone
@@ -887,7 +888,7 @@ Pyron applies following request headers modification (unless disabled):
 * Add `remote-address.protocol` to `X-Forwarded-Proto` headers
 * If `Host` header is set then add it to `X-Forwarded-Host` headers
 * If True Client IP header is missing then set it to first `X-Forwarded-For` value
-* Set True Client IP header to upstream service
+* Set True Client IP header to upstream service if not set already
 
 | Env variable                      | Description                                            |
 |:----------------------------------|:-------------------------------------------------------|

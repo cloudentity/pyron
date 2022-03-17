@@ -229,30 +229,30 @@ class RulesConfReaderSpec extends WordSpec with MustMatchers {
   }
 
   val preFlowRequestPluginConfs = List(
-    ApiGroupPluginConf(PluginName("pre-req-plugin1"), Json.Null, None),
-    ApiGroupPluginConf(PluginName("pre-req-plugin2"), Json.Null, None)
+    ApiGroupPluginConf(PluginName("pre-req-plugin1"), Json.Null, None, None),
+    ApiGroupPluginConf(PluginName("pre-req-plugin2"), Json.Null, None, None)
   )
   val postFlowRequestPluginConfs = List(
-    ApiGroupPluginConf(PluginName("post-req-plugin1"), Json.Null, None),
-    ApiGroupPluginConf(PluginName("post-req-plugin2"), Json.Null, None)
+    ApiGroupPluginConf(PluginName("post-req-plugin1"), Json.Null, None, None),
+    ApiGroupPluginConf(PluginName("post-req-plugin2"), Json.Null, None, None)
   )
   val preFlowResponsePluginConfs = List(
-    ApiGroupPluginConf(PluginName("pre-resp-plugin1"), Json.Null, None),
-    ApiGroupPluginConf(PluginName("pre-resp-plugin2"), Json.Null, None)
+    ApiGroupPluginConf(PluginName("pre-resp-plugin1"), Json.Null, None, None),
+    ApiGroupPluginConf(PluginName("pre-resp-plugin2"), Json.Null, None, None)
   )
   val postFlowResponsePluginConfs = List(
-    ApiGroupPluginConf(PluginName("post-resp-plugin1"), Json.Null, None),
-    ApiGroupPluginConf(PluginName("post-resp-plugin2"), Json.Null, None)
+    ApiGroupPluginConf(PluginName("post-resp-plugin1"), Json.Null, None, None),
+    ApiGroupPluginConf(PluginName("post-resp-plugin2"), Json.Null, None, None)
   )
 
   val serviceConf: ServiceConf = ServiceConf(emptyRuleConf,
     request = Some(ServiceFlowsConf(
-      preFlow = Some(ServiceFlowConf(preFlowRequestPluginConfs.map(p => PluginConf(p.name, p.conf)))),
-      postFlow = Some(ServiceFlowConf(postFlowRequestPluginConfs.map(p => PluginConf(p.name, p.conf)))))
+      preFlow = Some(ServiceFlowConf(preFlowRequestPluginConfs.map(p => PluginConf(p.name, p.conf, None)))),
+      postFlow = Some(ServiceFlowConf(postFlowRequestPluginConfs.map(p => PluginConf(p.name, p.conf, None)))))
     ),
     response = Some(ServiceFlowsConf(
-      preFlow = Some(ServiceFlowConf(preFlowResponsePluginConfs.map(p => PluginConf(p.name, p.conf)))),
-      postFlow = Some(ServiceFlowConf(postFlowResponsePluginConfs.map(p => PluginConf(p.name, p.conf)))))
+      preFlow = Some(ServiceFlowConf(preFlowResponsePluginConfs.map(p => PluginConf(p.name, p.conf, None)))),
+      postFlow = Some(ServiceFlowConf(postFlowResponsePluginConfs.map(p => PluginConf(p.name, p.conf, None)))))
     )
   )
 

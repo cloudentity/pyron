@@ -243,6 +243,41 @@
         },
         {
           "method": "POST",
+          "pathPattern": "/body-set-with-default",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "body": {
+                  "setWithDefault": {
+                    "attr1": {
+                      "sourcePath": "$body.attr1",
+                      "ifNull": {"value": "itHadBeenNull"},
+                      "ifAbsent": {"value": "itHadBeenAbsent"}
+                    },
+                    "attr2": {
+                      "sourcePath": "$body.attr2"
+                    },
+                    "attr3": {
+                      "sourcePath": "$body.attr3",
+                      "ifNull": {"remove": true},
+                      "ifAbsent": {"value": ["itHadBeenAbsent"]}
+                    },
+                    "attr4": {
+                      "sourcePath": "$body.attr4",
+                      "ifNull": {"value": {
+                        "subValue": "itHadBeenNull"
+                      }},
+                      "ifAbsent": {"remove": true}
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "pathPattern": "/body-dropped",
           "requestPlugins": [
             {
@@ -320,22 +355,6 @@
           ]
         },
         {
-          "method": "GET",
-          "pathPattern": "/header-from-conf",
-          "requestPlugins": [
-            {
-              "name": "transform-request",
-              "conf": {
-                "headers": {
-                  "set": {
-                    "H": "$conf.param"
-                  }
-                }
-              }
-            }
-          ]
-        },
-        {
           "method": "POST",
           "pathPattern": "/header-from-body",
           "requestPlugins": [
@@ -345,6 +364,22 @@
                 "headers": {
                   "set": {
                     "H": "$body.h"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/header-from-conf",
+          "requestPlugins": [
+            {
+              "name": "transform-request",
+              "conf": {
+                "headers": {
+                  "set": {
+                    "H": "$conf.param"
                   }
                 }
               }

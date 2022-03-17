@@ -2,6 +2,9 @@
   "registry:request-plugins": {
     "timeout": {
       "main": "com.cloudentity.pyron.acceptance.TimeoutPluginVerticle"
+    },
+    "fail": {
+      "main": "com.cloudentity.pyron.acceptance.FailPluginVerticle"
     }
   },
   "common-rules": [
@@ -51,6 +54,21 @@
           "method": "GET",
           "pathPattern": "/should-return-504-on-event-bus-timeout",
           "requestPlugins": [{ "name": "timeout" }]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-skip-plugin-when-apply-if-false",
+          "responsePlugins": [
+            {
+              "name": "fail",
+              "applyIf": {
+                "in": {
+                  "array": [201],
+                  "value": "$resp.status"
+                }
+              }
+            }
+          ]
         }
       ]
     }

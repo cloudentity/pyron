@@ -1,0 +1,9 @@
+{
+  "registry:request-plugins": {
+    "echo": {
+      "main": "com.cloudentity.pyron.plugin.impl.echo.EchoPlugin",
+      "verticleConfig": {
+      }
+    }
+  }
+}

@@ -15,7 +15,7 @@ import io.circe.syntax._
 import io.circe.{Decoder, Encoder, _}
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.{CookieSameSite, HttpMethod}
-import io.vertx.core.json.{JsonObject => VxJsonObject}
+import io.vertx.core.json.{JsonObject => VxJsonObject, JsonArray => VxJsonArray}
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -89,7 +89,8 @@ object Codecs {
         obj.apply("name").flatMap(_.asString) match {
           case Some(name) =>
             val conf = obj.apply("conf").getOrElse(Json.obj())
-            Right(PluginConf(PluginName(name), conf))
+            val applyIf = obj.apply("applyIf")
+            Right(PluginConf(PluginName(name), conf, applyIf))
           case None =>
             Left(DecodingFailure("Missing 'name' attribute", DownField("name") :: c.history))
         }

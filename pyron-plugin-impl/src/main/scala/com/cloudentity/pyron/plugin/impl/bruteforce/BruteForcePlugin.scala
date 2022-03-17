@@ -24,15 +24,16 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 case class BruteForceConfig(
-  maxAttempts: Int,
-  blockSpan: Int,
-  blockFor: Int,
-  successCodes: List[Int],
-  errorCodes: List[Int],
-  identifier: IdentifierSource,
-  lockedResponse: Json,
-  counterName: String
-)
+                             maxAttempts: Int,
+                             blockSpan: Int,
+                             blockFor: Int,
+                             successCodes: List[Int],
+                             errorCodes: List[Int],
+                             identifier: IdentifierSource,
+                             lockedResponse: Json,
+                             counterName: String,
+                             identifierCaseSensitive: Option[Boolean]
+                           )
 
 case class BruteForcePluginConfig(cacheTimeoutMs: Option[Int], leaseDurationMs: Option[Int])
 case class BruteForcePluginState(attempts: List[Attempt], identifier: String)
@@ -56,29 +57,28 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
   def blockedResponse(body: Json) = ApiResponse(423, Buffer.buffer(body.noSpaces), Headers.of("Content-Type" -> "application/json"))
 
   sealed trait BruteForceResult
-    case object LockAlreadyAcquired extends BruteForceResult
-    case object BruteForceBlocked extends BruteForceResult
-    case class FailureWithoutLock(ex: Throwable) extends BruteForceResult
+  case object LockAlreadyAcquired extends BruteForceResult
+  case object BruteForceBlocked extends BruteForceResult
+  case class FailureWithoutLock(ex: Throwable) extends BruteForceResult
 
   override def apply(ctx: RequestCtx, conf: BruteForceConfig): Future[RequestCtx] = {
     BruteForceIdentifierReader.read(ctx, conf.identifier) match {
       case Some(identifier) =>
         val counterName = conf.counterName
-        log.debug(ctx.tracingCtx, s"Checking brute-force for $counterName.$identifier")
-
+        val identifierWithAppropriateCase = identifierCaseConvert(identifier, conf.identifierCaseSensitive)
+        log.debug(ctx.tracingCtx, s"Checking brute-force for $counterName.$identifierWithAppropriateCase")
         val program: Future[BruteForceResult \/ RequestCtx] = {
           for {
-            lockAcquired <- tryLockWithLeaseTime(ctx.tracingCtx, counterName, identifier, cacheLockLeaseDuration)
+            lockAcquired <- tryLockWithLeaseTime(ctx.tracingCtx, counterName, identifierWithAppropriateCase, cacheLockLeaseDuration)
             _            <- if (lockAcquired) Operation.success[BruteForceResult, Unit](())
-                            else              Operation.error[BruteForceResult, Unit](LockAlreadyAcquired)
-            _             = log.debug(ctx.tracingCtx, s"Lock $counterName.$identifier acquired")
-
-            attempts     <- loadAttempts(ctx, identifier, counterName)
-            _             = log.debug(ctx.tracingCtx, s"Attempts for $counterName.$identifier: $attempts")
+            else              Operation.error[BruteForceResult, Unit](LockAlreadyAcquired)
+            _             = log.debug(ctx.tracingCtx, s"Lock $counterName.$identifierWithAppropriateCase acquired")
+            attempts     <- loadAttempts(ctx, identifierWithAppropriateCase, counterName)
+            _             = log.debug(ctx.tracingCtx, s"Attempts for $counterName.$identifierWithAppropriateCase: $attempts")
             blocked       = BruteForceEvaluator.isBlocked(Instant.now(), attempts)
 
             _            <- if (!blocked) Operation.success[BruteForceResult, Unit](())
-                            else          Operation.error[BruteForceResult, Unit](BruteForceBlocked)
+            else          Operation.error[BruteForceResult, Unit](BruteForceBlocked)
           } yield {
             ctx.withPluginState(BruteForcePluginState(attempts, identifier))
           }
@@ -95,7 +95,7 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
 
           case -\/(BruteForceBlocked) =>
             log.debug(ctx.tracingCtx, s"Brute-force attempt blocked: ${conf.counterName}")
-            unlockCache(ctx.tracingCtx, counterName, identifier)
+            unlockCache(ctx.tracingCtx, counterName, identifierWithAppropriateCase)
               .map(_ => ctx.abort(blockedResponse(conf.lockedResponse)))
 
           case -\/(FailureWithoutLock(ex)) =>
@@ -103,12 +103,17 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
             ctx.abort(Responses.Errors.unexpected.toApiResponse()) |> Future.successful
         }.recoverWith { case ex =>
           log.error(ctx.tracingCtx, "BruteForce plugin failed", ex)
-          unlockCache(ctx.tracingCtx, counterName, identifier)
+          unlockCache(ctx.tracingCtx, counterName, identifierWithAppropriateCase)
           Future.failed(ex)
         }
       case None =>
         Future.successful(ctx)
     }
+  }
+
+  private def identifierCaseConvert(identifier:String, identifierCaseSensitive: Option[Boolean]) = identifierCaseSensitive match {
+    case Some(true) => identifier
+    case _          => identifier.toLowerCase
   }
 
   private def loadAttempts(ctx: RequestCtx, identifier: String, counterName: String):Operation[BruteForceResult, List[Attempt]] =
@@ -132,24 +137,25 @@ class BruteForcePlugin extends RequestResponsePluginVerticle[BruteForceConfig] w
         Future.successful(ctx)
     }
 
-    private def clearOrUpdateAttempts(ctx: TracingContext, resp: ApiResponse, attempts: List[Attempt], conf: BruteForceConfig, identifier: String): Future[Unit] = {
-      val counterName = conf.counterName
+  private def clearOrUpdateAttempts(ctx: TracingContext, resp: ApiResponse, attempts: List[Attempt], conf: BruteForceConfig, identifier: String): Future[Unit] = {
+    val counterName = conf.counterName
+    val identifierWithAppropriateCase = identifierCaseConvert(identifier, conf.identifierCaseSensitive)
 
-      if (conf.successCodes.contains(resp.statusCode)) {
-        log.debug(ctx, s"Response successful for $counterName.$identifier")
+    if (conf.successCodes.contains(resp.statusCode)) {
+      log.debug(ctx, s"Response successful for $counterName.$identifierWithAppropriateCase")
 
-        if (attempts.nonEmpty) cache.clear(ctx, counterName, identifier).toScala()
-        else Future.successful(())
-      } else if (conf.errorCodes.contains(resp.statusCode)) {
-        log.debug(ctx, s"Response failure for $counterName.$identifier")
+      if (attempts.nonEmpty) cache.clear(ctx, counterName, identifierWithAppropriateCase).toScala()
+      else Future.successful(())
+    } else if (conf.errorCodes.contains(resp.statusCode)) {
+      log.debug(ctx, s"Response failure for $counterName.$identifierWithAppropriateCase")
 
-        val now = Instant.now
-        val shouldBlock = BruteForceEvaluator.shouldBlockNextAttempt(now, attempts, conf.maxAttempts, conf.blockSpan)
-        updateAttempts(ctx, Attempt(shouldBlock, now, conf.blockFor), counterName, identifier, attempts, conf)
-      } else {
-        Future.successful(())
-      }
+      val now = Instant.now
+      val shouldBlock = BruteForceEvaluator.shouldBlockNextAttempt(now, attempts, conf.maxAttempts, conf.blockSpan)
+      updateAttempts(ctx, Attempt(shouldBlock, now, conf.blockFor), counterName, identifierWithAppropriateCase, attempts, conf)
+    } else {
+      Future.successful(())
     }
+  }
 
   private def updateAttempts(ctx: TracingContext, attempt: Attempt, counterName: String, identifier: String, attempts: List[Attempt], conf: BruteForceConfig): Future[Unit] = {
     val pastBlockTime = Instant.now.minusSeconds(conf.blockFor)
@@ -172,8 +178,8 @@ object BruteForceIdentifierReader {
         ValueResolver.resolveString(ctx, emptyConf, valueOrRef)
       case DeprecatedIdentifierSource(location, name) =>
         location match {
-          case BodyIdentifier   => readIdentifierFromBody(ctx.request, name)
-          case HeaderIdentifier => ctx.request.headers.get(name)
+          case BodyIdentifier   => readIdentifierFromBody(ctx.targetRequest, name)
+          case HeaderIdentifier => ctx.targetRequest.headers.get(name)
         }
     }
 

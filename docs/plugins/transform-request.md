@@ -46,6 +46,8 @@ Enable `transform-request` plugin by adding `plugin/transform-request` to `MODUL
 * [JSON body](#json-body)
   * [Set body attribute to static value](#json-body-static)
   * [Set body attribute to request attribute](#json-body-ref)
+  * [Set body attribute to request attribute with default value](#json-body-with-default-ref)
+  * [Remove a body attribute](#json-body-remove)
   * [Drop body](#json-body-drop)
 * [Headers](#headers)
 * [Path parameters](#path-params)
@@ -58,8 +60,8 @@ Plugin rule configuration has following form:
   "name": "transform-request",
   "conf": {
     "{subject}": {
-        "{operation}": {
-          "{attribute-identifier}": "{attribute-value-or-reference}"
+      "{operation}": {
+        "{attribute-identifier}": "{attribute-value-or-reference}"
       }
     }
   }
@@ -82,14 +84,14 @@ e.g.
 }
 ```
 Supported subjects with operations:
-* `body` - set, drop
+* `body` - set, setWithDefault, remove, drop
 * `headers` - set
 * `pathParams` - set
 * `queryParams` - set
 
 Supported reference types with sub-items:
-* `body`
-* `headers`
+* `body` (alternatively `req.body`)
+* `headers` (alternatively `req.headers`)
 * `pathParams`
 * `queryParams`
 * `cookies`
@@ -210,6 +212,357 @@ then target request body would look like this, provided `X-Account-No` header ha
   "withdraw": {
     "amount": 1000
   }
+}
+```
+
+Elements of JSON arrays may also be referenced using the configuration syntax `.[array_index]`. For example, suppose the incoming request body is:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ]
+}
+```
+
+To set a request body attribute based on the head element of the `accounts` array, the following configuration should be used:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "set": {
+        "primaryAccount": "$body.accounts.[0]"
+      }
+    }
+  }
+}
+```
+
+Then the target request body would be:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ],
+  "primaryAccount": {
+    "name": "Savings",
+    "balance": "20000"
+  }
+}
+```
+
+The array element can be of any type. If the array element is itself a JSON array or object, its own nested attributes may be further referenced after the initial array element reference.
+
+In the above example, if the following configuration is used instead:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "set": {
+        "primaryAccountName": "$body.accounts.[0].name"
+      }
+    }
+  }
+}
+```
+
+then the target request body would be:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ],
+  "primaryAccountName": "Savings"
+}
+```
+
+Suppose a value referenced by `set` is not found in the request body. Using the above example, consider the following configuration (note that, with only 2 total array elements, the element of index 2 does not exist):
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "set": {
+        "tertiaryAccountName": "$body.accounts.[2].name"
+      }
+    }
+  }
+}
+```
+
+By default, the JSON value `null` is set:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ],
+  "tertiaryAccountName": null
+}
+```
+
+If the configuration flag `nullIfAbsent` is set to `false` in the body config, then any values mapped by `set` which are not found will be omitted from the result, rather than set to `null`:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "nullIfAbsent": false,
+      "set": {
+        "tertiaryAccountName": "$body.accounts.[2].name"
+      }
+    }
+  }
+}
+```
+
+Note that, now that `nullIfAbsent` is set to `false` in the configuration, the key `tertiaryAccountName` is omitted from the target request body:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ]
+}
+```
+
+<a id="json-body-with-default-ref"></a>
+##### Set body attribute to request attribute with default value
+
+Similar to the `set` configuration block, the `setWithDefault` configuration allows adding or modifying values in the request body. However, it adds options for setting a default value, in case the referenced attribute is not found or has a null value.
+
+The `setWithDefault` configuration block has the following format:
+
+```json
+{
+  "{attribute-identifier}": {
+    "sourcePath": "{attribute-value-or-reference}",
+    "ifNull": {value-or-remove},
+    "ifAbsent": {value-or-remove}
+  }
+}
+```
+
+where `{value-or-remove}` is a JSON object in either of the following formats:
+
+```json
+{"value": some-json-value}
+```
+
+OR
+
+```json
+{"remove": true}
+```
+
+`ifNull` and `ifAbsent` are both optional:
+* `ifNull`: What to do if the referenced attribute is explicitly set to `null`. Default config value: `{"value": null}` - retains null value if found
+* `ifAbsent`: What to do if the referenced attribute key is not found at all. Default config value: `{"remove": true}` - retains omitted value if not found
+
+Suppose that a downstream service requires an account name in the request body for each transaction, and a default value of "defaultAccount" is acceptable for clients. Then the following config is applicable:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "setWithDefault": {
+        "accountName": {
+          "sourcePath": "$body.accountName",
+          "ifNull": {"value": "defaultAccount"},
+          "ifAbsent": {"value": "defaultAccount"}
+        }
+      }
+    }
+  }
+}
+```
+
+If the value is supplied, it will be used:
+
+```json
+{
+  "accountName": "Checking",
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+However, if the value is not supplied, or is null, the default will be used. In other words, for either of the following request bodies:
+
+```json
+{
+  "accountName": null,
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+```json
+{
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+the request will be translated into:
+
+```json
+{
+  "accountName": "defaultAccount",
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+Note that the value for the "value" field can be any valid JSON.
+
+In some cases, it may be desirable to remove a JSON key-value pair completely if it has a null value. In such a case, for example, the following config may be used:
+
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "setWithDefault": {
+        "accountName": {
+          "sourcePath": "$body.accountName",
+          "ifNull": {"remove": true}
+        }
+      }
+    }
+  }
+}
+```
+
+Then for the following request body:
+
+```json
+{
+  "accountName": null,
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+the transformed body will be:
+
+```json
+{
+  "withdraw": {
+    "amount": 1000
+  }
+}
+```
+
+Note that, because the null-value case is handled explicitly, the `nullIfAbsent` configuration is ignored for the `setWithDefault` block.
+
+<a id="json-body-remove"></a>
+##### Remove a body attribute
+
+Individual elements can be removed from the request body. Use the `.` and `.[array_index]` configuration syntax, as in the `set` directive, to reference elements of a JSON path to be removed (no leading `$body.` is needed, however).
+
+For example, suppose the request body is:
+
+```json
+{
+  "accountNo": "xyz",
+  "routingNo": "123",
+  "withdraw": {
+    "amount": 1000,
+    "allowDebit": true
+  },
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    },
+    {
+      "name": "Checking",
+      "balance": "1000"
+    }
+  ]
+}
+```
+
+If the following configuration is used:
+```json
+{
+  "name": "transform-request",
+  "conf": {
+    "body": {
+      "remove": [
+        "routingNo",
+        "withdraw.allowDebit",
+        "accounts.[1]"
+      ]
+    }
+  }
+}
+```
+
+then the target request body will be:
+
+```json
+{
+  "accountNo": "xyz",
+  "withdraw": {
+    "amount": 1000
+  },
+  "accounts": [
+    {
+      "name": "Savings",
+      "balance": "20000"
+    }
+  ]
 }
 ```
 

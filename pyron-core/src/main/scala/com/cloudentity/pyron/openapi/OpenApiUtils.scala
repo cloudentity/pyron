@@ -1,7 +1,8 @@
 package com.cloudentity.pyron.openapi
 
-import java.util
+import com.cloudentity.pyron.domain.flow.{PathParamName, PathParams, PathPattern, PathPrefix}
 
+import java.util
 import com.cloudentity.pyron.domain.openapi.OpenApi.OpenApiOperations
 import com.cloudentity.pyron.domain.openapi.OpenApiRule
 import io.swagger.models._
@@ -9,6 +10,7 @@ import io.swagger.models.parameters._
 import io.swagger.models.properties.Property
 
 import scala.collection.JavaConverters._
+import scala.util.matching.Regex
 
 object OpenApiConverterUtils extends OpenApiConverterUtils
 trait OpenApiConverterUtils {
@@ -31,6 +33,29 @@ trait OpenApiConverterUtils {
       case None => path
     }
 
+  def isPathParam(apiPath: String, paramValue: String)  =
+    apiPath.split("/").find(pathPart => pathPart.equals(s"{$paramValue}")).toList.nonEmpty
+
+  def onlyPathParamsDefinedInRulePath(rulePath: String, pp: PathParams, operation: Operation): Option[Operation] = {
+    val paramsInRulePath: Map[String, String] = pp.value.filter(param => isPathParam(rulePath, param._2))
+    val woHardcodedPathParams = operation.getParameters().asScala.filter(p => !p.getIn.equals("path") || paramsInRulePath.keySet.contains(p.getName)).asJava
+
+    val operationCopy = deepCopyOperation(operation)
+    operationCopy.setParameters(woHardcodedPathParams)
+
+    Option(operationCopy)
+  }
+
+  def adjustPathParams(operation: Operation, swagger: Swagger, apiGwPath: String): Operation = {
+    val maybeOperation: Option[Operation] = for {
+      path <- findSwaggerPath(apiGwPath, swagger)
+      pp <- matchWithPathParams(apiGwPath, path._1)
+      adjustedOperationParams <- onlyPathParamsDefinedInRulePath(apiGwPath, pp, operation)
+    } yield adjustedOperationParams
+
+    maybeOperation.getOrElse(operation)
+  }
+
   def findOperation(swagger: Swagger, path: String, method: HttpMethod): Option[Operation] = {
     findPath(swagger, path).flatMap(p => findOperationInPath(p, method))
   }
@@ -51,11 +76,30 @@ trait OpenApiConverterUtils {
     pathsMap.mapValues(buildPath)
   }
 
-  def pathMatches(testPath: String, regexPath: String): Boolean = {
-    regexPath
-      .replaceAll("""\{\w+}""", """(\\w+)""").r
-      .findFirstIn(testPath.replaceAll("[{}]", "")).nonEmpty
+  def pathMatches(testPath: String, regexPath: String): Boolean =
+    matchWithPathParams(testPath, regexPath).isDefined
+
+  def findSwaggerPath(apiGwPath: String, swagger: Swagger) = {
+    swagger.getPaths.asScala.find(x => matchWithPathParams(apiGwPath, x._1).isDefined)
   }
+
+  def matchWithPathParams(targetServicePath: String, swaggerRegexPath: String): Option[PathParams] = {
+    val normalizedTargetServicePath = targetServicePath.replaceAll("\\{|\\}", "")
+    makeMatch(normalizedTargetServicePath, PathMatching.build(PathPrefix(""), PathPattern(swaggerRegexPath)))
+  }
+
+  def makeMatch(path: String, matcher: PathMatching): Option[PathParams] =
+    matcher.regex.findFirstMatchIn(path).flatMap[PathParams] { mtch =>
+      if (mtch.groupCount == matcher.paramNames.size)
+        Some(
+          PathParams(
+            matcher.paramNames.map { name =>
+              name.value -> mtch.group(name.value)
+            }.toMap
+          )
+        )
+      else None
+    }
 
   def toSwaggerMethod(method: io.vertx.core.http.HttpMethod): io.swagger.models.HttpMethod = {
     io.swagger.models.HttpMethod.valueOf(method.toString.toUpperCase)
@@ -64,6 +108,35 @@ trait OpenApiConverterUtils {
   def deepCopyOperation(operation: Operation): Operation =
     SwaggerCopy.copyOperation(operation)
 
+}
+
+case class PathMatching(regex: Regex, paramNames: List[PathParamName], prefix: PathPrefix, originalPath: String)
+
+object PathMatching {
+  val namePlaceholderPattern = """\{\w+[^/]\}"""
+  val namePlaceholderRegex = namePlaceholderPattern.r
+
+  def build(pathPrefix: PathPrefix, pathPattern: PathPattern): PathMatching =
+    PathMatching(
+      regex = createPatternRegex(createRawPattern(pathPrefix, pathPattern)),
+      paramNames = extractPathParamNames(pathPattern),
+      prefix = pathPrefix,
+      originalPath = pathPattern.value
+    )
+
+  def createRawPattern(pathPrefix: PathPrefix, pathPattern: PathPattern): String =
+    pathPrefix.value + pathPattern.value
+
+  def createPatternRegex(rawPattern: String): Regex = {
+    val regex = namePlaceholderRegex.findAllIn(rawPattern).toList.foldLeft(rawPattern) { case (acc, mtch) =>
+      val name = mtch.drop(1).dropRight(1)
+      acc.replaceFirst(namePlaceholderPattern, s"(?<$name>[^/]+)")
+    }
+    s"^$regex$$".r
+  }
+
+  def extractPathParamNames(pattern: PathPattern): List[PathParamName] =
+    namePlaceholderRegex.findAllIn(pattern.value).toList.map(_.drop(1).dropRight(1)).map(PathParamName)
 }
 
 object OpenApiPluginUtils extends OpenApiPluginUtils

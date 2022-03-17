@@ -36,7 +36,7 @@ object AcpApiGroupsSynchronizer {
         g.id.value,
         g.rules
           .filter(_.requestPlugins.toList.exists(_.name == AcpAuthzPlugin.pluginName))
-          .map(r => AcpApi(r.rule.criteria.method.name(), r.rule.criteria.rewrite.matchPattern))
+          .map(r => AcpApi(r.rule.criteria.method.name(), r.rule.criteria.rewrite.originPattern))
       )
   }
 

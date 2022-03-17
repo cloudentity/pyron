@@ -1,5 +1,6 @@
 package com.cloudentity.pyron
 
+import com.cloudentity.pyron.api.ApiRouter.RouteFilter
 import com.cloudentity.pyron.api.{ApiHandlerVerticle, ApiServer}
 import com.cloudentity.pyron.apigroup.ApiGroupsStoreVerticle
 import com.cloudentity.pyron.config.Conf
@@ -54,7 +55,8 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
   override def deployServer(): VxFuture[String] = {
     for {
       _          <- deployApiHandlers(appConf)
-      _          <- deployServerInstance(appConf)
+      filters    <- routeFilters()
+      _          <- deployServerInstance(appConf, filters)
       _          <- deployAdminServerIfConfigured()
       _          <- deployOpenApiEndpointIfEnabled(appConf)
     } yield ""
@@ -78,8 +80,10 @@ class Application extends VertxBootstrap with FutureConversions with ScalaSyntax
       }
     }.map(_ => ())
 
-  def deployServerInstance(conf: AppConf): Future[String] =
-    deployVerticle(new ApiServer(conf))
+  def deployServerInstance(conf: AppConf, routeFilters: List[RouteFilter]): Future[String] =
+    deployVerticle(new ApiServer(conf, routeFilters))
+
+  def routeFilters(): Future[List[RouteFilter]] = Future.successful(Nil)
 
   private def deployVerticle(verticle: Verticle): Future[String] = {
     log.debug(s"Deploying ${verticle.getClass.getName} verticle")

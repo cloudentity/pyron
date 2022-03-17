@@ -159,17 +159,23 @@ object RulesConfReader {
 
   private def getRuleConf(defaultConf: ServiceConf, endpointConf: EndpointConf, rf: RuleRequiredFields): Try[RuleConf] = {
     val pathPrefix = endpointConf.rule.pathPrefix.orElse(defaultConf.rule.pathPrefix).getOrElse(PathPrefix(""))
+    val dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true)
     val rewritePath = endpointConf.rule.rewritePath.orElse(defaultConf.rule.rewritePath)
+    val inputPattern = rf.pathPattern.value
+    val outputPattern = rewritePath.map(_.value)
+      .orElse(Some(if(dropPathPrefix) rf.pathPattern.value else pathPrefix + rf.pathPattern.value))
+      .getOrElse("")
+
     PreparedPathRewrite.prepare(
-      inputPattern = rf.pathPattern.value,
+      inputPattern = inputPattern,
       prefix = pathPrefix.value,
-      outputPattern = rewritePath.map(_.value).getOrElse("")
+      outputPattern = outputPattern
     ).map(preparedRewrite =>
       RuleConf(
         endpointName = endpointConf.rule.endpointName.orElse(defaultConf.rule.endpointName),
         criteria = EndpointMatchCriteria(rf.method, preparedRewrite),
         target = rf.service,
-        dropPathPrefix = endpointConf.rule.dropPrefix.orElse(defaultConf.rule.dropPrefix).getOrElse(true),
+        dropPathPrefix = dropPathPrefix,
         rewriteMethod = endpointConf.rule.rewriteMethod.orElse(defaultConf.rule.rewriteMethod),
         rewritePath = rewritePath,
         reroute = endpointConf.rule.reroute.orElse(defaultConf.rule.reroute),
@@ -213,7 +219,7 @@ object RulesConfReader {
   }
 
   def toApiGroupPluginConf(addresses: Map[PluginName, PluginAddressPrefix])(conf: PluginConf): ApiGroupPluginConf =
-    ApiGroupPluginConf(conf.name, conf.conf, addresses.get(conf.name))
+    ApiGroupPluginConf(conf.name, conf.conf, conf.applyIf, addresses.get(conf.name))
 
   def composeFlow(f: ServiceConf => Option[ServiceFlowConf], g: EndpointConf => Option[EndpointFlowConf])(sc: ServiceConf, ec: EndpointConf): List[PluginConf] =
     composePluginConfs(f(sc).getOrElse(ServiceFlowConf(Nil)), g(ec).getOrElse(EndpointFlowConf(None, None)))

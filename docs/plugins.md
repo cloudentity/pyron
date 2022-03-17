@@ -4,6 +4,7 @@
 * [Pre/post flow plugins](#pre-post)
 * [Request-response plugins](#req-resp)
 * [Exception handling](#exception)
+* [Conditional plugin application](#applyIf)
 
 <a id="intro"></a>
 ### Introduction
@@ -428,3 +429,34 @@ If an exception is thrown by a plugin processing response then the response is e
 
 [flow]: flow.png
 [plugins-example]: plugins-example.png
+
+<a id="applyIf"></a>
+### Conditional plugin application
+
+You can configure response plugins (request plugins not supported yet) to be applied conditionally.
+To do so you construct a logical expression that checks against values in request/response context.
+If constructed expression evaluates to `false` then the plugin is skipped, otherwise it is applied. By default all plugins are applied.
+
+Currently you can only check if given value can be found in an array of static values (example below).
+
+
+```json
+{
+  "name": "transform-response",
+  "conf": {
+    "headers": {
+      "set": {
+        "X-Correlation-Id": "$req.headers.X-Correlation-Id"
+      }
+    }
+  },
+  "applyIf": {
+    "in": {
+      "array": [200],
+      "value": "$resp.status"
+    }
+  }
+}
+```
+
+According to above configuration, `transform-response` will be applied only if response status code is equal to 200.

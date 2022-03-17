@@ -4,10 +4,13 @@ import java.util.{Optional, UUID}
 
 import io.circe.generic.semiauto._
 import io.circe.{Decoder, Json}
+import io.circe.syntax._
 import com.cloudentity.pyron.domain.flow.{ApiGroupPluginConf, PluginName, ResponseCtx}
 import com.cloudentity.pyron.plugin.ResponsePluginService
 import com.cloudentity.pyron.plugin.bus.response._
+import com.cloudentity.pyron.plugin.condition.ApplyIf
 import com.cloudentity.pyron.plugin.config._
+import com.cloudentity.pyron.plugin.util.value.Value
 import com.cloudentity.pyron.test.TestRequestResponseCtx
 import com.cloudentity.tools.vertx.bus.VertxEndpointClient
 import com.cloudentity.tools.vertx.scala.FutureConversions
@@ -34,6 +37,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
   def dummyConf(pluginName: PluginName): ApiGroupPluginConf = ApiGroupPluginConf(
     name = pluginName,
     conf = Json.fromFields(List("x" -> Json.fromString("x"), "y" -> Json.fromString("y"))),
+    applyIf = None,
     addressPrefixOpt = None
   )
 
@@ -46,7 +50,7 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
       // given
       val plugin = new DummyPlugin
       val pluginClient = createClient(plugin)
-      val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil), None)
+      val conf = ApiGroupPluginConf(plugin.name, Json.fromFields(Nil), None, None)
 
       VertxDeploy.deploy(vertx, plugin)
         .compose { _ =>
@@ -111,9 +115,56 @@ class ResponsePluginVerticleTest extends ScalaVertxUnitTest with MustMatchers wi
     }
 
   @Test
+  def responsePluginVerticleValidateApplyIfShouldReturnValidateFailureWhenConfigDecodingError(ctx: TestContext): Unit = {
+    // given
+    val plugin = new DummyPlugin
+    val pluginClient = createClient(plugin)
+    val conf = ApiGroupPluginConf(plugin.name, Json.Null, Some(Json.fromString("invalid")), None)
+
+    VertxDeploy.deploy(vertx, plugin)
+      .compose { _ =>
+        // when
+        pluginClient.validateApplyIf(ValidateRequest(conf))
+      }.compose { response =>
+      // then
+      response match {
+        case ValidateFailure(_) => // ok
+        case x => fail(x.toString)
+      }
+      VxFuture.succeededFuture(())
+    }.onComplete(ctx.asyncAssertSuccess())
+  }
+
+
+  @Test
+  def responsePluginVerticleValidateApplyIfShouldReturnValidateOkOnSuccess(ctx: TestContext): Unit = {
+    // given
+    val plugin = new DummyPlugin with ResponsePluginService {
+      override def validate(c: DummyConfig): ValidateResponse = ValidateOk
+    }
+    val pluginClient = createClient(plugin)
+    val conf = dummyConf(plugin.name).copy(applyIf = Option(Json.obj("in" -> Json.obj("array" -> Json.arr(), "value" -> Json.fromString("")))))
+
+    VertxDeploy.deploy(vertx, plugin)
+      .compose { _ =>
+        // when
+        pluginClient.validateApplyIf(ValidateRequest(conf))
+      }.compose { response =>
+
+      // then
+      response match {
+        case ValidateOk => // ok
+        case x => fail(x.toString)
+      }
+
+      VxFuture.succeededFuture(())
+    }.onComplete(ctx.asyncAssertSuccess())
+  }
+
+  @Test
   def responsePluginVerticleApplyShouldReturnErrorWhenExceptionThrown(ctx: TestContext): Unit = {
-      // given
-      val plugin = new DummyPlugin with ResponsePluginService {
+    // given
+    val plugin = new DummyPlugin with ResponsePluginService {
         override def apply(ctx: ResponseCtx, conf: DummyConfig): Future[ResponseCtx] = throw new Exception("error")
       }
       val pluginClient = createClient(plugin)
