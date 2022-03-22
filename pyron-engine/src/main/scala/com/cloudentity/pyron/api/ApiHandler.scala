@@ -99,7 +99,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       } yield (apiGroup, ruleWithPathParams)
 
     type Failed = Boolean
-    def reroute(rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], finalRequestCtx: RequestCtx): Future[(ApiResponse, Failed)] = {
+    def reroute(rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], finalRequestCtx: RequestCtx, reroutesLeft: Int): Future[(ApiResponse, Failed)] = {
       val matchData =
         RuleMatchInput(
           hostOpt = Option(vertxRequest.host()),
@@ -118,11 +118,11 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
             r.copy(method = rule.conf.rewriteMethod.map(_.value).getOrElse(r.method),
               uri = chooseRelativeUri(tracingContext, apiGroup.matchCriteria.basePath.getOrElse(BasePath("")), rule.conf, newOriginal))
           }
-          flow(ruleWithPathParams, Future.successful(rerouted)).map((_, false))
+          flow(ruleWithPathParams, Future.successful(rerouted), reroutesLeft - 1).map((_, false))
       }
     }
 
-    def flow(ruleWithPathParams: RuleWithPathParams, requestCtxFut: Future[RequestCtx]): Future[ApiResponse] = {
+    def flow(ruleWithPathParams: RuleWithPathParams, requestCtxFut: Future[RequestCtx], reroutesLeft: Int): Future[ApiResponse] = {
         val rule = ruleWithPathParams.rule
 
           ApiRequestHandler.setRule(ctx, rule)
@@ -149,7 +149,10 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
                                       case None =>
                                         if (!rule.conf.reroute.getOrElse(false))
                                           callTarget(tracingContext, finalRequestCtx, rule.conf.call)
-                                        else reroute(rule.conf.rewriteMethod, rule.conf.rewritePath, finalRequestCtx)
+                                        else if (reroutesLeft > 0)
+                                          reroute(rule.conf.rewriteMethod, rule.conf.rewritePath, finalRequestCtx, reroutesLeft)
+                                        else
+                                          Future.failed(new Exception("Too many reroutes."))
                                       case Some(response) =>
                                         Future.successful((response, false))
                                     }
@@ -181,7 +184,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
               ruleWithPathParams.params
             )
 
-          flow(ruleWithPathParams, initRequestCtx)
+          flow(ruleWithPathParams, initRequestCtx, 3)
       }
 
     program.onComplete { result =>

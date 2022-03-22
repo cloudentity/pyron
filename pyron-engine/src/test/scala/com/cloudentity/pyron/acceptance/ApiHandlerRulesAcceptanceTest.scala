@@ -161,6 +161,26 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
       .statusCode(200)
   }
 
+  @Test
+  def shouldApplyReroute(ctx: TestContext): Unit = {
+    mockOnPath(targetService)("/rerouted", resp().withStatusCode(200))
+
+    given()
+    .when()
+      .get(rulesTestBasePath + "/should-apply-reroute")
+    .`then`()
+      .statusCode(200)
+  }
+
+  @Test
+  def shouldBreakRerouteLoop(ctx: TestContext): Unit = {
+    given()
+    .when()
+      .get(rulesTestBasePath + "/should-break-reroute-loop")
+    .`then`()
+      .statusCode(500)
+  }
+
   def resp(): HttpResponse = org.mockserver.model.HttpResponse.response()
   def req(): HttpRequest = org.mockserver.model.HttpRequest.request()
 }
