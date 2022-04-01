@@ -52,10 +52,6 @@
       <groupId>io.circe</groupId>
       <artifactId>circe-generic_2.12</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-java8_2.12</artifactId>
-    </dependency>
     <!-- test -->
     <dependency>
       <groupId>com.cloudentity.tools.vertx</groupId>
