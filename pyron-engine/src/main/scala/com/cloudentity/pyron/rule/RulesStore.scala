@@ -50,7 +50,7 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
     RulesConfReader.read(rulesConf.toString, addresses) match {
       case \/-(rules) =>
         logRulesConf(s"Rules (${tag}) configuration", rules)
-        //log.info(s"Rules (${tag}) configuration:\n${rules.map(rule => s"   ${rule.asJson.pretty(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
+        //log.info(s"Rules (${tag}) configuration:\n${rules.map(rule => s"   ${rule.asJson.printWith(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
         for {
           _             <- checkPluginsReady(rules)
           extendedRules <- Future.sequence(rules.map(extendedRuleConfs)).map(_.flatten).map { extendedRules =>
@@ -72,7 +72,7 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
       RuleConfWithPluginNames(rule.rule, requestPlugins, responsePlugins)
     }
 
-    log.info(s"$msg:\n${rs.map(rule => s"   ${rule.asJson.pretty(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
+    log.info(s"$msg:\n${rs.map(rule => s"   ${rule.asJson.printWith(Printer.noSpaces.copy(dropNullValues = true))}").mkString("\n")}\n")
   }
 
   private def checkPluginsReady(rules: List[RuleConfWithPlugins]): Future[Unit] = {
@@ -123,7 +123,7 @@ class RulesStoreVerticle extends ScalaServiceVerticle with RulesStore {
 
           s"""
              |  {
-             |    "ruleConf": ${r.asJson.pretty(printer)},
+             |    "ruleConf": ${r.asJson.printWith(printer)},
              |    "errors": ${invalidConfs.map("       " + _.asJson.noSpaces).mkString("[\n", "\n", "\n    ]")}
              |  }
              |""".stripMargin

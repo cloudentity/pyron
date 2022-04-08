@@ -45,7 +45,7 @@ class OAuthAuthorizationCodeIntrospectionTest extends PluginAcceptanceTest with 
 
   @Test
   def shouldReturnFailureIfTokenInactive(ctx: TestContext): Unit = {
-    authorizationServer.when(request()).callback { request: HttpRequest =>
+    authorizationServer.when(request()).respond { request: HttpRequest =>
       if (request.getBodyAsString().startsWith("token=user-token")) {
         response().withStatusCode(200).withBody("""{"active": false}""")
       } else response().withStatusCode(404)
@@ -61,7 +61,7 @@ class OAuthAuthorizationCodeIntrospectionTest extends PluginAcceptanceTest with 
 
   @Test
   def shouldReturnFailureIfPyronUnauthorized(ctx: TestContext): Unit = {
-    authorizationServer.when(request()).callback { request: HttpRequest =>
+    authorizationServer.when(request()).respond { request: HttpRequest =>
       if (request.getFirstHeader("Authorization").equals(authzHeader)) {
         response().withStatusCode(401)
       } else response().withStatusCode(200)
@@ -77,11 +77,11 @@ class OAuthAuthorizationCodeIntrospectionTest extends PluginAcceptanceTest with 
 
   @Test
   def shouldReturnSuccessIfTokenActive(ctx: TestContext): Unit = {
-    targetService.when(request()).callback { request: HttpRequest =>
+    targetService.when(request()).respond { request: HttpRequest =>
       response().withStatusCode(200)
     }
 
-    authorizationServer.when(request()).callback { request: HttpRequest =>
+    authorizationServer.when(request()).respond { request: HttpRequest =>
       if (request.getBodyAsString().startsWith("token=user-token") && request.getFirstHeader("Authorization").equals(authzHeader)) {
         response().withStatusCode(200).withBody("""{"active": true}""")
       } else response().withStatusCode(404)

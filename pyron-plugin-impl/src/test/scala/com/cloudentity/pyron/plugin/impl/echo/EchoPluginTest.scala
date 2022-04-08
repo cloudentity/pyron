@@ -19,7 +19,7 @@ class EchoPluginTest extends PluginAcceptanceTest with MustMatchers {
   @Before
   def before(): Unit = {
     targetService = startClientAndServer(7760)
-    targetService.when(request()).callback { request: HttpRequest =>
+    targetService.when(request()).respond { request: HttpRequest =>
       response().withStatusCode(200)
     }
   }

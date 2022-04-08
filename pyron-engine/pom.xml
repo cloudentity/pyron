@@ -58,10 +58,6 @@
       <groupId>io.circe</groupId>
       <artifactId>circe-generic_2.12</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-java8_2.12</artifactId>
-    </dependency>
     <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -119,11 +115,6 @@
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

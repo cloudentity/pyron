@@ -47,7 +47,7 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
 
   @Test
   def shouldApplyRewritePathAndCopyQuery(ctx: TestContext): Unit = {
-    targetService.when(req().withPath("/should-apply-rewrite-path-and-copy-query-rewrite")).callback { request: HttpRequest =>
+    targetService.when(req().withPath("/should-apply-rewrite-path-and-copy-query-rewrite")).respond { request: HttpRequest =>
       if (request.hasQueryStringParameter("q", "1")) resp().withStatusCode(200)
       else resp().withStatusCode(400)
     }
@@ -60,7 +60,7 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
   }
   @Test
   def shouldApplyRewritePathAndDropQuery(ctx: TestContext): Unit = {
-    targetService.when(req().withPath("/should-apply-rewrite-path-and-drop-query-rewrite")).callback { request: HttpRequest =>
+    targetService.when(req().withPath("/should-apply-rewrite-path-and-drop-query-rewrite")).respond { request: HttpRequest =>
       if (!request.hasQueryStringParameter("q", "1")) resp().withStatusCode(200)
       else resp().withStatusCode(400)
     }
@@ -74,7 +74,7 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
 
   @Test
   def shouldApplyRewriteMethod(ctx: TestContext): Unit = {
-    targetService.when(req().withPath("/should-apply-rewrite-method").withMethod("POST")).callback { _ =>
+    targetService.when(req().withPath("/should-apply-rewrite-method").withMethod("POST")).respond { _: HttpRequest =>
       resp().withStatusCode(200)
     }
 
@@ -90,8 +90,8 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
     targetService.when(req()
       .withPath("/should-not-set-form-params-as-query-params-if-form-content")
       .withMethod("POST"))
-      .callback { request =>
-        if (request.getQueryStringParameters().size() == 0) resp().withStatusCode(200)
+      .respond { request: HttpRequest =>
+        if (request.getQueryStringParameterList.isEmpty) resp().withStatusCode(200)
         else resp().withStatusCode(400)
       }
 
@@ -106,7 +106,7 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
 
   @Test
   def shouldPreserveHostHeaderIfConfigured(ctx: TestContext): Unit = {
-    targetService.when(req().withPath("/should-preserve-host-header-if-configured")).callback { request: HttpRequest =>
+    targetService.when(req().withPath("/should-preserve-host-header-if-configured")).respond { request: HttpRequest =>
       resp().withStatusCode(200).withHeader("Request-Host", request.getFirstHeader("Host"))
     }
 
@@ -123,7 +123,7 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
 
   @Test
   def shouldReplaceHostHeaderByDefault(ctx: TestContext): Unit = {
-    targetService.when(req().withPath("/should-replace-host-header-by-default")).callback { request: HttpRequest =>
+    targetService.when(req().withPath("/should-replace-host-header-by-default")).respond { request: HttpRequest =>
       resp().withStatusCode(200).withHeader("Request-Host", request.getFirstHeader("Host"))
     }
 
@@ -150,7 +150,7 @@ class ApiHandlerRulesAcceptanceTest extends PyronAcceptanceTest with MockUtils {
 
   @Test
   def shouldSkipResponsePluginWhenApplyIfIsFalse(ctx: TestContext): Unit = {
-    targetService.when(req().withPath("/should-skip-plugin-when-apply-if-false")).callback { request: HttpRequest =>
+    targetService.when(req().withPath("/should-skip-plugin-when-apply-if-false")).respond { request: HttpRequest =>
       resp().withStatusCode(200)
     }
 
