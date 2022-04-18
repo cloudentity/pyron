@@ -184,7 +184,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
               ruleWithPathParams.params
             )
 
-          flow(ruleWithPathParams, initRequestCtx, 3)
+          flow(ruleWithPathParams, initRequestCtx, 1)
       }
 
     program.onComplete { result =>
