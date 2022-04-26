@@ -10,7 +10,7 @@ import org.mockserver.verify.VerificationTimes
 
 trait MockUtils {
   def mockOnPathWithPongingBodyAndHeaders(service: ClientAndServer)(path: String, code: Int): Unit =
-    service.when(request()).callback { request: HttpRequest =>
+    service.when(request()).respond { request: HttpRequest =>
       if (request.getPath.getValue == path)
         response()
           .withStatusCode(code)
@@ -20,10 +20,7 @@ trait MockUtils {
     }
 
   def mockOnPath(service: ClientAndServer)(path: String, resp: HttpResponse): Unit =
-    service.when(request().withPath(path)).callback { request: HttpRequest =>
-      if (request.getPath.getValue == path) resp
-      else response().withStatusCode(404)
-    }
+    service.when(request().withPath(path)).respond(resp)
 
   def mockOnPathWithBody(service: ClientAndServer)(path: String, body: String, resp: HttpResponse): Unit =
     service.when(request()
@@ -32,7 +29,7 @@ trait MockUtils {
         json(body,
           MatchType.STRICT)
       )
-    ).callback { request: HttpRequest =>
+    ).respond { request: HttpRequest =>
       if (request.getPath.getValue == path ) resp
       else response().withStatusCode(404)
     }

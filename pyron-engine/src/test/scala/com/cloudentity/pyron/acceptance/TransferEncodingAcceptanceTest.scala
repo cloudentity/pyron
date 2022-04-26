@@ -2,6 +2,7 @@ package com.cloudentity.pyron.acceptance
 
 import com.cloudentity.pyron.PyronAcceptanceTest
 import io.restassured.RestAssured.given
+import org.hamcrest.Matchers
 import org.junit.Test
 import org.scalatest.MustMatchers
 
@@ -14,6 +15,6 @@ class TransferEncodingAcceptanceTest extends PyronAcceptanceTest with MustMatche
     .when()
       .get("/chunked")
     .`then`()
-      .header("Content-Length", null.asInstanceOf[String])
+      .header("Content-Length", Matchers.nullValue())
   }
 }

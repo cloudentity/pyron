@@ -135,7 +135,7 @@ class TargetClientWithSmartHttpAcceptanceTest extends PyronAcceptanceTest with M
       .when(request())
       .respond(
         response
-          .withDelay(Delay.milliseconds(200)).applyDelay()
+          .withDelay(Delay.milliseconds(200))
           .withStatusCode(200)
           .withBody(requestBody)
       )

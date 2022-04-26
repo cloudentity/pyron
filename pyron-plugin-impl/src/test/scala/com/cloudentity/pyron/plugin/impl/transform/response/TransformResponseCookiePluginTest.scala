@@ -17,7 +17,7 @@ class TransformResponseCookiePluginTest extends WordSpec with MustMatchers with 
 
   def calcExpires(expireAfter: Long): String =
     ZonedDateTime.now(ZoneId.of("GMT")).plusSeconds(expireAfter)
-      .format(DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss z"))
+      .format(DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z"))
 
   "setResponseCookieDec" should {
 
