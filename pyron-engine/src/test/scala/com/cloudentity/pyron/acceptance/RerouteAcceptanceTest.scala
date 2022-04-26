@@ -27,7 +27,6 @@ class RerouteAcceptanceTest extends PyronAcceptanceTest with MockUtils {
     targetService.stop
   }
 
-  @Ignore("Un-ignore when support for path-params in rewritePath added")
   @Test
   def shouldApplyRerouteWithPathParams(ctx: TestContext): Unit = {
     mockOnPath(targetService)("/rerouted/path-params/x", resp().withStatusCode(200))

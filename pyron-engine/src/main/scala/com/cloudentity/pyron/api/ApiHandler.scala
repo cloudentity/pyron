@@ -99,12 +99,12 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
       } yield (apiGroup, ruleWithPathParams)
 
     type Failed = Boolean
-    def reroute(rewriteMethod: Option[RewriteMethod], rewritePath: Option[RewritePath], finalRequestCtx: RequestCtx, reroutesLeft: Int): Future[(ApiResponse, Failed)] = {
+    def reroute(targetMethod: HttpMethod, targetRelativeUri: RelativeUri, finalRequestCtx: RequestCtx): Future[(ApiResponse, Failed)] = {
       val matchData =
         RuleMatchInput(
           hostOpt = Option(vertxRequest.host()),
-          method = rewriteMethod.map(_.value).getOrElse(vertxRequest.method()),
-          pathOpt = rewritePath.map(_.value).orElse(Option(vertxRequest.path()))
+          method = targetMethod,
+          pathOpt = Some(targetRelativeUri.path)
         )
 
       matchOpt(matchData) match {
@@ -113,16 +113,21 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
         case Some((apiGroup, ruleWithPathParams)) =>
           val rule = ruleWithPathParams.rule
           val pathParams = ruleWithPathParams.params
-          val newOriginal = finalRequestCtx.originalRequest.copy(pathParams = pathParams, method = matchData.method, path = matchData.pathOpt.map(UriPath(_)).getOrElse(finalRequestCtx.originalRequest.path))
-          val rerouted = finalRequestCtx.modifyRequest { r =>
-            r.copy(method = rule.conf.rewriteMethod.map(_.value).getOrElse(r.method),
-              uri = chooseRelativeUri(tracingContext, apiGroup.matchCriteria.basePath.getOrElse(BasePath("")), rule.conf, newOriginal))
-          }
-          flow(ruleWithPathParams, Future.successful(rerouted), reroutesLeft - 1).map((_, false))
+          val queryParams = finalRequestCtx.originalRequest.queryParams
+          val reroutedToPath = matchData.pathOpt.map(UriPath(_)).getOrElse(finalRequestCtx.originalRequest.path)
+
+          val rerouted =
+            finalRequestCtx.modifyRequest { targetRequest =>
+              targetRequest
+                .withMethod(rule.conf.rewriteMethod.map(_.value).getOrElse(targetRequest.method))
+                .withUri(chooseRelativeUri(apiGroup.matchCriteria.basePathResolved, rule.conf, reroutedToPath, queryParams, pathParams))
+            }
+
+          flow(ruleWithPathParams, Future.successful(rerouted), false).map((_, false))
       }
     }
 
-    def flow(ruleWithPathParams: RuleWithPathParams, requestCtxFut: Future[RequestCtx], reroutesLeft: Int): Future[ApiResponse] = {
+    def flow(ruleWithPathParams: RuleWithPathParams, requestCtxFut: Future[RequestCtx], rerouteLeft: Boolean): Future[ApiResponse] = {
         val rule = ruleWithPathParams.rule
 
           ApiRequestHandler.setRule(ctx, rule)
@@ -149,8 +154,8 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
                                       case None =>
                                         if (!rule.conf.reroute.getOrElse(false))
                                           callTarget(tracingContext, finalRequestCtx, rule.conf.call)
-                                        else if (reroutesLeft > 0)
-                                          reroute(rule.conf.rewriteMethod, rule.conf.rewritePath, finalRequestCtx, reroutesLeft)
+                                        else if (rerouteLeft)
+                                          reroute(finalRequestCtx.targetRequest.method, finalRequestCtx.targetRequest.uri, finalRequestCtx)
                                         else
                                           Future.failed(new Exception("Too many reroutes."))
                                       case Some(response) =>
@@ -184,7 +189,7 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
               ruleWithPathParams.params
             )
 
-          flow(ruleWithPathParams, initRequestCtx, 1)
+          flow(ruleWithPathParams, initRequestCtx, true)
       }
 
     program.onComplete { result =>
@@ -432,7 +437,7 @@ object HttpConversions {
         TargetRequest(
           method  = ruleConf.rewriteMethod.map(_.value).getOrElse(original.method),
           service = TargetService(ruleConf.target, req),
-          uri     = chooseRelativeUri(tracingCtx, apiGroup.matchCriteria.basePathResolved, ruleConf, original),
+          uri     = chooseRelativeUri(apiGroup.matchCriteria.basePathResolved, ruleConf, original.path, original.queryParams, pathParams),
           headers = removeHeadersAsProxy(ruleConf, original.headers),
           bodyOpt = bodyOpt
         )
@@ -471,19 +476,19 @@ object HttpConversions {
     )
   }
 
-  def chooseRelativeUri(ctx: TracingContext, basePath: BasePath, ruleConf: RuleConf, original: OriginalRequest): RelativeUri =
+  def chooseRelativeUri(basePath: BasePath, ruleConf: RuleConf, path: UriPath, queryParams: QueryParams, pathParams: PathParams): RelativeUri =
     ruleConf.rewritePath match {
       case Some(rewritePath) =>
         if (ruleConf.copyQueryOnRewrite.getOrElse(true))
-          RewritableRelativeUri(rewritePath, original.queryParams, original.pathParams)
-        else RewritableRelativeUri(rewritePath, QueryParams.of(), original.pathParams)
+          RewritableRelativeUri(rewritePath, queryParams, pathParams)
+        else RewritableRelativeUri(rewritePath, QueryParams.of(), pathParams)
       case None =>
         val relativeOriginalPath =
-          original.path.value.drop(basePath.value.length)
+          path.value.drop(basePath.value.length)
         val targetPath =
           if (ruleConf.dropPathPrefix) relativeOriginalPath.drop(ruleConf.criteria.rewrite.pathPrefix.length)
           else relativeOriginalPath
-        FixedRelativeUri(UriPath(targetPath), original.queryParams, original.pathParams)
+        FixedRelativeUri(UriPath(targetPath), queryParams, pathParams)
     }
 
   def removeHeadersAsProxy(conf: RuleConf, headers: Headers): Headers = {
