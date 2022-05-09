@@ -17,7 +17,7 @@ class BruteForcePluginTest extends PluginAcceptanceTest with MustMatchers  {
   def before(): Unit = {
     targetService = startClientAndServer(7760)
 
-    targetService.when(request()).callback { request: HttpRequest =>
+    targetService.when(request()).respond { request: HttpRequest =>
       response().withStatusCode(request.getFirstHeader("TARGET_STATUS").toInt)
     }
   }

@@ -87,7 +87,7 @@ class ListOpenApiRouteAcceptanceTest extends PyronAcceptanceTest with MustMatche
   }
 
   class ListOpenApiMatcher(val expected: ListOpenApiResponse, val printer: Printer) extends BaseMatcher[ListOpenApiResponse] {
-    val expectedJson: String = expected.asJson.pretty(printer)
+    val expectedJson: String = expected.asJson.printWith(printer)
 
     override def matches(response: scala.Any): Boolean = {
       assertEquals(expectedJson, response.asInstanceOf[String])

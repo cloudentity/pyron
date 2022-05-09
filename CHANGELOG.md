@@ -1,8 +1,36 @@
+## [1.15.0] - 2022-04-26
+### Security
+- [CVE-2020-13949](https://nvd.nist.gov/vuln/detail/CVE-2020-13949)
+  - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively libthrift 0.13.0 -> 0.14.1)
+  - Avoiding importing tomcat-embed-core 8.5.46, with its new vulnerabilities, by setting overriding libthrift -> 0.16.0
+- [CVE-2022-21653](https://nvd.nist.gov/vuln/detail/CVE-2022-21653)
+  - Upgrading circe 0.11.1 to 0.14.1 (transitively jawn-parser 0.14.1 -> 1.1.2)
+  - Upgrading jawn-parser -> 1.3.2 to solve vulnerability
+- [CVE-2021-29425](https://nvd.nist.gov/vuln/detail/CVE-2021-29425) - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively commons-io 2.5 -> 2.11.0)
+- [CVE-2018-12541](https://nvd.nist.gov/vuln/detail/CVE-2018-12541) - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively vertx 3.9.5 -> 3.9.12)
+- [CVE-2021-21290](https://nvd.nist.gov/vuln/detail/CVE-2021-21290) - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively netty-transport and netty-handler 4.1.49 -> 4.1.72)
+- [CVE-2021-21295](https://nvd.nist.gov/vuln/detail/CVE-2021-21295) - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively netty-transport and netty-handler 4.1.49 -> 4.1.72)
+- [CVE-2021-21409](https://nvd.nist.gov/vuln/detail/CVE-2021-21409) - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively netty-transport and netty-handler 4.1.49 -> 4.1.72)
+- [CVE-2021-37136](https://nvd.nist.gov/vuln/detail/CVE-2021-37136) - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively netty-transport and netty-handler 4.1.49 -> 4.1.72)
+- [CVE-2021-37137](https://nvd.nist.gov/vuln/detail/CVE-2021-37137) - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively netty-transport and netty-handler 4.1.49 -> 4.1.72)
+- [CVE-2021-43797](https://nvd.nist.gov/vuln/detail/CVE-2021-43797) - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively netty-transport and netty-handler 4.1.49 -> 4.1.72)
+- [CVE-2020-29582](https://nvd.nist.gov/vuln/detail/CVE-2020-29582) - Solved by upgrading kotlin-stdlib and kotlin-stdlib-common from 1.3.50 -> 1.4.32
+- [CVE-2020-15824](https://nvd.nist.gov/vuln/detail/CVE-2020-15824) - Solved by upgrading kotlin-stdlib and kotlin-stdlib-common from 1.3.50 -> 1.4.32
+- [CVE-2017-18640](https://nvd.nist.gov/vuln/detail/CVE-2017-18640) - Fixed by upgrading swagger-parser 1.0.36 -> 1.0.58 (transitively snakeyaml 1.18 -> 1.26)
+- [CVE-2020-13956](https://nvd.nist.gov/vuln/detail/CVE-2020-13956) - Solved by upgrading rest-assured 3.0.2 -> 4.5.1 and httpclient 4.5.3 -> 4.5.13
+- [CVE-2018-1000873](https://nvd.nist.gov/vuln/detail/CVE-2018-1000873) - Solved by upgrading mock-server 5.1.1 -> 5.9.0 (transitively jackson-annotations 2.9.2 -> 2.10.1)
+- [CWE-79](http://cwe.mitre.org/data/definitions/79.html) - Solved by upgrading scala-reflect 2.12.6 and 2.12.8 -> 2.12.9 (matching scala-library version)
+
 ## [1.14.0] - 2021-11-19
 ### Changed
 - Updated base docker image to openjdk:8u312-jre
 - Cloudentity user ID to 9999
 - Added possibility set the application port using $PORT env variable
+
+### Fixed
+- Comma-separated X-Forwarded-For and X-Real-IP values in single header recognized and set as proper X-Real-IP
+- X-Real-IP headers are not modified if already set
+
 
 ## [1.13.0] - 2021-10-19
 ### Added

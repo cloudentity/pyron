@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.cloudentity.pyron</groupId>
     <artifactId>pyron-root</artifactId>
-    <version>1.14.0</version>
+    <version>1.15.0</version>
   </parent>
 
   <artifactId>pyron-engine</artifactId>
@@ -57,10 +57,6 @@
     <dependency>
       <groupId>io.circe</groupId>
       <artifactId>circe-generic_2.12</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.circe</groupId>
-      <artifactId>circe-java8_2.12</artifactId>
     </dependency>
     <!-- logging -->
     <dependency>
@@ -119,11 +115,6 @@
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
