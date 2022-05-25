@@ -55,6 +55,48 @@
           "method": "POST",
           "pathPattern": "/should-apply-reroute/second",
           "rewritePath": "/rerouted/multi"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute/plugins",
+          "rewritePath": "/rerouted/plugins",
+          "reroute": true,
+          "requestPlugins": [
+            {
+              "name": "reroute-request",
+              "conf": {
+                "value": "request-initial"
+              }
+            }
+          ],
+          "responsePlugins": [
+            {
+              "name": "reroute-response",
+              "conf": {
+                "value": "response-initial"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/rerouted/plugins",
+          "requestPlugins": [
+            {
+              "name": "reroute-request",
+              "conf": {
+                "value": "request-rerouted"
+              }
+            }
+          ],
+          "responsePlugins": [
+            {
+              "name": "reroute-response",
+              "conf": {
+                "value": "response-rerouted"
+              }
+            }
+          ]
         }
       ]
     }

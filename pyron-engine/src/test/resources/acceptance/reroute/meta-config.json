@@ -9,6 +9,22 @@
       }
     },
     {
+      "type": "json",
+      "format": "json",
+      "config": {
+        "registry:request-plugins": {
+          "reroute-request": {
+            "main": "com.cloudentity.pyron.acceptance.RerouteRequestTestPlugin"
+          }
+        },
+        "registry:response-plugins": {
+          "reroute-response": {
+            "main": "com.cloudentity.pyron.acceptance.RerouteResponseTestPlugin"
+          }
+        }
+      }
+    },
+    {
       "type": "file",
       "format": "json",
       "config": {
