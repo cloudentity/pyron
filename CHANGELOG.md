@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.15.0] - 2022-04-26
 ### Security
 - [CVE-2020-13949](https://nvd.nist.gov/vuln/detail/CVE-2020-13949)
   - Solved by upgrading vertx-tools 1.9.0 -> 1.11.0 (transitively libthrift 0.13.0 -> 0.14.1)

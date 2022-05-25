@@ -9,13 +9,15 @@
   USED IN RELEASE NOTES
 -->
 
-## Type of changes
+## Information for QA
 <!-- [Place an '[X]' (no spaces) in all applicable fields.] -->
-- [ ] Bugfix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Tests (extending the test suite)
-- [ ] Refactor (internal improvement that doesn't change product functionality)
-- [ ] Other (if none of the other choices apply)
+- [ ] Is QA testing required?
+- [ ] Does PR contain unit tests?
+- [ ] Should QA create E2E tests for the change?
+
+## Additional QA Procedures (Optional)
+
+<!--- Describe what QA needs to do if needed -->
 
 ## Implementation details
 
