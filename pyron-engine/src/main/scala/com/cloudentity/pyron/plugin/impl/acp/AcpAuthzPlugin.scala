@@ -10,6 +10,7 @@ import com.cloudentity.tools.vertx.http.{Headers, SmartHttp, SmartHttpClient}
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.syntax._
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.json.JsonObject
 
 import scala.concurrent.Future
 
@@ -83,7 +84,15 @@ class AcpAuthzPlugin extends RequestPluginVerticle[Unit] {
       requestCtx
     } else if (code == 403) {
       log.debug(requestCtx.tracingCtx, s"Request unauthorized, aborting: code=$code, body=${response.getBody}")
-      requestCtx.abort(unauthorized)
+
+      val authorizerResponseBody = response.getBody.toJsonObject
+      val details = authorizerResponseBody.getJsonObject("details", new JsonObject())
+      val responseCode = details.getInteger("rfc_6750_www_authenticate_response_code", 403)
+      val responseHeaderValue = details.getString("rfc_6750_www_authenticate_header_value", "")
+
+      val headers = Headers("WWW-Authenticate" -> List(responseHeaderValue))
+      val apiResponse = ApiResponse(responseCode, Buffer.buffer(), headers)
+      requestCtx.abort(apiResponse)
     } else {
       log.error(requestCtx.tracingCtx, s"Unexcepted acp-authorizer response: code=$code, body=${response.getBody}")
       requestCtx.abort(unauthorized)
