@@ -191,6 +191,7 @@ $ docker run --env-file envs --network="host" --name pyron -v "$(pwd)"/configs:/
   * [Path prefix](#config-path-prefix)
   * [Rewrite path](#config-rewrite-path)
   * [Rewrite method](#config-rewrite-method)
+  * [Reroute](#config-reroute)
   * [Response timeout](#config-response-timeout)
   * [Retry](#config-retry)
   * [Preserve Host header](#config-preserve-host-header)
@@ -382,10 +383,10 @@ Example: client's call `GET /user/123` is proxied to target `GET /entities/user/
       },
       "endpoints": [
         {
-              "method": "POST",
-              "rewriteMethod": "PUT",
-              "pathPattern": "/user"
-            }
+          "method": "POST",
+          "rewriteMethod": "PUT",
+          "pathPattern": "/user"
+        }
       ]
     }
   ]
@@ -397,6 +398,45 @@ Example: client's call `GET /user/123` is proxied to target `GET /entities/user/
 | rewriteMethod      | method that Pyron calls target service with (optional, `method` used if this not set)  |
 
 Example: client's call `POST /user` is proxied to target `PUT /user`.
+
+<a id="config-reroute"></a>
+#### Reroute
+
+Reroute the call to other rule. The call is rerouted based on 'rewriteMethod' and 'rewritePath' of initial rule.
+
+> NOTE<br/>
+> Plugins of initial and rerouted rule are applied in the following order: initial request, rerouted request, rerouted response, initial response.
+
+```json
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "example.com",
+        "targetPort": 80
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/get-user/{id}",
+          "rewritePath": "/user/{id}",
+          "reroute": true
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/user/{id}"
+        }
+      ]
+    }
+  ]
+}
+```
+
+| Attribute    | Description                                          |
+|:-------------|:-----------------------------------------------------|
+| reroute      | if true then rerouted to other rule (default false)  |
+
+Example: client's call `GET /get-user/123` is rerouted to 'GET /user/123' rule and then proxied to target `GET /user/123`.
 
 <a id="config-response-timeout"></a>
 #### Response timeout

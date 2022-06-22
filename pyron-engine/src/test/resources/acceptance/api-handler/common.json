@@ -69,6 +69,29 @@
               }
             }
           ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute",
+          "reroute": true,
+          "rewritePath": "/should-apply-reroute-rerouted"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute-rerouted",
+          "rewritePath": "/rerouted"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-break-reroute-loop",
+          "reroute": true,
+          "rewritePath": "/should-break-reroute-loop-rerouted"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-break-reroute-loop-rerouted",
+          "reroute": true,
+          "rewritePath": "/should-break-reroute-loop"
         }
       ]
     }
