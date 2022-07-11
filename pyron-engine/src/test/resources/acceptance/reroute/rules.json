@@ -1,0 +1,104 @@
+{
+  "rules": [
+    {
+      "default": {
+        "targetHost": "localhost",
+        "targetPort": 7760
+      },
+      "endpoints": [
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute/path-params/{param1}",
+          "reroute": true,
+          "rewritePath": "/should-apply-reroute-rerouted/path-params/{param1}"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute-rerouted/path-params/{param1}",
+          "rewritePath": "/rerouted/path-params/{param1}"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute/query",
+          "reroute": true,
+          "rewritePath": "/should-apply-reroute-rerouted/query"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute-rerouted/query",
+          "rewritePath": "/rerouted/query"
+        },
+        {
+          "method": "GET",
+          "rewriteMethod": "POST",
+          "pathPattern": "/should-apply-reroute/method-rewrite",
+          "reroute": true
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/should-apply-reroute/method-rewrite",
+          "rewritePath": "/rerouted/method-rewrite"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute/first",
+          "reroute": true,
+          "rewritePath": "/should-apply-reroute/second"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute/second",
+          "reroute": true,
+          "rewriteMethod": "POST"
+        },
+        {
+          "method": "POST",
+          "pathPattern": "/should-apply-reroute/second",
+          "rewritePath": "/rerouted/multi"
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/should-apply-reroute/plugins",
+          "rewritePath": "/rerouted/plugins",
+          "reroute": true,
+          "requestPlugins": [
+            {
+              "name": "reroute-request",
+              "conf": {
+                "value": "request-initial"
+              }
+            }
+          ],
+          "responsePlugins": [
+            {
+              "name": "reroute-response",
+              "conf": {
+                "value": "response-initial"
+              }
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "pathPattern": "/rerouted/plugins",
+          "requestPlugins": [
+            {
+              "name": "reroute-request",
+              "conf": {
+                "value": "request-rerouted"
+              }
+            }
+          ],
+          "responsePlugins": [
+            {
+              "name": "reroute-response",
+              "conf": {
+                "value": "response-rerouted"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

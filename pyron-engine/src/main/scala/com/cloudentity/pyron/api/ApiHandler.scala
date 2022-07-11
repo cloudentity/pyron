@@ -22,7 +22,7 @@ import com.cloudentity.tools.vertx.tracing.{LoggingWithTracing, TracingContext}
 import io.vertx.config.ConfigChange
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.ReplyException
-import io.vertx.core.http.{HttpServerRequest, HttpServerResponse}
+import io.vertx.core.http.{HttpMethod, HttpServerRequest, HttpServerResponse}
 import io.vertx.core.streams.ReadStream
 import io.vertx.core.{MultiMap, http, Future => VxFuture}
 import io.vertx.ext.web.RoutingContext
@@ -49,6 +49,8 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
   var targetClient: TargetClient = _
   var apiGroups: List[ApiGroup] = List()
   var rulesStore: RulesStore = _
+
+  case class RuleMatchInput(hostOpt: Option[String], method: HttpMethod, pathOpt: Option[String])
 
   override def initServiceAsyncS(): Future[Unit] = {
     registerConfChangeConsumer(onSmartClientsChanged)
@@ -82,47 +84,59 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
     val vertxRequest   = ctx.request()
     val vertxResponse  = ctx.response()
     val tracingContext = RoutingWithTracingS.getOrCreate(ctx, getTracing)
+    val proxyHeaders   = getProxyHeaders(ctx)
 
     val requestSignature = Option(vertxRequest.host()) match {
       case Some(_) => s"${vertxRequest.method()} ${vertxRequest.uri()}"
       case None => s"${vertxRequest.method()} ${vertxRequest.absoluteURI()}"
     }
-    log.debug(tracingContext, s"Received request: $requestSignature")
     log.trace(tracingContext, s"Received request: $requestSignature, headers=${vertxRequest.headers()}")
 
-    val matchOpt =
+    def matchOpt(input: RuleMatchInput): Option[(ApiGroup, RuleWithPathParams)] =
       for {
-        apiGroup             <- findMatchingApiGroup(apiGroups, vertxRequest)
-        ruleWithPathParams   <- findMatchingRule(apiGroup, vertxRequest)
+        apiGroup             <- findMatchingApiGroup(apiGroups, input.hostOpt, input.pathOpt)
+        ruleWithPathParams   <- findMatchingRule(apiGroup, input.method, input.pathOpt)
       } yield (apiGroup, ruleWithPathParams)
 
-    val program: Future[ApiResponse] =
-      matchOpt match {
-        case None =>
-          Future.successful(Errors.ruleNotFound.toApiResponse())
+    type Failed = Boolean
+    def reroute(targetMethod: HttpMethod, targetRelativeUri: RelativeUri, finalRequestCtx: RequestCtx): Future[(ApiResponse, Failed)] = {
+      val matchData =
+        RuleMatchInput(
+          hostOpt = Option(vertxRequest.host()),
+          method = targetMethod,
+          pathOpt = Some(targetRelativeUri.path)
+        )
 
+      matchOpt(matchData) match {
+        case None =>
+          Future.successful(Errors.ruleNotFound.toApiResponse(), true)
         case Some((apiGroup, ruleWithPathParams)) =>
           val rule = ruleWithPathParams.rule
           val pathParams = ruleWithPathParams.params
-          val proxyHeaders = getProxyHeaders(ctx)
+          val queryParams = finalRequestCtx.originalRequest.queryParams
+          val reroutedToPath = matchData.pathOpt.map(UriPath(_)).getOrElse(finalRequestCtx.originalRequest.path)
+
+          val rerouted =
+            finalRequestCtx.modifyRequest { targetRequest =>
+              targetRequest
+                .withMethod(rule.conf.rewriteMethod.map(_.value).getOrElse(targetRequest.method))
+                .withUri(chooseRelativeUri(apiGroup.matchCriteria.basePathResolved, rule.conf, reroutedToPath, queryParams, pathParams))
+            }
+
+          flow(ruleWithPathParams, Future.successful(rerouted), false).map((_, false))
+      }
+    }
+
+    def flow(ruleWithPathParams: RuleWithPathParams, requestCtxFut: Future[RequestCtx], rerouteLeft: Boolean): Future[ApiResponse] = {
+        val rule = ruleWithPathParams.rule
 
           ApiRequestHandler.setRule(ctx, rule)
           setTracingOperationName(ctx, rule)
 
           log.debug(tracingContext, s"Found ${ruleWithPathParams.rule} for, request='$requestSignature'")
-          val defaultRequestBodyMaxSize = conf.defaultRequestBodyMaxSize
 
           for {
-
-            initRequestCtx <- toRequestCtx(
-              defaultRequestBodyMaxSize,
-              ctx,
-              tracingContext,
-              proxyHeaders,
-              rule.conf,
-              apiGroup,
-              pathParams
-            )
+            initRequestCtx <- requestCtxFut
 
             finalRequestCtx <- applyRequestPlugins(
               initRequestCtx.modifyRequest(withProxyHeaders(proxyHeaders)),
@@ -138,7 +152,12 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
 
             (initResponse, fail) <- finalRequestCtx.aborted match {
                                       case None =>
-                                        callTarget(tracingContext, finalRequestCtx, rule.conf.call)
+                                        if (!rule.conf.reroute.getOrElse(false))
+                                          callTarget(tracingContext, finalRequestCtx, rule.conf.call)
+                                        else if (rerouteLeft)
+                                          reroute(finalRequestCtx.targetRequest.method, finalRequestCtx.targetRequest.uri, finalRequestCtx)
+                                        else
+                                          Future.failed(new Exception("Too many reroutes."))
                                       case Some(response) =>
                                         Future.successful((response, false))
                                     }
@@ -150,6 +169,27 @@ class ApiHandlerVerticle extends ScalaServiceVerticle with ApiHandler with ApiGr
             _                     = ApiRequestHandler.addExtraAccessLogItems(ctx, finalResponseCtx.accessLog)
             _                     = ApiRequestHandler.addProperties(ctx, finalResponseCtx.properties)
           } yield finalResponseCtx.response
+      }
+
+    val matchData = RuleMatchInput(Option(vertxRequest.host()), vertxRequest.method(), Option(vertxRequest.path()))
+
+    val program: Future[ApiResponse] =
+      matchOpt(matchData) match {
+        case None =>
+          Future.successful(Errors.ruleNotFound.toApiResponse())
+        case Some((apiGroup, ruleWithPathParams)) =>
+          val initRequestCtx =
+            toRequestCtx(
+              conf.defaultRequestBodyMaxSize,
+              ctx,
+              tracingContext,
+              proxyHeaders,
+              ruleWithPathParams.rule.conf,
+              apiGroup,
+              ruleWithPathParams.params
+            )
+
+          flow(ruleWithPathParams, initRequestCtx, true)
       }
 
     program.onComplete { result =>
@@ -249,20 +289,20 @@ object ApiRequestHandler {
 
   case class RuleWithPathParams(rule: Rule, params: PathParams)
 
-  def findMatchingApiGroup(apiGroups: List[ApiGroup], vertxRequest: HttpServerRequest): Option[ApiGroup] =
+  def findMatchingApiGroup(apiGroups: List[ApiGroup], hostOpt: Option[String], pathOpt: Option[String]): Option[ApiGroup] =
     apiGroups.find { group =>
-      ApiGroupMatcher.makeMatch(Option(vertxRequest.host()), Option(vertxRequest.path()).getOrElse(""), group.matchCriteria)
+      ApiGroupMatcher.makeMatch(hostOpt, pathOpt.getOrElse(""), group.matchCriteria)
     }
 
 
-  def findMatchingRule(apiGroup: ApiGroup, vertxRequest: HttpServerRequest): Option[RuleWithPathParams] = {
+  def findMatchingRule(apiGroup: ApiGroup, method: HttpMethod, pathOpt: Option[String]): Option[RuleWithPathParams] = {
     @tailrec
     def loop(basePath: BasePath, rules: List[Rule]): Option[RuleWithPathParams] =
       rules match {
         case rule :: tail =>
           val criteria = rule.conf.criteria
-          val path = Option(vertxRequest.path()).getOrElse("")
-          RuleMatcher.makeMatch(vertxRequest.method(), path, basePath, criteria) match {
+          val path = pathOpt.getOrElse("")
+          RuleMatcher.makeMatch(method, path, basePath, criteria) match {
             case Match(rewrite) => Some(RuleWithPathParams(rule, rewrite.pathParams))
             case NoMatch => loop(basePath, tail)
           }
@@ -397,7 +437,7 @@ object HttpConversions {
         TargetRequest(
           method  = ruleConf.rewriteMethod.map(_.value).getOrElse(original.method),
           service = TargetService(ruleConf.target, req),
-          uri     = chooseRelativeUri(tracingCtx, apiGroup.matchCriteria.basePathResolved, ruleConf, original),
+          uri     = chooseRelativeUri(apiGroup.matchCriteria.basePathResolved, ruleConf, original.path, original.queryParams, pathParams),
           headers = removeHeadersAsProxy(ruleConf, original.headers),
           bodyOpt = bodyOpt
         )
@@ -436,19 +476,19 @@ object HttpConversions {
     )
   }
 
-  def chooseRelativeUri(ctx: TracingContext, basePath: BasePath, ruleConf: RuleConf, original: OriginalRequest): RelativeUri =
+  def chooseRelativeUri(basePath: BasePath, ruleConf: RuleConf, path: UriPath, queryParams: QueryParams, pathParams: PathParams): RelativeUri =
     ruleConf.rewritePath match {
       case Some(rewritePath) =>
         if (ruleConf.copyQueryOnRewrite.getOrElse(true))
-          RewritableRelativeUri(rewritePath, original.queryParams, original.pathParams)
-        else RewritableRelativeUri(rewritePath, QueryParams.of(), original.pathParams)
+          RewritableRelativeUri(rewritePath, queryParams, pathParams)
+        else RewritableRelativeUri(rewritePath, QueryParams.of(), pathParams)
       case None =>
         val relativeOriginalPath =
-          original.path.value.drop(basePath.value.length)
+          path.value.drop(basePath.value.length)
         val targetPath =
           if (ruleConf.dropPathPrefix) relativeOriginalPath.drop(ruleConf.criteria.rewrite.pathPrefix.length)
           else relativeOriginalPath
-        FixedRelativeUri(UriPath(targetPath), original.queryParams, original.pathParams)
+        FixedRelativeUri(UriPath(targetPath), queryParams, pathParams)
     }
 
   def removeHeadersAsProxy(conf: RuleConf, headers: Headers): Headers = {
