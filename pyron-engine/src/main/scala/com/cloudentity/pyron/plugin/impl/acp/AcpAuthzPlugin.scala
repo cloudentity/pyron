@@ -88,7 +88,8 @@ class AcpAuthzPlugin extends RequestPluginVerticle[Unit] {
       if(response.getBody.length() == 0) requestCtx.abort(unauthorized)
       else {
         val authorizerResponseBody = response.getBody.toJsonObject
-        val details = authorizerResponseBody.getJsonObject("details", new JsonObject())
+        val detailsMaybeNull = authorizerResponseBody.getJsonObject("details", new JsonObject())
+        val details = if(detailsMaybeNull == null) new JsonObject() else detailsMaybeNull
         val responseCode = details.getInteger("rfc_6750_www_authenticate_response_code", 403)
         val responseHeaderValue = details.getString("rfc_6750_www_authenticate_header_value", "")
 
