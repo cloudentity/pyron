@@ -85,14 +85,17 @@ class AcpAuthzPlugin extends RequestPluginVerticle[Unit] {
     } else if (code == 403) {
       log.debug(requestCtx.tracingCtx, s"Request unauthorized, aborting: code=$code, body=${response.getBody}")
 
-      val authorizerResponseBody = response.getBody.toJsonObject
-      val details = authorizerResponseBody.getJsonObject("details", new JsonObject())
-      val responseCode = details.getInteger("rfc_6750_www_authenticate_response_code", 403)
-      val responseHeaderValue = details.getString("rfc_6750_www_authenticate_header_value", "")
+      if(response.getBody.length() == 0) requestCtx.abort(unauthorized)
+      else {
+        val authorizerResponseBody = response.getBody.toJsonObject
+        val details = authorizerResponseBody.getJsonObject("details", new JsonObject())
+        val responseCode = details.getInteger("rfc_6750_www_authenticate_response_code", 403)
+        val responseHeaderValue = details.getString("rfc_6750_www_authenticate_header_value", "")
 
-      val headers = Headers("WWW-Authenticate" -> List(responseHeaderValue))
-      val apiResponse = ApiResponse(responseCode, Buffer.buffer(), headers)
-      requestCtx.abort(apiResponse)
+        val headers = Headers("WWW-Authenticate" -> List(responseHeaderValue))
+        val apiResponse = ApiResponse(responseCode, Buffer.buffer(), headers)
+        requestCtx.abort(apiResponse)
+      }
     } else {
       log.error(requestCtx.tracingCtx, s"Unexcepted acp-authorizer response: code=$code, body=${response.getBody}")
       requestCtx.abort(unauthorized)
