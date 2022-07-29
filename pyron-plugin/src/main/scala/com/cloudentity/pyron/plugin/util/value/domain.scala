@@ -17,6 +17,7 @@ case class AuthnRef(path: Path) extends RefType
 case class RequestHeaderRef(header: String, typ: HeaderRefType) extends RefType
 case class ResponseHeaderRef(header: String, typ: HeaderRefType) extends RefType
 case class ConfRef(path: Path) extends RefType
+case class PropertiesRef(path: Path) extends RefType
 
 sealed trait HeaderRefType
 case object FirstHeaderRefType extends HeaderRefType
@@ -74,6 +75,7 @@ object ValueOrRef {
       case "resp.headers" => decodeHeadersRef(path, ResponseHeaderRef.apply _)
       case "pathParams" => Some(PathParamRef(path.mkString(".")))
       case "queryParams" => Some(QueryParamRef(path.mkString(".")))
+      case "props" => Some(PropertiesRef(Path(path)))
       case "conf" => Some(ConfRef(Path(path)))
       case _ => None
     }

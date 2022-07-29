@@ -2,7 +2,7 @@ package com.cloudentity.pyron.plugin.util.value
 
 import java.util.{List => JavaList, Map => JavaMap}
 
-import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx, ResponseCtx}
+import com.cloudentity.pyron.domain.flow.{AuthnCtx, RequestCtx, ResponseCtx, Properties}
 import com.cloudentity.pyron.domain.http.{ApiResponse, OriginalRequest, TargetRequest}
 import com.cloudentity.pyron.plugin.util.value.PatternUtil.safePatternAndParams
 import io.circe.Json
@@ -19,13 +19,14 @@ object ValueResolver {
   case class ResolveCtx(origReq: OriginalRequest,
                         tgtReq: TargetRequest,
                         authnCtx: AuthnCtx,
-                        responseOpt: Option[ApiResponse])
+                        responseOpt: Option[ApiResponse],
+                        properties: Properties)
 
   implicit def requestCtx_to_resolveCtx(ctx: RequestCtx): ResolveCtx =
-    ResolveCtx(ctx.originalRequest, ctx.targetRequest, ctx.authnCtx, None)
+    ResolveCtx(ctx.originalRequest, ctx.targetRequest, ctx.authnCtx, None, ctx.properties)
 
   implicit def responseCtx_to_resolveCtx(ctx: ResponseCtx): ResolveCtx =
-    ResolveCtx(ctx.originalRequest, ctx.targetRequest, ctx.authnCtx, Some(ctx.response))
+    ResolveCtx(ctx.originalRequest, ctx.targetRequest, ctx.authnCtx, Some(ctx.response), ctx.properties)
 
   def resolveString(ctx: ResolveCtx,
                     reqBodyOpt: Option[JsonObject],
@@ -52,8 +53,15 @@ object ValueResolver {
       case AuthnRef(path)                        => extractAuthnCtxAttribute(ctx.authnCtx, path).flatMap(_.asString)
       case ConfRef(path)                         => extractJsonObjectAttribute(confValues, path).flatMap(_.asString)
       case HttpStatusRef                         => ctx.responseOpt.map(_.statusCode.toString())
+      case PropertiesRef(path)                   => extractPropertiesAttribute(ctx.properties, path).flatMap(_.asString)
     }
   }
+
+  def extractPropertiesAttribute(props: Properties, path: Path): Option[JsonValue] = 
+    path.value match {
+      case head :: tail => props.get[JsonObject](head).flatMap(extractJsonObjectAttribute(_, Path(tail)))
+        case Nil => None
+    }
 
   def resolveString(ctx: ResolveCtx, confValues: JsonObject, valueOrRef: ValueOrRef): Option[String] =
     valueOrRef match {
@@ -94,6 +102,7 @@ object ValueResolver {
       case AuthnRef(path)                        => extractAuthnCtxAttribute(ctx.authnCtx, path).flatMap(_.asListOfStrings)
       case ConfRef(path)                         => extractJsonObjectAttribute(confValues, path).flatMap(_.asListOfStrings)
       case HttpStatusRef                         => ctx.responseOpt.map(_.statusCode.toString()).map(List(_))
+      case PropertiesRef(path)                   => extractPropertiesAttribute(ctx.properties, path).flatMap(_.asListOfStrings)
     }
   }
 
@@ -125,6 +134,7 @@ object ValueResolver {
                                                       .map(v => ArrayJsonValue(new JsonArray(v.asJava)))
       case ConfRef(path)                         => extractJsonObjectAttribute(confValues, path)
       case HttpStatusRef                         => ctx.responseOpt.map(_.statusCode.toString()).map(StringJsonValue)
+      case PropertiesRef(path)                   => extractPropertiesAttribute(ctx.properties, path)
     }
   }
 

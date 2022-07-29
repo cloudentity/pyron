@@ -1,0 +1,9 @@
+{
+  "registry:request-plugins": {
+    "http-call": {
+      "main": "com.cloudentity.pyron.plugin.impl.httpcall.HttpCallPlugin",
+      "verticleConfig": {
+      }
+    }
+  }
+}
