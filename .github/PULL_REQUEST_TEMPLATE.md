@@ -11,9 +11,9 @@ This description will be pulled into public release notes.
 
 1. What changes are you introducing? Be clear and provide a detailed overview of your changes.
 2. Why are you introducing the changes? Make the intent of the changes clear.
-   - What do those changes mean for our end users?
-   - Why should they care? 
-   - What is the context of your changes?
+    - What do those changes mean for our end users?
+    - Why should they care?
+    - What is the context of your changes?
 
 Additionally:
 
@@ -23,6 +23,7 @@ Additionally:
 -->
 
 <!-- [Mark with '[X]' (no spaces) if Release Notes description is not required for this PR. Use only if this PR has no impact for external audience.] -->
+
 - [ ] Skip Release Notes for this PR
 
 ## Implementation details (internal)
@@ -30,7 +31,9 @@ Additionally:
 <!--- Describe technical implementation details for peer reviewers -->
 
 ## Information for QA
+
 <!-- [Place an '[X]' (no spaces) in all applicable fields.] -->
+
 - [ ] Is QA testing required?
 - [ ] Does PR contain unit tests?
 - [ ] Should QA create E2E tests for the change?
