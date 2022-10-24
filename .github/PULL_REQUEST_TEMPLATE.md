@@ -22,10 +22,6 @@ Additionally:
 - If your changes deprecate an API, provide what is the alternative for our customers (if it exists). State clearly that an API became deprecated.
 -->
 
-<!-- [Mark with '[X]' (no spaces) if Release Notes description is not required for this PR. Use only if this PR has no impact for external audience.] -->
-
-- [ ] Skip Release Notes for this PR
-
 ## Implementation details (internal)
 
 <!--- Describe technical implementation details for peer reviewers -->
